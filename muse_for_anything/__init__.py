@@ -11,6 +11,7 @@ from flask import Flask
 from flask.cli import FlaskGroup
 from flask.logging import default_handler
 from flask_cors import CORS
+from flask_static_digest import FlaskStaticDigest
 
 import click
 
@@ -95,6 +96,9 @@ def create_app(test_config: Optional[Dict[str, Any]] = None):
 
     # allow cors requests everywhere
     CORS(app)
+
+    # setup static digest for SPA
+    FlaskStaticDigest(app)
 
     if app.config.get("DEBUG", False):
         # Register debug routes when in debug mode

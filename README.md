@@ -73,6 +73,8 @@ This package uses the following libraries to build a rest app with a database on
  *  sphinxcontrib-redoc ([documantation](https://sphinxcontrib-redoc.readthedocs.io/en/stable/))
     Renders the OpenAPI spec with redoc in sphinx html output.
     Config: `docs/conf.py` (API title is read from spec)
+ *  flask-static-digest ([documentation](https://github.com/nickjj/flask-static-digest))\
+    For serving the resources of a javascript SPA
 
 Additional files and folders:
 
@@ -97,7 +99,6 @@ Additional files and folders:
 
 Library alternatives or recommendations:
 
- *  For including single page applications: flask-static-digest ([documentation](https://github.com/nickjj/flask-static-digest))
  *  For scripting tasks: invoke ([documentation](http://www.pyinvoke.org)) (is already in `pyproject.toml`)
  *  For hashing passwords: flask-bcrypt ([documentation](https://flask-bcrypt.readthedocs.io/en/latest/))
  
