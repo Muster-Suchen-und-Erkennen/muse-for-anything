@@ -20,6 +20,7 @@ from . import babel
 from . import db
 from . import api
 from .api import jwt
+from .root_routes import register_root_routes
 
 
 def create_app(test_config: Optional[Dict[str, Any]] = None):
@@ -98,7 +99,9 @@ def create_app(test_config: Optional[Dict[str, Any]] = None):
     CORS(app)
 
     # setup static digest for SPA
-    FlaskStaticDigest(app)
+    static_digest = FlaskStaticDigest(app)
+
+    register_root_routes(app, static_digest)
 
     if app.config.get("DEBUG", False):
         # Register debug routes when in debug mode

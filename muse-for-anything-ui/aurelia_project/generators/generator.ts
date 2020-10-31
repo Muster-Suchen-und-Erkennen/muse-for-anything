@@ -51,7 +51,7 @@ export default class ${className}Generator {
     }
 
     generateSource(className) {
-        return \`import {bindable} from 'aurelia-framework';
+        return \`import {bindable} from "aurelia-framework";
 
 export class \${className} {
     @bindable value;

@@ -16,7 +16,7 @@ const when = (condition, config, negativeConfig) =>
 // primary config:
 const outDir = path.resolve(__dirname, project.platform.output);
 const srcDir = path.resolve(__dirname, 'src');
-const baseUrl = 'static';
+const baseUrl = '/static';
 
 const cssRules = [
     {
@@ -55,30 +55,34 @@ module.exports = ({ production } = {}, { extractCss, analyze, tests, hmr, port, 
     output: {
         path: outDir,
         publicPath: baseUrl,
-        filename: production ? '[name].[chunkhash].bundle.js' : '[name].[hash].bundle.js',
-        sourceMapFilename: production ? '[name].[chunkhash].bundle.map' : '[name].[hash].bundle.map',
-        chunkFilename: production ? '[name].[chunkhash].chunk.js' : '[name].[hash].chunk.js'
+        filename: '[name].bundle.js',
+        sourceMapFilename: '[name].bundle.map',
+        chunkFilename: '[name].chunk.js'
     },
     optimization: {
         runtimeChunk: true,  // separates the runtime chunk, required for long term cacheability
         // moduleIds is the replacement for HashedModuleIdsPlugin and NamedModulesPlugin deprecated in https://github.com/webpack/webpack/releases/tag/v4.16.0
         // changes module id's to use hashes be based on the relative path of the module, required for long term cacheability
-        moduleIds: 'hashed',
+        moduleIds: 'named', // uses 'named' as cache busting/hashing is handled by flask...
+        chunkIds: 'named', // uses 'named' as cache busting/hashing is handled by flask...
+        namedChunks: true, // uses named chunks as cache busting/hashing is handled by flask...
         // Use splitChunks to breakdown the App/Aurelia bundle down into smaller chunks
         // https://webpack.js.org/plugins/split-chunks-plugin/
+        
+        
         splitChunks: {
             hidePathInfo: true, // prevents the path from being used in the filename when using maxSize
             chunks: "initial",
             // sizes are compared against source before minification
 
+            
             // This is the HTTP/1.1 optimized maxSize.
             maxSize: 200000, // splits chunks if bigger than 200k, adjust as required (maxSize added in webpack v4.15)
-            /* This is the HTTP/2 optimized options.
-            maxInitialRequests: Infinity, // Default is 3, make this unlimited if using HTTP/2
-            maxAsyncRequests: Infinity, // Default is 5, make this unlimited if using HTTP/2
-            minSize: 10000, // chunk is only created if it would be bigger than minSize, adjust as required
-            maxSize: 40000, // splits chunks if bigger than 40k, adjust as required (maxSize added in webpack v4.15)
-            */
+            // This is the HTTP/2 optimized options.
+            // maxInitialRequests: Infinity, // Default is 3, make this unlimited if using HTTP/2
+            // maxAsyncRequests: Infinity, // Default is 5, make this unlimited if using HTTP/2
+            // minSize: 10000, // chunk is only created if it would be bigger than minSize, adjust as required
+            // maxSize: 40000, // splits chunks if bigger than 40k, adjust as required (maxSize added in webpack v4.15)
 
             cacheGroups: {
                 default: false, // Disable the built-in groups default & vendors (vendors is redefined below)
@@ -251,8 +255,8 @@ module.exports = ({ production } = {}, { extractCss, analyze, tests, hmr, port, 
         }),
         // ref: https://webpack.js.org/plugins/mini-css-extract-plugin/
         ...when(extractCss, new MiniCssExtractPlugin({ // updated to match the naming conventions for the js files
-            filename: production ? '[name].[contenthash].bundle.css' : '[name].[hash].bundle.css',
-            chunkFilename: production ? '[name].[contenthash].chunk.css' : '[name].[hash].chunk.css'
+            filename: '[name].bundle.css',
+            chunkFilename: '[name].chunk.css'
         })),
         ...when(!tests, new CopyWebpackPlugin({
             patterns: [

@@ -23,7 +23,7 @@ export default class AttributeGenerator {
     }
 
     generateSource(className) {
-        return `import {autoinject} from 'aurelia-framework';
+        return `import {autoinject} from "aurelia-framework";
 
 @autoinject()
 export class ${className}CustomAttribute {
