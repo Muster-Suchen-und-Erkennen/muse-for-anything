@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from flask.helpers import url_for
 from flask.views import MethodView
 from ..util import SecurityBlueprint as SmorestBlueprint
-from .models import RootSchema
+from ..base_models import ApiResponse, ApiLink, DynamicApiResponseSchema
 
 
 API_V1 = SmorestBlueprint(
@@ -14,14 +14,30 @@ API_V1 = SmorestBlueprint(
 
 @dataclass()
 class RootData:
-    auth: str
+    self: ApiLink
 
 
 @API_V1.route("/")
 class RootView(MethodView):
     """Root endpoint of the v1 api."""
 
-    @API_V1.response(RootSchema())
+    @API_V1.response(DynamicApiResponseSchema())
     def get(self):
         """Get the urls of the next endpoints of the v1 api to call."""
-        return RootData(auth=url_for("api-v1.AuthRootView", _external=True))
+        return ApiResponse(
+            links=[
+                ApiLink(
+                    href=url_for("api-v1.AuthRootView", _external=True),
+                    rel=("api", "authentication"),
+                    resource_type="api",
+                ),
+            ],
+            embedded=[],
+            data=RootData(
+                self=ApiLink(
+                    href=url_for("api-v1.RootView", _external=True),
+                    rel=("api", "v0.1.0"),
+                    resource_type="api",
+                )
+            ),
+        )

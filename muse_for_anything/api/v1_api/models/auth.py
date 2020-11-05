@@ -1,26 +1,10 @@
 """Module containing all API schemas for the authentication API."""
 
+from ....util.import_helpers import get_all_classes_of_module
 import marshmallow as ma
-from ...util import MaBaseSchema
+from ...base_models import MaBaseSchema, ApiResponseSchema, ApiObjectSchema
 
-__all__ = [
-    "RootSchema",
-    "AuthRootSchema",
-    "LoginPostSchema",
-    "LoginTokensSchema",
-    "AccessTokenSchema",
-    "UserSchema",
-]
-
-
-class RootSchema(MaBaseSchema):
-    auth = ma.fields.Url(required=True, allow_none=False, dump_only=True)
-
-
-class AuthRootSchema(MaBaseSchema):
-    login = ma.fields.Url(required=True, allow_none=False, dump_only=True)
-    refresh = ma.fields.Url(required=True, allow_none=False, dump_only=True)
-    whoami = ma.fields.Url(required=True, allow_none=False, dump_only=True)
+__all__ = []  # extended later
 
 
 class LoginPostSchema(MaBaseSchema):
@@ -28,14 +12,17 @@ class LoginPostSchema(MaBaseSchema):
     password = ma.fields.String(required=True, allow_none=False, load_only=True)
 
 
-class LoginTokensSchema(MaBaseSchema):
+class LoginTokensSchema(ApiObjectSchema):
     access_token = ma.fields.String(required=True, allow_none=False, dump_only=True)
     refresh_token = ma.fields.String(required=True, allow_none=False, dump_only=True)
 
 
-class AccessTokenSchema(MaBaseSchema):
+class AccessTokenSchema(ApiObjectSchema):
     access_token = ma.fields.String(required=True, allow_none=False, dump_only=True)
 
 
-class UserSchema(MaBaseSchema):
+class UserSchema(ApiObjectSchema):
     username = ma.fields.String(required=True, allow_none=False)
+
+
+__all__.extend(get_all_classes_of_module(__name__, MaBaseSchema))

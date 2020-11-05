@@ -5,6 +5,11 @@ docs/api.json
 docs/changelog.md
 docs/readme.md
 
+# static files from webpack
+muse_for_anything/static/locales
+muse_for_anything/static/favicon.ico
+muse_for_anything/static/index.html
+muse_for_anything/static/*.js
 
 
 # Ignores from Template:

@@ -9,3 +9,6 @@ Welcome to MUSE4Anything's documentation!
    api-doc
    cli
    changelog
+
+
+.. todolist::

@@ -1,22 +1,32 @@
 """Module containing all API related code of the project."""
 
-from typing import Dict
 from flask import Flask
 from flask.helpers import url_for
 from flask.views import MethodView
 import marshmallow as ma
 from flask_smorest import Api, Blueprint as SmorestBlueprint
-from .util import MaBaseSchema
+from .base_models import (
+    ApiLink,
+    ApiObjectSchema,
+    ApiResponse,
+    DynamicApiResponseSchema,
+)
 from .v1_api import API_V1
 from .jwt import SECURITY_SCHEMES
 
 """A single API instance. All api versions should be blueprints."""
-ROOT_API = Api(spec_kwargs={"title": "API Root", "version": "v1"})
+ROOT_API = Api(spec_kwargs={"title": "API Root", "version": "v0.1.0"})
 
 
-class RootSchema(MaBaseSchema):
+class RootDataSchema(ApiObjectSchema):
     title = ma.fields.String(required=True, allow_none=False, dump_only=True)
-    v1 = ma.fields.Url(required=True, allow_none=False, dump_only=True)
+    latest = ma.fields.String(required=True, allow_none=False, dump_only=True)
+    v0_1 = ma.fields.String(
+        data_key="v0.1", required=True, allow_none=False, dump_only=True
+    )
+    v0_1_0 = ma.fields.String(
+        data_key="v0.1.0", required=True, allow_none=False, dump_only=True
+    )
 
 
 ROOT_ENDPOINT = SmorestBlueprint(
@@ -29,13 +39,31 @@ ROOT_ENDPOINT = SmorestBlueprint(
 
 @ROOT_ENDPOINT.route("/")
 class RootView(MethodView):
-    @ROOT_ENDPOINT.response(RootSchema())
-    def get(self) -> Dict[str, str]:
+    @ROOT_ENDPOINT.response(DynamicApiResponseSchema(RootDataSchema()))
+    def get(self) -> ApiResponse:
         """Get the Root API information containing the links to all versions of this api."""
-        return {
+        api_data = {
+            "self": ApiLink(
+                href=url_for("api-root.RootView", _external=True),
+                rel=("self", "api"),
+                resource_type="api",
+            ),
             "title": ROOT_API.spec.title,
-            "v1": url_for("api-v1.RootView", _external=True),
+            "latest": "v0.1.0",
+            "v0_1": "v0.1.0",
+            "v0_1_0": "v0.1.0",
         }
+        return ApiResponse(
+            links=[
+                ApiLink(
+                    href=url_for("api-v1.RootView", _external=True),
+                    rel=("api", "v0.1.0", "latest"),
+                    resource_type="api",
+                ),
+            ],
+            embedded=[],
+            data=api_data,
+        )
 
 
 def register_root_api(app: Flask):
