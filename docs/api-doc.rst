@@ -83,10 +83,15 @@ Additionally a top level (not embedded) API response can have the ``embedded`` f
 
     The meaning of key variables **should** be as stable as the meaning of a rel attribute (never change them without updating the api major version!).
 ``data``
-    Contains either a single data object or a list of data objects if the Resource is a collection resource.
+    Contains a single data object.
 
     All data objects have a ``self`` attribute that contains their canonical url.
     This attribute should be used to discover the links for the specific object if it is part of a collection resource.
+
+    If the resource is a collection ``data`` contains a an object of the form ``{"self": {...}, "items": []}``.
+    The ``items`` attribute of the collection contains a list of links to the resources in the collection.
+    The actual resources should always be provided in the ``embedded`` attribute of the API response.
+    If a client does not use the ``embedded`` attribute to populate a client side cache it can replace the links in the ``items`` attribute with the corresponding embedded item by matching the href of the link and the items self link.
 
     A client that caches API responses **may** use the url in the ``self`` attribute of the data object as the cache key for this API response if the response contains exactly one object.
 
@@ -100,8 +105,6 @@ The ``resourceType`` is also one of the entries in ``rel``.
 
 Rationale Behind the Format
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. todo:: Link all the relevant specifications...
 
 The format is similar to (and inspired by) the existing json format standards, that standardise how links should be embedded into json documents.
 It does however not follow any one specific format.
@@ -136,6 +139,34 @@ The custom format is mostly inspired by the JSON+Hal specification.
 The JSON+Hal format is very easy to use with only three special defined attributes (``_links``, ``_embedded`` and ``self`` (in the ``_links`` attribute)).
 This makes it easy to learn.
 In fact all three attributes can be found again in the custom format.
+
+.. note:: Inspirations for the custom format:
+
+    JSON+Hal
+        Link: https://tools.ietf.org/html/draft-kelly-json-hal-06
+
+        Inspired the naming of the ``links``, ``embedded`` and ``self`` attributes (but without the undescores).
+    Ion
+        Link: https://ionspec.org
+
+        Inspired the rel attribute of links to be a list instead of a single string.
+        Also inspired me to encode http methods into links.
+
+        The ``data`` attribute is inspired by the ``value`` attribute of value objects.
+    Collection+JSON
+        Link: http://amundsen.com/media-types/collection/
+
+        Inspired a single list of links rather than using the map style of JSON+Hal or from Ion.
+    SIREN
+        Link:
+
+        Inspired a single list of links rather than using the map style of JSON+Hal or from Ion.
+        Inspired encapsulating the object in a ``data`` attribute (SIREN uses ``properties``).
+
+    Relevant articles and other links:
+     *  https://sookocheff.com/post/api/on-choosing-a-hypermedia-format/
+     *  https://brandur.org/elegant-apis#hyper-schema
+
 
 The actual data object is encapsuled in the ``data`` attribute.
 This was done specifically, to make it trivially easy to seperate the data from the metadata of the response like links and other embedded objects.
@@ -172,6 +203,42 @@ Consider the following example:
 Here we can see that by having multiple rel values we can encode, that the same url can be used to get the collection of all myobjects and to create a new myobject with the POST method.
 By specifying a list of special rel values the client can utilise this information and know even before calling the link what type of resource is returned and if it is a collection of these resources.
 
+
+Link relations
+^^^^^^^^^^^^^^
+
+The rel attribute of a link can hold many relations.
+The relations should use ``kebap-case`` and must not contain special characters that are not url safe.
+
+Common defined rel types can be found here https://www.iana.org/assignments/link-relations/link-relations.xhtml and here https://html.spec.whatwg.org/multipage/links.html.
+
+Additionally this format specifies these rel types:
+
+api
+    A collection of API endpoints that are provided via the ``links`` attribute of the API response.
+
+    The client may follow and cache all api rels to speed up discovery of subsequent links.
+    The client must refresh the cache on page reload or after 24 hours.
+get, put, post, delete
+    These rels map to the corresponding http method.
+    If none of them is specified then ``get`` is implied.
+create, retreive, update, delete, crud-delete
+    These rels map to the common crud operations.
+    They do not imply the use of a specific http method.
+    If only the crud operation delete but not the http method delete is meant one can use ``crud-delete`` instead.
+page
+    Should always be used together with the rel ``collection``.
+    Indicates that the collection is paginated.
+partial
+    Indicates that a resource (that is not a collection!) is only a partial of the full resource.
+    A partial resource should be cached seperately from the full resource.
+    Partial resources can be useful to include into collections as often not the whole resource is needed to be displayed in a collection.
+    A partial resource may be used as initial value to display if it is already cached (but the full resource should be fetched from the api).
+    If a partial resource has an etag it must be the same etag as for the full resource.
+    If the full resource is cached and the etag does not match teh partial resource the full resource should be evicted from the cache.
+<resourceType>
+    All resource types are also valid rels.
+    They should not have a conflict with any existing rel defined above or defined in a common spec like the ones linked above.
 
 Rationale behind ``keyedLinks`` and ``key``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
