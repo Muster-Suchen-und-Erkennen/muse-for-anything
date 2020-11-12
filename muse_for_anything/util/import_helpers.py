@@ -3,7 +3,11 @@ from inspect import getmembers, getmodule, isclass
 from typing import Any, Optional, Sequence, Type
 
 
-def get_all_classes_of_module(module: str, base_class: Optional[Type[Any]], ignore: Sequence[Type[Any]] = tuple()):
+def get_all_classes_of_module(
+    module: str,
+    base_class: Optional[Type[Any]] = None,
+    ignore: Sequence[Type[Any]] = tuple(),
+):
     """Get a set of classes defined in the specified module to include into __all__."""
     classes = set()
     resolved_module = sys.modules[module]

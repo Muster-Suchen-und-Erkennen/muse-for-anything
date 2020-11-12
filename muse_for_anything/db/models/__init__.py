@@ -1,3 +1,4 @@
 """Module containing all SQLalchemy Models."""
 
-from . import example  # noqa
+from . import namespace  # noqa
+from . import ontology_objects  # noqa

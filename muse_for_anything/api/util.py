@@ -1,12 +1,23 @@
 """Module containing utilities for flask smorest APIs."""
-from typing import Any
-from .jwt import JWTMixin
+from typing import Any, Dict
+from flask import url_for
 from flask_smorest import Blueprint
+
+from .jwt import JWTMixin
+
+
+def template_url_for(endpoint: str, key_args: Dict[str, str], **values) -> str:
+    for key, key_variable in key_args.items():
+        values[key] = f"{{{key_variable}}}"
+    url: str = url_for(endpoint, **values)
+    for key, key_variable in key_args.items():
+        url = url.replace(f"%7B{key_variable}%7D", values[key])
+    return url
 
 
 class SecurityBlueprint(Blueprint, JWTMixin):
     """Blueprint that is aware of jwt tokens and how to document them.
-    
+
     Use this Blueprint if you want to document security requirements for your api.
     """
 
@@ -19,4 +30,3 @@ def camelcase(s: str) -> str:
     """Turn a string from python snake_case into camelCase."""
     parts = iter(s.split("_"))
     return next(parts) + "".join(i.title() for i in parts)
-

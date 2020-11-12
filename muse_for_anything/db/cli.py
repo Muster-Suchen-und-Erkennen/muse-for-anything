@@ -47,4 +47,4 @@ def drop_db_function(app: Flask):
 def register_cli_blueprint(app: Flask):
     """Method to register the DB CLI blueprint."""
     app.register_blueprint(DB_CLI_BLP)
-    app.logger.info("Registered blueprint.")
+    app.logger.info("Registered DB CLI blueprint.")

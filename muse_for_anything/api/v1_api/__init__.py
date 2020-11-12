@@ -2,3 +2,4 @@
 
 from .root import API_V1  # noqa
 from . import auth  # noqa
+from . import namespace  # noqa

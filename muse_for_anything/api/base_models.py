@@ -4,10 +4,12 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Sequence, Union
 import marshmallow as ma
 from marshmallow.base import SchemaABC
-from marshmallow.validate import Length
+from marshmallow.validate import Length, Range
 from marshmallow.utils import is_collection
 from ..util.import_helpers import get_all_classes_of_module
 from .util import camelcase
+
+MAX_PAGE_ITEM_COUNT = 100
 
 
 class MaBaseSchema(ma.Schema):
@@ -75,7 +77,7 @@ class ApiResponseSchema(MaBaseSchema):
         KeyedApiLinkSchema, many=True, reqired=False, allow_none=True, dump_only=True
     )
     embedded = ma.fields.List(
-        ma.fields.Nested(lambda: ApiResponseSchema(exclude=("embedded",))),
+        ma.fields.Nested(lambda: RawApiResponseSchema(exclude=("embedded",))),
         reqired=False,
         allow_none=True,
         dump_only=True,
@@ -96,12 +98,20 @@ class ApiResponseSchema(MaBaseSchema):
         return data
 
 
+class RawApiResponseSchema(ApiResponseSchema):
+    """API Response Schema to be used if data is already marshalled."""
+
+    data = ma.fields.Raw(reqired=True, allow_none=False)
+
+
 class DynamicApiResponseSchema(ApiResponseSchema):
     data = ma.fields.Method("dump_data", "load_data", reqired=True, allow_none=False)
 
     def __init__(
         self, data_schema: SchemaABC = ApiObjectSchema(), *args, **kwargs
     ) -> None:
+        if not isinstance(data_schema, SchemaABC):
+            raise TypeError("The given data_schema must be an instance not a class!")
         self._data_schema = data_schema
         super().__init__(*args, **kwargs)
 
@@ -116,6 +126,25 @@ class DynamicApiResponseSchema(ApiResponseSchema):
         return self._data_schema.load(value, many=many)
 
 
+class CursorPageSchema(ApiObjectSchema):
+    collection_size = ma.fields.Integer(required=True, allow_none=False, dump_only=True)
+    items = ma.fields.List(
+        ma.fields.Nested(ApiLinkSchema), default=tuple(), required=True, dump_only=True
+    )
+
+
+class CursorPageArgumentsSchema(MaBaseSchema):
+    cursor = ma.fields.String(allow_none=True, load_only=True)
+    item_count = ma.fields.Integer(
+        data_key="item-count",
+        allow_none=True,
+        load_only=True,
+        missing=50,
+        validate=Range(1, MAX_PAGE_ITEM_COUNT, min_inclusive=True, max_inclusive=True),
+    )
+    sort = ma.fields.String(allow_none=True, load_only=True)
+
+
 @dataclass
 class ApiLink:
     href: str
@@ -126,12 +155,24 @@ class ApiLink:
 
 
 @dataclass
+class KeyedApiLink(ApiLink):
+    key: Sequence[str] = tuple()
+
+
+@dataclass
 class ApiResponse:
     links: Sequence[ApiLink]
-    data: Union[Sequence[Any], Any]
+    data: Any
     embedded: Optional[Sequence[Any]] = None
-    keyed_links: Optional[Sequence[ApiLink]] = None
+    keyed_links: Optional[Sequence[KeyedApiLink]] = None
     key: Optional[Dict[str, str]] = None
+
+
+@dataclass
+class CursorPage:
+    self: ApiLink
+    collection_size: int
+    items: List[ApiLink]
 
 
 __all__ = list(get_all_classes_of_module(__name__, MaBaseSchema))
