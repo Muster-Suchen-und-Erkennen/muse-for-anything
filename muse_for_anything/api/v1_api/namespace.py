@@ -1,12 +1,16 @@
 """Module containing the namespace API endpoints of the v1 API."""
 
+from flask_babel import gettext
 from muse_for_anything.api.util import template_url_for
 from typing import Any, Callable, Dict, List, Optional
 from flask.helpers import url_for
 from flask.views import MethodView
 from dataclasses import dataclass
 from sqlalchemy.sql.expression import asc, desc
+from sqlalchemy.sql import func, column
 from sqlalchemy.orm.query import Query
+from flask_smorest import abort
+from http import HTTPStatus
 
 from .root import API_V1
 from ..base_models import (
@@ -18,28 +22,46 @@ from ..base_models import (
     DynamicApiResponseSchema,
     KeyedApiLink,
 )
-from .models.ontology import NamespaceSchema
+from .models.ontology import NamespaceData, NamespaceSchema
 from ...db.db import DB
+from ...db.pagination import get_page_info
 from ...db.models.namespace import Namespace
 
 
-def namespace_to_api_response(namespace: Namespace) -> ApiResponse:
-    raw_namespace: Dict[str, Any] = NamespaceSchema().dump(namespace)
-    raw_namespace["self"] = ApiLink(
-        href=url_for("api-v1.NamespaceView", namespace=str(namespace.id), _external=True),
-        rel=("namespace",),
-        resource_type="ont-namespace",
+def namespace_to_namespace_data(namespace: Namespace) -> NamespaceData:
+    return NamespaceData(
+        self=ApiLink(
+            href=url_for(
+                "api-v1.NamespaceView", namespace=str(namespace.id), _external=True
+            ),
+            rel=("ont-namespace",),
+            resource_type="ont-namespace",
+        ),
+        name=namespace.name,
+        description=namespace.description,
+        created_on=namespace.created_on,
+        updated_on=namespace.updated_on,
+        deleted_on=namespace.deleted_on,
     )
+
+
+def namespace_to_key(namespace: Namespace) -> Dict[str, str]:
+    return {"namespaceId": str(namespace.id)}
+
+
+def namespace_to_api_response(namespace: Namespace) -> ApiResponse:
+    namespace_data = namespace_to_namespace_data(namespace)
+    raw_namespace: Dict[str, Any] = NamespaceSchema().dump(namespace_data)
     return ApiResponse(
         links=(
             ApiLink(
                 href=url_for("api-v1.NamespacesView", _external=True),
-                rel=("first", "collection", "namespace"),
+                rel=("first", "page", "collection", "ont-namespace"),
                 resource_type="ont-namespace",
             ),
         ),
         data=raw_namespace,
-        key={"namespaceId": namespace.id},
+        key=namespace_to_key(namespace),
     )
 
 
@@ -59,20 +81,22 @@ class NamespacesView(MethodView):
         )
         sort_key: str = sort.lstrip("+-") if sort is not None else "name"
 
-        collection_size: int = Namespace.query.enable_eagerloads(False).count()
+        pagination_info = get_page_info(
+            Namespace, Namespace.id, [Namespace.name], cursor, sort, item_count
+        )
 
         query: Query = Namespace.query
-        query.limit(item_count + 1)
 
         if sort_key == "name":
-            query.order_by(sort_function(Namespace.name))
+            query = query.order_by(sort_function(Namespace.name))
 
-        if cursor is not None:
-            query.filter(Namespace.name > cursor)
+        if cursor is not None and cursor.isdigit():
+            query = query.filter(Namespace.id > int(cursor))
 
-        _namespaces: List[Namespace] = query.all()
-        next_cursor = _namespaces[item_count : item_count + 1]
-        namespaces = _namespaces[:item_count]
+        query = query.limit(item_count)
+
+        namespaces: List[Namespace] = query.all()
+
         embedded_items: List[ApiResponse] = [
             namespace_to_api_response(namespace) for namespace in namespaces
         ]
@@ -83,34 +107,80 @@ class NamespacesView(MethodView):
             "sort": sort,
         }
 
-        if namespaces:
-            query_params["cursor"] = str(namespaces[0].id)
+        self_query_params = dict(query_params)
 
-        self = ApiLink(
-            href=url_for("api-v1.NamespacesView", _external=True, **query_params),
-            rel=("first", "collection", "namespace"),
+        if cursor:
+            self_query_params["cursor"] = cursor
+
+        self_rels = []
+        if pagination_info.cursor_page == 1:
+            self_rels.append("first")
+        if (
+            pagination_info.last_page
+            and pagination_info.cursor_page == pagination_info.last_page.page
+        ):
+            self_rels.append("last")
+
+        self_link = ApiLink(
+            href=url_for("api-v1.NamespacesView", _external=True, **self_query_params),
+            rel=(
+                *self_rels,
+                "page",
+                f"page-{pagination_info.cursor_page}",
+                "collection",
+                "ont-namespace",
+            ),
             resource_type="ont-namespace",
         )
 
-        last: ApiLink  # TODO find out how to get more than a next cursor...
+        extra_links: List[ApiLink] = [self_link]
 
-        extra_links: List[ApiLink] = []
+        if pagination_info.last_page is not None:
+            if pagination_info.cursor_page != pagination_info.last_page.page:
+                # only if current page is not last page
+                last_query_params = dict(query_params)
+                last_query_params["cursor"] = str(pagination_info.last_page.cursor)
 
-        if not next_cursor:
-            extra_links.append(
-                ApiLink(
-                    href=self.href,
-                    rel=("last", "collection", "namespace"),
-                    resource_type="ont-namespace",
+                extra_links.append(
+                    ApiLink(
+                        href=url_for(
+                            "api-v1.NamespacesView", _external=True, **last_query_params
+                        ),
+                        rel=(
+                            "last",
+                            "page",
+                            f"page-{pagination_info.last_page.page}",
+                            "collection",
+                            "ont-namespace",
+                        ),
+                        resource_type="ont-namespace",
+                    )
                 )
-            )
-        else:
-            params = {key: val for key, val in query_params.items()}
-            params["cursor"] = str(next_cursor[0].id)
+
+        for page in pagination_info.surrounding_pages:
+            if page == pagination_info.last_page:
+                continue  # link already included
+            page_query_params = dict(query_params)
+            page_query_params["cursor"] = str(page.cursor)
+
+            extra_rels = []
+            if page.page + 1 == pagination_info.cursor_page:
+                extra_rels.append("prev")
+            if page.page - 1 == pagination_info.cursor_page:
+                extra_rels.append("next")
+
             extra_links.append(
                 ApiLink(
-                    href=url_for("api-v1.NamespacesView", _external=True, **params),
-                    rel=("next", "collection", "namespace"),
+                    href=url_for(
+                        "api-v1.NamespacesView", _external=True, **page_query_params
+                    ),
+                    rel=(
+                        *extra_rels,
+                        "page",
+                        f"page-{page.page}",
+                        "collection",
+                        "ont-namespace",
+                    ),
                     resource_type="ont-namespace",
                 )
             )
@@ -124,7 +194,7 @@ class NamespacesView(MethodView):
                         item_count=item_count,
                         sort=sort,
                     ),
-                    rel=("first", "collection", "ont-namespace"),
+                    rel=("first", "page", "collection", "ont-namespace"),
                     resource_type="ont-namespace",
                 ),
                 *extra_links,
@@ -152,10 +222,12 @@ class NamespacesView(MethodView):
                     key=("item_count", "cursor", "sort"),
                 ),
             ],
-            key=query_params,
+            key={k: str(v) for k, v in self_query_params.items()},
             data=CursorPage(
-                self=self,
-                collection_size=collection_size,
+                self=self_link,
+                collection_size=pagination_info.collection_size,
+                page=pagination_info.cursor_page,
+                first_row=pagination_info.cursor_row + 1,
                 items=items,
             ),
         )
@@ -166,5 +238,33 @@ class NamespaceView(MethodView):
     """Endpoint a single namespace resource."""
 
     @API_V1.response(DynamicApiResponseSchema(NamespaceSchema()))
-    def get(self, namespace, **kwargs: Any):
-        pass
+    def get(self, namespace: str, **kwargs: Any):
+        if not namespace or not namespace.isdigit():
+            abort(
+                HTTPStatus.BAD_REQUEST,
+                message=gettext("The requested namespace id has the wrong format!"),
+            )
+        namespace_id = int(namespace)
+        found_namespace: Optional[Namespace] = Namespace.query.filter(
+            Namespace.id == namespace_id
+        ).first()
+
+        if found_namespace is None:
+            abort(HTTPStatus.NOT_FOUND, message=gettext("Namespace not found."))
+        print("\n\n", namespace_to_namespace_data(found_namespace), "\n\n")
+        return ApiResponse(
+            links=[
+                ApiLink(
+                    href=url_for(
+                        "api-v1.NamespacesView",
+                        _external=True,
+                        item_count=50,
+                        sort="name",
+                    ),
+                    rel=("first", "page", "collection", "ont-namespace"),
+                    resource_type="ont-namespace",
+                ),
+            ],
+            key=namespace_to_key(found_namespace),
+            data=namespace_to_namespace_data(found_namespace),
+        )

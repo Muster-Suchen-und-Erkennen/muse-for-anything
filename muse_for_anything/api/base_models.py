@@ -128,6 +128,8 @@ class DynamicApiResponseSchema(ApiResponseSchema):
 
 class CursorPageSchema(ApiObjectSchema):
     collection_size = ma.fields.Integer(required=True, allow_none=False, dump_only=True)
+    page = ma.fields.Integer(required=True, allow_none=False, dump_only=True)
+    first_row = ma.fields.Integer(required=True, allow_none=False, dump_only=True)
     items = ma.fields.List(
         ma.fields.Nested(ApiLinkSchema), default=tuple(), required=True, dump_only=True
     )
@@ -160,6 +162,10 @@ class KeyedApiLink(ApiLink):
 
 
 @dataclass
+class BaseApiObject:
+    self: ApiLink
+
+@dataclass
 class ApiResponse:
     links: Sequence[ApiLink]
     data: Any
@@ -172,6 +178,8 @@ class ApiResponse:
 class CursorPage:
     self: ApiLink
     collection_size: int
+    page: int
+    first_row: int
     items: List[ApiLink]
 
 
