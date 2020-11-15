@@ -1,6 +1,6 @@
 import { autoinject } from "aurelia-framework";
 import { HttpClient } from "aurelia-fetch-client";
-import { ApiResponse, ApiLink, GenericApiObject, ApiObject, matchesLinkRel } from "./api-objects";
+import { ApiResponse, ApiLink, GenericApiObject, ApiObject, matchesLinkRel, ApiLinkKey, KeyedApiLink, applyKeyToLinkedKey } from "./api-objects";
 
 @autoinject
 export class BaseApiService {
@@ -15,6 +15,10 @@ export class BaseApiService {
     private apiRoot: Promise<ApiResponse<GenericApiObject>>;
     private apiCache: Cache;
 
+    private clientUrlToApiLink: Map<string, ApiLink> = new Map();
+    private keyedLinksByKey: Map<string, KeyedApiLink> = new Map();
+    private keyedLinkyByResourceType: Map<string, KeyedApiLink[]> = new Map();
+
     constructor(http: HttpClient) {
         this.http = http;
     }
@@ -25,6 +29,18 @@ export class BaseApiService {
             throw Error(`Could not find a link with the relation ${rel}!`);
         }
         return link;
+    }
+
+    private keyedLinkToStringKey(keyedLink: KeyedApiLink): string {
+        const key = [...keyedLink.key];
+        key.sort(); // sort keys consistently
+        return key.join("/");
+    }
+
+    private linkKeyToStringKey(linkKey: ApiLinkKey): string {
+        const key = Object.keys(linkKey);
+        key.sort(); // sort keys consistently
+        return key.join("/");
     }
 
     private async cacheResults(url, responseData: ApiResponse<unknown>) {
@@ -47,17 +63,42 @@ export class BaseApiService {
         }
     }
 
+    private async cacheKeyedLinks(responseData: ApiResponse<unknown>) {
+        const keyedLinks = responseData.keyedLinks ?? [];
+        keyedLinks.forEach(keyedLink => {
+            const stringKey = this.keyedLinkToStringKey(keyedLink);
+            if (this.keyedLinksByKey.has(stringKey)) {
+                return;
+            }
+            this.keyedLinksByKey.set(stringKey, keyedLink);
+            // cache by resource type
+            if (!this.keyedLinkyByResourceType.has(keyedLink.resourceType)) {
+                this.keyedLinkyByResourceType.set(keyedLink.resourceType, [keyedLink]);
+                return;
+            }
+            const existingLinks = this.keyedLinkyByResourceType.get(keyedLink.resourceType);
+            if (existingLinks.some(existing => keyedLink.key.every(key => existing.key.includes(key)))) {
+                return; // Key already exists
+            }
+            existingLinks.push(keyedLink);
+        });
+    }
+
     private async _get<T>(url: string, ignoreCache = false): Promise<ApiResponse<T>> {
         if (!ignoreCache && this.apiCache != null) {
             const response = await this.apiCache.match(url);
             if (response != null) {
                 const responseData = await response.json();
-                return responseData as ApiResponse<T>;
+                if (url === responseData.data.self.href) {
+                    // prevent stale/incorrect cache results
+                    return responseData as ApiResponse<T>;
+                }
             }
         }
         const rootResponse = await this.http.fetch(url);
         const responseData = await rootResponse.json() as ApiResponse<T>;
 
+        this.cacheKeyedLinks(responseData);
         await this.cacheResults(url, responseData);
 
         return responseData;
@@ -174,7 +215,96 @@ export class BaseApiService {
             throw Error(`Could not find a link with the relation ${rel}!`);
         }
         return link;
+    }
 
+    private async resolveApiLinkKey(apiLinkKey: ApiLinkKey): Promise<ApiLink> {
+        const stringKey = this.linkKeyToStringKey(apiLinkKey);
+        if (!this.keyedLinksByKey.has(stringKey)) {
+            throw Error(`No keyed link found for the api link key ${apiLinkKey}!`);
+        }
+        return applyKeyToLinkedKey(this.keyedLinksByKey.get(stringKey), apiLinkKey);
+    }
+
+    private fillOutKey(initialKey: ApiLinkKey, existingKeyVariables: string[], keyVariables: string[], keyValues: string[]): ApiLinkKey {
+        const newKey: ApiLinkKey = { ...initialKey };
+        let i = 0; // index for keyValuesList
+        for (let k = 0; k < keyVariables.length; k++) {
+            const keyVar = keyVariables[k];
+            if (!existingKeyVariables.includes(keyVar)) {
+                if (i >= keyValues.length) {
+                    throw Error(`Cannot match keyed link ${keyVariables} with existing key ${existingKeyVariables}.`);
+                }
+                newKey[keyVar] = keyValues[i];
+                i++; // increment index for keyValues list to use next value
+            }
+        }
+        return newKey;
+    }
+
+    private async reconstructApiLinkKey(steps: Array<{ type: "rel" | "key", value: string }>, initialKey: ApiLinkKey): Promise<ApiLinkKey> {
+        if (steps.length === 0) {
+            throw Error("Empty client url.");
+        }
+        if (steps[0].type !== "rel") {
+            throw Error("Malformed client url. Must start with a 'rel'!");
+        }
+        const resourceType = steps[0].value;
+        const keyValues: string[] = [];
+        for (let i = 1; i < steps.length; i++) {
+            if (steps[i].type !== "key") {
+                break;
+            }
+            keyValues.push(steps[i].value);
+        }
+        if (keyValues.length === 0) {
+            throw Error("Malformed client url. A rel must be followed by at least one key value!");
+        }
+        const nextSteps = steps.slice(1 + keyValues.length);
+        const relevantKeys = this.keyedLinkyByResourceType.get(resourceType) ?? [];
+        for (let i = 0; i < relevantKeys.length; i++) {
+            const keyedLink = relevantKeys[i];
+            const existingKeyVariables = Object.keys(initialKey);
+            if (keyedLink.key.length !== (keyValues.length + existingKeyVariables.length)) {
+                continue; // keys do not match in length
+            }
+            const keyVariables = [...keyedLink.key].sort();
+            try {
+                const newKey = this.fillOutKey(initialKey, existingKeyVariables, keyVariables, keyValues);
+                if (nextSteps.length > 0) {
+                    return this.reconstructApiLinkKey(nextSteps, newKey);
+                } else {
+                    return newKey;
+                }
+            } catch (error) {
+                // could not reconstruct key with this keyed link as path
+                // try next link
+            }
+        }
+        throw Error("Could not reconstruct a valid key from the client url.");
+    }
+
+    public async resolveClientUrl(clientUrl: string): Promise<ApiLink> {
+        await this.resolveApiRoot(); // must be connected to api for this!
+        if (this.clientUrlToApiLink.has(clientUrl)) {
+            return this.clientUrlToApiLink.get(clientUrl);
+        }
+        let includesKey = false;
+        const steps: Array<{ type: "rel" | "key", value: string }> = clientUrl.split("/")
+            .filter(step => step != null && step.length > 0)
+            .map(step => {
+                if (step.startsWith(":")) {
+                    includesKey = true;
+                    return { type: "key", value: step.substring(1) };
+                }
+                return { type: "rel", value: step };
+            });
+        if (!includesKey) {
+            const rels = steps.map(step => step.value);
+            return await this.searchResolveRels(rels);
+        }
+        const linkKey = await this.reconstructApiLinkKey(steps, {});
+
+        return await this.resolveApiLinkKey(linkKey);
     }
 
     private async prefetchRelsRecursive(rel: string | string[] = "api", root?: ApiResponse<unknown>, ignoreCache: boolean = true) {
@@ -197,12 +327,12 @@ export class BaseApiService {
         return await this.apiRoot;
     }
 
-    public async getByRel<T>(rel: string | string[] | string[][]): Promise<ApiResponse<T>> {
+    public async getByRel<T>(rel: string | string[] | string[][], ignoreCache: boolean = false): Promise<ApiResponse<T>> {
         const link: ApiLink = await this.resolveRecursiveRels(rel);
-        return await this._get<T>(link.href);
+        return await this._get<T>(link.href, ignoreCache);
     }
 
-    public async get<T>(link: ApiLink): Promise<ApiResponse<T>> {
-        return await this._get<T>(link.href);
+    public async get<T>(link: ApiLink, ignoreCache: boolean = false): Promise<ApiResponse<T>> {
+        return await this._get<T>(link.href, ignoreCache);
     }
 }

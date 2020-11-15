@@ -1,6 +1,23 @@
 <template>
     <require from="tachyons/css/tachyons.css"></require>
     <require from="./app.css"></require>
-    <h1>${message}</h1>
-    <h2 t="hello-world">translated</h1>
+    <require from="./main-app/elements/main-header.html"></require>
+
+    <div class="main">
+
+        <header class="bb b--black-20 pa3 flex items-center">
+            <main-header></main-header>
+        </header>
+        <nav class="bg-black-80 tc flex flex-column items-center">
+            <div class="w-100 pa2" repeat.for="nav of router.navigation">
+                <a class="white ${nav.isActive ? 'b' : ''}" href.bind="nav.href">${nav.title | t}</a></li>
+            </div>
+        </nav>
+        <div class="sidebar bg-near-white">
+            <router-view name="sidebar"></router-view>
+        </div>
+        <main>
+            <router-view name="content"></router-view>
+        </main>
+    </div>
 </template>

@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Tuple, Type, TypeVar, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
 from dataclasses import dataclass
 from sqlalchemy.sql.expression import asc, desc
 from sqlalchemy.sql import func, column
@@ -59,12 +59,12 @@ def get_page_info(
         sort_columns["id"] = model.id
 
     sort_column_name = sort.lstrip("+-")
-    sort_direction = desc if sort.startswith("-") else asc
+    sort_direction: Any = desc if sort.startswith("-") else asc
 
     order_by = sort_direction(sort_columns[sort_column_name])
-    row_numbers = func.row_number().over(order_by=order_by)
+    row_numbers: Any = func.row_number().over(order_by=order_by)
 
-    collection_size = model.query.enable_eagerloads(False).count()
+    collection_size: int = model.query.enable_eagerloads(False).count()
 
     cursor_row: Union[int, Any] = 0
 
@@ -163,5 +163,5 @@ def digest_pages(
         surrounding_pages,
         PageInfo(last_page[0], last_page[2] + 1, last_page[1] + 1),
         cursor_row,
-        cursor_page
+        cursor_page,
     )

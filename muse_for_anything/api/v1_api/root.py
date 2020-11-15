@@ -3,8 +3,8 @@
 from dataclasses import dataclass
 from flask.helpers import url_for
 from flask.views import MethodView
-from ..util import SecurityBlueprint as SmorestBlueprint
-from ..base_models import ApiResponse, ApiLink, DynamicApiResponseSchema
+from ..util import SecurityBlueprint as SmorestBlueprint, template_url_for
+from ..base_models import ApiResponse, ApiLink, DynamicApiResponseSchema, KeyedApiLink
 
 
 API_V1 = SmorestBlueprint(
@@ -31,8 +31,35 @@ class RootView(MethodView):
                     rel=("api", "authentication"),
                     resource_type="api",
                 ),
+                ApiLink(
+                    href=url_for("api-v1.NamespacesView", _external=True),
+                    rel=("first", "page", "collection", "ont-namespace"),
+                    resource_type="ont-namespace",
+                ),
             ],
             embedded=[],
+            keyed_links=[
+                KeyedApiLink(
+                    href=template_url_for(
+                        "api-v1.NamespaceView",
+                        {"namespace": "namespaceId"},
+                        _external=True,
+                    ),
+                    rel=("ont-namespace",),
+                    resource_type="ont-namespace",
+                    key=("namespaceId",),
+                ),
+                KeyedApiLink(
+                    href=template_url_for(
+                        "api-v1.NamespacesView",
+                        {"item_count": "item_count", "sort": "sort", "cursor": "cursor"},
+                        _external=True,
+                    ),
+                    rel=("collection", "page", "ont-namespace"),
+                    resource_type="ont-namespace",
+                    key=("item_count", "cursor", "sort"),
+                ),
+            ],
             data=RootData(
                 self=ApiLink(
                     href=url_for("api-v1.RootView", _external=True),

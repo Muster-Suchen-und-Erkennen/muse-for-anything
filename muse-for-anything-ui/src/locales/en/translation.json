@@ -1,3 +1,9 @@
 {
-    "hello-world": "Hello World!!"
+    "hello-world": "Hello World!!",
+    "titles": {
+        "app": "MUSE4Anything",
+        "home": "Home",
+        "explore": "Explore"
+    },
+    "loading": "loading"
 }

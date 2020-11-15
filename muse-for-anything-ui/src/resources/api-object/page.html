@@ -1,0 +1,9 @@
+<template>
+    <require from="../elements/api-resource"></require>
+
+    <p>${apiObject.self.href}</p>
+
+    <div repeat.for="link of apiObject.items" classes-for="card">
+        <api-resource api-link.bind="link" is-root.one-time="false"></api-resource>
+    </div>
+</template>

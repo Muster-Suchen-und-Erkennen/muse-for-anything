@@ -1,3 +1,33 @@
 body {
-    color: red;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.main {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 5rem 15rem 1fr;
+    grid-template-rows: 3rem 1fr;
+    grid-template-areas: "header header header" "nav sidebar content";
+}
+
+header {
+    grid-area: header;
+}
+
+nav {
+    grid-area: nav;
+}
+
+.sidebar {
+    grid-area: sidebar;
+    overflow: hidden;
+}
+
+main {
+    grid-area: content;
+}
+
+.w-min {
+    width: min-content;
 }

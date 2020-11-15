@@ -1,5 +1,8 @@
-import {FrameworkConfiguration} from 'aurelia-framework';
+import { FrameworkConfiguration } from 'aurelia-framework';
+import { PLATFORM } from "aurelia-pal";
 
 export function configure(config: FrameworkConfiguration): void {
-    //config.globalResources([]);
+    config.globalResources([
+        PLATFORM.moduleName("resources/attributes/classes-for"),
+    ]);
 }

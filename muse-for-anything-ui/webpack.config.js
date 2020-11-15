@@ -4,7 +4,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const DuplicatePackageCheckerPlugin = require('duplicate-package-checker-webpack-plugin');
 const project = require('./aurelia_project/aurelia.json');
-const { AureliaPlugin, ModuleDependenciesPlugin } = require('aurelia-webpack-plugin');
+const { AureliaPlugin, ModuleDependenciesPlugin, GlobDependenciesPlugin } = require('aurelia-webpack-plugin');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
@@ -68,14 +68,14 @@ module.exports = ({ production } = {}, { extractCss, analyze, tests, hmr, port, 
         namedChunks: true, // uses named chunks as cache busting/hashing is handled by flask...
         // Use splitChunks to breakdown the App/Aurelia bundle down into smaller chunks
         // https://webpack.js.org/plugins/split-chunks-plugin/
-        
-        
+
+
         splitChunks: {
             hidePathInfo: true, // prevents the path from being used in the filename when using maxSize
             chunks: "initial",
             // sizes are compared against source before minification
 
-            
+
             // This is the HTTP/1.1 optimized maxSize.
             maxSize: 200000, // splits chunks if bigger than 200k, adjust as required (maxSize added in webpack v4.15)
             // This is the HTTP/2 optimized options.
@@ -243,12 +243,15 @@ module.exports = ({ production } = {}, { extractCss, analyze, tests, hmr, port, 
     plugins: [
         ...when(!tests, new DuplicatePackageCheckerPlugin()),
         new AureliaPlugin(),
+        new GlobDependenciesPlugin({ "resources": "src/resources/api-object/*.ts" }),
         new ModuleDependenciesPlugin({
             'aurelia-testing': ['./compile-spy', './view-spy']
         }),
-        new CopyWebpackPlugin({ patterns: [
-            { from: 'src/locales/', to: 'locales/' }
-        ]}),
+        new CopyWebpackPlugin({
+            patterns: [
+                { from: 'src/locales/', to: 'locales/' }
+            ]
+        }),
         new HtmlWebpackPlugin({
             template: 'index.ejs',
             metadata: {

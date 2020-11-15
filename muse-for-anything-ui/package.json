@@ -65,6 +65,7 @@
     "webpack-dev-server": "^3.11.0"
   },
   "scripts": {
+    "au": "au",
     "build": "webpack --env.production --extractCss",
     "watch": "webpack --extractCss --watch",
     "start": "webpack-dev-server --extractCss",

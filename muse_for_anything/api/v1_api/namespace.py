@@ -251,7 +251,6 @@ class NamespaceView(MethodView):
 
         if found_namespace is None:
             abort(HTTPStatus.NOT_FOUND, message=gettext("Namespace not found."))
-        print("\n\n", namespace_to_namespace_data(found_namespace), "\n\n")
         return ApiResponse(
             links=[
                 ApiLink(

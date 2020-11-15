@@ -5,6 +5,7 @@
         "root": "src",
         "resources": "resources",
         "elements": "resources/elements",
+        "main-elements": "main-app/elements",
         "attributes": "resources/attributes",
         "valueConverters": "resources/value-converters",
         "bindingBehaviors": "resources/binding-behaviors"

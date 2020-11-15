@@ -1,0 +1,8 @@
+<template>
+    <div if.bind="objectType == null">
+        <h1 t="loading">Loading</h1>
+    </div>
+    <div if.bind="objectType != null" style="max-width: 48rem; margin-left: auto; margin-right: auto;">
+        <compose view-model="resources/api-object/${objectType}" model.bind="apiObject"></compose>
+    </div>
+</template>
