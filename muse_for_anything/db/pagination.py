@@ -4,16 +4,13 @@ from sqlalchemy.sql.expression import asc, desc
 from sqlalchemy.sql import func, column
 from sqlalchemy.orm.query import Query
 from sqlalchemy.sql.schema import Column
+from sqlalchemy.sql.selectable import CTE
 
 from .db import DB, MODEL
 from .models.model_helpers import IdMixin
 
 
 M = TypeVar("M", bound=MODEL)
-
-
-def print_(*args, **kwargs):
-    print("\n\n", *args, "\n\n", **kwargs)
 
 
 @dataclass
@@ -69,15 +66,16 @@ def get_page_info(
     cursor_row: Union[int, Any] = 0
 
     if cursor is not None:
-        cursor_row_cte = (
+        cursor_row_cte: CTE = (
             DB.session.query(
                 row_numbers.label("row"),
+                cursor_column,
             )
+            .from_self(column("row"))
             .filter(cursor_column == cursor)
             .cte("cursor_row")
         )
         cursor_row = cursor_row_cte.c.row
-        print_(cursor_row)
 
     page_rows = (
         DB.session.query(
@@ -99,8 +97,6 @@ def get_page_info(
         .limit(1)
         .cte("last-page")
     )
-
-    print_(page_rows.c)
 
     pages = (
         DB.session.query(*page_rows.c)
