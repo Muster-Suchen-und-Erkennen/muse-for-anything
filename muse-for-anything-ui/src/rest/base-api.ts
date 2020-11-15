@@ -1,6 +1,6 @@
 import { autoinject } from "aurelia-framework";
 import { HttpClient } from "aurelia-fetch-client";
-import { ApiResponse, ApiLink, GenericApiObject, ApiObject, matchesLinkRel, ApiLinkKey, KeyedApiLink, applyKeyToLinkedKey } from "./api-objects";
+import { ApiResponse, ApiLink, GenericApiObject, ApiObject, matchesLinkRel, ApiLinkKey, KeyedApiLink, applyKeyToLinkedKey, checkKeyMatchesKeyedLink } from "./api-objects";
 
 @autoinject
 export class BaseApiService {
@@ -53,13 +53,15 @@ export class BaseApiService {
             const embedded = responseData.embedded;
             delete responseData.embedded;
             this.apiCache.put(url, new Response(JSON.stringify(responseData)));
+            const promises = [];
             for (const response of embedded) {
                 const selfLink = (response as ApiResponse<ApiObject>)?.data?.self?.href ?? null;
                 if (selfLink == null) {
                     continue;
                 }
-                this.apiCache.put(selfLink, new Response(JSON.stringify(responseData)));
+                promises.push(this.apiCache.put(selfLink, new Response(JSON.stringify(response))));
             }
+            await Promise.all(promises);
         }
     }
 
@@ -92,6 +94,8 @@ export class BaseApiService {
                 if (url === responseData.data.self.href) {
                     // prevent stale/incorrect cache results
                     return responseData as ApiResponse<T>;
+                } else {
+                    console.log(url, responseData.data.self.href);
                 }
             }
         }
@@ -104,7 +108,7 @@ export class BaseApiService {
         return responseData;
     }
 
-    private async clearCaches(reopenCache: boolean = true) {
+    public async clearCaches(reopenCache: boolean = true) {
         if ("caches" in window) {
             // cache api available
 
@@ -217,12 +221,12 @@ export class BaseApiService {
         return link;
     }
 
-    private async resolveApiLinkKey(apiLinkKey: ApiLinkKey): Promise<ApiLink> {
+    private async resolveApiLinkKey(apiLinkKey: ApiLinkKey, queryParams?: ApiLinkKey): Promise<ApiLink> {
         const stringKey = this.linkKeyToStringKey(apiLinkKey);
         if (!this.keyedLinksByKey.has(stringKey)) {
             throw Error(`No keyed link found for the api link key ${apiLinkKey}!`);
         }
-        return applyKeyToLinkedKey(this.keyedLinksByKey.get(stringKey), apiLinkKey);
+        return applyKeyToLinkedKey(this.keyedLinksByKey.get(stringKey), apiLinkKey, queryParams);
     }
 
     private fillOutKey(initialKey: ApiLinkKey, existingKeyVariables: string[], keyVariables: string[], keyValues: string[]): ApiLinkKey {
@@ -283,9 +287,93 @@ export class BaseApiService {
         throw Error("Could not reconstruct a valid key from the client url.");
     }
 
-    public async resolveClientUrl(clientUrl: string): Promise<ApiLink> {
+    public async buildClientUrl(selfLink: ApiLink, resourceKey: ApiLinkKey = {}): Promise<string> {
+        let resKey = selfLink.resourceKey ?? resourceKey;
+        const queryKey: string[] = [];
+        if (resKey == null) {
+            return selfLink.resourceType;
+        }
+        if (selfLink.rel.some(rel => rel === "page")) {
+            resKey = { ...resKey };
+            ["item-count", "cursor", "sort"].forEach(key => {
+                if (resKey[key] != null) {
+                    queryKey.push(`${key}=${resKey[key]}`);
+                }
+                delete resKey[key];
+            });
+            if (Object.keys(resKey).length === 0) {
+                return `${selfLink.resourceType}?${queryKey.join("&")}`;
+            }
+        }
+        const matchingKeys: Array<{ key: string[], rel: string, link: KeyedApiLink }> = [];
+
+        this.keyedLinkyByResourceType.forEach((keyedLinks, resourceType) => {
+            keyedLinks.forEach(keyedLink => {
+                if (checkKeyMatchesKeyedLink(resKey, keyedLink)) {
+                    if (matchingKeys.some(match => {
+                        if (match.key.length != keyedLink.key.length) {
+                            return false;
+                        }
+                        return match.key.every(keyVar => keyedLink.key.includes(keyVar));
+                    })) {
+                        // key already in matching keys
+                        return;
+                    }
+                    matchingKeys.push({
+                        key: [...keyedLink.key].sort(),
+                        rel: resourceType,
+                        link: keyedLink,
+                    });
+                }
+            });
+        });
+
+        matchingKeys.sort((a, b) => a.key.length - b.key.length);
+
+        if (matchingKeys.length === 0) {
+            throw Error("Could not find any matching key!");
+        }
+        if (matchingKeys[matchingKeys.length - 1].key.length < Object.keys(resKey).length) {
+            throw Error("Could not find a fully matching key to build the client url with!");
+        }
+
+        const usedKeyVariables = new Set<string>();
+
+        const url: string[] = [];
+
+        matchingKeys.forEach(match => {
+            if (match.key.every(keyVar => usedKeyVariables.has(keyVar))) {
+                return;
+            }
+            url.push(match.rel);
+            match.key.forEach(keyVar => {
+                if (usedKeyVariables.has(keyVar)) {
+                    return; // only append new keys
+                }
+                url.push(`:${resKey[keyVar]}`);
+            });
+            // put part in cache for later use
+            const currentUrl = url.join("/");
+            if (!this.clientUrlToApiLink.has(currentUrl)) {
+                // TODO later fill in template in URL before caching...
+                //this.clientUrlToApiLink.set(currentUrl, match.link);
+            }
+        });
+
+        const concreteUrl = url.join("/");
+
+        if (queryKey) {
+            const query = queryKey.join("&");
+            return `${concreteUrl}?${query}`;
+        }
+
+        return concreteUrl;
+    }
+
+    public async resolveClientUrl(clientUrl: string, queryParams?: ApiLinkKey): Promise<ApiLink> {
         await this.resolveApiRoot(); // must be connected to api for this!
         if (this.clientUrlToApiLink.has(clientUrl)) {
+            console.log("cache hit")
             return this.clientUrlToApiLink.get(clientUrl);
         }
         let includesKey = false;
@@ -300,11 +388,24 @@ export class BaseApiService {
             });
         if (!includesKey) {
             const rels = steps.map(step => step.value);
-            return await this.searchResolveRels(rels);
+            const resolvedLink = await this.searchResolveRels(rels);
+
+            if (Object.keys(queryParams).length > 0) {
+                const query = Object.keys(queryParams)
+                    .map(k => `${k}=${queryParams[k]}`)
+                    .join("&");
+                return {
+                    ...resolvedLink,
+                    href: `${resolvedLink.href}?${query}`,
+                    resourceKey: { ...queryParams },
+                };
+            }
+
+            return resolvedLink;
         }
         const linkKey = await this.reconstructApiLinkKey(steps, {});
 
-        return await this.resolveApiLinkKey(linkKey);
+        return await this.resolveApiLinkKey(linkKey, queryParams);
     }
 
     private async prefetchRelsRecursive(rel: string | string[] = "api", root?: ApiResponse<unknown>, ignoreCache: boolean = true) {

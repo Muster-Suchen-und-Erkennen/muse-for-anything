@@ -1,10 +1,11 @@
 import { autoinject } from "aurelia-framework";
 import { BaseApiService } from "rest/base-api";
-import { ApiLink, ApiObject } from "rest/api-objects";
+import { ApiLink, ApiObject, ApiResponse } from "rest/api-objects";
 
 @autoinject
 export class OntNamespace {
 
+    clientUrl: string;
     apiObject: ApiObject;
 
     private api: BaseApiService;
@@ -13,7 +14,9 @@ export class OntNamespace {
         this.api = baseApi;
     }
 
-    activate(apiObject: ApiObject) {
-        this.apiObject = apiObject;
+    activate(modelData: { apiObject: ApiObject, apiResponse: ApiResponse<unknown>, isRoot: boolean }) {
+        this.apiObject = modelData.apiObject;
+
+        this.api.buildClientUrl(modelData.apiObject.self).then(url => this.clientUrl = url);
     }
 }

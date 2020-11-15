@@ -1,6 +1,6 @@
 """Module containing base models for building api models."""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Sequence, Union
 import marshmallow as ma
 from marshmallow.base import SchemaABC
@@ -23,7 +23,7 @@ class MaBaseSchema(ma.Schema):
         field_obj.data_key = camelcase(field_obj.data_key or field_name)
 
 
-class ApiLinkSchema(MaBaseSchema):
+class ApiLinkBaseSchema(MaBaseSchema):
     """Schema for (non templated) api links."""
 
     href = ma.fields.Url(reqired=True, allow_none=False, dump_only=True)
@@ -43,10 +43,16 @@ class ApiLinkSchema(MaBaseSchema):
         self, data: Dict[str, Optional[Union[str, List[str]]]], **kwargs
     ):
         """Remove empty attributes from serialized links for a smaller and more readable output."""
-        for key in ("doc", "schema"):
+        for key in ("doc", "schema", "resourceKey"):
             if data.get(key, False) is None:
                 del data[key]
         return data
+
+
+class ApiLinkSchema(ApiLinkBaseSchema):
+    resource_key = ma.fields.Mapping(
+        ma.fields.String, ma.fields.String, reqired=False, allow_none=True, dump_only=True
+    )
 
 
 class KeyedApiLinkSchema(ApiLinkSchema):
@@ -81,9 +87,6 @@ class ApiResponseSchema(MaBaseSchema):
         reqired=False,
         allow_none=True,
         dump_only=True,
-    )
-    key = ma.fields.Mapping(
-        ma.fields.String, ma.fields.String, reqired=False, allow_none=True, dump_only=True
     )
     data = ma.fields.Nested(lambda: ApiObjectSchema(), reqired=True, allow_none=False)
 
@@ -141,14 +144,14 @@ class CursorPageArgumentsSchema(MaBaseSchema):
         data_key="item-count",
         allow_none=True,
         load_only=True,
-        missing=50,
+        missing=5,
         validate=Range(1, MAX_PAGE_ITEM_COUNT, min_inclusive=True, max_inclusive=True),
     )
     sort = ma.fields.String(allow_none=True, load_only=True)
 
 
 @dataclass
-class ApiLink:
+class ApiLinkBase:
     href: str
     rel: Sequence[str]
     resource_type: str
@@ -157,7 +160,12 @@ class ApiLink:
 
 
 @dataclass
-class KeyedApiLink(ApiLink):
+class ApiLink(ApiLinkBase):
+    resource_key: Optional[Dict[str, str]] = None
+
+
+@dataclass
+class KeyedApiLink(ApiLinkBase):
     key: Sequence[str] = tuple()
 
 
@@ -165,13 +173,13 @@ class KeyedApiLink(ApiLink):
 class BaseApiObject:
     self: ApiLink
 
+
 @dataclass
 class ApiResponse:
     links: Sequence[ApiLink]
     data: Any
     embedded: Optional[Sequence[Any]] = None
     keyed_links: Optional[Sequence[KeyedApiLink]] = None
-    key: Optional[Dict[str, str]] = None
 
 
 @dataclass

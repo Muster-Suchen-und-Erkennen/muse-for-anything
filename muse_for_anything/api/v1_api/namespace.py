@@ -2,12 +2,10 @@
 
 from flask_babel import gettext
 from muse_for_anything.api.util import template_url_for
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Union, cast
 from flask.helpers import url_for
 from flask.views import MethodView
-from dataclasses import dataclass
 from sqlalchemy.sql.expression import asc, desc
-from sqlalchemy.sql import func, column
 from sqlalchemy.orm.query import Query
 from flask_smorest import abort
 from http import HTTPStatus
@@ -28,6 +26,10 @@ from ...db.pagination import get_page_info
 from ...db.models.namespace import Namespace
 
 
+def namespace_to_key(namespace: Namespace) -> Dict[str, str]:
+    return {"namespaceId": str(namespace.id)}
+
+
 def namespace_to_namespace_data(namespace: Namespace) -> NamespaceData:
     return NamespaceData(
         self=ApiLink(
@@ -36,6 +38,7 @@ def namespace_to_namespace_data(namespace: Namespace) -> NamespaceData:
             ),
             rel=("ont-namespace",),
             resource_type="ont-namespace",
+            resource_key=namespace_to_key(namespace),
         ),
         name=namespace.name,
         description=namespace.description,
@@ -43,10 +46,6 @@ def namespace_to_namespace_data(namespace: Namespace) -> NamespaceData:
         updated_on=namespace.updated_on,
         deleted_on=namespace.deleted_on,
     )
-
-
-def namespace_to_key(namespace: Namespace) -> Dict[str, str]:
-    return {"namespaceId": str(namespace.id)}
 
 
 def namespace_to_api_response(namespace: Namespace) -> ApiResponse:
@@ -61,8 +60,14 @@ def namespace_to_api_response(namespace: Namespace) -> ApiResponse:
             ),
         ),
         data=raw_namespace,
-        key=namespace_to_key(namespace),
     )
+
+
+def query_params_to_api_key(query_params: Dict[str, Union[str, int]]) -> Dict[str, str]:
+    key = {}
+    for k, v in query_params.items():
+        key[k.replace("_", "-")] = str(v)
+    return key
 
 
 @API_V1.route("/namespaces/")
@@ -74,8 +79,8 @@ class NamespacesView(MethodView):
     def get(self, **kwargs: Any):
         """Get the page of namespaces."""
         cursor: Optional[str] = kwargs.get("cursor", None)
-        item_count: int = kwargs.get("item_count", 50)
-        sort: str = kwargs.get("sort", "name").lstrip("+")
+        item_count: int = cast(int, kwargs.get("item_count", 50))
+        sort: str = cast(str, kwargs.get("sort", "name").lstrip("+"))
         sort_function: Callable[..., Any] = (
             desc if sort is not None and sort.startswith("-") else asc
         )
@@ -131,6 +136,7 @@ class NamespacesView(MethodView):
                 "ont-namespace",
             ),
             resource_type="ont-namespace",
+            resource_key=query_params_to_api_key(self_query_params),
         )
 
         extra_links: List[ApiLink] = [self_link]
@@ -154,6 +160,7 @@ class NamespacesView(MethodView):
                             "ont-namespace",
                         ),
                         resource_type="ont-namespace",
+                        resource_key=query_params_to_api_key(last_query_params),
                     )
                 )
 
@@ -182,20 +189,17 @@ class NamespacesView(MethodView):
                         "ont-namespace",
                     ),
                     resource_type="ont-namespace",
+                    resource_key=query_params_to_api_key(page_query_params),
                 )
             )
 
         return ApiResponse(
             links=[
                 ApiLink(
-                    href=url_for(
-                        "api-v1.NamespacesView",
-                        _external=True,
-                        item_count=item_count,
-                        sort=sort,
-                    ),
-                    rel=("first", "page", "collection", "ont-namespace"),
+                    href=url_for("api-v1.NamespacesView", _external=True, **query_params),
+                    rel=("first", "page", "page-1", "collection", "ont-namespace"),
                     resource_type="ont-namespace",
+                    resource_key=query_params_to_api_key(query_params),
                 ),
                 *extra_links,
             ],
@@ -222,7 +226,6 @@ class NamespacesView(MethodView):
                     key=("item_count", "cursor", "sort"),
                 ),
             ],
-            key={k: str(v) for k, v in self_query_params.items()},
             data=CursorPage(
                 self=self_link,
                 collection_size=pagination_info.collection_size,
@@ -264,6 +267,5 @@ class NamespaceView(MethodView):
                     resource_type="ont-namespace",
                 ),
             ],
-            key=namespace_to_key(found_namespace),
             data=namespace_to_namespace_data(found_namespace),
         )

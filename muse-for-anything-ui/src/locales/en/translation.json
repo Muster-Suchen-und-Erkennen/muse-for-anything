@@ -5,5 +5,12 @@
         "home": "Home",
         "explore": "Explore"
     },
-    "loading": "loading"
+    "loading": "loading…",
+    "pages": {
+        "page": "page",
+        "first": "first",
+        "previous": "previous",
+        "next": "next",
+        "last": "last"
+    }
 }

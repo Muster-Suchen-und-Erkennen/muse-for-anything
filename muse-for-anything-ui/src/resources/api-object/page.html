@@ -1,9 +1,14 @@
 <template>
     <require from="../elements/api-resource"></require>
+    <require from="../elements/page-nav"></require>
 
     <p>${apiObject.self.href}</p>
 
-    <div repeat.for="link of apiObject.items" classes-for="card">
-        <api-resource api-link.bind="link" is-root.one-time="false"></api-resource>
+    <div class="flex flex-column">
+        <page-nav api-response.bind="apiResponse"></page-nav>
+        <api-resource repeat.for="link of apiObject.items" classes-for="card" api-link.bind="link"
+            is-root.one-time="false">
+        </api-resource>
+        <page-nav api-response.bind="apiResponse"></page-nav>
     </div>
 </template>

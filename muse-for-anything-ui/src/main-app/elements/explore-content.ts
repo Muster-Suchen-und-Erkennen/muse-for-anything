@@ -1,8 +1,9 @@
 import { autoinject } from "aurelia-framework";
 import { BaseApiService } from "rest/base-api";
+import { activationStrategy, RoutableComponentDetermineActivationStrategy } from 'aurelia-router';
 
 @autoinject
-export class ExploreContent {
+export class ExploreContent implements RoutableComponentDetermineActivationStrategy {
     path;
     apiLink;
 
@@ -12,12 +13,16 @@ export class ExploreContent {
         this.api = baseApi;
     }
 
-    activate(routeParams: { path: string }) {
-        this.path = routeParams.path;
-        this.api.resolveClientUrl(this.path).then(result => this.apiLink = result);
+    determineActivationStrategy() {
+        return activationStrategy.invokeLifecycle;
     }
 
-    valueChanged(newValue, oldValue) {
-        //
+    activate(routeParams: { path: string, [prop: string]: string }) {
+        this.path = routeParams.path;
+        const queryParams = { ...routeParams };
+        delete queryParams.path;
+        this.api.resolveClientUrl(this.path, queryParams).then(result => {
+            this.apiLink = result;
+        });
     }
 }

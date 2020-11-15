@@ -1,0 +1,22 @@
+<template>
+    <div class="w-100 flex flex-row justify-between">
+        <div class="flex flex-row gap1">
+            <a href="/explore/${firstPage.clientUrl}" aria-disabled.bind="firstPage == null ? true : null"
+                classes-for="button-flat" t="pages.first"></a>
+            <a href="/explore/${previousPage.clientUrl}" aria-disabled.bind="previousPage == null ? true : null"
+                classes-for="button-flat" t="pages.previous"></a>
+        </div>
+        <div class="flex flex-row">
+            <a href="/explore/${page.clientUrl}" repeat.for="page of pages"
+                aria-disabled.bind="page.nr === currentPageNumber ? true : null"
+                class="${page.nr === 1 && firstPageGap ? 'mr4' : ''} ${page.nr === lastPageNumber && lastPageGap ? 'ml4' : ''}"
+                classes-for="button-flat">${page.nr}</a>
+        </div>
+        <div class="flex flex-row">
+            <a href="/explore/${nextPage.clientUrl}" aria-disabled.bind="nextPage == null ? true : null"
+                classes-for="button-flat" t="pages.next"></a>
+            <a href="/explore/${lastPage.clientUrl}" aria-disabled.bind="lastPage == null ? true : null"
+                classes-for="button-flat" t="pages.last"></a>
+        </div>
+    </div>
+</template>

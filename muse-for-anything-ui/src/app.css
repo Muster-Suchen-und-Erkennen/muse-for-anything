@@ -31,3 +31,13 @@ main {
 .w-min {
     width: min-content;
 }
+
+.gap1 {
+    gap: var(--spacing-extra-small);
+}
+
+a[aria-disabled] {
+    pointer-events: none;
+    color: var(--black-40);
+    text-decoration: none;
+}

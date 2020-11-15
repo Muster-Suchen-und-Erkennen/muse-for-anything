@@ -1,6 +1,8 @@
 <template>
     <require from="../elements/api-resource"></require>
 
-    <p class="b">${apiObject.name}</p>
+    <a href="/explore/${clientUrl}" aria-disabled.bind="clientUrl == null ? true : null">
+        <p class="b">${apiObject.name}</p>
+    </a>
     <p>${apiObject.description}</p>
 </template>
