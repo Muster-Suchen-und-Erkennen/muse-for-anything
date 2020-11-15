@@ -40,6 +40,17 @@ Run the development server with
 poetry run flask run
 ```
 
+To compile the frontend run the following commands in the `muse-for-anything-ui` folder.
+
+```bash
+npm install # update/install dependencies
+
+# watching build
+npm run watch
+# normal build
+npm run build
+```
+
 ## Libraries and special files/folders
 
 This package uses the following libraries to build a rest app with a database on top of flask.
@@ -78,6 +89,8 @@ This package uses the following libraries to build a rest app with a database on
 
 Additional files and folders:
 
+ *  `muse-for-anything-ui`\
+    Aurelia frontend for the API.
  *  `default.nix` and `shell.nix`\
     For use with the [nix](https://nixos.org) ecosystem.
  *  `pyproject.toml`\
