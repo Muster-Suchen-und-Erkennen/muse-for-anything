@@ -39,6 +39,7 @@ def namespace_to_namespace_data(namespace: Namespace) -> NamespaceData:
             rel=("ont-namespace",),
             resource_type="ont-namespace",
             resource_key=namespace_to_key(namespace),
+            schema=url_for("api-v1.ApiSchemaView", schema_id="Namespace", _external=True),
         ),
         name=namespace.name,
         description=namespace.description,
@@ -57,6 +58,9 @@ def namespace_to_api_response(namespace: Namespace) -> ApiResponse:
                 href=url_for("api-v1.NamespacesView", _external=True),
                 rel=("first", "page", "collection", "ont-namespace"),
                 resource_type="ont-namespace",
+                schema=url_for(
+                    "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
+                ),
             ),
         ),
         data=raw_namespace,
@@ -137,6 +141,7 @@ class NamespacesView(MethodView):
             ),
             resource_type="ont-namespace",
             resource_key=query_params_to_api_key(self_query_params),
+            schema=url_for("api-v1.ApiSchemaView", schema_id="Namespace", _external=True),
         )
 
         extra_links: List[ApiLink] = [self_link]
@@ -161,6 +166,9 @@ class NamespacesView(MethodView):
                         ),
                         resource_type="ont-namespace",
                         resource_key=query_params_to_api_key(last_query_params),
+                        schema=url_for(
+                            "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
+                        ),
                     )
                 )
 
@@ -190,6 +198,9 @@ class NamespacesView(MethodView):
                     ),
                     resource_type="ont-namespace",
                     resource_key=query_params_to_api_key(page_query_params),
+                    schema=url_for(
+                        "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
+                    ),
                 )
             )
 
@@ -200,6 +211,9 @@ class NamespacesView(MethodView):
                     rel=("first", "page", "page-1", "collection", "ont-namespace"),
                     resource_type="ont-namespace",
                     resource_key=query_params_to_api_key(query_params),
+                    schema=url_for(
+                        "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
+                    ),
                 ),
                 *extra_links,
             ],
@@ -265,6 +279,9 @@ class NamespaceView(MethodView):
                     ),
                     rel=("first", "page", "collection", "ont-namespace"),
                     resource_type="ont-namespace",
+                    schema=url_for(
+                        "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
+                    ),
                 ),
             ],
             data=namespace_to_namespace_data(found_namespace),

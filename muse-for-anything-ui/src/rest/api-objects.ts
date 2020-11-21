@@ -2,6 +2,10 @@ export interface ApiObject {
     self: ApiLink;
 }
 
+export function isApiObject(obj: any): obj is ApiObject {
+    return obj?.self != null && isApiLinkBase(obj?.self);
+}
+
 export interface GenericApiObject extends ApiObject {
     [prop: string]: any;
 }
@@ -12,6 +16,10 @@ export interface ApiLinkBase {
     resourceType: string;
     doc?: string;
     schema?: string;
+}
+
+export function isApiLinkBase(obj: any): obj is ApiLinkBase {
+    return obj?.href != null && obj?.rel != null && obj.resourceType != null;
 }
 
 export interface ApiLinkKey {
@@ -34,6 +42,10 @@ export function matchesLinkRel(link: ApiLinkBase, rel: string | string[]): boole
 
 export interface KeyedApiLink extends ApiLinkBase {
     key: string[];
+}
+
+export function isKeyedApiLink(obj: any): obj is KeyedApiLink {
+    return isApiLinkBase(obj) && (obj as any)?.key != null;
 }
 
 export function checkKeyMatchesKeyedLink(key: ApiLinkKey, keyedLink: KeyedApiLink): boolean {
@@ -90,5 +102,9 @@ export interface ApiResponse<T> {
     data: T;
     keyedLinks?: KeyedApiLink[];
     key?: ApiLinkKey;
+}
+
+export function isApiResponse(obj: any): obj is ApiResponse<unknown> {
+    return obj?.links != null && obj?.data != null && isApiObject(obj.data);
 }
 

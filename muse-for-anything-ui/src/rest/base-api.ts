@@ -1,6 +1,6 @@
 import { autoinject } from "aurelia-framework";
 import { HttpClient } from "aurelia-fetch-client";
-import { ApiResponse, ApiLink, GenericApiObject, ApiObject, matchesLinkRel, ApiLinkKey, KeyedApiLink, applyKeyToLinkedKey, checkKeyMatchesKeyedLink } from "./api-objects";
+import { ApiResponse, ApiLink, GenericApiObject, ApiObject, matchesLinkRel, ApiLinkKey, KeyedApiLink, applyKeyToLinkedKey, checkKeyMatchesKeyedLink, isApiResponse } from "./api-objects";
 
 @autoinject
 export class BaseApiService {
@@ -11,7 +11,7 @@ export class BaseApiService {
         api: `api-cache-v${BaseApiService.CACHE_VERSION}`,
     };
 
-    private http;
+    private http: HttpClient;
     private apiRoot: Promise<ApiResponse<GenericApiObject>>;
     private apiCache: Cache;
 
@@ -86,26 +86,57 @@ export class BaseApiService {
         });
     }
 
-    private async _get<T>(url: string, ignoreCache = false): Promise<ApiResponse<T>> {
-        if (!ignoreCache && this.apiCache != null) {
-            const response = await this.apiCache.match(url);
+    private async handleResponse<T>(response: Response, input: RequestInfo): Promise<T> {
+        if (!response.ok) {
+            console.warn(response);
+            throw Error("Something went wrong with the request!");
+        }
+
+        if (response.status === 204) {
+            // no content
+            return null;
+        }
+
+        const contentType = response.headers.get("content-type");
+
+        if (contentType === "application/json") {
+            const responseData = await response.json() as T;
+
+            if (isApiResponse(responseData)) {
+                this.cacheKeyedLinks(responseData);
+                await this.cacheResults(input, responseData);
+            }
+
+            return responseData;
+        } else if (contentType === "application/schema+json") {
+            return await response.json() as T;
+        } else {
+            return response as unknown as T;
+        }
+    }
+
+    private async _fetch<T>(input: RequestInfo, ignoreCache = false, init: RequestInit = null): Promise<T> {
+        if (init != null && Boolean(init)) {
+            input = new Request(input, init);
+        }
+        if (typeof input === "string") {
+            input = new Request(input, { headers: { Accept: "application/json" } });
+        }
+        const isGet = typeof input === "string" || input.method === "GET";
+        if (isGet && !ignoreCache && this.apiCache != null) {
+            const response = await this.apiCache.match(input);
             if (response != null) {
                 const responseData = await response.json();
-                if (url === responseData.data.self.href) {
+                if (input === responseData.data.self.href) {
                     // prevent stale/incorrect cache results
-                    return responseData as ApiResponse<T>;
+                    return responseData as T;
                 } else {
-                    console.log(url, responseData.data.self.href);
+                    console.log(input, responseData.data.self.href);
                 }
             }
         }
-        const rootResponse = await this.http.fetch(url);
-        const responseData = await rootResponse.json() as ApiResponse<T>;
-
-        this.cacheKeyedLinks(responseData);
-        await this.cacheResults(url, responseData);
-
-        return responseData;
+        const rootResponse = await this.http.fetch(input);
+        return await this.handleResponse<T>(rootResponse, input);
     }
 
     public async clearCaches(reopenCache: boolean = true) {
@@ -149,7 +180,7 @@ export class BaseApiService {
 
     private async resolveApiRootPromise<T>(resolve: (value?: ApiResponse<T> | PromiseLike<ApiResponse<T>>) => void, reject: (reason: any) => void) {
         await this.openCache();
-        const api_versions = await this._get(BaseApiService.API_ROOT_URL, true);
+        const api_versions = await this._fetch<ApiResponse<unknown>>(BaseApiService.API_ROOT_URL, true);
         const compatible_version: string = api_versions.data[BaseApiService.API_VERSION];
         if (compatible_version == null) {
             console.error("No compatible API version found!");
@@ -162,7 +193,7 @@ export class BaseApiService {
             reject(Error("No compatible API version found! The ref could not be resolved!"));
             return;
         }
-        const api_version_root = await this._get<T>(version_root_link.href, true);
+        const api_version_root = await this._fetch<ApiResponse<T>>(version_root_link.href, true);
         if (api_version_root == null) {
             console.error("No compatible API version found! The root of the api version could not be loaded!");
             reject(Error("No compatible API version found! The root of the api version could not be loaded!"));
@@ -190,7 +221,7 @@ export class BaseApiService {
                 return nextLink;
             }
             // not the last rel
-            base = await this._get(nextLink.href);
+            base = await this._fetch<ApiResponse<unknown>>(nextLink.href);
         }
     }
 
@@ -202,7 +233,7 @@ export class BaseApiService {
         }
         for (const link of base.links) {
             if (matchesLinkRel(link, apiRel)) {
-                const newBase = await this._get(link.href);
+                const newBase = await this._fetch<ApiResponse<unknown>>(link.href);
                 const matchedLink = this._searchResolveRels(rel, newBase, apiRel);
                 if (matchedLink != null) {
                     return matchedLink;
@@ -311,7 +342,7 @@ export class BaseApiService {
             keyedLinks.forEach(keyedLink => {
                 if (checkKeyMatchesKeyedLink(resKey, keyedLink)) {
                     if (matchingKeys.some(match => {
-                        if (match.key.length != keyedLink.key.length) {
+                        if (match.key.length !== keyedLink.key.length) {
                             return false;
                         }
                         return match.key.every(keyVar => keyedLink.key.includes(keyVar));
@@ -373,7 +404,6 @@ export class BaseApiService {
     public async resolveClientUrl(clientUrl: string, queryParams?: ApiLinkKey): Promise<ApiLink> {
         await this.resolveApiRoot(); // must be connected to api for this!
         if (this.clientUrlToApiLink.has(clientUrl)) {
-            console.log("cache hit")
             return this.clientUrlToApiLink.get(clientUrl);
         }
         let includesKey = false;
@@ -412,7 +442,7 @@ export class BaseApiService {
         const base = root ?? await this.resolveApiRoot();
         base.links.forEach(async (link) => {
             if (matchesLinkRel(link, rel)) {
-                const new_base = await this._get(link.href, ignoreCache);
+                const new_base = await this._fetch<ApiResponse<unknown>>(link.href, ignoreCache);
                 this.prefetchRelsRecursive(rel, new_base, ignoreCache);
             }
         });
@@ -430,10 +460,14 @@ export class BaseApiService {
 
     public async getByRel<T>(rel: string | string[] | string[][], ignoreCache: boolean = false): Promise<ApiResponse<T>> {
         const link: ApiLink = await this.resolveRecursiveRels(rel);
-        return await this._get<T>(link.href, ignoreCache);
+        return await this._fetch<ApiResponse<T>>(link.href, ignoreCache);
     }
 
-    public async get<T>(link: ApiLink, ignoreCache: boolean = false): Promise<ApiResponse<T>> {
-        return await this._get<T>(link.href, ignoreCache);
+    public async getByApiLink<T>(link: ApiLink, ignoreCache: boolean = false): Promise<ApiResponse<T>> {
+        return await this._fetch<ApiResponse<T>>(link.href, ignoreCache);
+    }
+
+    public async fetch<T>(input: RequestInfo, init?: RequestInit, ignoreCache: boolean = false): Promise<T> {
+        return await this._fetch<T>(input, ignoreCache, init);
     }
 }

@@ -2,8 +2,12 @@
 from typing import Any, Dict
 from flask import url_for
 from flask_smorest import Blueprint
+from marshmallow_jsonschema import JSONSchema
 
 from .jwt import JWTMixin
+
+
+JSON_SCHEMA = JSONSchema()
 
 
 def template_url_for(endpoint: str, key_args: Dict[str, str], **values) -> str:

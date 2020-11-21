@@ -24,15 +24,15 @@ MAX_STRING_LENGTH = 170
 
 
 class CreateSchemaMixin:
-    created_on = ma.fields.DateTime(required=True, allow_none=False, dump_only=True)
+    created_on = ma.fields.DateTime(allow_none=False, dump_only=True)
 
 
 class UpdateSchemaMixin:
-    updated_on = ma.fields.DateTime(required=True, allow_none=False, dump_only=True)
+    updated_on = ma.fields.DateTime(allow_none=False, dump_only=True)
 
 
 class DeleteSchemaMixin:
-    deleted_on = ma.fields.DateTime(required=True, allow_none=False, dump_only=True)
+    deleted_on = ma.fields.DateTime(allow_none=False, dump_only=True)
 
 
 class ChangesSchemaMixin(CreateSchemaMixin, UpdateSchemaMixin, DeleteSchemaMixin):

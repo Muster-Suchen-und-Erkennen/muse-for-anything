@@ -22,7 +22,7 @@ export class ApiResource {
         this.apiObject = null;
         this.modelData = null;
         const ignoreCache = Boolean(this.isRoot);
-        this.api.get<ApiObject>(newValue, ignoreCache).then(apiResponse => {
+        this.api.getByApiLink<ApiObject>(newValue, ignoreCache).then(apiResponse => {
             this.apiObject = apiResponse.data;
             this.modelData = {
                 apiObject: apiResponse.data,

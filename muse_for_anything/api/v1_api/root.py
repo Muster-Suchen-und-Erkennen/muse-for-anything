@@ -32,6 +32,11 @@ class RootView(MethodView):
                     resource_type="api",
                 ),
                 ApiLink(
+                    href=url_for("api-v1.SchemaRootView", _external=True),
+                    rel=("api", "schema"),
+                    resource_type="api",
+                ),
+                ApiLink(
                     href=url_for("api-v1.NamespacesView", _external=True),
                     rel=("first", "page", "collection", "ont-namespace"),
                     resource_type="ont-namespace",
