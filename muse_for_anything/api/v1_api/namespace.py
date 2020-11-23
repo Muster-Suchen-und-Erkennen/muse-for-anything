@@ -97,10 +97,11 @@ class NamespacesView(MethodView):
         query: Query = Namespace.query
 
         if sort_key == "name":
-            query = query.order_by(sort_function(Namespace.name))
+            query = query.order_by(sort_function(Namespace.name.collate("NOCASE")))
 
         if cursor is not None and cursor.isdigit():
-            query = query.filter(Namespace.id > int(cursor))
+            # hope that cursor row has not jumped compared to last query in get_page_info
+            query = query.offset(pagination_info.cursor_row)
 
         query = query.limit(item_count)
 
