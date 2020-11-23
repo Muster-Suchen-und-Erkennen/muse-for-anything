@@ -1,8 +1,14 @@
 <template>
-    <require from="../elements/api-resource"></require>
+    <require from="../elements/api-schema-view"></require>
 
-    <a href="/explore/${clientUrl}" aria-disabled.bind="clientUrl == null ? true : null">
-        <p class="b">${apiObject.name}</p>
-    </a>
-    <p>${apiObject.description}</p>
+    <div if.bind="!isRoot">
+        <a href="/explore/${clientUrl}" aria-disabled.bind="clientUrl == null ? true : null">
+            <p class="mv1 b">${apiObject.name}</p>
+        </a>
+        <p class="mv1">${apiObject.description}</p>
+    </div>
+    <div class="ph3 pv2" classes-for="card" if.bind="isRoot">
+        <h3 class="mt1 bv2">${"namespace" | t}: ${apiObject.name}</h3>
+        <api-schema-view data.bind="apiObject" schema-url.bind="apiObject.self.schema"></api-schema-view>
+    </div>
 </template>

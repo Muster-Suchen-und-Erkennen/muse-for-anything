@@ -8,6 +8,7 @@ export class OntNamespace {
 
     clientUrl: string;
     apiObject: ApiObject;
+    isRoot: boolean = false;
 
     private api: BaseApiService;
     private schemas: SchemaService;
@@ -19,11 +20,18 @@ export class OntNamespace {
 
     activate(modelData: { apiObject: ApiObject, apiResponse: ApiResponse<unknown>, isRoot: boolean }) {
         this.apiObject = modelData.apiObject;
+        this.isRoot = modelData.isRoot;
 
         this.api.buildClientUrl(modelData.apiObject.self).then(url => this.clientUrl = url);
 
-        if (this.apiObject.self.schema != null) {
-            this.schemas.getSchema(this.apiObject.self.schema).then(schema => schema.resolveSchema()).then(schema => console.log(schema));
+        if (this.apiObject.self.schema != null && modelData.isRoot) {
+            this.schemas.getSchema(this.apiObject.self.schema)
+                .then(schema => schema.getNormalizedApiSchema())
+                .then(schema => {
+                    console.log(schema);
+                    console.log(schema.normalized);
+                    console.log(schema.getPropertyList());
+                });
         }
     }
 }

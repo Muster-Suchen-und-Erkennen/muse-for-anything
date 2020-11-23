@@ -12,5 +12,10 @@
         "previous": "previous",
         "next": "next",
         "last": "last"
-    }
+    },
+    "schemaViews": {
+        "true": "True",
+        "false": "False"
+    },
+    "namespace": "Namespace"
 }

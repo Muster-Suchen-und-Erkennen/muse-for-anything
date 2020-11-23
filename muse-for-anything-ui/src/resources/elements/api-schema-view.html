@@ -1,0 +1,10 @@
+<template>
+    <require from="./schema-view"></require>
+
+    <div if.bind="schema == null">
+        <h1 t="loading">Loading</h1>
+    </div>
+    <div if.bind="schema != null" style="max-width: 48rem; margin-left: auto; margin-right: auto;">
+        <schema-view data.bind="data" schema.bind="schema"></schema-view>
+    </div>
+</template>
