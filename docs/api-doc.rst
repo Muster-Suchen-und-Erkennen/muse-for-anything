@@ -23,23 +23,58 @@ Example of the custom format:
 
     {
         "links": [
-            {"href": "/api/v1/auth/", "rel": ["api", "authentication"], "resourceType": "api"},
-            {"href": "/api/v1/auth/login/", "rel": ["login", "post"], "resourceType": "login"},
+            {
+                "href": "/api/v1/auth/",
+                "rel": ["api", "authentication"],
+                "resourceType": "api"
+            },
+            {
+                "href": "/api/v1/auth/login/",
+                "rel": ["login", "post"],
+                "resourceType": "login"
+            },
+            {
+                "href": "/api/v1/namespaces/",
+                "rel": ["namespace", "collection", "page", "page-1"],
+                "resourceType":"namespace",
+                "key": {"?item-count": "10", "?sort": "name"}
+            }
         ],
         "embedded": [
             {
                 "links": [],
-                "key": {"namespaceId": "nsExample"},
                 "data": {
-                    "self": {"href": "/api/v1/namespaces/nsExample/", "rel": ["namespace"], "resourceType": "namespace"}
+                    "self": {
+                        "href": "/api/v1/namespaces/nsExample/", 
+                        "rel": ["namespace"],
+                        "resourceType": "namespace",
+                        "key": {"namespaceId": "nsExample"},
+                        "schema": "url-to-json-schema",
+                        "doc": "url-to-human-documentation"
+                    }
                 }
             }
         ],
         "keyedLinks": [
-            {"href": "/api/v1/namespaces/{namespaceId}/", "rel": ["namespace"], "resourceType":"namespace", "key": ["namespaceId"]}
-        ]
+            {
+                "href": "/api/v1/namespaces/",
+                "rel": ["namespace", "collection", "page"],
+                "resourceType":"namespace", 
+                "queryKey": ["item-count", "cursor", "sort"]
+            },
+            {
+                "href": "/api/v1/namespaces/{namespaceId}/",
+                "rel": ["namespace"],
+                "resourceType":"namespace",
+                "key": ["namespaceId"]
+            }
+        ],
         "data": {
-            "self": {"href": "/api/v1/", "rel": ["api", "root"], "resourceType": "api"},
+            "self": {
+                "href": "/api/v1/", 
+                "rel": ["api", "root"], 
+                "resourceType": "api"
+            }
         }
     }
 
@@ -65,6 +100,8 @@ Additionally a top level (not embedded) API response can have the ``embedded`` f
 ``keyedLinks``
     Contains shortcut links that contain a template url that can be used with a ``key`` to construct a valid url.
     The links in this list contain a ``key`` attribute that matches the template variables in the url and can be used to check if the ``key`` is compatible with this link.
+    Additionally a keyed link can also specify a ``queryKey`` attribute with all accepted query variable names for this endpoint.
+    If the ``queryKey`` attribute is set the ``key`` attribute can be omitted and is treated as an empty json object.
 
     The client **should** only use these links when there is no alternative navigation possible using only normal links from the ``links`` attribute.
     This can be the case if the client stored the resource ``key`` in the url and has to reconstruct its state from its current url (or similar).
@@ -72,16 +109,26 @@ Additionally a top level (not embedded) API response can have the ``embedded`` f
 ``key``
     A minimal key for this resource that can be used with a keyed link.
     The key is a mapping from key variables to key values (both as strings).
+
+    The self link of any API response mus be reachable by relations only from the api root or specify a key.
+    The same applies for any link in the links attribute of a api response.
+
+    A key can contain query variables that must begin with a ``?`` character (that is stripped away).
+    These query variables must be matched against the ``queryKey`` attribute of a keyed link.
     
     To construct a link from a keyed link all keys of the link's ``key`` attribute must have a value in the key.
     Then the key values can be safely used to fill in the the template variables that correspond to the key variables (the keys of the key mapping).
+    All query variables supported by the keyed link must be appended to the query part of the url with the value they have in the key.
 
     If a key has more key variables than specified in the links ``key`` attribute it **must** still create a valid url to an existing resource.
     This resource may not be of the same type as the resource the key was from.
 
-    If the key has exactly all key variables specified in the links ``key`` attribute the resource found behind the url must be the same resource the key was from.
+    If the key has exactly all key variables (query variables do not count for this) specified in the links ``key`` attribute the resource found behind the url must be the same resource the key was from.
+    If the key has query variables then additionally all query variables must be supported by the keyed link for the key to match the keyed link exactly.
 
     The meaning of key variables **should** be as stable as the meaning of a rel attribute (never change them without updating the api major version!).
+    To introduce a new key format change the key variable names or add a versioned variable name to the key for matching.
+    Not all key variables must be used in the url template of a keyed link.
 ``data``
     Contains a single data object.
 
@@ -101,6 +148,9 @@ The ``rel`` attribute should contain a rel for the type of the resource.
 If the resource behind the url should be called with another http method the method should be included as a rel (in lowercase).
 The ``resourceType`` attribute of the link is the type of resource the API will will deliver when calling this link.
 The ``resourceType`` is also one of the entries in ``rel``.
+The ``schema`` attribute should contain a valid (and stable) url to a json schema describing the returned (or expected) object (only the data part of an API response).
+The ``doc`` attribute should contain a valid (and stable) url to the documentation for this resource.
+This attribute is intended for humans exploring the api.
 
 
 Rationale Behind the Format
@@ -196,12 +246,16 @@ Consider the following example:
 .. code-block:: json
 
     [
-        {"href": "/api/objects/", "rel": ["collection", "myobject"], "resourceType": "myobject"},
-        {"href": "/api/objects/", "rel": ["create", "post", "myobject"], "resourceType": "myobject"}
+        {"href": "/api/objects/", "rel": ["collection", "myobject"], "resourceType": "myobject", "schema": "link-to-GET-myobject-schema"},
+        {"href": "/api/objects/", "rel": ["create", "post", "myobject"], "resourceType": "myobject", "schema": "link-to-POST-myobject-schema"}
     ]
 
 Here we can see that by having multiple rel values we can encode, that the same url can be used to get the collection of all myobjects and to create a new myobject with the POST method.
 By specifying a list of special rel values the client can utilise this information and know even before calling the link what type of resource is returned and if it is a collection of these resources.
+
+By providing a ``schema`` url in the link object we can provide the client with a machine readable description of the object returned when visiting that link.
+The client can use this schema to dynamically generate a view (or input form) for this object type.
+For links that specify the http method to be used (and where the method is not GET) the schema refers to the required input expected from the client.
 
 
 Link relations
@@ -226,9 +280,10 @@ create, retreive, update, delete, crud-delete
     These rels map to the common crud operations.
     They do not imply the use of a specific http method.
     If only the crud operation delete but not the http method delete is meant one can use ``crud-delete`` instead.
-page
+page, page-<nr>
     Should always be used together with the rel ``collection``.
     Indicates that the collection is paginated.
+    Additionally to the ``page`` rel a ``page-1`` rel can be set to indicate the number of the page.
 partial
     Indicates that a resource (that is not a collection!) is only a partial of the full resource.
     A partial resource should be cached seperately from the full resource.
@@ -239,6 +294,7 @@ partial
 <resourceType>
     All resource types are also valid rels.
     They should not have a conflict with any existing rel defined above or defined in a common spec like the ones linked above.
+
 
 Rationale behind ``keyedLinks`` and ``key``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -343,11 +399,15 @@ Consider the following API response.
 
     {
         "links": [],
-        "key": {
-            "documentId": "23ca6",
-            "documentRevisionId": "14"
-        },
-        "data": {}
+        "data": {
+            "self": {
+                "href": "...",
+                "key": {
+                    "documentId": "23ca6",
+                    "documentRevisionId": "14"
+                }
+            }
+        }
     }
 
 The client first needs to find all keyed links matching the key.
@@ -366,4 +426,4 @@ This is done until no more keyed link is left.
 
 Note that the keyed links my not be provided in the API response that contained the key.
 The client is expected to crawl all ``api`` rels to find all potential keyed links to consider for building urls.
-
+It is also recommended for clients to store the query variables in the key in the query part of the client url.
