@@ -44,6 +44,15 @@ export class App {
                 nav: true,
                 title: "titles.explore",
             },
+            {
+                route: ["create/:resourceType/at/*path"],
+                name: "create",
+                viewPorts: {
+                    sidebar: { moduleId: PLATFORM.moduleName("main-app/elements/create-sidebar") },
+                    content: { moduleId: PLATFORM.moduleName("main-app/elements/create-content") },
+                },
+                nav: false,
+            },
         ]);
         config.mapUnknownRoutes({ redirect: "home" });
     }

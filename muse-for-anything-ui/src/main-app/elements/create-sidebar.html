@@ -1,0 +1,10 @@
+<template>
+    <p if.bind="isEmpty">Create Sidebar!</p>
+    <div else class="flex flex-column">
+        <a class="ph3 pv2 mb2 bg-black-10 shadow-1 bb b--black-30" if.bind="navLinks.self != null"
+            href.bind="navLinks.self.clientUrl">
+            &lt; ${navLinks.self.title | t}
+        </a>
+
+    </div>
+</template>

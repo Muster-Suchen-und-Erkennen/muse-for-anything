@@ -1,6 +1,6 @@
 import { autoinject } from "aurelia-framework";
-import { BaseApiService } from "rest/base-api";
 import { activationStrategy, RoutableComponentDetermineActivationStrategy } from 'aurelia-router';
+import { BaseApiService } from "rest/base-api";
 
 @autoinject
 export class ExploreContent implements RoutableComponentDetermineActivationStrategy {

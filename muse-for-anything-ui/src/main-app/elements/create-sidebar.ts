@@ -5,7 +5,7 @@ import { NAV_LINKS_CHANNEL, NavLinks, NavigationLinksService } from "services/na
 const ACCEPTED_NAV_LINKS = new Set<string>(["up", "self"]);
 
 @autoinject
-export class ExploreSidebar {
+export class CreateSidebar {
 
     isEmpty: boolean = true;
     navLinks: NavLinks = {};

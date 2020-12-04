@@ -3,9 +3,29 @@
     "titles": {
         "app": "MUSE4Anything",
         "home": "Home",
-        "explore": "Explore"
+        "explore": "Explore",
+        "create": {
+            "ont-namespace": "Create Namespace"
+        }
     },
     "loading": "loading…",
+    "nav": {
+        "up": "Back",
+        "actions": "Actions",
+        "collection": {
+            "ont-namespace": "Namespaces"
+        },
+        "create": {
+            "ont-namespace": "Create Namespace"
+        },
+        "update": {
+            "ont-namespace": "Edit Namespace"
+        },
+        "delete": {
+            "ont-namespace": "Delete Namespace"
+        },
+        "ont-namespace": "Namespace"
+    },
     "pages": {
         "page": "page",
         "first": "first",

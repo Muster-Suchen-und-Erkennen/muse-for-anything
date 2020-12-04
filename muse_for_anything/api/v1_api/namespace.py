@@ -17,6 +17,7 @@ from ..base_models import (
     CursorPage,
     CursorPageArgumentsSchema,
     CursorPageSchema,
+    ApiResponseSchema,
     DynamicApiResponseSchema,
     KeyedApiLink,
 )
@@ -216,6 +217,14 @@ class NamespacesView(MethodView):
                         "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
                     ),
                 ),
+                ApiLink(
+                    href=url_for("api-v1.NamespacesView", _external=True),
+                    rel=("create", "post", "ont-namespace"),
+                    resource_type="ont-namespace",
+                    schema=url_for(
+                        "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
+                    ),
+                ),
                 *extra_links,
             ],
             embedded=embedded_items,
@@ -250,6 +259,21 @@ class NamespacesView(MethodView):
             ),
         )
 
+    @API_V1.arguments(NamespaceSchema(only=("name", "description")))
+    @API_V1.response(ApiResponseSchema())
+    def post(self, namespace_data):
+        existing: bool = Namespace.query.filter(
+            Namespace.name == namespace_data["name"]
+        ).exists()
+        if existing:
+            abort(
+                400,
+                f"Name {namespace_data['name']} is already used for another Namespace!",
+            )
+        namespace = Namespace(**namespace_data)
+        DB.session.add(namespace)
+        DB.session.commit()
+
 
 @API_V1.route("/namespaces/<string:namespace>/")
 class NamespaceView(MethodView):
@@ -278,7 +302,7 @@ class NamespaceView(MethodView):
                         item_count=50,
                         sort="name",
                     ),
-                    rel=("first", "page", "collection", "ont-namespace"),
+                    rel=("first", "page", "up", "collection", "ont-namespace"),
                     resource_type="ont-namespace",
                     schema=url_for(
                         "api-v1.ApiSchemaView", schema_id="Namespace", _external=True

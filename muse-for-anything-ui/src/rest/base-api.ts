@@ -127,11 +127,11 @@ export class BaseApiService {
             const response = await this.apiCache.match(input);
             if (response != null) {
                 const responseData = await response.json();
-                if (input === responseData.data.self.href) {
+                if (input.url === responseData.data.self.href) {
                     // prevent stale/incorrect cache results
                     return responseData as T;
                 } else {
-                    console.log(input, responseData.data.self.href);
+                    console.log("Wrong cached result!", input, responseData.data.self.href);
                 }
             }
         }
@@ -321,7 +321,7 @@ export class BaseApiService {
     public async buildClientUrl(selfLink: ApiLink, resourceKey: ApiLinkKey = {}): Promise<string> {
         let resKey = selfLink.resourceKey ?? resourceKey;
         const queryKey: string[] = [];
-        if (resKey == null) {
+        if (resKey == null || Object.keys(resKey).length === 0) {
             return selfLink.resourceType;
         }
         if (selfLink.rel.some(rel => rel === "page")) {
@@ -333,7 +333,11 @@ export class BaseApiService {
                 delete resKey[key];
             });
             if (Object.keys(resKey).length === 0) {
-                return `${selfLink.resourceType}?${queryKey.join("&")}`;
+                if (queryKey.length > 0) {
+                    return `${selfLink.resourceType}?${queryKey.join("&")}`;
+                } else {
+                    return selfLink.resourceType;
+                }
             }
         }
         const matchingKeys: Array<{ key: string[], rel: string, link: KeyedApiLink }> = [];

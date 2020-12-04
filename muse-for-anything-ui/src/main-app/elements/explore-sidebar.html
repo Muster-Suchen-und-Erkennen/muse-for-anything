@@ -1,4 +1,26 @@
 <template>
-    <h1>${value}</h1>
-    <p>Explore Sidebar!</p>
+    <p if.bind="isEmpty">Explore Sidebar!</p>
+    <div else class="flex flex-column">
+        <a class="ph3 pv2 mb2 bg-black-10 shadow-1 bb b--black-30"
+            if.bind="navLinks.self != null && navLinks.up == null" href.bind="navLinks.self.clientUrl">
+            ${navLinks.self.title | t}
+        </a>
+        <a class="ph3 pv2 mb2 bg-black-10 shadow-1 bb b--black-30"
+            if.bind="navLinks.self != null && navLinks.up != null" href.bind="navLinks.up.clientUrl">
+            &lt; ${navLinks.self.title | t}
+        </a>
+        <a class="ph3 pv2 mb2 bg-black-10 shadow-1 bb b--black-30"
+            if.bind="navLinks.self == null && navLinks.up != null" href.bind="navLinks.up.clientUrl">
+            &lt; ${navLinks.up.title | t}
+        </a>
+
+        <!-- Actions -->
+        <template if.bind="navLinks.actions != null && navLinks.actions.length > 0">
+            <h4 class="mt0 mb1 ph3 pv2 bb b--black-10" t="nav.actions"></h4>
+            <a class="ph3 pv2 bb b--black-10" repeat.for="action of navLinks.actions" href.bind="action.clientUrl">
+                ${action.title | t}
+            </a>
+        </template>
+
+    </div>
 </template>

@@ -10,7 +10,7 @@
         </header>
         <nav class="bg-black-80 tc flex flex-column items-center">
             <div class="w-100 pa2" repeat.for="nav of router.navigation">
-                <a class="white ${nav.isActive ? 'b' : ''}" href.bind="nav.href">${nav.title | t}</a></li>
+                <a class="white ${nav.isActive ? 'b' : ''}" href.bind="nav.href">${nav.title | t}</a>
             </div>
         </nav>
         <div class="sidebar bg-near-white">

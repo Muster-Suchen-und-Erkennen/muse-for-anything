@@ -1,5 +1,6 @@
 """Module containing the namespace table definitions."""
 
+from typing import Optional
 from sqlalchemy.sql.schema import Column, Index
 from sqlalchemy.ext.declarative import declared_attr
 from ..db import DB, MODEL
@@ -26,3 +27,12 @@ class Namespace(IdMixin, UniqueNameDescriptionMixin, ChangesMixin, MODEL):
                 **FULLTEXT_INDEX_PARAMS,
             ),
         )
+
+    def __init__(self, name: str, description: Optional[str] = None, **kwargs) -> None:
+        self.update(name, description, **kwargs)
+
+    def update(self, name: str, description: Optional[str] = None, **kwargs):
+        if kwargs:
+            raise ValueError("Got unknown keyword arguments!")
+        self.name = name
+        self.description = description
