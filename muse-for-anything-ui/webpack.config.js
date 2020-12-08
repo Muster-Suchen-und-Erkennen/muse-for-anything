@@ -18,13 +18,33 @@ const outDir = path.resolve(__dirname, project.platform.output);
 const srcDir = path.resolve(__dirname, 'src');
 const baseUrl = '/static';
 
-const cssRules = [
+const purgecss = require('@fullhuman/postcss-purgecss')({
+    content: [
+        path.resolve(srcDir, '/**/*.html')
+    ],
+    defaultExtractor: content => content.match(/[A-Za-z0–9-_:/]+/g) || []
+});
+
+const cssRules = (production) => [
     {
         loader: 'css-loader',
         options: {
             esModule: false
         }
-    }
+    },
+    {
+        loader: 'postcss-loader',
+        options: {
+            postcssOptions: {
+                plugins: [
+                    require('autoprefixer')(),
+                    require('tailwindcss')('tailwind.config.js'),
+                    //...when(production, purgecss), // not working right now (needs update to work with newest postcss)
+                    ...when(production, require('cssnano')()),
+                ],
+            },
+        },
+    },
 ];
 
 
@@ -210,15 +230,15 @@ module.exports = ({ production } = {}, { extractCss, analyze, tests, hmr, port, 
                 issuer: [{ not: [{ test: /\.html$/i }] }],
                 use: extractCss ? [{
                     loader: MiniCssExtractPlugin.loader
-                }, ...cssRules
-                ] : ['style-loader', ...cssRules]
+                }, ...cssRules(production)
+                ] : ['style-loader', ...cssRules(production)]
             },
             {
                 test: /\.css$/i,
                 issuer: [{ test: /\.html$/i }],
                 // CSS required in templates cannot be extracted safely
                 // because Aurelia would try to require it again in runtime
-                use: cssRules
+                use: cssRules(production)
             },
             { test: /\.html$/i, loader: 'html-loader' },
             { test: /\.ts$/, loader: "ts-loader" },

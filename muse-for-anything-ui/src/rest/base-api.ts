@@ -43,16 +43,21 @@ export class BaseApiService {
         return key.join("/");
     }
 
-    private async cacheResults(url, responseData: ApiResponse<unknown>) {
+    private async cacheResults(request: RequestInfo, responseData: ApiResponse<unknown>) {
         if (this.apiCache == null) {
             return;
         }
-        if (responseData?.embedded == null) {
-            this.apiCache.put(url, new Response(JSON.stringify(responseData)));
-        } else {
-            const embedded = responseData.embedded;
-            delete responseData.embedded;
-            this.apiCache.put(url, new Response(JSON.stringify(responseData)));
+        const isGet = typeof request === "string" || request.method === "GET";
+
+        const embedded = responseData?.embedded;
+        delete responseData.embedded; // nothing outside of caching must depend on this!
+
+        if (isGet) {
+            // only cache the whole response for get requests
+            this.apiCache.put(request, new Response(JSON.stringify(responseData)));
+        }
+
+        if (embedded != null) {
             const promises = [];
             for (const response of embedded) {
                 const selfLink = (response as ApiResponse<ApiObject>)?.data?.self?.href ?? null;
@@ -469,6 +474,19 @@ export class BaseApiService {
 
     public async getByApiLink<T>(link: ApiLink, ignoreCache: boolean = false): Promise<ApiResponse<T>> {
         return await this._fetch<ApiResponse<T>>(link.href, ignoreCache);
+    }
+
+    public async submitByApiLink<T>(link: ApiLink, data: any, signal?: AbortSignal): Promise<ApiResponse<T>> {
+        const method = link.rel.find(rel => rel === "post" || rel === "put" || rel === "patch" || rel === "delete").toUpperCase();
+        const init: RequestInit = {
+            headers: { Accept: "application/json", "Content-Type": "application/json" },
+            method: method,
+            body: JSON.stringify(data),
+        };
+        if (signal != null) {
+            init.signal = signal;
+        }
+        return await this._fetch<ApiResponse<T>>(link.href, true, init);
     }
 
     public async fetch<T>(input: RequestInfo, init?: RequestInit, ignoreCache: boolean = false): Promise<T> {

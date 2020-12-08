@@ -40,7 +40,9 @@ class CreateDeleteMixin:
 class ChangesMixin(CreateDeleteMixin):
     """Add the columns 'created_on', 'updated_on' and 'deleted_on' to track changes to the database entries."""
 
-    updated_on: Column = DB.Column(DB.DateTime, onupdate=datetime.utcnow, nullable=False)
+    updated_on: Column = DB.Column(
+        DB.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
 
 __all__ = list(get_all_classes_of_module(__name__))

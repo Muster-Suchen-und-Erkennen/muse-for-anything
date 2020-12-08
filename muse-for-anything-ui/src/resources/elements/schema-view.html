@@ -1,24 +1,24 @@
 <template>
     <require from="./object-view"></require>
 
-    <div if.bind="schemaType === 'object'">
+    <template if.bind="schemaType === 'object'">
         <object-view data.bind="data" schema.bind="schema"></object-view>
-    </div>
-    <div if.bind="schemaType === 'string'">
-        <p class="ma0">${data != null ? data : ''}</p>
-    </div>
-    <div if.bind="schemaType === 'text'">
-        <p class="ma0 w100">${data != null ? data : '–'}</p>
-    </div>
-    <div if.bind="schemaType === 'number'">
-        <p class="ma0">${data != null ? data : '–'}</p>
-    </div>
-    <div if.bind="schemaType === 'boolean'">
-        <p class="ma0" if.bind="data" t="schemaViews.true"></p>
-        <p class="ma0" if.bind="!data" t="schemaViews.false"></p>
-    </div>
-    <div if.bind="schemaType === 'unknown'">
-        <p class="ma0" style="white-space: pre;">${data | json}</p>
-    </div>
+    </template>
+    <template if.bind="schemaType === 'string'">
+        <p class="m-0">${data != null ? data : ''}</p>
+    </template>
+    <template if.bind="schemaType === 'text'">
+        <p class="m-0 w100">${data != null ? data : '–'}</p>
+    </template>
+    <template if.bind="schemaType === 'number'">
+        <p class="m-0">${data != null ? data : '–'}</p>
+    </template>
+    <template if.bind="schemaType === 'boolean'">
+        <p class="m-0" if.bind="data" t="schemaViews.true"></p>
+        <p class="m-0" if.bind="!data" t="schemaViews.false"></p>
+    </template>
+    <template if.bind="schemaType === 'unknown'">
+        <p class="m-0" style="white-space: pre;">${data | json}</p>
+    </template>
 
 </template>

@@ -72,7 +72,11 @@ class KeyedApiLinkSchema(ApiLinkSchema):
 
 
 class ApiObjectSchema(MaBaseSchema):
-    self = ma.fields.Nested(ApiLinkSchema, reqired=True, allow_none=False, dump_only=True)
+    self = ma.fields.Nested(ApiLinkSchema, allow_none=False, dump_only=True)
+
+
+class NewApiObjectSchema(ApiObjectSchema):
+    new = ma.fields.Nested(ApiLinkSchema, allow_none=False, dump_only=True)
 
 
 class ApiResponseSchema(MaBaseSchema):
@@ -172,6 +176,11 @@ class KeyedApiLink(ApiLinkBase):
 @dataclass
 class BaseApiObject:
     self: ApiLink
+
+
+@dataclass
+class NewApiObject(BaseApiObject):
+    new: ApiLink
 
 
 @dataclass

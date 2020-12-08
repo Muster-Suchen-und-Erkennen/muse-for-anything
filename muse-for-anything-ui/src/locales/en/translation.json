@@ -5,10 +5,14 @@
         "home": "Home",
         "explore": "Explore",
         "create": {
-            "ont-namespace": "Create Namespace"
+            "ont-namespace": "Create New Namespace"
         }
     },
     "loading": "loading…",
+    "resource-type": {
+        "ont-namespace": "Namespace",
+        "ont-type": "Type"
+    },
     "nav": {
         "up": "Back",
         "actions": "Actions",

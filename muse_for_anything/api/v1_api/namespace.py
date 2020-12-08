@@ -5,7 +5,7 @@ from muse_for_anything.api.util import template_url_for
 from typing import Any, Callable, Dict, List, Optional, Union, cast
 from flask.helpers import url_for
 from flask.views import MethodView
-from sqlalchemy.sql.expression import asc, desc
+from sqlalchemy.sql.expression import asc, desc, literal
 from sqlalchemy.orm.query import Query
 from flask_smorest import abort
 from http import HTTPStatus
@@ -20,6 +20,8 @@ from ..base_models import (
     ApiResponseSchema,
     DynamicApiResponseSchema,
     KeyedApiLink,
+    NewApiObject,
+    NewApiObjectSchema,
 )
 from .models.ontology import NamespaceData, NamespaceSchema
 from ...db.db import DB
@@ -260,11 +262,15 @@ class NamespacesView(MethodView):
         )
 
     @API_V1.arguments(NamespaceSchema(only=("name", "description")))
-    @API_V1.response(ApiResponseSchema())
+    @API_V1.response(DynamicApiResponseSchema(NewApiObjectSchema()))
     def post(self, namespace_data):
-        existing: bool = Namespace.query.filter(
-            Namespace.name == namespace_data["name"]
-        ).exists()
+        existing: bool = (
+            DB.session.query(literal(True))
+            .filter(
+                Namespace.query.filter(Namespace.name == namespace_data["name"]).exists()
+            )
+            .scalar()
+        )
         if existing:
             abort(
                 400,
@@ -273,6 +279,27 @@ class NamespacesView(MethodView):
         namespace = Namespace(**namespace_data)
         DB.session.add(namespace)
         DB.session.commit()
+
+        namespace_link = namespace_to_namespace_data(namespace).self
+        namespace_data = namespace_to_api_response(namespace)
+
+        return ApiResponse(
+            links=[namespace_link],
+            embedded=[namespace_data],
+            data=NewApiObject(
+                self=ApiLink(
+                    href=url_for("api-v1.NamespacesView", _external=True),
+                    rel=(
+                        "new",
+                        "create",
+                        "post",
+                        "ont-namespace",
+                    ),
+                    resource_type="new",
+                ),
+                new=namespace_link,
+            ),
+        )
 
 
 @API_V1.route("/namespaces/<string:namespace>/")

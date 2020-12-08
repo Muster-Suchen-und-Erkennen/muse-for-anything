@@ -1,19 +1,22 @@
 <template>
-    <require from="tachyons/css/tachyons.css"></require>
     <require from="./app.css"></require>
     <require from="./main-app/elements/main-header.html"></require>
 
     <div class="main">
 
-        <header class="bb b--black-20 pa3 flex items-center">
+        <header class="border-b border-gray-200 p-3 flex items-center">
             <main-header></main-header>
         </header>
-        <nav class="bg-black-80 tc flex flex-column items-center">
-            <div class="w-100 pa2" repeat.for="nav of router.navigation">
-                <a class="white ${nav.isActive ? 'b' : ''}" href.bind="nav.href">${nav.title | t}</a>
+        <nav class="bg-gray-800 text-center flex flex-col items-center">
+            <div class="sticky top-0">
+                <div class="w-full p-2" repeat.for="nav of router.navigation">
+                    <a class="text-white hover:text-primary-light ${nav.isActive ? 'font-bold' : ''}"
+                        href.bind="nav.href">${nav.title
+                        | t}</a>
+                </div>
             </div>
         </nav>
-        <div class="sidebar bg-near-white">
+        <div class="sidebar bg-gray-50">
             <router-view name="sidebar"></router-view>
         </div>
         <main>

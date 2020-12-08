@@ -1,3 +1,124 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@layer utilities {
+    @variants responsive, dark, visited, hover, focus, active, disabled {
+        /* default primary */
+        .bg-primary {
+            background-color: var(--primary-color);
+        }
+        .text-primary {
+            color: var(--primary-color);
+        }
+        .border-primary {
+            border-color: var(--primary-color);
+        }
+        .from-primary {
+            --tw-gradient-from: var(--primary-color);
+            --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(0, 0, 0, 0));
+        } 
+        .to-primary {
+            --tw-gradient-to: var(--primary-color);
+        }
+        /* light primary */
+        .bg-primary-light {
+            background-color: var(--primary-light-color, var(--primary-color));
+        }
+        .text-primary-light {
+            color: var(--primary-light-color, var(--primary-color));
+        }
+        .border-primary-light {
+            border-color: var(--primary-light-color, var(--primary-color));
+        }
+        .from-primary-light {
+            --tw-gradient-from: var(--primary-light-color, var(--primary-color));
+            --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(0, 0, 0, 0));
+        } 
+        .to-primary-light {
+            --tw-gradient-to: var(--primary-light-color, var(--primary-color));
+        }
+        /* dark primary */
+        .bg-primary-dark {
+            background-color: var(--primary-dark-color, var(--primary-color));
+        }
+        .text-primary-dark {
+            color: var(--primary-dark-color, var(--primary-color));
+        }
+        .border-primary-dark {
+            border-color: var(--primary-dark-color, var(--primary-color));
+        }
+        .from-primary-dark {
+            --tw-gradient-from: var(--primary-dark-color, var(--primary-color));
+            --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(0, 0, 0, 0));
+        } 
+        .to-primary-dark {
+            --tw-gradient-to: var(--primary-dark-color, var(--primary-color));
+        }
+        /* default accent */
+        .bg-accent {
+            background-color: var(--accent-color);
+        }
+        .text-accent {
+            color: var(--accent-color);
+        }
+        .border-accent {
+            border-color: var(--accent-color);
+        }
+        .from-accent {
+            --tw-gradient-from: var(--accent-color);
+            --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(0, 0, 0, 0));
+        }
+        .to-accent {
+            --tw-gradient-to: var(--accent-color);
+        }
+        /* light accent */
+        .bg-accent-light {
+            background-color: var(--accent-light-color, var(--accent-color));
+        }
+        .text-accent-light {
+            color: var(--accent-light-color, var(--accent-color));
+        }
+        .border-accent-light {
+            border-color: var(--accent-light-color, var(--accent-color));
+        }
+        .from-accent-light {
+            --tw-gradient-from: var(--accent-light-color, var(--accent-color));
+            --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(0, 0, 0, 0));
+        }
+        .to-accent-light {
+            --tw-gradient-to: var(--accent-light-color, var(--accent-color));
+        }
+        /* dark accent */
+        .bg-accent-dark {
+            background-color: var(--accent-dark-color, var(--accent-color));
+        }
+        .text-accent-dark {
+            color: var(--accent-dark-color, var(--accent-color));
+        }
+        .border-accent-dark {
+            border-color: var(--accent-dark-color, var(--accent-color));
+        }
+        .from-accent-dark {
+            --tw-gradient-from: var(--accent-dark-color, var(--accent-color));
+            --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(0, 0, 0, 0));
+        }
+        .to-accent-dark {
+            --tw-gradient-to: var(--accent-dark-color, var(--accent-color));
+        }
+    }
+}
+
+:root {
+    --primary-color: theme("colors.purple.700");
+    --primary-light-color: theme("colors.purple.500");
+    --primary-dark-color: theme("colors.purple.900");
+    --accent-color: theme("colors.yellow.600");
+    --accent-light-color: theme("colors.yellow.400");
+    --accent-dark-color: theme("colors.yellow.800");
+}
+
 body {
     min-height: 100vh;
     margin: 0;
@@ -38,6 +159,71 @@ main {
 
 a[aria-disabled] {
     pointer-events: none;
-    color: var(--black-40);
+    color: theme("colors.gray.500");
     text-decoration: none;
+}
+
+button:disabled {
+    pointer-events: none;
+    text-decoration: none;
+}
+
+/* Tailwind CSS styles (ignore css errors...) */
+
+/* form styles */
+.dirty.error {
+    @apply border-red-700 border-2;
+}
+
+.dirty.error:focus {
+    @apply border-red-700 border-2;
+}
+
+
+/* page content styles */
+
+.content-title {
+    @apply px-3 py-3 mb-2 font-bold text-xl;
+}
+
+.sidebar-head {
+    @apply px-3 py-2 mb-2 bg-gray-200 font-semibold shadow-md border-b border-gray-400 hover:text-primary;
+}
+
+.sidebar-item {
+    @apply px-3 py-2 border-b border-gray-200;
+}
+
+.sidebar-action {
+    @apply px-3 py-2 border-b border-gray-200 hover:text-primary;
+}
+
+/* element styles */
+
+.card {
+    @apply mb-2 rounded-md shadow-md;
+}
+
+/* button styles */
+
+.button-flat {
+    @apply p-1 m-1 rounded-sm hover:bg-gray-100 hover:shadow-sm hover:text-primary;
+}
+
+.button-outline {
+    @apply p-1 m-1 rounded-md border-2 text-primary border-primary hover:bg-gray-200;
+}
+
+.button-outline:disabled {
+    @apply text-gray-400 border-gray-400;
+}
+
+/* link styles */
+
+.link {
+    @apply underline text-primary visited:text-accent hover:underline hover:text-primary;
+}
+
+.link-hover {
+    @apply hover:underline hover:text-primary;
 }

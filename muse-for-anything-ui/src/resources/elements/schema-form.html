@@ -1,0 +1,25 @@
+<template>
+    <require from="./object-form"></require>
+    <require from="./text-form"></require>
+
+    <template if.bind="schemaType === 'object'">
+        <object-form label.bind="label" initial-data.bind="initialData" schema.bind="schema" required.bind="required"
+            value.from-view="value & viewSignal:'update-values'" valid.from-view="valid & viewSignal:'revalidate'">
+        </object-form>
+    </template>
+    <template if.bind="schemaType === 'string'">
+        <text-form label.bind="label" initial-data.bind="initialData" schema.bind="schema" required.bind="required"
+            value.from-view="value & viewSignal:'update-values'" valid.from-view="valid & viewSignal:'revalidate'">
+        </text-form>
+    </template>
+    <template if.bind="schemaType === 'number'">
+        <p class="m-0">${initialData != null ? initialData : '–'}</p>
+    </template>
+    <template if.bind="schemaType === 'boolean'">
+        <p class="m-0" if.bind="initialData" t="schemaViews.true"></p>
+        <p class="m-0" if.bind="!initialData" t="schemaViews.false"></p>
+    </template>
+    <template if.bind="schemaType === 'unknown'">
+        <p class="m-0" style="white-space: pre;">${initialData | json}</p>
+    </template>
+</template>

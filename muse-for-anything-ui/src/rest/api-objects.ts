@@ -6,6 +6,20 @@ export function isApiObject(obj: any): obj is ApiObject {
     return obj?.self != null && isApiLinkBase(obj?.self);
 }
 
+export interface NewApiObject extends ApiObject {
+    new: ApiLink;
+}
+
+export function isNewApiObject(obj: any): obj is NewApiObject {
+    if (!isApiObject(obj)) {
+        return false;
+    }
+    if (obj.self.resourceType !== "new") {
+        return false;
+    }
+    return (obj as NewApiObject)?.new != null && isApiLinkBase((obj as NewApiObject)?.new);
+}
+
 export interface GenericApiObject extends ApiObject {
     [prop: string]: any;
 }
