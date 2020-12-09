@@ -63,6 +63,15 @@ def get_page_info(
 
     collection_size: int = model.query.enable_eagerloads(False).count()
 
+    if collection_size <= item_count:
+        return PaginationInfo(
+            collection_size=collection_size,
+            cursor_row=0,
+            cursor_page=1,
+            surrounding_pages=[],
+            last_page=PageInfo(0, 1, 0),
+        )
+
     cursor_row: Union[int, Any] = 0
 
     if cursor is not None:
