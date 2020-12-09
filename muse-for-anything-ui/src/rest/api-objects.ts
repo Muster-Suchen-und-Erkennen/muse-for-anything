@@ -28,7 +28,7 @@ export function isChangedApiObject(obj: any): obj is ChangedApiObject {
     if (!isApiObject(obj)) {
         return false;
     }
-    if (obj.self.resourceType !== "new") {
+    if (obj.self.resourceType !== "changed") {
         return false;
     }
     return (obj as ChangedApiObject)?.changed != null && isApiLinkBase((obj as ChangedApiObject)?.changed);

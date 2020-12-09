@@ -441,12 +441,12 @@ class NamespaceView(MethodView):
                 self=ApiLink(
                     href=url_for("api-v1.NamespacesView", _external=True),
                     rel=(
-                        "new",
+                        "changed",
                         "create",
                         "post",
                         "ont-namespace",
                     ),
-                    resource_type="new",
+                    resource_type="changed",
                 ),
                 changed=namespace_link,
             ),
@@ -484,12 +484,12 @@ class NamespaceView(MethodView):
                 self=ApiLink(
                     href=url_for("api-v1.NamespacesView", _external=True),
                     rel=(
-                        "new",
+                        "changed",
                         "create",
                         "post",
                         "ont-namespace",
                     ),
-                    resource_type="new",
+                    resource_type="changed",
                 ),
                 changed=namespace_link,
             ),
