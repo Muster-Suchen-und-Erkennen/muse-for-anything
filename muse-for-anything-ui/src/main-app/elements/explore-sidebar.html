@@ -1,4 +1,6 @@
 <template>
+    <require from="resources/elements/action-link"></require>
+
     <div class="sticky top-0">
         <p if.bind="isEmpty">Explore Sidebar!</p>
         <div else class="flex flex-col">
@@ -18,9 +20,8 @@
             <!-- Actions -->
             <template if.bind="navLinks.actions != null && navLinks.actions.length > 0">
                 <h4 class="sidebar-item mt-0 mb-1" t="nav.actions"></h4>
-                <a class="sidebar-action" repeat.for="action of navLinks.actions" href.bind="action.clientUrl">
-                    ${action.title | t}
-                </a>
+                <action-link class="contents" repeat.for="action of navLinks.actions" action.bind="action">
+                </action-link>
             </template>
 
         </div>

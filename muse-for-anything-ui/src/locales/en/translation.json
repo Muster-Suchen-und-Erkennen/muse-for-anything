@@ -9,6 +9,7 @@
         }
     },
     "loading": "loading…",
+    "deleted": "Deleted",
     "resource-type": {
         "ont-namespace": "Namespace",
         "ont-type": "Type"
@@ -27,6 +28,9 @@
         },
         "delete": {
             "ont-namespace": "Delete Namespace"
+        },
+        "restore": {
+            "ont-namespace": "Restore Namespace"
         },
         "ont-namespace": "Namespace"
     },

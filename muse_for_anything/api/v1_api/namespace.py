@@ -1,5 +1,6 @@
 """Module containing the namespace API endpoints of the v1 API."""
 
+from datetime import datetime
 from flask_babel import gettext
 from muse_for_anything.api.util import template_url_for
 from typing import Any, Callable, Dict, List, Optional, Union, cast
@@ -14,6 +15,8 @@ from .root import API_V1
 from ..base_models import (
     ApiLink,
     ApiResponse,
+    ChangedApiObject,
+    ChangedApiObjectSchema,
     CursorPage,
     CursorPageArgumentsSchema,
     CursorPageSchema,
@@ -52,6 +55,62 @@ def namespace_to_namespace_data(namespace: Namespace) -> NamespaceData:
     )
 
 
+def action_links_for_namespace(namespace: Namespace) -> List[ApiLink]:
+    actions: List[ApiLink] = [
+        ApiLink(
+            href=url_for("api-v1.NamespacesView", _external=True),
+            rel=("create", "post", "ont-namespace"),
+            resource_type="ont-namespace",
+            schema=url_for("api-v1.ApiSchemaView", schema_id="Namespace", _external=True),
+        ),
+    ]
+
+    resource_key = namespace_to_key(namespace)
+
+    if namespace.deleted_on is None:
+        actions.append(
+            ApiLink(
+                href=url_for(
+                    "api-v1.NamespaceView",
+                    namespace=str(namespace.id),
+                    _external=True,
+                ),
+                rel=("update", "put", "ont-namespace"),
+                resource_type="ont-namespace",
+                resource_key=resource_key,
+                schema=url_for(
+                    "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
+                ),
+            )
+        )
+        actions.append(
+            ApiLink(
+                href=url_for(
+                    "api-v1.NamespaceView",
+                    namespace=str(namespace.id),
+                    _external=True,
+                ),
+                rel=("delete", "ont-namespace"),
+                resource_type="ont-namespace",
+                resource_key=resource_key,
+            )
+        )
+    else:
+        actions.append(
+            ApiLink(
+                href=url_for(
+                    "api-v1.NamespaceView",
+                    namespace=str(namespace.id),
+                    _external=True,
+                ),
+                rel=("restore", "post", "ont-namespace"),
+                resource_type="ont-namespace",
+                resource_key=resource_key,
+            )
+        )
+    return actions
+
+
 def namespace_to_api_response(namespace: Namespace) -> ApiResponse:
     namespace_data = namespace_to_namespace_data(namespace)
     raw_namespace: Dict[str, Any] = NamespaceSchema().dump(namespace_data)
@@ -59,12 +118,13 @@ def namespace_to_api_response(namespace: Namespace) -> ApiResponse:
         links=(
             ApiLink(
                 href=url_for("api-v1.NamespacesView", _external=True),
-                rel=("first", "page", "collection", "ont-namespace"),
+                rel=("first", "page", "up", "collection", "ont-namespace"),
                 resource_type="ont-namespace",
                 schema=url_for(
                     "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
                 ),
             ),
+            *action_links_for_namespace(namespace),
         ),
         data=raw_namespace,
     )
@@ -93,11 +153,19 @@ class NamespacesView(MethodView):
         )
         sort_key: str = sort.lstrip("+-") if sort is not None else "name"
 
+        namespace_filter = (Namespace.deleted_on == None,)
+
         pagination_info = get_page_info(
-            Namespace, Namespace.id, [Namespace.name], cursor, sort, item_count
+            Namespace,
+            Namespace.id,
+            [Namespace.name],
+            cursor,
+            sort,
+            item_count,
+            filter_criteria=namespace_filter,
         )
 
-        query: Query = Namespace.query
+        query: Query = Namespace.query.filter(*namespace_filter)
 
         if sort_key == "name":
             query = query.order_by(sort_function(Namespace.name.collate("NOCASE")))
@@ -320,6 +388,7 @@ class NamespaceView(MethodView):
 
         if found_namespace is None:
             abort(HTTPStatus.NOT_FOUND, message=gettext("Namespace not found."))
+
         return ApiResponse(
             links=[
                 ApiLink(
@@ -335,6 +404,93 @@ class NamespaceView(MethodView):
                         "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
                     ),
                 ),
+                *action_links_for_namespace(found_namespace),
             ],
             data=namespace_to_namespace_data(found_namespace),
+        )
+
+    @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    def post(self, namespace: str):  # restore action
+        if not namespace or not namespace.isdigit():
+            abort(
+                HTTPStatus.BAD_REQUEST,
+                message=gettext("The requested namespace id has the wrong format!"),
+            )
+        namespace_id = int(namespace)
+        found_namespace: Optional[Namespace] = Namespace.query.filter(
+            Namespace.id == namespace_id
+        ).first()
+
+        if found_namespace is None:
+            abort(HTTPStatus.NOT_FOUND, message=gettext("Namespace not found."))
+
+        # only actually restore when not already restored
+        if found_namespace.deleted_on is not None:
+            # restore namespace
+            found_namespace.deleted_on = None
+            DB.session.add(found_namespace)
+            DB.session.commit()
+
+        namespace_link = namespace_to_namespace_data(found_namespace).self
+        namespace_data = namespace_to_api_response(found_namespace)
+
+        return ApiResponse(
+            links=[namespace_link],
+            embedded=[namespace_data],
+            data=ChangedApiObject(
+                self=ApiLink(
+                    href=url_for("api-v1.NamespacesView", _external=True),
+                    rel=(
+                        "new",
+                        "create",
+                        "post",
+                        "ont-namespace",
+                    ),
+                    resource_type="new",
+                ),
+                changed=namespace_link,
+            ),
+        )
+
+    @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    def delete(self, namespace: str):
+        if not namespace or not namespace.isdigit():
+            abort(
+                HTTPStatus.BAD_REQUEST,
+                message=gettext("The requested namespace id has the wrong format!"),
+            )
+        namespace_id = int(namespace)
+        found_namespace: Optional[Namespace] = Namespace.query.filter(
+            Namespace.id == namespace_id
+        ).first()
+
+        if found_namespace is None:
+            abort(HTTPStatus.NOT_FOUND, message=gettext("Namespace not found."))
+
+        # only actually delete when not already deleted
+        if found_namespace.deleted_on is None:
+            # soft delete namespace
+            found_namespace.deleted_on = datetime.now()
+            DB.session.add(found_namespace)
+            DB.session.commit()
+
+        namespace_link = namespace_to_namespace_data(found_namespace).self
+        namespace_data = namespace_to_api_response(found_namespace)
+
+        return ApiResponse(
+            links=[namespace_link],
+            embedded=[namespace_data],
+            data=ChangedApiObject(
+                self=ApiLink(
+                    href=url_for("api-v1.NamespacesView", _external=True),
+                    rel=(
+                        "new",
+                        "create",
+                        "post",
+                        "ont-namespace",
+                    ),
+                    resource_type="new",
+                ),
+                changed=namespace_link,
+            ),
         )

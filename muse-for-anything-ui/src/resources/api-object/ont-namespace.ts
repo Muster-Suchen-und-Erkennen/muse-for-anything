@@ -28,9 +28,9 @@ export class OntNamespace {
             this.schemas.getSchema(this.apiObject.self.schema)
                 .then(schema => schema.getNormalizedApiSchema())
                 .then(schema => {
-                    console.log(schema);
-                    console.log(schema.normalized);
-                    console.log(schema.getPropertyList());
+                    // console.log(schema);
+                    // console.log(schema.normalized);
+                    // console.log(schema.getPropertyList());
                 });
         }
     }

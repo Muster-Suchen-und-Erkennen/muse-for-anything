@@ -476,13 +476,15 @@ export class BaseApiService {
         return await this._fetch<ApiResponse<T>>(link.href, ignoreCache);
     }
 
-    public async submitByApiLink<T>(link: ApiLink, data: any, signal?: AbortSignal): Promise<ApiResponse<T>> {
+    public async submitByApiLink<T>(link: ApiLink, data?: any, signal?: AbortSignal): Promise<ApiResponse<T>> {
         const method = link.rel.find(rel => rel === "post" || rel === "put" || rel === "patch" || rel === "delete").toUpperCase();
         const init: RequestInit = {
             headers: { Accept: "application/json", "Content-Type": "application/json" },
             method: method,
-            body: JSON.stringify(data),
         };
+        if (data !== undefined) {
+            init.body = JSON.stringify(data);
+        }
         if (signal != null) {
             init.signal = signal;
         }

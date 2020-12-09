@@ -1,0 +1,20 @@
+<template>
+    <template if.bind="action.actionType === 'create' || action.actionType === 'update'">
+        <a class="sidebar-action" href.bind="action.clientUrl">
+            <span style="min-width: 1.2rem; text-align: center; display: inline-block;"
+                if.bind="action.actionType === 'create'">🞤</span>
+            <span style="min-width: 1.2rem; text-align: center; display: inline-block;"
+                if.bind="action.actionType === 'update'">🖉</span>
+            ${action.title | t}
+        </a>
+    </template>
+    <template if.bind="action.actionType === 'delete' || action.actionType === 'restore'">
+        <button class="sidebar-action text-left" click.delegate="performAction()">
+            <span style="min-width: 1.2rem; text-align: center; display: inline-block;"
+                if.bind="action.actionType === 'delete'">🗑</span>
+            <span style="min-width: 1.2rem; text-align: center; display: inline-block;"
+                if.bind="action.actionType === 'restore'">♲</span>
+            ${action.title | t}
+        </button>
+    </template>
+</template>

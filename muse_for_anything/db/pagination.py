@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, TypeVar, Union
 from dataclasses import dataclass
 from sqlalchemy.sql.expression import asc, desc
 from sqlalchemy.sql import func, column
@@ -46,6 +46,7 @@ def get_page_info(
     sort: str,
     item_count: int = 50,
     surrounding_pages: int = 5,
+    filter_criteria: Sequence[Any] = tuple(),
 ) -> PaginationInfo:
     if item_count is None:
         item_count = 50
@@ -61,7 +62,9 @@ def get_page_info(
     order_by = sort_direction(sort_columns[sort_column_name])
     row_numbers: Any = func.row_number().over(order_by=order_by)
 
-    collection_size: int = model.query.enable_eagerloads(False).count()
+    collection_size: int = (
+        model.query.filter(*filter_criteria).enable_eagerloads(False).count()
+    )
 
     if collection_size <= item_count:
         return PaginationInfo(
@@ -80,6 +83,7 @@ def get_page_info(
                 row_numbers.label("row"),
                 cursor_column,
             )
+            .filter(*filter_criteria)
             .from_self(column("row"))
             .filter(cursor_column == cursor)
             .cte("cursor_row")
@@ -93,6 +97,7 @@ def get_page_info(
             (row_numbers / item_count).label("page"),
             (row_numbers % item_count).label("modulo"),
         )
+        .filter(*filter_criteria)
         .order_by(column("row").asc())
         .cte("pages")
     )
@@ -102,6 +107,7 @@ def get_page_info(
             row_numbers.label("row"),
             (row_numbers / item_count).label("page"),
         )
+        .filter(*filter_criteria)
         .order_by(column("row").desc())
         .limit(1)
         .cte("last-page")

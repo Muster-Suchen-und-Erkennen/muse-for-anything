@@ -2,13 +2,14 @@ import { autoinject } from "aurelia-framework";
 import { EventAggregator } from "aurelia-event-aggregator";
 import { BaseApiService } from "rest/base-api";
 import { ApiLink, ApiResponse, isApiObject } from "rest/api-objects";
+import { NAV_LINKS_CHANNEL } from "resources/events";
 
 export interface NavigationLink {
     clientUrl: string;
     title: string;
     sortKey: number;
     icon?: string;
-    actionType?: "create" | "update" | "delete";
+    actionType?: "create" | "update" | "delete" | "restore";
     apiLink?: ApiLink;
 }
 
@@ -18,9 +19,7 @@ export interface NavLinks {
     actions?: NavigationLink[];
 }
 
-export const NAV_LINKS_CHANNEL = "navigation-links";
-
-const ACTION_RELS: Set<string> = new Set<string>(["create", "update", "delete"]);
+const ACTION_RELS: Set<string> = new Set<string>(["create", "update", "delete", "restore"]);
 
 @autoinject
 export class NavigationLinksService {
@@ -53,7 +52,6 @@ export class NavigationLinksService {
         // TODO consolidate nav links
         this.currentNavLinks = this.mainApiResponse;
         // send update event
-        console.log("New NAV links", this.currentNavLinks);
         this.events.publish(NAV_LINKS_CHANNEL, this.currentNavLinks);
     }
 
@@ -72,8 +70,6 @@ export class NavigationLinksService {
         const navLinks: NavLinks = {};
         const actions: NavigationLink[] = [];
         navLinks.actions = actions;
-
-        console.log("Possibly New NAV links");
 
         if (response == null) {
             this.updateNavLinksFromMainResponse(navLinks);
@@ -135,7 +131,7 @@ export class NavigationLinksService {
                             clientUrl: `/edit/${clientUrl}`,
                             title: `nav.update.${this.getTranslationKeyForLink(link)}`,
                             sortKey: baseSortKey + 20,
-                            actionType: "create",
+                            actionType: "update",
                         });
                     }
                     if (link.rel.some(rel => rel === "delete")) {
@@ -144,7 +140,16 @@ export class NavigationLinksService {
                             clientUrl: `/delete/${clientUrl}`,
                             title: `nav.delete.${this.getTranslationKeyForLink(link)}`,
                             sortKey: baseSortKey + 30,
-                            actionType: "create",
+                            actionType: "delete",
+                        });
+                    }
+                    if (link.rel.some(rel => rel === "restore")) {
+                        actions.push({
+                            ...navLinkBase,
+                            clientUrl: `/restore/${clientUrl}`,
+                            title: `nav.restore.${this.getTranslationKeyForLink(link)}`,
+                            sortKey: baseSortKey + 40,
+                            actionType: "restore",
                         });
                     }
                 }));

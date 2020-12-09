@@ -1,6 +1,7 @@
 import { autoinject } from "aurelia-framework";
 import { EventAggregator, Subscription } from "aurelia-event-aggregator";
-import { NAV_LINKS_CHANNEL, NavLinks, NavigationLinksService } from "services/navigation-links";
+import { NavLinks, NavigationLinksService } from "services/navigation-links";
+import { NAV_LINKS_CHANNEL } from "resources/events";
 
 const ACCEPTED_NAV_LINKS = new Set<string>(["up", "self"]);
 

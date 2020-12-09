@@ -1,9 +1,10 @@
 import { autoinject } from "aurelia-framework";
 import { EventAggregator, Subscription } from "aurelia-event-aggregator";
 import { activationStrategy, RoutableComponentDetermineActivationStrategy } from "aurelia-router";
-import { NavigationLinksService, NavLinks, NAV_LINKS_CHANNEL } from "services/navigation-links";
+import { NavigationLinksService, NavLinks } from "services/navigation-links";
 import { BaseApiService } from "rest/base-api";
 import { ApiLink, ApiResponse } from "rest/api-objects";
+import { NAV_LINKS_CHANNEL } from "resources/events";
 
 @autoinject
 export class CreateContent {
