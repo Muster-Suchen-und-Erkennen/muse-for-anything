@@ -62,7 +62,7 @@ class RootView(MethodView):
                     ),
                     rel=("collection", "page", "ont-namespace"),
                     resource_type="ont-namespace",
-                    key=("item_count", "cursor", "sort"),
+                    query_key=("item_count", "cursor", "sort"),
                 ),
             ],
             data=RootData(

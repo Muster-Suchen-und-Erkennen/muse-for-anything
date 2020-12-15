@@ -20,121 +20,22 @@ from ..base_models import (
     CursorPage,
     CursorPageArgumentsSchema,
     CursorPageSchema,
-    ApiResponseSchema,
     DynamicApiResponseSchema,
     KeyedApiLink,
     NewApiObject,
     NewApiObjectSchema,
 )
-from .models.ontology import NamespaceData, NamespaceSchema
+from .models.ontology import NamespaceSchema
 from ...db.db import DB
 from ...db.pagination import get_page_info
 from ...db.models.namespace import Namespace
 
-
-def namespace_to_key(namespace: Namespace) -> Dict[str, str]:
-    return {"namespaceId": str(namespace.id)}
-
-
-def namespace_to_namespace_data(namespace: Namespace) -> NamespaceData:
-    return NamespaceData(
-        self=ApiLink(
-            href=url_for(
-                "api-v1.NamespaceView", namespace=str(namespace.id), _external=True
-            ),
-            rel=("ont-namespace",),
-            resource_type="ont-namespace",
-            resource_key=namespace_to_key(namespace),
-            schema=url_for("api-v1.ApiSchemaView", schema_id="Namespace", _external=True),
-        ),
-        name=namespace.name,
-        description=namespace.description,
-        created_on=namespace.created_on,
-        updated_on=namespace.updated_on,
-        deleted_on=namespace.deleted_on,
-    )
-
-
-def action_links_for_namespace(namespace: Namespace) -> List[ApiLink]:
-    actions: List[ApiLink] = [
-        ApiLink(
-            href=url_for("api-v1.NamespacesView", _external=True),
-            rel=("create", "post", "ont-namespace"),
-            resource_type="ont-namespace",
-            schema=url_for("api-v1.ApiSchemaView", schema_id="Namespace", _external=True),
-        ),
-    ]
-
-    resource_key = namespace_to_key(namespace)
-
-    if namespace.deleted_on is None:
-        actions.append(
-            ApiLink(
-                href=url_for(
-                    "api-v1.NamespaceView",
-                    namespace=str(namespace.id),
-                    _external=True,
-                ),
-                rel=("update", "put", "ont-namespace"),
-                resource_type="ont-namespace",
-                resource_key=resource_key,
-                schema=url_for(
-                    "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
-                ),
-            )
-        )
-        actions.append(
-            ApiLink(
-                href=url_for(
-                    "api-v1.NamespaceView",
-                    namespace=str(namespace.id),
-                    _external=True,
-                ),
-                rel=("delete", "ont-namespace"),
-                resource_type="ont-namespace",
-                resource_key=resource_key,
-            )
-        )
-    else:
-        actions.append(
-            ApiLink(
-                href=url_for(
-                    "api-v1.NamespaceView",
-                    namespace=str(namespace.id),
-                    _external=True,
-                ),
-                rel=("restore", "post", "ont-namespace"),
-                resource_type="ont-namespace",
-                resource_key=resource_key,
-            )
-        )
-    return actions
-
-
-def namespace_to_api_response(namespace: Namespace) -> ApiResponse:
-    namespace_data = namespace_to_namespace_data(namespace)
-    raw_namespace: Dict[str, Any] = NamespaceSchema().dump(namespace_data)
-    return ApiResponse(
-        links=(
-            ApiLink(
-                href=url_for("api-v1.NamespacesView", _external=True),
-                rel=("first", "page", "up", "collection", "ont-namespace"),
-                resource_type="ont-namespace",
-                schema=url_for(
-                    "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
-                ),
-            ),
-            *action_links_for_namespace(namespace),
-        ),
-        data=raw_namespace,
-    )
-
-
-def query_params_to_api_key(query_params: Dict[str, Union[str, int]]) -> Dict[str, str]:
-    key = {}
-    for k, v in query_params.items():
-        key[k.replace("_", "-")] = str(v)
-    return key
+from .namespace_helpers import (
+    namespace_to_namespace_data,
+    namespace_to_api_response,
+    action_links_for_namespace,
+    query_params_to_api_key,
+)
 
 
 @API_V1.route("/namespaces/")

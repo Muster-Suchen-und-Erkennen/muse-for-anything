@@ -70,10 +70,11 @@ export function matchesLinkRel(link: ApiLinkBase, rel: string | string[]): boole
 
 export interface KeyedApiLink extends ApiLinkBase {
     key: string[];
+    queryKey: string[];
 }
 
 export function isKeyedApiLink(obj: any): obj is KeyedApiLink {
-    return isApiLinkBase(obj) && (obj as any)?.key != null;
+    return isApiLinkBase(obj) && ((obj as any)?.key != null || (obj as any)?.queryKey != null);
 }
 
 export function checkKeyMatchesKeyedLink(key: ApiLinkKey, keyedLink: KeyedApiLink): boolean {
@@ -81,39 +82,40 @@ export function checkKeyMatchesKeyedLink(key: ApiLinkKey, keyedLink: KeyedApiLin
 }
 
 export function checkKeyMatchesKeyedLinkExact(key: ApiLinkKey, keyedLink: KeyedApiLink): boolean {
-    return checkKeyMatchesKeyedLink(key, keyedLink) && Object.keys(key).length === keyedLink.key.length;
+    const allKeysMatch = checkKeyMatchesKeyedLink(key, keyedLink);
+    const queryKeys = Object.keys(key).filter(keyVariable => keyVariable.startsWith("?"));
+    if (queryKeys.length === 0) {
+        return allKeysMatch;
+    }
+    const allowedQueryKeys = new Set(keyedLink.queryKey?.map(k => `?${k}`) ?? []);
+    const allQueryKeysAllowed = queryKeys.every(queryKey => allowedQueryKeys.has(queryKey));
+    return allKeysMatch && allQueryKeysAllowed && Object.keys(key).filter(keyVariable => !keyVariable.startsWith("?")).length === keyedLink.key.length;
 }
 
-export function applyKeyToLinkedKey(keyedLink: KeyedApiLink, key: ApiLinkKey, queryParams?: ApiLinkKey): ApiLink {
+export function applyKeyToLinkedKey(keyedLink: KeyedApiLink, key: ApiLinkKey): ApiLink {
     let url = keyedLink.href;
-    const keyVariables = Object.keys(key);
+    const keyVariables = Object.keys(key).filter(keyVariable => !keyVariable.startsWith("?"));
     // check if key matches
-    if (!keyVariables.every(keyVariable => keyedLink.key.includes(keyVariable))) {
-        throw Error(`Cannot apply key ${keyVariables} to keyedLink with key ${keyedLink.key}`);
+    if (!checkKeyMatchesKeyedLink(key, keyedLink)) {
+        throw Error(`Cannot apply key ${key} to keyedLink with key ${keyedLink.key}`);
     }
     // apply key to templated url
     keyVariables.forEach(keyVariable => {
         url = url.replace(`{${keyVariable}}`, key[keyVariable]);
     });
 
-    if (Object.keys(queryParams).length > 0) {
-        const query = Object.keys(queryParams)
-            .map(k => `${k}=${queryParams[k]}`)
-            .join("&");
+    const queryKeyVariables = Object.keys(key).filter(keyVariable => keyVariable.startsWith("?"));
+    if (queryKeyVariables.length > 0) {
+        const query = queryKeyVariables.map(k => `${k.substring(1)}=${key[k]}`).join("&");
         url += `?${query}`;
     }
-
-    const fullKey = {
-        ...key,
-        ...(queryParams ?? {}),
-    };
 
     // build new api link
     const apiLink: ApiLink = {
         href: url,
         rel: keyedLink.rel,
         resourceType: keyedLink.resourceType,
-        resourceKey: fullKey,
+        resourceKey: {...key},
     };
     if (keyedLink.doc != null) {
         apiLink.doc = keyedLink.doc;

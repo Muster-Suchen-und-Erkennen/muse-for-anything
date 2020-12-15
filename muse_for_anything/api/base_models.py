@@ -46,6 +46,8 @@ class ApiLinkBaseSchema(MaBaseSchema):
         for key in ("doc", "schema", "resourceKey"):
             if data.get(key, False) is None:
                 del data[key]
+        if not data.get("queryKey", True):  # return True if not in dict
+            del data["queryKey"]
         return data
 
 
@@ -63,6 +65,13 @@ class KeyedApiLinkSchema(ApiLinkSchema):
     """
 
     key = ma.fields.List(
+        ma.fields.String(allow_none=False, dump_only=True),
+        validate=Length(min=1, error="At least one ref must be provided!"),
+        reqired=True,
+        allow_none=False,
+        dump_only=True,
+    )
+    query_key = ma.fields.List(
         ma.fields.String(allow_none=False, dump_only=True),
         validate=Length(min=1, error="At least one ref must be provided!"),
         reqired=True,
@@ -175,6 +184,7 @@ class ApiLink(ApiLinkBase):
 @dataclass
 class KeyedApiLink(ApiLinkBase):
     key: Sequence[str] = tuple()
+    query_key: Sequence[str] = tuple()
 
 
 @dataclass

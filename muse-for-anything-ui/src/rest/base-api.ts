@@ -1,6 +1,6 @@
 import { autoinject } from "aurelia-framework";
 import { HttpClient } from "aurelia-fetch-client";
-import { ApiResponse, ApiLink, GenericApiObject, ApiObject, matchesLinkRel, ApiLinkKey, KeyedApiLink, applyKeyToLinkedKey, checkKeyMatchesKeyedLink, isApiResponse } from "./api-objects";
+import { ApiResponse, ApiLink, GenericApiObject, ApiObject, matchesLinkRel, ApiLinkKey, KeyedApiLink, applyKeyToLinkedKey, checkKeyMatchesKeyedLink, isApiResponse, checkKeyMatchesKeyedLinkExact } from "./api-objects";
 
 @autoinject
 export class BaseApiService {
@@ -258,11 +258,17 @@ export class BaseApiService {
     }
 
     private async resolveApiLinkKey(apiLinkKey: ApiLinkKey, queryParams?: ApiLinkKey): Promise<ApiLink> {
-        const stringKey = this.linkKeyToStringKey(apiLinkKey);
-        if (!this.keyedLinksByKey.has(stringKey)) {
-            throw Error(`No keyed link found for the api link key ${apiLinkKey}!`);
+        const key: ApiLinkKey = { ...apiLinkKey };
+        if (queryParams != null) {
+            Object.keys(queryParams).forEach(queryKeyVariable => {
+                key[`?${queryKeyVariable}`] = queryParams[queryKeyVariable];
+            });
         }
-        return applyKeyToLinkedKey(this.keyedLinksByKey.get(stringKey), apiLinkKey, queryParams);
+        const stringKey = this.linkKeyToStringKey(key);
+        if (!this.keyedLinksByKey.has(stringKey)) {
+            throw Error(`No keyed link found for the api link key ${key}!`);
+        }
+        return applyKeyToLinkedKey(this.keyedLinksByKey.get(stringKey), key);
     }
 
     private fillOutKey(initialKey: ApiLinkKey, existingKeyVariables: string[], keyVariables: string[], keyValues: string[]): ApiLinkKey {
@@ -324,18 +330,17 @@ export class BaseApiService {
     }
 
     public async buildClientUrl(selfLink: ApiLink, resourceKey: ApiLinkKey = {}): Promise<string> {
-        let resKey = selfLink.resourceKey ?? resourceKey;
+        const fullKey = selfLink.resourceKey ?? resourceKey;
+        const resKey = { ...fullKey };
         const queryKey: string[] = [];
         if (resKey == null || Object.keys(resKey).length === 0) {
             return selfLink.resourceType;
         }
-        if (selfLink.rel.some(rel => rel === "page")) {
-            resKey = { ...resKey };
-            ["item-count", "cursor", "sort"].forEach(key => {
-                if (resKey[key] != null) {
-                    queryKey.push(`${key}=${resKey[key]}`);
-                }
-                delete resKey[key];
+        const queryKeyVariables = Object.keys(resKey).filter(keyVariable => keyVariable.startsWith("?"));
+        if (queryKeyVariables.length > 0) {
+            queryKeyVariables.forEach(queryKeyVariable => {
+                queryKey.push(`${queryKeyVariable.substring(1)}=${resKey[queryKeyVariable]}`);
+                delete resKey[queryKeyVariable];
             });
             if (Object.keys(resKey).length === 0) {
                 if (queryKey.length > 0) {
@@ -345,13 +350,13 @@ export class BaseApiService {
                 }
             }
         }
-        const matchingKeys: Array<{ key: string[], rel: string, link: KeyedApiLink }> = [];
+        const matchingKeys: Array<{ key: string[], queryKey: string[], rel: string, link: KeyedApiLink }> = [];
 
         this.keyedLinkyByResourceType.forEach((keyedLinks, resourceType) => {
             keyedLinks.forEach(keyedLink => {
-                if (checkKeyMatchesKeyedLink(resKey, keyedLink)) {
+                if (checkKeyMatchesKeyedLink(fullKey, keyedLink)) {
                     if (matchingKeys.some(match => {
-                        if (match.key.length !== keyedLink.key.length) {
+                        if (match.key.length !== keyedLink.key.length || match.queryKey.length !== (keyedLink.queryKey?.length ?? 0)) {
                             return false;
                         }
                         return match.key.every(keyVar => keyedLink.key.includes(keyVar));
@@ -361,6 +366,7 @@ export class BaseApiService {
                     }
                     matchingKeys.push({
                         key: [...keyedLink.key].sort(),
+                        queryKey: [...(keyedLink.queryKey ?? [])].sort(),
                         rel: resourceType,
                         link: keyedLink,
                     });
@@ -368,12 +374,20 @@ export class BaseApiService {
             });
         });
 
-        matchingKeys.sort((a, b) => a.key.length - b.key.length);
+        matchingKeys.sort((a, b) => {
+            if (a.key.length !== b.key.length) {
+                // sort by key length (primary)
+                return a.key.length - b.key.length;
+            }
+            // then sort by queryKeyLength
+            return a.queryKey.length - b.queryKey.length;
+        });
 
         if (matchingKeys.length === 0) {
             throw Error("Could not find any matching key!");
         }
-        if (matchingKeys[matchingKeys.length - 1].key.length < Object.keys(resKey).length) {
+        const containsFullMatch = matchingKeys.some(match => checkKeyMatchesKeyedLinkExact(fullKey, match.link));
+        if (!containsFullMatch) {
             throw Error("Could not find a fully matching key to build the client url with!");
         }
 
