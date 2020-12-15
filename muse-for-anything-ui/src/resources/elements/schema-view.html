@@ -5,10 +5,10 @@
         <object-view data.bind="data" schema.bind="schema"></object-view>
     </template>
     <template if.bind="schemaType === 'string'">
-        <p class="m-0">${data != null ? data : ''}</p>
+        <p class="m-0 whitespace-pre-line">${data != null ? data : ''}</p>
     </template>
     <template if.bind="schemaType === 'text'">
-        <p class="m-0 w100">${data != null ? data : '–'}</p>
+        <p class="m-0 w100 whitespace-pre-line">${data != null ? data : '–'}</p>
     </template>
     <template if.bind="schemaType === 'number'">
         <p class="m-0">${data != null ? data : '–'}</p>

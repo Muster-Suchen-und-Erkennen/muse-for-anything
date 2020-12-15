@@ -1,0 +1,11 @@
+<template>
+    <div class="sticky top-0">
+        <p if.bind="isEmpty">Create Sidebar!</p>
+        <div else class="flex flex-col">
+            <a class="sidebar-head" if.bind="navLinks.self != null" href.bind="navLinks.self.clientUrl">
+                &lt; ${navLinks.self.title | t}
+            </a>
+
+        </div>
+    </div>
+</template>

@@ -6,7 +6,7 @@
     </div>
     <div if.bind="schema != null" style="max-width: 48rem; margin-left: auto; margin-right: auto;">
         <form submit.trigger="submit()">
-            <schema-form initial-data.bind="initial-data" schema.bind="schema"
+            <schema-form initial-data.bind="initialData" schema.bind="schema"
                 label.bind="resourceTypeTranslationKey | t" value.bind="data" valid.bind="valid"></schema-form>
         </form>
         <div class="mt-2 px-1 flex flex-wrap gap-1">

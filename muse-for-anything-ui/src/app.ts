@@ -53,6 +53,15 @@ export class App {
                 },
                 nav: false,
             },
+            {
+                route: ["update/:resourceType/at/*path"],
+                name: "create",
+                viewPorts: {
+                    sidebar: { moduleId: PLATFORM.moduleName("main-app/elements/update-sidebar") },
+                    content: { moduleId: PLATFORM.moduleName("main-app/elements/update-content") },
+                },
+                nav: false,
+            },
         ]);
         config.mapUnknownRoutes({ redirect: "home" });
     }

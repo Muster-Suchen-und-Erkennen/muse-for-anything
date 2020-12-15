@@ -1,10 +1,12 @@
 import { bindable, autoinject, observable, bindingMode } from "aurelia-framework";
+import { EventAggregator } from "aurelia-event-aggregator";
 import { Router } from "aurelia-router";
 import { BindingSignaler } from "aurelia-templating-resources";
-import { ApiLink, isApiObject, isNewApiObject } from "rest/api-objects";
+import { ApiLink, isApiObject, isChangedApiObject, isNewApiObject } from "rest/api-objects";
 import { BaseApiService } from "rest/base-api";
 import { NormalizedApiSchema } from "rest/schema-objects";
 import { SchemaService } from "rest/schema-service";
+import { API_RESOURCE_CHANGES_CHANNEL } from "resources/events";
 
 @autoinject
 export class ApiSchemaForm {
@@ -26,13 +28,15 @@ export class ApiSchemaForm {
 
     private bindingSignaler: BindingSignaler;
     private router: Router;
+    private events: EventAggregator;
 
-    constructor(schemaService: SchemaService, basApi: BaseApiService, bindingSingaler: BindingSignaler, router: Router) {
+    constructor(schemaService: SchemaService, basApi: BaseApiService, bindingSingaler: BindingSignaler, router: Router, events: EventAggregator) {
         this.schemaService = schemaService;
         this.api = basApi;
 
         this.bindingSignaler = bindingSingaler;
         this.router = router;
+        this.events = events;
     }
 
     apiLinkChanged(newValue: ApiLink, oldValue) {
@@ -69,7 +73,6 @@ export class ApiSchemaForm {
             console.warn("Tried to submit a form that is not valid!");
             return;
         }
-        console.log(this.valid, this.data, this.apiLink);
         this.submitting = true;
         this.api.submitByApiLink(this.apiLink, this.data, this.abortSignal)
             .then((response) => {
@@ -77,6 +80,9 @@ export class ApiSchemaForm {
                 this.submitError = false;
                 if (isNewApiObject(response.data)) {
                     this.navigateToNewResource(response.data.new);
+                }
+                if (isChangedApiObject(response.data)) {
+                    this.events.publish(API_RESOURCE_CHANGES_CHANNEL, response.data.changed.resourceKey);
                 }
             })
             .catch(() => {

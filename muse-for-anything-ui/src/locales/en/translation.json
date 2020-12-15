@@ -6,6 +6,9 @@
         "explore": "Explore",
         "create": {
             "ont-namespace": "Create New Namespace"
+        },
+        "update": {
+            "ont-namespace": "Edit Namespace"
         }
     },
     "loading": "loading…",

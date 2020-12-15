@@ -128,7 +128,7 @@ export class NavigationLinksService {
                     if (link.rel.some(rel => rel === "update")) {
                         actions.push({
                             ...navLinkBase,
-                            clientUrl: `/edit/${clientUrl}`,
+                            clientUrl: `/update/${link.resourceType}/at/${clientUrl}`,
                             title: `nav.update.${this.getTranslationKeyForLink(link)}`,
                             sortKey: baseSortKey + 20,
                             actionType: "update",

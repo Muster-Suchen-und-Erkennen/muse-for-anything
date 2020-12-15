@@ -43,6 +43,10 @@ export class CreateContent {
         });
     }
 
+    detached() {
+        this.subscription?.dispose();
+    }
+
     determineActivationStrategy() {
         return activationStrategy.invokeLifecycle;
     }

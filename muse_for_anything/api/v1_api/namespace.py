@@ -409,6 +409,63 @@ class NamespaceView(MethodView):
             data=namespace_to_namespace_data(found_namespace),
         )
 
+    @API_V1.arguments(NamespaceSchema(only=("name", "description")))
+    @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    def put(self, namespace_data, namespace: str):  # restore action
+        if not namespace or not namespace.isdigit():
+            abort(
+                HTTPStatus.BAD_REQUEST,
+                message=gettext("The requested namespace id has the wrong format!"),
+            )
+        namespace_id = int(namespace)
+        found_namespace: Optional[Namespace] = Namespace.query.filter(
+            Namespace.id == namespace_id
+        ).first()
+
+        if found_namespace is None:
+            abort(HTTPStatus.NOT_FOUND, message=gettext("Namespace not found."))
+
+        if found_namespace.name != namespace_data.get("name"):
+            existing: bool = (
+                DB.session.query(literal(True))
+                .filter(
+                    Namespace.query.filter(
+                        Namespace.name == namespace_data["name"]
+                    ).exists()
+                )
+                .scalar()
+            )
+            if existing:
+                abort(
+                    400,
+                    f"Name {namespace_data['name']} is already used for another Namespace!",
+                )
+
+        found_namespace.update(**namespace_data)
+        DB.session.add(found_namespace)
+        DB.session.commit()
+
+        namespace_link = namespace_to_namespace_data(found_namespace).self
+        namespace_rsponse_data = namespace_to_api_response(found_namespace)
+
+        return ApiResponse(
+            links=[namespace_link],
+            embedded=[namespace_rsponse_data],
+            data=ChangedApiObject(
+                self=ApiLink(
+                    href=url_for("api-v1.NamespacesView", _external=True),
+                    rel=(
+                        "changed",
+                        "create",
+                        "post",
+                        "ont-namespace",
+                    ),
+                    resource_type="changed",
+                ),
+                changed=namespace_link,
+            ),
+        )
+
     @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
     def post(self, namespace: str):  # restore action
         if not namespace or not namespace.isdigit():

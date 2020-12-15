@@ -28,14 +28,14 @@ export class TextForm {
     @child(".input-valid-check") formInput: Element;
 
     initialDataChanged(newValue, oldValue) {
-        if (newValue !== undefined) {
+        if (newValue !== undefined && !this.dirty) {
             if (this.isNullable) {
                 this.value = newValue;
             } else {
                 this.value = newValue ?? "";
             }
+            this.dirty = false;
         }
-        this.dirty = false;
         if (this.formInput != null) {
             this.formIsValid = (this.formInput as HTMLInputElement).validity.valid;
             this.updateValid();

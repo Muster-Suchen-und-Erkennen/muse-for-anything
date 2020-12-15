@@ -2,7 +2,7 @@
     <require from="./schema-view"></require>
 
     <div class="flex flex-wrap" repeat.for="prop of properties">
-        <p class="mr2 mv0 b">
+        <p class="mr-2 font-semibold">
             ${prop.propertyName}:
         </p>
         <schema-view data.bind="data[prop.propertyName]" schema.bind="prop.propertySchema"></schema-view>
