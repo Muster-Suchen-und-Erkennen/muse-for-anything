@@ -34,6 +34,7 @@ from .namespace_helpers import (
     namespace_to_namespace_data,
     namespace_to_api_response,
     action_links_for_namespace,
+    nav_links_for_namespace,
     query_params_to_api_key,
 )
 
@@ -305,6 +306,7 @@ class NamespaceView(MethodView):
                         "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
                     ),
                 ),
+                *nav_links_for_namespace(found_namespace),
                 *action_links_for_namespace(found_namespace),
             ],
             data=namespace_to_namespace_data(found_namespace),

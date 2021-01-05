@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 import marshmallow as ma
 from marshmallow.validate import Length
 
@@ -53,6 +54,26 @@ class NamespaceData(BaseApiObject):
     created_on: datetime
     updated_on: datetime
     deleted_on: datetime
+
+
+class ObjectTypeSchema(ChangesSchemaMixin, ApiObjectSchema):
+    name = ma.fields.String(
+        allow_none=False, dump_only=True, validate=Length(1, MAX_STRING_LENGTH)
+    )
+    description = ma.fields.String(allow_none=False, dump_only=True)
+    version = ma.fields.Integer(allow_none=False, dump_only=True)
+    schema = ma.fields.Raw(allow_none=False, dump_only=True)
+
+
+@dataclass
+class ObjectTypeData(BaseApiObject):
+    name: str
+    description: str
+    created_on: datetime
+    updated_on: datetime
+    deleted_on: datetime
+    version: int
+    schema: Any
 
 
 __all__.extend(get_all_classes_of_module(__name__, MaBaseSchema))

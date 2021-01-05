@@ -1,5 +1,6 @@
 """Module containing ontology object table definitions."""
 
+from typing import Any
 from sqlalchemy.sql.schema import ForeignKey, Column, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declared_attr
@@ -23,7 +24,7 @@ class OntologyObjectType(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
 
     namespace_id: Column = DB.Column(DB.Integer, ForeignKey(Namespace.id), nullable=False)
     current_version_id: Column = DB.Column(
-        DB.Integer, ForeignKey("TypeVersion.id"), nullable=False
+        DB.Integer, ForeignKey("TypeVersion.id"), nullable=True
     )
     is_toplevel_type: Column = DB.Column(DB.Boolean, nullable=False)
 
@@ -47,6 +48,18 @@ class OntologyObjectType(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
         lazy="select",
         back_populates="ontology_type",
     )
+
+    @property
+    def version(self) -> int:
+        if self.current_version_id is None:
+            return 0
+        return self.current_version.version
+
+    @property
+    def schema(self) -> Any:
+        if self.current_version_id is None:
+            return None
+        return self.current_version.data
 
 
 class OntologyObjectTypeVersion(MODEL, IdMixin, CreateDeleteMixin):
@@ -97,7 +110,7 @@ class OntologyObject(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
         DB.Integer, ForeignKey(OntologyObjectType.id), nullable=False
     )
     current_version_id: Column = DB.Column(
-        DB.Integer, ForeignKey("ObjectVersion.id"), nullable=False
+        DB.Integer, ForeignKey("ObjectVersion.id"), nullable=True
     )
 
     # relationships

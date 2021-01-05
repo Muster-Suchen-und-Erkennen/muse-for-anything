@@ -1,10 +1,13 @@
 import { bindable, bindingMode, children, child, observable } from "aurelia-framework";
 import { NormalizedApiSchema, PropertyDescription } from "rest/schema-objects";
+import { SchemaValueObserver } from "./schema-value-observer";
 
 export class ObjectForm {
+    @bindable key: string;
     @bindable label: string;
     @bindable initialData: any;
     @bindable schema: NormalizedApiSchema;
+    @bindable debug: boolean = false;
     @bindable({ defaultBindingMode: bindingMode.fromView }) value: any = {};
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
 
@@ -13,6 +16,15 @@ export class ObjectForm {
 
     invalidProps: Set<string> = new Set();
     validProps: Set<string> = new Set();
+
+    valueObserver: SchemaValueObserver = {
+        onValueChanged: (key, newValue, oldValue) => {
+            this.propChanged(key, newValue);
+        },
+        onValidityChanged: (key, newValue, oldValue) => {
+            this.propValidityChanged(key, newValue);
+        },
+    };
 
     initialDataChanged(newValue, oldValue) {
         this.reloadProperties();
@@ -41,26 +53,23 @@ export class ObjectForm {
         this.required = this.schema.normalized.required;
     }
 
-    propChanged(propertyName, event) {
-        if (event.detail == null) {
+    propChanged(key: string, newValue) {
+        if (this.value[key] === newValue) {
             return;
         }
         this.value = {
             ...this.value,
-            [propertyName]: event.detail?.newValue,
+            [key]: newValue,
         };
     }
 
-    propValidityChanged(propertyName, event) {
-        if (event.detail == null) {
-            return;
-        }
-        if (event.detail.newValue) {
-            this.invalidProps.delete(propertyName);
-            this.validProps.add(propertyName);
+    propValidityChanged(key: string, newValue) {
+        if (newValue) {
+            this.invalidProps.delete(key);
+            this.validProps.add(key);
         } else {
-            this.invalidProps.add(propertyName);
-            this.validProps.delete(propertyName);
+            this.invalidProps.add(key);
+            this.validProps.delete(key);
         }
         const knownProps = this.invalidProps.size + this.validProps.size;
         if (knownProps < this.properties.length) {

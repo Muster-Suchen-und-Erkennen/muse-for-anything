@@ -34,13 +34,13 @@ export class BaseApiService {
     private keyedLinkToStringKey(keyedLink: KeyedApiLink): string {
         const key = [...keyedLink.key];
         key.sort(); // sort keys consistently
-        return key.join("/");
+        return `${keyedLink.resourceType}/${key.join("/")}`;
     }
 
-    private linkKeyToStringKey(linkKey: ApiLinkKey): string {
-        const key = Object.keys(linkKey);
+    private linkKeyToStringKey(linkKey: ApiLinkKey, resourceType: string): string {
+        const key = Object.keys(linkKey).filter(k => !k.startsWith("?"));
         key.sort(); // sort keys consistently
-        return key.join("/");
+        return `${resourceType}/${key.join("/")}`;
     }
 
     private async cacheResults(request: RequestInfo, responseData: ApiResponse<unknown>) {
@@ -257,14 +257,14 @@ export class BaseApiService {
         return link;
     }
 
-    private async resolveApiLinkKey(apiLinkKey: ApiLinkKey, queryParams?: ApiLinkKey): Promise<ApiLink> {
+    private async resolveApiLinkKey(apiLinkKey: ApiLinkKey, resourceType: string, queryParams?: ApiLinkKey): Promise<ApiLink> {
         const key: ApiLinkKey = { ...apiLinkKey };
         if (queryParams != null) {
             Object.keys(queryParams).forEach(queryKeyVariable => {
                 key[`?${queryKeyVariable}`] = queryParams[queryKeyVariable];
             });
         }
-        const stringKey = this.linkKeyToStringKey(key);
+        const stringKey = this.linkKeyToStringKey(key, resourceType);
         if (!this.keyedLinksByKey.has(stringKey)) {
             throw Error(`No keyed link found for the api link key ${key}!`);
         }
@@ -287,6 +287,7 @@ export class BaseApiService {
         return newKey;
     }
 
+    // eslint-disable-next-line complexity
     private async reconstructApiLinkKey(steps: Array<{ type: "rel" | "key", value: string }>, initialKey: ApiLinkKey): Promise<ApiLinkKey> {
         if (steps.length === 0) {
             throw Error("Empty client url.");
@@ -303,6 +304,11 @@ export class BaseApiService {
             keyValues.push(steps[i].value);
         }
         if (keyValues.length === 0) {
+            const relevantLinks = this.keyedLinkyByResourceType.get(resourceType) ?? [];
+            const link = relevantLinks.find(link => checkKeyMatchesKeyedLinkExact(initialKey, link));
+            if (link != null) {
+                return initialKey;
+            }
             throw Error("Malformed client url. A rel must be followed by at least one key value!");
         }
         const nextSteps = steps.slice(1 + keyValues.length);
@@ -395,15 +401,26 @@ export class BaseApiService {
 
         const url: string[] = [];
 
+        let urlResourceType: string = null;
+
         matchingKeys.forEach(match => {
             if (match.key.every(keyVar => usedKeyVariables.has(keyVar))) {
+                if (selfLink.resourceType !== urlResourceType && selfLink.resourceType === match.rel) {
+                    // introduces bug if this link is not the last keyed link to consider
+                    url.push(match.rel);
+                    urlResourceType = match.rel; // workaround fix (together with below)
+                }
                 return;
             }
-            url.push(match.rel);
+            if (urlResourceType !== match.rel) { // FIXME workaround for bug introduced above
+                url.push(match.rel);
+            }
+            urlResourceType = match.rel;
             match.key.forEach(keyVar => {
                 if (usedKeyVariables.has(keyVar)) {
                     return; // only append new keys
                 }
+                usedKeyVariables.add(keyVar);
                 url.push(`:${resKey[keyVar]}`);
             });
             // put part in cache for later use
@@ -430,6 +447,7 @@ export class BaseApiService {
             return this.clientUrlToApiLink.get(clientUrl);
         }
         let includesKey = false;
+        let resourceType: string = null;
         const steps: Array<{ type: "rel" | "key", value: string }> = clientUrl.split("/")
             .filter(step => step != null && step.length > 0)
             .map(step => {
@@ -437,6 +455,8 @@ export class BaseApiService {
                     includesKey = true;
                     return { type: "key", value: step.substring(1) };
                 }
+                // set last known rel as resourceType
+                resourceType = step;
                 return { type: "rel", value: step };
             });
         if (!includesKey) {
@@ -458,7 +478,7 @@ export class BaseApiService {
         }
         const linkKey = await this.reconstructApiLinkKey(steps, {});
 
-        return await this.resolveApiLinkKey(linkKey, queryParams);
+        return await this.resolveApiLinkKey(linkKey, resourceType, queryParams);
     }
 
     private async prefetchRelsRecursive(rel: string | string[] = "api", root?: ApiResponse<unknown>, ignoreCache: boolean = true) {

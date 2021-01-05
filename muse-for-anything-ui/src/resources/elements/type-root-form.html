@@ -1,0 +1,35 @@
+<template>
+    <require from="./validity-indicator"></require>
+    <require from="./schema-form"></require>
+
+    <div class="flex flex-col">
+        <div class="w-full flex items-center">
+            <p class="font-semibold" for="">${label}</p>
+            <validity-indicator class="ml-1" valid.bind="valid"></validity-indicator>
+        </div>
+        <!-- FIXME add translations -->
+        <div class="flex flex-wrap" repeat.for="prop of extraProperties">
+            ${prop.propertyName}
+            <schema-form class="w-full properties" value-observer.bind="propertyValueObserver"
+                key.bind="prop.propertyName" label.bind="prop.propertyName"
+                initial-data.bind="initialData[prop.propertyName]" schema.bind="prop.propertySchema"
+                required.bind="required != null && required.has(prop.propertyName)" debug.bind="debug">
+            </schema-form>
+        </div>
+        <div>
+            <p>Root Type</p>
+            ${value.definitions["root"]|json}
+            <schema-form class="w-full properties" value-observer.bind="typeValueObserver" key.bind="'root'"
+                label.bind="'root'" initial-data.bind="initialData.definitions['root']" schema.bind="typeSchema"
+                required.bind="true" debug.bind="debug">
+            </schema-form>
+        </div>
+        <div repeat.for="typeId of containedTypes">
+            ${value.definitions[typeId]|json}
+            <schema-form class="w-full properties" value-observer.bind="typeValueObserver" key.bind="typeId"
+                label.bind="typeId" initial-data.bind="initialData.definitions[typeId]" schema.bind="typeSchema"
+                required.bind="true" debug.bind="debug">
+            </schema-form>
+        </div>
+    </div>
+</template>

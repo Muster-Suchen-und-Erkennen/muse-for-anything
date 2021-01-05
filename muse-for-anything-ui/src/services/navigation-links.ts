@@ -17,6 +17,7 @@ export interface NavLinks {
     self?: NavigationLink;
     up?: NavigationLink;
     actions?: NavigationLink[];
+    nav?: NavigationLink[];
 }
 
 const ACTION_RELS: Set<string> = new Set<string>(["create", "update", "delete", "restore"]);
@@ -44,6 +45,12 @@ export class NavigationLinksService {
         if (navLinks?.actions?.length === 0) {
             delete navLinks.actions;
         }
+        if (navLinks?.nav?.length >= 0) {
+            navLinks.nav = navLinks.nav.sort((a, b) => a.sortKey - b.sortKey);
+        }
+        if (navLinks?.nav?.length === 0) {
+            delete navLinks.nav;
+        }
         this.mainApiResponse = navLinks;
         this.updateNavLinks();
     }
@@ -69,7 +76,9 @@ export class NavigationLinksService {
     public setMainApiResponse(response: ApiResponse<unknown>) {
         const navLinks: NavLinks = {};
         const actions: NavigationLink[] = [];
+        const navigations: NavigationLink[] = [];
         navLinks.actions = actions;
+        navLinks.nav = navigations;
 
         if (response == null) {
             this.updateNavLinksFromMainResponse(navLinks);
@@ -152,6 +161,17 @@ export class NavigationLinksService {
                             actionType: "restore",
                         });
                     }
+                }));
+            }
+            // action links
+            if (link.rel.some(rel => rel === "nav")) {
+                promises.push(this.api.buildClientUrl(link).then(clientUrl => {
+                    navigations.push({
+                        apiLink: link,
+                        clientUrl: `/explore/${clientUrl}`,
+                        title: `nav.${this.getTranslationKeyForLink(link)}`,
+                        sortKey: 10, // TODO better sort keys
+                    });
                 }));
             }
         });

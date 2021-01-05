@@ -29,6 +29,25 @@ def namespace_to_namespace_data(namespace: Namespace) -> NamespaceData:
     )
 
 
+def nav_links_for_namespace(namespace: Namespace) -> List[ApiLink]:
+    nav_links: List[ApiLink] = [
+        ApiLink(
+            href=url_for(
+                "api-v1.TypesView",
+                namespace=str(namespace.id),
+                _external=True,
+            ),
+            rel=("nav", "collection", "page", "first"),
+            resource_type="ont-type",
+            resource_key=namespace_to_key(namespace),
+            schema=url_for(
+                "api-v1.ApiSchemaView", schema_id="OntologyType", _external=True
+            ),
+        ),
+    ]
+    return nav_links
+
+
 def action_links_for_namespace(namespace: Namespace) -> List[ApiLink]:
     actions: List[ApiLink] = [
         ApiLink(
@@ -98,6 +117,7 @@ def namespace_to_api_response(namespace: Namespace) -> ApiResponse:
                     "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
                 ),
             ),
+            *nav_links_for_namespace(namespace),
             *action_links_for_namespace(namespace),
         ),
         data=raw_namespace,

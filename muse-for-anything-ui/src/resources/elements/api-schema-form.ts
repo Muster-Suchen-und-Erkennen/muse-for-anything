@@ -12,6 +12,7 @@ import { API_RESOURCE_CHANGES_CHANNEL } from "resources/events";
 export class ApiSchemaForm {
     @bindable initialData;
     @bindable apiLink: ApiLink;
+    @bindable debug: boolean = false;
     @bindable({ defaultBindingMode: bindingMode.fromView }) data: any;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) submitting: boolean = false;
@@ -57,6 +58,9 @@ export class ApiSchemaForm {
     }
 
     schemaChanged(newValue, oldValue) {
+        if (this.debug) {
+            console.info("New Schema", newValue);
+        }
         setTimeout(() => this.bindingSignaler.signal("revalidate"), 50);
         setTimeout(() => this.bindingSignaler.signal("update-values"), 50);
     }

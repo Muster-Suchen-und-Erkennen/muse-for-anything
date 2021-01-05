@@ -60,10 +60,10 @@ export interface ApiLink extends ApiLinkBase {
 
 export function matchesLinkRel(link: ApiLinkBase, rel: string | string[]): boolean {
     if (typeof rel === "string") {
-        return link.rel.some(linkRel => linkRel === rel);
+        return link.resourceType === rel || link.rel.some(linkRel => linkRel === rel);
     } else {
         return rel.every(r => {
-            return link.rel.some(linkRel => linkRel === r);
+            return link.resourceType === r || link.rel.some(linkRel => linkRel === r);
         });
     }
 }
@@ -115,7 +115,7 @@ export function applyKeyToLinkedKey(keyedLink: KeyedApiLink, key: ApiLinkKey): A
         href: url,
         rel: keyedLink.rel,
         resourceType: keyedLink.resourceType,
-        resourceKey: {...key},
+        resourceKey: { ...key },
     };
     if (keyedLink.doc != null) {
         apiLink.doc = keyedLink.doc;

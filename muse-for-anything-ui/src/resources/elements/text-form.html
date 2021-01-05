@@ -3,19 +3,19 @@
 
     <div class="flex flex-col">
         <div class="w-full flex items-center">
-            <label class="font-semibold" for="">${label} ${test | json}</label>
+            <label class="font-semibold" for.bind="key+slug">${label} ${test | json}</label>
             <validity-indicator class="ml-1" valid.bind="valid"></validity-indicator>
         </div>
         <template if.bind="isSingelLine">
             <input
                 class="input-valid-check border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1 ${dirty ? 'dirty' : ''} ${valid ? '' : 'error'}"
-                type="text" value.bind="value & throttle" maxlength.bind="maxLength & optional"
+                name.bind="key+slug" type="text" value.bind="value & throttle" maxlength.bind="maxLength & optional"
                 minlength.bind="minLength & optional" pattern.bind="pattern & optional"
                 required.bind="required && !isNullable && minLength != null & empty">
         </template>
         <template if.bind="!isSingelLine">
             <textarea class="input-valid-check border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1 resize"
-                name="" id="" value.bind="value & throttle" maxlength.bind="maxLength & optional"
+                name.bind="key+slug" id="" value.bind="value & throttle" maxlength.bind="maxLength & optional"
                 minlength.bind="minLength & optional" pattern.bind="pattern & optional"
                 required.bind="required && !isNullable && minLength != null & empty"></textarea>
         </template>

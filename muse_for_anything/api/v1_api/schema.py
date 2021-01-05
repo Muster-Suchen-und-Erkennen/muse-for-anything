@@ -1,6 +1,6 @@
 """Module containing the schema API of the v1 API."""
 
-from typing import Any, Dict, Optional, cast
+from typing import Any, Callable, Dict, List, Optional, cast
 from flask import request, jsonify, Response
 from flask.helpers import url_for
 from flask.views import MethodView
@@ -13,11 +13,8 @@ from http import HTTPStatus
 from .root import API_V1
 from ..util import JSON_SCHEMA
 from ..base_models import ApiLink, ApiResponse, BaseApiObject, DynamicApiResponseSchema
-from .models.ontology import NamespaceSchema
-from .models.schema import (
-    SchemaApiObject,
-    SchemaApiObjectSchema,
-)
+from .models.ontology import NamespaceSchema, ObjectTypeSchema
+from .models.schema import SchemaApiObject, SchemaApiObjectSchema, TYPE_SCHEMA
 
 
 def create_schema_from_model(
@@ -50,8 +47,30 @@ SCHEMAS: Dict[str, Dict[str, Any]] = {
             "propertyOrder": {"name": 10, "description": 20},
             "hiddenProperties": ["createdOn", "updatedOn", "deletedOn"],
         },
-    )
+    ),
+    "OntologyType": create_schema_from_model(
+        ObjectTypeSchema(exclude=("self",)),
+        ObjectTypeSchema={
+            "propertyOrder": {"name": 10, "description": 20, "version": 30, "schema": 40},
+            "hiddenProperties": ["createdOn", "updatedOn", "deletedOn"],
+        },
+    ),
+    "TypeSchema": TYPE_SCHEMA,
 }
+
+
+def ontology_type_fixer(schema: Dict[str, Any]) -> Dict[str, Any]:
+    schema["definitions"]["ObjectTypeSchema"]["properties"]["schema"] = {
+        "$ref": f'{url_for("api-v1.ApiSchemaView", schema_id="TypeSchema", _external=True)}#'
+    }
+    return schema
+
+
+SCHEMA_FIXERS: Dict[str, Callable[[Dict[str, Any]], Dict[str, Any]]] = {
+    "OntologyType": ontology_type_fixer,
+}
+
+RELATED_SCHEMA: Dict[str, List[str]] = {"OntologyType": ["TypeSchema"]}
 
 
 JSON_MIMETYPE = "application/json"
@@ -113,6 +132,10 @@ class ApiSchemaView(MethodView):
         if schema is None:
             abort(HTTPStatus.NOT_FOUND, gettext("Schema not found."))
 
+        fixer = SCHEMA_FIXERS.get(schema_id)
+        if fixer:
+            schema = fixer(schema)
+
         match = request.accept_mimetypes.best_match(
             (JSON_MIMETYPE, JSON_SCHEMA_MIMETYPE), default=JSON_MIMETYPE
         )
@@ -123,15 +146,32 @@ class ApiSchemaView(MethodView):
             response.mimetype = JSON_SCHEMA_MIMETYPE
             return response
 
+        related_schemas = RELATED_SCHEMA.get(schema_id, [])
+
+        related_schema_links = []
+
+        for related_schema_id in related_schemas:
+            related_schema_links.append(
+                ApiLink(
+                    href=url_for(
+                        "api-v1.ApiSchemaView",
+                        schema_id=related_schema_id,
+                        _external=True,
+                    ),
+                    rel=tuple(),
+                    resource_type="schema",
+                )
+            )
+
         # return full api response otherwise
         return ApiResponse(
-            links=[],
+            links=related_schema_links,
             data=SchemaApiObject(
                 self=ApiLink(
                     href=url_for(
                         "api-v1.ApiSchemaView", schema_id=schema_id, _external=True
                     ),
-                    rel=("schema",),
+                    rel=tuple(),
                     resource_type="schema",
                 ),
                 schema=schema,

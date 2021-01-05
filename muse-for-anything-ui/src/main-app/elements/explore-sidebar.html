@@ -24,6 +24,14 @@
                 </action-link>
             </template>
 
+            <!-- Navigations -->
+            <template if.bind="navLinks.nav != null && navLinks.nav.length > 0">
+                <h4 class="sidebar-item mt-9 mb-1" t="nav.navigations"></h4>
+                <a class="sidebar-link" repeat.for="nav of navLinks.nav" href.bind="nav.clientUrl">
+                    ${nav.title | t}
+                </a>
+            </template>
+
         </div>
     </div>
 </template>

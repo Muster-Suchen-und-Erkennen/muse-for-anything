@@ -1,4 +1,3 @@
-import { error } from "console";
 import { ApiObject, ApiResponse, isApiObject, isApiResponse } from "./api-objects";
 import { SchemaService } from "./schema-service";
 
@@ -7,14 +6,14 @@ interface JsonSchema {
     type?: "object" | "array" | "string" | "number" | "integer" | "boolean" | "null" | Array<"object" | "array" | "string" | "number" | "integer" | "boolean" | "null">;
     // combining schemas
     $ref?: string;
-    $allOf?: JsonSchema[];
-    $anyOf?: JsonSchema[];
-    $oneOf?: JsonSchema[];
-    $not?: JsonSchema;
+    allOf?: JsonSchema[];
+    anyOf?: JsonSchema[];
+    oneOf?: JsonSchema[];
+    not?: JsonSchema;
     // if
-    $if?: JsonSchema;
-    $then?: JsonSchema;
-    $else?: JsonSchema;
+    if?: JsonSchema;
+    then?: JsonSchema;
+    else?: JsonSchema;
     // valid everywhere
     enum?: Array<string | number | boolean | null>;
     const?: string | number | boolean | null;
@@ -112,6 +111,8 @@ export class ApiSchema {
     private apiResponse?: ApiResponse<SchemaApiObject>;
     private schemaRoot: JsonSchemaRoot;
 
+    private hitCount: number = 0;
+
     private resolvedRoot: JsonSchema;
     private resolvedSchemas: Map<string, JsonSchema> = new Map();
 
@@ -127,47 +128,47 @@ export class ApiSchema {
     }
 
     private async resolveGenericSchemaKeywords(toResolve: JsonSchema, resolved: JsonSchema) {
-        if (toResolve.$allOf != null) {
-            resolved.$allOf = [];
+        if (toResolve.allOf != null) {
+            resolved.allOf = [];
             const promises = [];
-            toResolve.$allOf.forEach(innerSchema => {
+            toResolve.allOf.forEach(innerSchema => {
                 const resolvedInnerSchema = this.resolveSchemaInstance(innerSchema);
                 promises.push(resolvedInnerSchema);
             });
             const results = await Promise.all(promises);
-            results.forEach(res => resolved.$allOf.push(res));
+            results.forEach(res => resolved.allOf.push(res));
         }
-        if (toResolve.$anyOf != null) {
-            resolved.$anyOf = [];
+        if (toResolve.anyOf != null) {
+            resolved.anyOf = [];
             const promises = [];
-            toResolve.$anyOf.forEach(innerSchema => {
+            toResolve.anyOf.forEach(innerSchema => {
                 const resolvedInnerSchema = this.resolveSchemaInstance(innerSchema);
                 promises.push(resolvedInnerSchema);
             });
             const results = await Promise.all(promises);
-            results.forEach(res => resolved.$anyOf.push(res));
+            results.forEach(res => resolved.anyOf.push(res));
         }
-        if (toResolve.$oneOf != null) {
-            resolved.$oneOf = [];
+        if (toResolve.oneOf != null) {
+            resolved.oneOf = [];
             const promises = [];
-            toResolve.$oneOf.forEach(innerSchema => {
+            toResolve.oneOf.forEach(innerSchema => {
                 const resolvedInnerSchema = this.resolveSchemaInstance(innerSchema);
                 promises.push(resolvedInnerSchema);
             });
             const results = await Promise.all(promises);
-            results.forEach(res => resolved.$oneOf.push(res));
+            results.forEach(res => resolved.oneOf.push(res));
         }
-        if (toResolve.$not != null) {
-            resolved.$not = await this.resolveSchemaInstance(toResolve.$not);
+        if (toResolve.not != null) {
+            resolved.not = await this.resolveSchemaInstance(toResolve.not);
         }
-        if (toResolve.$if != null) {
-            resolved.$if = await this.resolveSchemaInstance(toResolve.$if);
+        if (toResolve.if != null) {
+            resolved.if = await this.resolveSchemaInstance(toResolve.if);
         }
-        if (toResolve.$then != null) {
-            resolved.$then = await this.resolveSchemaInstance(toResolve.$then);
+        if (toResolve.then != null) {
+            resolved.then = await this.resolveSchemaInstance(toResolve.then);
         }
-        if (toResolve.$else != null) {
-            resolved.$else = await this.resolveSchemaInstance(toResolve.$else);
+        if (toResolve.else != null) {
+            resolved.else = await this.resolveSchemaInstance(toResolve.else);
         }
     }
 
@@ -211,19 +212,45 @@ export class ApiSchema {
         }
     }
 
-    private async resolveSchemaInstance(toResolve: JsonSchema, resolvedSchema?: JsonSchema): Promise<JsonSchema> {
+    private async resolveSchemaId(ref: string): Promise<string> {
+        let refId: string = "#";
+        if (ref != null && ref !== "") {
+            if (ref.startsWith("#/definitions/")) {
+                const schemaName = ref.substring(14);
+                refId = this.schemaRoot.definitions?.[schemaName]?.$id ?? ref;
+            }
+        }
+        if (!refId.startsWith("#")) {
+            return refId; // assume an id not starting with # to be a complete url
+        }
+        let baseId: string = this.schemaRoot?.$id;
+        if (baseId == null) {
+            baseId = this.apiResponse?.data?.self?.href;
+        }
+        if (baseId == null) {
+            throw Error(`Cannot compute id for Schema ${ref}`);
+        }
+        const baseUrl = this.schemaService.getUrlWithoutFragment(baseId);
+        return baseUrl + refId;
+    }
+
+    private async resolveSchemaInstance(toResolve: JsonSchema, resolvedSchema?: JsonSchema, depth: number = 0): Promise<JsonSchema> {
         const resolved: JsonSchema = resolvedSchema ?? {};
         if (toResolve == null) {
             return resolved; // empty schema
         }
         const originalRef = resolved.originRef;
+        const originalId = resolved.originId;
         // if schema is reference then only resolve reference
         if (toResolve.$ref != null) {
-            const nestedResolved = await this.resolveSchema(toResolve.$ref);
+            const nestedResolved = await this.resolveSchema(toResolve.$ref, depth + 1);
             // copy all keys over
             Object.assign(resolved, nestedResolved);
             if (originalRef != null) {
                 resolved.originRef = originalRef;
+            }
+            if (originalId != null) {
+                resolved.originId = originalId;
             }
             return resolved;
         }
@@ -235,10 +262,25 @@ export class ApiSchema {
         if (originalRef != null) {
             resolved.originRef = originalRef;
         }
+        if (originalId != null) {
+            resolved.originId = originalId;
+        }
         return resolved;
     }
 
-    public async resolveSchema(ref?: string): Promise<JsonSchema> {
+    public async resolveSchema(ref?: string, depth: number = 0): Promise<JsonSchema> {
+        if (ref === "#") {
+            ref = null;
+        }
+        if (this.hitCount > 100) { // FIXME remove emergency recursion stop later if possible
+            console.trace(ref);
+            throw Error("Too many schemas requested!");
+        }
+        this.hitCount++;
+        if (depth > 100) { // FIXME remove emergency recursion stop later if possible
+            console.trace(ref);
+            throw Error("Schemas to deeply nested!");
+        }
         let toResolve: JsonSchema;
         // generate object instance here to avoid infinite recursions
         const resolved: JsonSchema = {
@@ -246,6 +288,14 @@ export class ApiSchema {
             originSchema: this,
             // store the original ref used to resolve this schema
             originRef: ref ?? "#",
+            originId: this.schemaRoot?.$id,
+            toJSON: function () { // avoid recursive json
+                if (this.originRef?.startsWith("#/definitions/")) {
+                    const schemaName = this.originRef.substring(14);
+                    return this.originSchema.schemaRoot.definitions?.[schemaName];
+                }
+                return this.originSchema.schemaRoot;
+            },
         };
         if (ref == null || ref === "") {
             if (this.resolvedRoot != null) {
@@ -267,10 +317,16 @@ export class ApiSchema {
         } else {
             // ref does not point to the root or a contained schema
             const schema = await this.schemaService.getSchema(ref);
+            if (ref === this.schemaRoot.$id) {
+                console.trace("Recursive Fetch?")
+                debugger // FIXME remove later
+            }
             const fragment = this.schemaService.getSchemaFragmentFromUrl(ref);
-            return await schema.resolveSchema(fragment);
+            return await schema.resolveSchema(fragment, depth + 1);
         }
-        return await this.resolveSchemaInstance(toResolve, resolved);
+        const resolvedSchema = await this.resolveSchemaInstance(toResolve, resolved, depth);
+        resolvedSchema.$id = await this.resolveSchemaId(ref);
+        return resolvedSchema;
     }
 
     public async getNormalizedApiSchema(ref?: string): Promise<NormalizedApiSchema> {
@@ -326,11 +382,13 @@ export interface NormalizedJsonSchema {
     maximum?: number;
     exclusiveMinimum?: number;
     exclusiveMaximum?: number;
+    // extra attributes
+    oneOf?: NormalizedApiSchema[];
     [prop: string]: any;
 }
 
-const IGNORED_KEYS = new Set(["type"]);
-const INCOMPATIBLE_KEYS = new Set(["$ref", "$anyOf", "$not", "$if", "$then", "$else", "dependencies"]);
+const IGNORED_KEYS = new Set(["type", "toJSON"]);
+const INCOMPATIBLE_KEYS = new Set(["$ref", "anyOf", "not", "if", "then", "else", "dependencies"]);
 const TYPE_SPECIFIC_KEYS = new Set([
     // object
     "properties",
@@ -375,9 +433,10 @@ interface NormalizationContext {
     tupleItems?: JsonSchema[][];
     contains?: JsonSchema[];
     additionalItems?: Array<JsonSchema | false>;
+    oneOf?: JsonSchema[][];
 }
 
-const CONTEXT_COLLECT_KEYS = new Set(["properties", "patternProperties", "additionalProperties", "items", "tupleItems", "contains", "additionalItems"]);
+const CONTEXT_COLLECT_KEYS = new Set(["properties", "patternProperties", "additionalProperties", "items", "tupleItems", "contains", "additionalItems", "oneOf"]);
 
 function typeIsCompatible(typeSet: Set<string>, newType: string) {
     if (typeSet == null || typeSet.size === 0) {
@@ -426,27 +485,27 @@ function mergeMaxProperty(key, normalized: NormalizedJsonSchema, toNormalize: Js
 }
 
 // eslint-disable-next-line complexity
-function mergeObjectProperties(key, normalized: NormalizedJsonSchema, toNormalize: ObjectJsonSchema) {
+function mergeObjectProperties(key, normalized: NormalizedJsonSchema, toNormalize: ObjectJsonSchema): boolean {
     // type of toNormalize is not enforced here!
     if (key === "required") {
         const req = normalized.required ?? new Set<string>();
         toNormalize.required.forEach(r => req.add(r));
         normalized.required = req;
-        return;
+        return true;
     }
     if (key === "propertyNames" && toNormalize.propertyNames?.pattern != null) {
         const propNames = normalized.propertyNames ?? { pattern: [] };
         propNames.pattern.push(RegExp(toNormalize.propertyNames.pattern));
         normalized.propertyNames = propNames;
-        return;
+        return true;
     }
     if (key === "minProperties") {
         mergeMinProperty(key, normalized, toNormalize);
-        return;
+        return true;
     }
     if (key === "maxProperties") {
         mergeMaxProperty(key, normalized, toNormalize);
-        return;
+        return true;
     }
     if (key === "propertyOrder") {
         const orderMap = normalized.propertyOrder ?? new Map<string, number>();
@@ -454,112 +513,118 @@ function mergeObjectProperties(key, normalized: NormalizedJsonSchema, toNormaliz
             orderMap.set(propName, toNormalize.propertyOrder[propName]);
         });
         normalized.propertyOrder = orderMap;
-        return;
+        return true;
     }
     if (key === "hiddenProperties") {
         const hidden = normalized.hiddenProperties ?? new Set<string>();
         toNormalize.hiddenProperties.forEach(r => hidden.add(r));
         normalized.hiddenProperties = hidden;
-        return;
+        return true;
     }
+    return false;
 }
 
-function mergeArrayProperties(key, normalized: NormalizedJsonSchema, toNormalize: ArrayBaseJsonSchema) {
+function mergeArrayProperties(key, normalized: NormalizedJsonSchema, toNormalize: ArrayBaseJsonSchema): boolean {
     if (key === "minItems") {
         mergeMinProperty(key, normalized, toNormalize);
-        return;
+        return true;
     }
     if (key === "maxItems") {
         mergeMaxProperty(key, normalized, toNormalize);
-        return;
+        return true;
     }
     if (key === "uniqueItems") {
         normalized.uniqueItems = toNormalize.uniqueItems || Boolean(normalized.uniqueItems);
+        return true;
     }
+    return false;
 }
 
-function mergeStringProperties(key, normalized: NormalizedJsonSchema, toNormalize: StringJsonSchema) {
+function mergeStringProperties(key, normalized: NormalizedJsonSchema, toNormalize: StringJsonSchema): boolean {
     if (key === "minLength") {
         mergeMinProperty(key, normalized, toNormalize);
-        return;
+        return true;
     }
     if (key === "maxLength") {
         mergeMaxProperty(key, normalized, toNormalize);
-        return;
+        return true;
     }
     if (key === "pattern") {
         const patterns = normalized.pattern ?? [];
         patterns.push(RegExp(toNormalize.pattern));
         normalized.pattern = patterns;
-        return;
+        return true;
     }
     if (key === "format" || key === "contentMediaType" || key === "contentEncoding") {
         if (normalized[key] == null) {
             normalized[key] = toNormalize[key];
-            return;
+            return true;
         }
         if (normalized[key] !== toNormalize[key]) {
             throw Error(`Ìncompatible string types. Attribute ${key} has incompatible values "${normalized[key]}" "${toNormalize[key]}"!`);
         }
         // properties match, nothing to do.
-        return;
+        return true;
     }
+    return false;
 }
 
 // eslint-disable-next-line complexity
-function mergeNumericProperties(key, normalized: NormalizedJsonSchema, toNormalize: NumericJsonSchema) {
+function mergeNumericProperties(key, normalized: NormalizedJsonSchema, toNormalize: NumericJsonSchema): boolean {
     if (key === "multipleOf") {
         const multiples = normalized.multipleOf ?? [];
         multiples.push(toNormalize.multipleOf);
         normalized.multipleOf = multiples;
-        return;
+        return true;
     }
     if (key === "minimum") {
         if (normalized.exclusiveMinimum == null) {
             mergeMinProperty(key, normalized, toNormalize);
-            return;
+            return true;
         }
         if (normalized.exclusiveMinimum < toNormalize.minimum) {
             normalized.exclusiveMinimum = null;
             normalized.minimum = toNormalize.minimum;
         }
-        return;
+        return true;
     }
     if (key === "exclusiveMinimum") {
         if (normalized.minimum == null) {
             mergeMinProperty(key, normalized, toNormalize);
-            return;
+            return true;
         }
         if (normalized.minimum <= toNormalize.exclusiveMinimum) {
             normalized.minimum = null;
             normalized.exclusiveMinimum = toNormalize.exclusiveMinimum;
         }
-        return;
+        return true;
     }
     if (key === "maximum") {
         if (normalized.exclusiveMaximum == null) {
             mergeMaxProperty(key, normalized, toNormalize);
-            return;
+            return true;
         }
         if (normalized.exclusiveMaximum > toNormalize.maximum) {
             normalized.exclusiveMaximum = null;
             normalized.maximum = toNormalize.maximum;
         }
-        return;
+        return true;
     }
     if (key === "exclusiveMaximum") {
         if (normalized.maximum == null) {
             mergeMaxProperty(key, normalized, toNormalize);
-            return;
+            return true;
         }
         if (normalized.maximum >= toNormalize.exclusiveMaximum) {
             normalized.maximum = null;
             normalized.exclusiveMaximum = toNormalize.exclusiveMaximum;
         }
-        return;
+        return true;
     }
+    return false;
 }
 
+// eslint-disable-next-line complexity
 function mergeProperties(key, normalized: NormalizedJsonSchema, toNormalize: JsonSchema) {
     if (key === "enum") {
         if (normalized.enum == null || toNormalize.enum.every(entry => normalized.enum.includes(entry))) {
@@ -576,10 +641,15 @@ function mergeProperties(key, normalized: NormalizedJsonSchema, toNormalize: Jso
         }
         throw Error(`Incompatible const ${toNormalize.const} must be part of ${normalized.enum}!`);
     }
-    mergeObjectProperties(key, normalized, toNormalize as ObjectJsonSchema);
-    mergeArrayProperties(key, normalized, toNormalize as ArrayBaseJsonSchema);
-    mergeStringProperties(key, normalized, toNormalize as StringJsonSchema);
-    mergeNumericProperties(key, normalized, toNormalize as NumericJsonSchema);
+    let isKnown: boolean = false;
+    isKnown = mergeObjectProperties(key, normalized, toNormalize as ObjectJsonSchema) || isKnown;
+    isKnown = mergeArrayProperties(key, normalized, toNormalize as ArrayBaseJsonSchema) || isKnown;
+    isKnown = mergeStringProperties(key, normalized, toNormalize as StringJsonSchema) || isKnown;
+    isKnown = mergeNumericProperties(key, normalized, toNormalize as NumericJsonSchema) || isKnown;
+    if (isKnown) {
+        return;
+    }
+    normalized[key] = toNormalize[key];
 }
 
 
@@ -606,7 +676,7 @@ function consolidatePropertiesLike(propertiesLists: Array<{ [prop: string]: Json
             newProps.set(propName, new NormalizedApiSchema(schemas[0]));
             return;
         }
-        newProps.set(propName, new NormalizedApiSchema({ $allOf: schemas }));
+        newProps.set(propName, new NormalizedApiSchema({ allOf: schemas }));
     });
 
     return newProps;
@@ -629,9 +699,28 @@ function consolidateSchemaList(schemas: Array<JsonSchema | false>, allowFalse = 
     if (schemas.length === 1) {
         return new NormalizedApiSchema((schemas as JsonSchema[])[0]);
     }
-    return new NormalizedApiSchema({ $allOf: (schemas as JsonSchema[]) });
+    return new NormalizedApiSchema({ allOf: (schemas as JsonSchema[]) });
 }
 
+
+function consolidateExtraProperties(rootSchema: JsonSchema, normalized: NormalizedJsonSchema, context: NormalizationContext) {
+    if (context.oneOf != null) {
+        if (context.oneOf.length !== 1) {
+            throw Error("Cannot consolidate more than one schema with a 'oneOf' property!");
+        }
+        const oneOf: NormalizedApiSchema[] = [];
+        context.oneOf[0].forEach(schema => {
+            const combined = {
+                allOf: [
+                    rootSchema,
+                    schema,
+                ],
+            };
+            oneOf.push(new NormalizedApiSchema(combined, ["oneOf", "customType"]));
+        });
+        normalized.oneOf = oneOf;
+    }
+}
 
 function consolidateObjectProperties(normalized: NormalizedJsonSchema, context: NormalizationContext) {
     if (context.properties != null) {
@@ -695,9 +784,13 @@ export class NormalizedApiSchema {
 
     private resolvedSchema: JsonSchema;
     private normalizedSchema: NormalizedJsonSchema;
+    private ignoredKeys: Set<string> = new Set();
 
-    constructor(resolvedJsonSchema: JsonSchema) {
+    constructor(resolvedJsonSchema: JsonSchema, ignoredKeys?: Iterable<string>) {
         this.resolvedSchema = resolvedJsonSchema;
+        if (ignoredKeys) {
+            this.ignoredKeys = new Set(ignoredKeys);
+        }
     }
 
     public get normalized(): NormalizedJsonSchema {
@@ -715,7 +808,7 @@ export class NormalizedApiSchema {
         return normalized;
     }
 
-    public getPropertyList(obj?: any, options: { includeHidden?: boolean, allowList?: Iterable<string>, blockList?: Iterable<string> } = { blockList: ["self"] }): PropertyDescription[] {
+    public getPropertyList(obj?: any, options: { includeHidden?: boolean, excludeReadOnly?: boolean, excludeWriteOnly?: boolean, allowList?: Iterable<string>, blockList?: Iterable<string> } = { blockList: ["self"] }): PropertyDescription[] {
         if (!this.normalized.type.has("object")) {
             throw Error("Cannot read properties of a non object schema!");
         }
@@ -741,6 +834,12 @@ export class NormalizedApiSchema {
                 if (!hasAllowList && blockList.has(propName)) {
                     // allowList dominates blocklist completely
                     return; // in block list, skip
+                }
+                if (options.excludeReadOnly && propSchema.normalized.readOnly) {
+                    return;
+                }
+                if (options.excludeWriteOnly && propSchema.normalized.writeOnly) {
+                    return;
                 }
                 props.push({
                     propertyName: propName,
@@ -815,13 +914,13 @@ export class NormalizedApiSchema {
             return;
         }
         if (maxDepth < 0) {
-            console.warn(`Schema was nested too deep with inheritance ($allOf) and not all constraints will be applied correctly! Maximum allowed depth is ${context.maxDepth}!`, normalized);
+            console.warn(`Schema was nested too deep with inheritance (allOf) and not all constraints will be applied correctly! Maximum allowed depth is ${context.maxDepth}!`, normalized);
         }
 
         // check all of before all other keys
-        if (toNormalize.$allOf != null) {
+        if (toNormalize.allOf != null) {
             // apply allOf inheritance in the correct order
-            toNormalize.$allOf.forEach(schema => this.normalizeSchema(normalized, schema, context, maxDepth - 1));
+            toNormalize.allOf.forEach(schema => this.normalizeSchema(normalized, schema, context, maxDepth - 1));
         }
         // check type before other keys
         if (toNormalize.type != null) {
@@ -836,7 +935,7 @@ export class NormalizedApiSchema {
 
         // check other keys
         Object.keys(toNormalize).forEach(key => {
-            if (IGNORED_KEYS.has(key)) {
+            if (IGNORED_KEYS.has(key) || this.ignoredKeys.has(key)) {
                 return;
             }
             if (INCOMPATIBLE_KEYS.has(key)) {
@@ -912,6 +1011,7 @@ export class NormalizedApiSchema {
                 throw Error("Schema cannot be normalized as it has no given type!");
             }
         }
+        consolidateExtraProperties(this.resolvedSchema, normalized, context);
         if (normalized.type.has("object")) {
             normalized.mainType = "object";
             consolidateObjectProperties(normalized, context);

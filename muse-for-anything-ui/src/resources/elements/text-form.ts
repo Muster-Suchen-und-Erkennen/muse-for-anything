@@ -1,15 +1,20 @@
 import { bindable, bindingMode, child } from "aurelia-framework";
 import { NormalizedApiSchema } from "rest/schema-objects";
+import { nanoid } from "nanoid";
 
 
 export class TextForm {
+    @bindable key: string;
     @bindable label: string;
     @bindable initialData: any;
     @bindable schema: NormalizedApiSchema;
     @bindable required: boolean = false;
+    @bindable debug: boolean = false;
     @bindable({ defaultBindingMode: bindingMode.fromView }) value: string;
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean = false;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
+
+    slug = nanoid(8);
 
     formIsValid: boolean = false;
     extraIsValid: boolean = true;

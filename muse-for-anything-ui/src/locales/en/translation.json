@@ -5,10 +5,12 @@
         "home": "Home",
         "explore": "Explore",
         "create": {
-            "ont-namespace": "Create New Namespace"
+            "ont-namespace": "Create New Namespace",
+            "ont-type": "Create New Type"
         },
         "update": {
-            "ont-namespace": "Edit Namespace"
+            "ont-namespace": "Edit Namespace",
+            "ont-type": "Edit Type"
         }
     },
     "loading": "loading…",
@@ -20,22 +22,29 @@
     "nav": {
         "up": "Back",
         "actions": "Actions",
+        "navigations": "Navigation",
         "collection": {
-            "ont-namespace": "Namespaces"
+            "ont-namespace": "Namespaces",
+            "ont-type": "Types"
         },
         "create": {
-            "ont-namespace": "Create Namespace"
+            "ont-namespace": "Create Namespace",
+            "ont-type": "Create Type"
         },
         "update": {
-            "ont-namespace": "Edit Namespace"
+            "ont-namespace": "Edit Namespace",
+            "ont-type": "Edit Type"
         },
         "delete": {
-            "ont-namespace": "Delete Namespace"
+            "ont-namespace": "Delete Namespace",
+            "ont-type": "Delete Type"
         },
         "restore": {
-            "ont-namespace": "Restore Namespace"
+            "ont-namespace": "Restore Namespace",
+            "ont-type": "Restore Type"
         },
-        "ont-namespace": "Namespace"
+        "ont-namespace": "Namespace",
+        "ont-type": "Type"
     },
     "pages": {
         "page": "page",
@@ -48,5 +57,6 @@
         "true": "True",
         "false": "False"
     },
-    "namespace": "Namespace"
+    "namespace": "Namespace",
+    "type": "type"
 }

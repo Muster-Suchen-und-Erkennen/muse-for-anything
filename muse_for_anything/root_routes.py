@@ -2,7 +2,7 @@ from pathlib import Path
 import re
 from secrets import token_urlsafe
 from typing import Any, List
-from flask import Flask, render_template, redirect, Blueprint, g
+from flask import Flask, render_template, redirect, Blueprint, g, abort
 from flask.globals import current_app
 from flask.views import MethodView
 from flask_static_digest import FlaskStaticDigest
@@ -66,10 +66,11 @@ class SPA(MethodView):
         return self._get_skripts()
 
     def get(self, path: str):
+        if path and path.startswith("api/"):
+            abort(404)
         if current_app.config.get("DEBUG", False):
             # circumvent cached property in debug mode...
             vars(self)["skripts"] = self._get_skripts()
-            print("HEEEEELOOOOO")
         return render_template("index.html", title="muse4anything", skripts=self.skripts)
 
 

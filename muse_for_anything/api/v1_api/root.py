@@ -38,7 +38,7 @@ class RootView(MethodView):
                 ),
                 ApiLink(
                     href=url_for("api-v1.NamespacesView", _external=True),
-                    rel=("first", "page", "collection", "ont-namespace"),
+                    rel=("first", "page", "collection"),
                     resource_type="ont-namespace",
                 ),
             ],
@@ -50,19 +50,45 @@ class RootView(MethodView):
                         {"namespace": "namespaceId"},
                         _external=True,
                     ),
-                    rel=("ont-namespace",),
+                    rel=tuple(),
                     resource_type="ont-namespace",
                     key=("namespaceId",),
                 ),
                 KeyedApiLink(
                     href=template_url_for(
                         "api-v1.NamespacesView",
-                        {"item_count": "item_count", "sort": "sort", "cursor": "cursor"},
+                        {},
                         _external=True,
                     ),
-                    rel=("collection", "page", "ont-namespace"),
+                    rel=("collection", "page"),
                     resource_type="ont-namespace",
-                    query_key=("item_count", "cursor", "sort"),
+                    query_key=("item-count", "cursor", "sort"),
+                ),
+                KeyedApiLink(
+                    href=template_url_for(
+                        "api-v1.TypesView",
+                        {
+                            "namespace": "namespaceId",
+                        },
+                        _external=True,
+                    ),
+                    rel=("collection", "page"),
+                    resource_type="ont-type",
+                    key=("namespaceId",),
+                    query_key=("item-count", "cursor", "sort"),
+                ),
+                KeyedApiLink(
+                    href=template_url_for(
+                        "api-v1.TypeView",
+                        {
+                            "namespace": "namespaceId",
+                            "object_type": "typeId",
+                        },
+                        _external=True,
+                    ),
+                    rel=tuple(),
+                    resource_type="ont-type",
+                    key=("namespaceId", "typeId"),
                 ),
             ],
             data=RootData(
