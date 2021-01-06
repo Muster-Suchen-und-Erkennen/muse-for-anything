@@ -191,12 +191,18 @@ export class ApiSchema {
         }
         if (isObjectJsonSchema(toResolve)) {
             if (toResolve.properties != null) {
-                resolved.properties = {};
-                const promises = Object.keys(toResolve.properties).map(async key => {
+                const newProperties = {};
+                const promises = [];
+                Object.keys(toResolve.properties).forEach(key => {
                     const innerSchema = toResolve.properties[key];
-                    resolved.properties[key] = await this.resolveSchemaInstance(innerSchema);
+                    const promise = this.resolveSchemaInstance(innerSchema).then(prop => newProperties[key] = prop);
+                    promises.push(promise);
                 });
                 await Promise.all(promises);
+                resolved.properties = newProperties;
+                if (typeof resolved.properties?.additionalItems?.$ref === "string") {
+                    console.error("something bad", resolved)
+                }
             }
             if (toResolve.patternProperties != null) {
                 resolved.patternProperties = {};
@@ -244,6 +250,10 @@ export class ApiSchema {
         // if schema is reference then only resolve reference
         if (toResolve.$ref != null) {
             const nestedResolved = await this.resolveSchema(toResolve.$ref, depth + 1);
+            if (toResolve.$ref.startsWith("#")) {
+                // ref to a local schema => return the actual schema object as it may still change!
+                return nestedResolved;
+            }
             // copy all keys over
             Object.assign(resolved, nestedResolved);
             if (originalRef != null) {
@@ -259,6 +269,9 @@ export class ApiSchema {
         // specifically resolve nested schemas
         await this.resolveGenericSchemaKeywords(toResolve, resolved);
         await this.resolveTypeSpecificSchemaKeywords(toResolve, resolved);
+        if (typeof resolved.properties?.additionalItems?.$ref === "string") {
+            console.warn(this)
+        }
         if (originalRef != null) {
             resolved.originRef = originalRef;
         }
@@ -337,8 +350,8 @@ export class ApiSchema {
 
 export interface NormalizedJsonSchema {
     $id?: string;
-    type: Set<"object" | "array" | "string" | "number" | "integer" | "boolean" | "null">;
-    mainType?: "object" | "array" | "string" | "number" | "integer" | "boolean" | "null";
+    type: Set<"any" | "object" | "array" | "string" | "number" | "integer" | "boolean" | "null">;
+    mainType?: "any" | "object" | "array" | "string" | "number" | "integer" | "boolean" | "null";
     // valid everywhere
     enum?: Array<string | number | boolean | null>;
     const?: string | number | boolean | null;
@@ -447,7 +460,7 @@ function typeIsCompatible(typeSet: Set<string>, newType: string) {
     }
 }
 
-function mergeType(typeSet: Set<"object" | "array" | "string" | "number" | "integer" | "boolean" | "null">, newType: "object" | "array" | "string" | "number" | "integer" | "boolean" | "null" | Array<"object" | "array" | "string" | "number" | "integer" | "boolean" | "null">): Set<"object" | "array" | "string" | "number" | "integer" | "boolean" | "null"> {
+function mergeType(typeSet: Set<"any" | "object" | "array" | "string" | "number" | "integer" | "boolean" | "null">, newType: "object" | "array" | "string" | "number" | "integer" | "boolean" | "null" | Array<"object" | "array" | "string" | "number" | "integer" | "boolean" | "null">): Set<"any" | "object" | "array" | "string" | "number" | "integer" | "boolean" | "null"> {
     if (typeof newType === "string") {
         if (typeIsCompatible(typeSet, newType)) {
             return new Set([newType]);
@@ -797,6 +810,10 @@ export class NormalizedApiSchema {
         if (this.normalizedSchema != null) {
             return this.normalizedSchema;
         }
+        if (this.resolvedSchema != null && Object.keys(this.resolvedSchema).length === 0) {
+            this.normalizedSchema = { type: new Set<"any">(["any"]) };
+            return this.normalizedSchema;
+        }
         const normalized: NormalizedJsonSchema = { type: null };
         const context: NormalizationContext = {
             maxDepth: 20,
@@ -808,7 +825,8 @@ export class NormalizedApiSchema {
         return normalized;
     }
 
-    public getPropertyList(obj?: any, options: { includeHidden?: boolean, excludeReadOnly?: boolean, excludeWriteOnly?: boolean, allowList?: Iterable<string>, blockList?: Iterable<string> } = { blockList: ["self"] }): PropertyDescription[] {
+    // eslint-disable-next-line complexity
+    public getPropertyList(objectKeys?: string[], options: { includeHidden?: boolean, excludeReadOnly?: boolean, excludeWriteOnly?: boolean, allowList?: Iterable<string>, blockList?: Iterable<string> } = { blockList: ["self"] }): PropertyDescription[] {
         if (!this.normalized.type.has("object")) {
             throw Error("Cannot read properties of a non object schema!");
         }
@@ -850,7 +868,7 @@ export class NormalizedApiSchema {
                 });
             });
         }
-        if (obj == null) {
+        if (objectKeys == null || objectKeys.length === 0) {
             // cannot determine pattern or additional properties without an object
             return props.sort((a, b) => a.sortKey - b.sortKey);
         }
@@ -865,7 +883,7 @@ export class NormalizedApiSchema {
             additionalSchema = additionalProperties;
         }
 
-        Object.keys(obj).forEach(propName => {
+        objectKeys.forEach(propName => {
             if (knownProps.has(propName)) {
                 return; // defined in properties, no need to recheck
             }
@@ -1012,6 +1030,9 @@ export class NormalizedApiSchema {
             }
         }
         consolidateExtraProperties(this.resolvedSchema, normalized, context);
+        if (normalized.type == null) {
+            console.error(this, normalized);
+        }
         if (normalized.type.has("object")) {
             normalized.mainType = "object";
             consolidateObjectProperties(normalized, context);
