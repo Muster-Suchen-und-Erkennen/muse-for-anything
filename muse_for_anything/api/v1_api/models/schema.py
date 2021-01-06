@@ -90,10 +90,10 @@ JSON_META_PROPERTIES_SCHEMA = {
     "$id": JSON_META_PROPERTIES_SCHEMA_REF["$ref"],
     "type": ["object"],
     "properties": {
-        "$comment": {"type": "string"},
         "$id": {"type": "string", "format": "uri-reference"},
-        "title": {"type": "string"},
+        "title": {"type": "string", "maxLength": 300},
         "description": {"type": "string"},
+        "$comment": {"type": "string"},
         "default": NESTED_JSON_SCHEMA_REF,
         "deprecated": {"type": "boolean", "default": False},
         "readOnly": {"type": "boolean", "default": False},
@@ -252,7 +252,7 @@ JSON_STRING_PROPERTIES_SCHEMA = {
     "allOf": [JSON_META_PROPERTIES_SCHEMA_REF],
     "properties": {
         "type": {
-            "type": "string",
+            "type": "array",
             "items": {
                 "enum": [
                     "null",
@@ -267,10 +267,10 @@ JSON_STRING_PROPERTIES_SCHEMA = {
         },
         "maxLength": {"type": "integer", "minimum": 0},
         "minLength": {"type": "integer", "minimum": 0, "default": 0},
-        "pattern": {"type": "string", "format": "regex"},
-        "format": {"type": "string"},
-        "contentMediaType": {"type": "string"},
-        "contentEncoding": {"type": "string"},
+        "pattern": {"type": "string", "format": "regex", "singleLine": True},
+        "format": {"type": "string", "singleLine": True},
+        "contentMediaType": {"type": "string", "singleLine": True},
+        "contentEncoding": {"type": "string", "singleLine": True},
         "contentSchema": NESTED_JSON_SCHEMA_REF,
     },
 }
@@ -296,7 +296,7 @@ JSON_NUMBER_PROPERTIES_SCHEMA = {
     "allOf": [JSON_NUMBER_PROPERTIES_BASE_SCHEMA_REF],
     "properties": {
         "type": {
-            "type": "number",
+            "type": "array",
             "items": {
                 "enum": [
                     "null",
@@ -320,7 +320,7 @@ JSON_INTEGER_PROPERTIES_SCHEMA = {
     "allOf": [JSON_NUMBER_PROPERTIES_BASE_SCHEMA_REF],
     "properties": {
         "type": {
-            "type": "integer",
+            "type": "array",
             "items": {
                 "enum": [
                     "null",
@@ -344,7 +344,7 @@ JSON_BOOLEAN_PROPERTIES_SCHEMA = {
     "allOf": [JSON_META_PROPERTIES_SCHEMA_REF],
     "properties": {
         "type": {
-            "type": "boolean",
+            "type": "array",
             "items": {
                 "enum": [
                     "null",
@@ -406,7 +406,7 @@ JSON_REF_PROPERTIES_SCHEMA = {
     "required": ["$ref"],
     "allOf": [JSON_META_PROPERTIES_SCHEMA_REF],
     "properties": {
-        "$ref": {"type": "string", "format": "uri-reference"},
+        "$ref": {"type": "string", "format": "uri-reference", "singleLine": True},
     },
 }
 
