@@ -11,6 +11,7 @@ export class SchemaForm {
     @bindable required: boolean = false;
     @bindable valueObserver: SchemaValueObserver = null;
     @bindable debug: boolean = false;
+    @bindable valuePush: any;
     @bindable({ defaultBindingMode: bindingMode.fromView }) value: unknown;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
 
@@ -19,6 +20,7 @@ export class SchemaForm {
     schemaType: string;
     extraType: string;
 
+    // eslint-disable-next-line complexity
     schemaChanged(newValue: NormalizedApiSchema, oldValue) {
         const normalized = newValue.normalized;
         if (normalized.enum != null) {

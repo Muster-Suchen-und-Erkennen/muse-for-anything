@@ -2,15 +2,17 @@
     <require from="./schema-form"></require>
     <require from="./validity-indicator"></require>
 
-    <div class="mb-2 flex items-center">
-        <p class="font-semibold text-lg">${label}</p>
-        <validity-indicator class="ml-2" valid.bind="valid"></validity-indicator>
-    </div>
-    <div class="flex flex-wrap" repeat.for="prop of properties">
-        <schema-form class="w-full properties" value-observer.bind="valueObserver" key.bind="prop.propertyName"
-            label.bind="prop.propertyName" initial-data.bind="initialData[prop.propertyName]"
-            schema.bind="prop.propertySchema" required.bind="required != null && required.has(prop.propertyName)"
-            debug.bind="debug">
-        </schema-form>
+    <div class="form-container">
+        <div class="mb-2 flex items-center form-container-title">
+            <p class="font-semibold text-lg">${label}</p>
+            <validity-indicator class="ml-2" valid.bind="valid"></validity-indicator>
+        </div>
+        <div class="flex flex-wrap" repeat.for="prop of properties">
+            <schema-form class="w-full properties" value-observer.bind="valueObserver" key.bind="prop.propertyName"
+                label.bind="prop.propertyName" initial-data.bind="initialData[prop.propertyName]"
+                value-push.bind="valuePush[prop.propertyName]" schema.bind="prop.propertySchema"
+                required.bind="required != null && required.has(prop.propertyName)" debug.bind="debug">
+            </schema-form>
+        </div>
     </div>
 </template>

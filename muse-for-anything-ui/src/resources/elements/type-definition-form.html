@@ -3,21 +3,24 @@
     <require from="./schema-form"></require>
     <!-- TODO translations -->
 
-    <p class="font-semibold mb-2">${label}:</p>
 
-    <select class="bg-gray-100 border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1"
-        value.bind="chosenSchema">
-        <option model.bind="null">Choose...</option>
-        <option repeat.for="choice of choices" model.bind="choice">
-            ${choice.title}
-        </option>
-    </select>
-    <div if.bind="chosenSchema != null">
-        <p>Type Schema</p>
-        <schema-form class="w-full properties" value-observer.bind="typeValueObserver" key.bind="chosenSchema.title"
-            label.bind="'Type Schema'" initial-data.bind="initialData" schema.bind="chosenSchema.schema"
-            required.bind="true" debug.bind="debug">
-        </schema-form>
+    <div class="form-container">
+        <p class="font-semibold mb-2 form-container-title">${label}:</p>
+
+        <select class="bg-gray-100 border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1"
+            value.bind="chosenSchema">
+            <option model.bind="null">Choose...</option>
+            <option repeat.for="choice of choices" model.bind="choice">
+                ${choice.title}
+            </option>
+        </select>
+        <div if.bind="chosenSchema != null">
+            <p>Type Schema</p>
+            <schema-form class="w-full properties" value-observer.bind="typeValueObserver" key.bind="chosenSchema.title"
+                label.bind="'Type Schema'" initial-data.bind="initialData" value-push.bind="valuePush"
+                schema.bind="chosenSchema.schema" required.bind="true" debug.bind="debug">
+            </schema-form>
+        </div>
     </div>
 
 </template>

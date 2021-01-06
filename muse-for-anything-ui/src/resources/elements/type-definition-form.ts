@@ -1,4 +1,4 @@
-import { bindable, bindingMode } from "aurelia-framework";
+import { bindable, observable, bindingMode } from "aurelia-framework";
 import { NormalizedApiSchema, PropertyDescription } from "rest/schema-objects";
 import { SchemaValueObserver } from "./schema-value-observer";
 import { nanoid } from "nanoid";
@@ -10,6 +10,7 @@ export class TypeDefinitionForm {
     @bindable schema: NormalizedApiSchema;
     @bindable required: boolean = false;
     @bindable debug: boolean = false;
+    @bindable valuePush: any;
     @bindable({ defaultBindingMode: bindingMode.fromView }) value: any;
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean = false;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
@@ -17,14 +18,18 @@ export class TypeDefinitionForm {
     slug = nanoid(8);
 
     choices: Array<{ title: string, description: string, schema: NormalizedApiSchema }> = [];
-    chosenSchema: { title: string, description: string, schema: NormalizedApiSchema };
+    @observable() chosenSchema: { title: string, description: string, schema: NormalizedApiSchema };
+
+    valueCache: Map<string, any> = new Map();
 
     typeValueObserver: SchemaValueObserver = {
         onValueChanged: (key, newValue, oldValue) => {
             //this.propChanged(key, newValue);
+            this.value = newValue;
         },
         onValidityChanged: (key, newValue, oldValue) => {
             //this.propValidityChanged(key, newValue);
+            this.valid = newValue;
         },
     };
 
@@ -34,7 +39,13 @@ export class TypeDefinitionForm {
 
     schemaChanged(newValue: NormalizedApiSchema, oldValue) {
         this.valid = false;
-        const rawChoices = [...newValue.normalized.oneOf];
+        if (newValue == null) {
+            return;
+        }
+        if (newValue.normalized.oneOf == null) {
+            console.warn(newValue)
+        }
+        const rawChoices = [...(newValue.normalized.oneOf ?? [])];
         const choices = rawChoices.map(schema => {
             const normalized = schema.normalized;
             if (normalized == null) {
@@ -61,5 +72,35 @@ export class TypeDefinitionForm {
 
     valueChanged(newValue, oldValue) {
 
+    }
+
+    chosenSchemaChanged(newSchemaValue, oldSchemaValue) {
+        const oldValue = this.value ?? {};
+        if (oldSchemaValue != null) {
+            this.valueCache.set(oldSchemaValue.title, oldValue);
+        }
+        if (newSchemaValue == null) {
+            return;
+        }
+        console.log(newSchemaValue)
+        const newValue: any = {};
+        if (newSchemaValue.schema.normalized.default != null) {
+            const defaultValue = newSchemaValue.schema.normalized.default;
+            Object.assign(newValue, JSON.parse(JSON.stringify(defaultValue)));
+        }
+        if (this.valueCache.has(newSchemaValue.title)) {
+            const cachedValue = this.valueCache.get(newSchemaValue.title);
+            Object.keys(cachedValue).forEach(key => {
+                if (cachedValue[key] != null) {
+                    newValue[key] = cachedValue[key];
+                }
+            });
+        }
+        ["title", "description", "$comment", "deprecated"].forEach(attr => {
+            if (oldValue[attr] != null) {
+                newValue[attr] = oldValue[attr];
+            }
+        });
+        this.valuePush = newValue;
     }
 }

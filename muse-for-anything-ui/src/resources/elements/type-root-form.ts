@@ -10,6 +10,7 @@ export class TypeRootForm {
     @bindable schema: NormalizedApiSchema;
     @bindable required: boolean = false;
     @bindable debug: boolean = false;
+    @bindable valuePush: any;
     @bindable({ defaultBindingMode: bindingMode.fromView }) value: any;
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean = false;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
@@ -70,7 +71,7 @@ export class TypeRootForm {
             this.requiredProperties = new Set();
             return;
         }
-        this.extraProperties = this.schema.getPropertyList(this.initialData, {
+        this.extraProperties = this.schema.getPropertyList([], { // FIXME proper object keys...
             excludeReadOnly: true,
             blockList: ["$schema", "$ref", "definitions", "$comment", "title", "description", "deprecated", "allOf"],
         });

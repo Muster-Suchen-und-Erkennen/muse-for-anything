@@ -1,0 +1,17 @@
+<template>
+    <require from="./validity-indicator"></require>
+
+    <div class="flex flex-col form-field">
+        <div class="w-full flex items-center">
+            <label class="font-semibold form-title" click.trigger="cycle()" for.bind="key+slug">${label}</label>
+            <!-- input has to be in a template to be picked up by child… -->
+            <template if.bind="schema != null">
+                <input
+                    class="input-valid-check rounded-sm focus:ring-4 m-1.5 px-2 py-1 ${dirty ? 'dirty' : ''} ${valid ? '' : 'error'}"
+                    name.bind="key+slug" type="checkbox" click.trigger="cycle($event)"
+                    required.bind="required && !isNullable && minLength != null & empty">
+            </template>
+            <validity-indicator class="ml-1" valid.bind="valid" if.bind="!valid"></validity-indicator>
+        </div>
+    </div>
+</template>

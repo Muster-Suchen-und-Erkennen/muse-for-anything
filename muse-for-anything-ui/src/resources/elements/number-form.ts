@@ -3,33 +3,37 @@ import { NormalizedApiSchema } from "rest/schema-objects";
 import { nanoid } from "nanoid";
 
 
-export class TextForm {
+export class NumberForm {
     @bindable key: string;
     @bindable label: string;
     @bindable initialData: any;
     @bindable schema: NormalizedApiSchema;
     @bindable required: boolean = false;
     @bindable debug: boolean = false;
-    @bindable valuePush: string;
-    @bindable({ defaultBindingMode: bindingMode.fromView }) value: string;
+    @bindable valuePush: number;
+    @bindable({ defaultBindingMode: bindingMode.fromView }) value: number;
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean = false;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
 
     slug = nanoid(8);
 
     formIsValid: boolean = false;
-    extraIsValid: boolean = true;
+    boundsValid: boolean = true;
+    stepValid: boolean = true;
 
-    isSingelLine: boolean = false;
     isNullable: boolean = true;
 
-    format: string;
+    isInteger: boolean = true;
 
-    minLength: number = null;
-    maxLength: number = null;
-    pattern: string = null;
+    step: number = 0.1;
 
-    extraPatterns: RegExp[] = [];
+    minimum: number;
+    maximum: number;
+
+    exclusiveMinimum: number;
+    exclusiveMaximum: number;
+
+    extraMultiples: number[];
 
     @child(".input-valid-check") formInput: Element;
 
@@ -38,7 +42,7 @@ export class TextForm {
             if (this.isNullable) {
                 this.value = newValue;
             } else {
-                this.value = newValue ?? "";
+                this.value = newValue ?? 0;
             }
             this.dirty = false;
         }
@@ -60,36 +64,39 @@ export class TextForm {
         const normalized = newValue.normalized;
         this.isNullable = normalized.type.has(null) || !this.required;
         if (!this.isNullable && this.value == null) {
-            this.value = "";
+            this.value = 0;
         }
-        this.minLength = normalized.minLength;
-        this.maxLength = normalized.maxLength;
-        if (normalized.pattern != null && normalized.pattern.length === 1) {
-            this.pattern = normalized.pattern[0].source;
-            this.extraIsValid = true;
+
+        if (normalized.mainType === "integer") {
+            this.step = 1;
+            this.isInteger = true;
         } else {
-            this.pattern = null;
-            this.extraPatterns = normalized.pattern ?? [];
-            this.extraIsValid = normalized.pattern == null;
+            this.step = 0;
+            this.isInteger = false;
         }
-        if (normalized.format != null) {
-            this.format = normalized.format;
+
+        this.minimum = normalized.minimum ?? normalized.exclusiveMinimum;
+        this.maximum = normalized.maximum ?? normalized.exclusiveMaximum;
+        this.exclusiveMinimum = normalized.exclusiveMinimum;
+        this.exclusiveMaximum = normalized.exclusiveMaximum;
+
+        if (normalized.multipleOf != null) {
+            if (normalized.multipleOf.length > 0) {
+                this.step = normalized.multipleOf[0];
+            }
+            if (normalized.multipleOf.length > 1) {
+                this.extraMultiples = normalized.multipleOf;
+            }
         }
-        if (normalized.contentMediaType != null) {
-            // TODO
-        }
-        if ((normalized.maxLength != null && normalized.maxLength <= 500) || normalized.singleLine) {
-            this.isSingelLine = true;
-        } else {
-            this.isSingelLine = false;
-        }
+
         if (this.formInput != null) {
             this.formIsValid = (this.formInput as HTMLInputElement).validity.valid;
             this.updateValid();
         }
     }
 
-    valueChanged(newValue, oldValue) {
+    // eslint-disable-next-line complexity
+    valueChanged(newValue, oldValue) { // TODO value does not change for float input with integer
         if (this.initialData === undefined) {
             this.dirty = !(newValue == null || (!this.isNullable && newValue === ""));
         } else {
@@ -100,10 +107,14 @@ export class TextForm {
             this.formIsValid = (this.formInput as HTMLInputElement).validity.valid;
             updatedValidStatus = true;
         }
-        if (this.extraPatterns) {
-            this.extraIsValid = this.extraPatterns.every(pattern => pattern.test(newValue));
+        if (this.exclusiveMinimum != null || this.exclusiveMaximum != null) {
+            this.boundsValid = (this.exclusiveMinimum == null || this.exclusiveMinimum < newValue) && (this.exclusiveMaximum == null || this.exclusiveMaximum > newValue);
             updatedValidStatus = true;
         }
+        if (this.extraMultiples) {
+            // TODO
+        }
+        console.log(updatedValidStatus, this.formInput)
         if (updatedValidStatus) {
             this.updateValid();
         }
@@ -126,6 +137,6 @@ export class TextForm {
                 return;
             }
         }
-        this.valid = this.formIsValid && this.extraIsValid;
+        this.valid = this.formIsValid && this.boundsValid;
     }
 }

@@ -8,10 +8,12 @@ export class ObjectForm {
     @bindable initialData: any;
     @bindable schema: NormalizedApiSchema;
     @bindable debug: boolean = false;
+    @bindable valuePush: any;
     @bindable({ defaultBindingMode: bindingMode.fromView }) value: any = {};
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
 
     properties: PropertyDescription[] = [];
+    propertiesByKey: Map<string, PropertyDescription> = new Map();
     required: Set<string> = new Set();
 
     invalidProps: Set<string> = new Set();
@@ -28,6 +30,13 @@ export class ObjectForm {
 
     initialDataChanged(newValue, oldValue) {
         this.reloadProperties();
+    }
+
+    valuePushChanged(newValue, oldValue) {
+        if (this.value === newValue) {
+            return;
+        }
+        this.value = newValue;
     }
 
     schemaChanged(newValue, oldValue) {
@@ -49,12 +58,35 @@ export class ObjectForm {
             this.required = new Set();
             return;
         }
-        this.properties = this.schema.getPropertyList(this.initialData);
+        const currentData = { // TODO refactor to be less costly (maybe use set?)
+            ...this.initialData,
+            ...(this.value ?? {}),
+        };
+        const properties = this.schema.getPropertyList(Object.keys(currentData));
+        const propertiesByKey = new Map<string, PropertyDescription>();
+        properties.forEach(prop => propertiesByKey.set(prop.propertyName, prop));
+        this.properties = properties;
+        this.propertiesByKey = propertiesByKey;
         this.required = this.schema.normalized.required;
     }
 
     propChanged(key: string, newValue) {
         if (this.value[key] === newValue) {
+            return;
+        }
+        if (!this.required.has(key) && newValue == null) {
+            // if key is not required then remove it if value is null
+            if (this.value[key] !== undefined) {
+                // only remove it if key is present in the object
+                const temp = {
+                    ...this.value,
+                };
+                delete temp[key];
+                this.value = temp;
+                return;
+            }
+        }
+        if (this.value[key] == null && newValue == null) {
             return;
         }
         this.value = {

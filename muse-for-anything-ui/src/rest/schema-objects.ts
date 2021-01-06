@@ -200,9 +200,6 @@ export class ApiSchema {
                 });
                 await Promise.all(promises);
                 resolved.properties = newProperties;
-                if (typeof resolved.properties?.additionalItems?.$ref === "string") {
-                    console.error("something bad", resolved)
-                }
             }
             if (toResolve.patternProperties != null) {
                 resolved.patternProperties = {};
@@ -269,9 +266,6 @@ export class ApiSchema {
         // specifically resolve nested schemas
         await this.resolveGenericSchemaKeywords(toResolve, resolved);
         await this.resolveTypeSpecificSchemaKeywords(toResolve, resolved);
-        if (typeof resolved.properties?.additionalItems?.$ref === "string") {
-            console.warn(this)
-        }
         if (originalRef != null) {
             resolved.originRef = originalRef;
         }

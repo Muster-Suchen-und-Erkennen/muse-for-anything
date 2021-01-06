@@ -13,6 +13,7 @@ export class ApiSchemaForm {
     @bindable initialData;
     @bindable apiLink: ApiLink;
     @bindable debug: boolean = false;
+    @bindable valuePush: any;
     @bindable({ defaultBindingMode: bindingMode.fromView }) data: any;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) submitting: boolean = false;
