@@ -21,10 +21,10 @@ export class ObjectForm {
 
     valueObserver: SchemaValueObserver = {
         onValueChanged: (key, newValue, oldValue) => {
-            this.propChanged(key, newValue);
+            this.propChanged(key as string, newValue);
         },
         onValidityChanged: (key, newValue, oldValue) => {
-            this.propValidityChanged(key, newValue);
+            this.propValidityChanged(key as string, newValue);
         },
     };
 

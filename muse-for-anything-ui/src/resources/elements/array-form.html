@@ -1,0 +1,24 @@
+<template>
+    <require from="./schema-form"></require>
+    <require from="./validity-indicator"></require>
+    <!-- TODO translations -->
+
+    <div class="form-container">
+        <div class="mb-2 flex items-center form-container-title">
+            <p class="font-semibold text-lg">${label}</p>
+            <validity-indicator class="ml-2" valid.bind="valid"></validity-indicator>
+        </div>
+        <div class="flex flex-wrap card px-2 py-2" repeat.for="i of itemSchemas.length">
+            <schema-form class="w-full" value-observer.bind="valueObserver" key.bind="$parent.itemSchemas[i].itemIndex"
+                label.bind="$parent.itemSchemas[i].itemTitle" initial-data.bind="$parent.initialData[i]"
+                value-push.bind="$parent.valuePush[i]" schema.bind="$parent.itemSchemas[i].itemSchema"
+                required.bind="minItems != null && i < minItems" debug.bind="debug || true">
+            </schema-form>
+        </div>
+        <button class="button-outline w-full" disabled.bind="maxItems && itemSchemas.length >= maxItems"
+            click.delegate="addItem()">
+            Add Item
+        </button>
+        ${value|json}
+    </div>
+</template>

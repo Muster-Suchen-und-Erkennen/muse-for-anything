@@ -3,18 +3,20 @@
     <require from="./type-root-form"></require>
     <require from="./type-definition-form"></require>
     <require from="./object-form"></require>
+    <require from="./array-form"></require>
     <require from="./text-form"></require>
     <require from="./number-form"></require>
     <require from="./boolean-form"></require>
+    <require from="./enum-form"></require>
 
     <template if.bind="schemaType === 'custom'">
-        <div class="card px-2 py-2" if.bind="extraType === 'typeRoot'">
+        <div class="card px-2 py-2 mt-4" if.bind="extraType === 'typeRoot'">
             <type-root-form key.bind="key" label.bind="label" initial-data.bind="initialData" schema.bind="schema"
                 required.bind="required" debug.bind="debug" value-push.bind="valuePush"
                 value.from-view="value & viewSignal:'update-values'" valid.from-view="valid & viewSignal:'revalidate'">
             </type-root-form>
         </div>
-        <div class="card px-2 py-2" if.bind="extraType === 'typeDefinition'">
+        <div class="card px-2 py-2 mt-4" if.bind="extraType === 'typeDefinition'">
             <type-definition-form key.bind="key" label.bind="label" initial-data.bind="initialData" schema.bind="schema"
                 required.bind="required" debug.bind="debug" value-push.bind="valuePush"
                 value.from-view="value & viewSignal:'update-values'" valid.from-view="valid & viewSignal:'revalidate'">
@@ -22,7 +24,7 @@
         </div>
     </template>
     <template if.bind="schemaType === 'object'">
-        <div class="card px-2 py-2">
+        <div class="card px-2 py-2 mt-4">
             <object-form key.bind="key" label.bind="label" initial-data.bind="initialData" schema.bind="schema"
                 required.bind="required" debug.bind="debug" value-push.bind="valuePush"
                 value.from-view="value & viewSignal:'update-values'" valid.from-view="valid & viewSignal:'revalidate'">
@@ -30,8 +32,10 @@
         </div>
     </template>
     <template if.bind="schemaType === 'array'">
-        <p class="font-semibold">Array ${label}:</p>
-        <p class="m-0">${value | json}</p>
+        <array-form class="mt-4 block" key.bind="key" label.bind="label" initial-data.bind="initialData"
+            schema.bind="schema" required.bind="required" debug.bind="debug" value-push.bind="valuePush"
+            value.from-view="value & viewSignal:'update-values'" valid.from-view="valid & viewSignal:'revalidate'">
+        </array-form>
     </template>
     <template if.bind="schemaType === 'string'">
         <text-form key.bind="key" label.bind="label" initial-data.bind="initialData" schema.bind="schema"
@@ -52,8 +56,10 @@
         </boolean-form>
     </template>
     <template if.bind="schemaType === 'enum'">
-        <p class="font-semibold">Enum ${label}:</p>
-        <p class="m-0">${initialData != null ? initialData : '–'}</p>
+        <enum-form key.bind="key" label.bind="label" initial-data.bind="initialData" schema.bind="schema"
+            required.bind="required" debug.bind="debug" value-push.bind="valuePush"
+            value.from-view="value & viewSignal:'update-values'" valid.from-view="valid & viewSignal:'revalidate'">
+        </enum-form>
     </template>
     <template if.bind="schemaType === 'const'">
         <div class="w-full flex items-center">

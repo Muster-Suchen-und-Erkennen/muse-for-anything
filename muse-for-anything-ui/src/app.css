@@ -5,6 +5,11 @@
 
 @layer utilities {
     @variants responsive, dark, visited, hover, focus, active, disabled {
+        /* card shadow */
+        .shadow-card {
+            --tw-shadow: 0 1px 6px 0px rgba(0, 0, 0, 0.25), 0 2px 4px -1px rgba(0, 1, 0, 0.1);
+            box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+        }
         /* default primary */
         .bg-primary {
             background-color: var(--primary-color);
@@ -212,7 +217,7 @@ button:disabled {
 /* element styles */
 
 .card {
-    @apply mb-2 rounded-md shadow-md;
+    @apply mb-2 rounded-md shadow-card;
 }
 
 /* button styles */

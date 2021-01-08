@@ -114,7 +114,6 @@ export class NumberForm {
         if (this.extraMultiples) {
             // TODO
         }
-        console.log(updatedValidStatus, this.formInput)
         if (updatedValidStatus) {
             this.updateValid();
         }

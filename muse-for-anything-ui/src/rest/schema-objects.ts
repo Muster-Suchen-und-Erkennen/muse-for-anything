@@ -247,17 +247,18 @@ export class ApiSchema {
         // if schema is reference then only resolve reference
         if (toResolve.$ref != null) {
             const nestedResolved = await this.resolveSchema(toResolve.$ref, depth + 1);
-            if (toResolve.$ref.startsWith("#")) {
-                // ref to a local schema => return the actual schema object as it may still change!
-                return nestedResolved;
-            }
-            // copy all keys over
+            // copy all keys over to update resolved object that may be in resolved schemas cache
             Object.assign(resolved, nestedResolved);
             if (originalRef != null) {
                 resolved.originRef = originalRef;
             }
             if (originalId != null) {
                 resolved.originId = originalId;
+            }
+            if (toResolve.$ref.startsWith("#")) {
+                // ref to a local schema
+                // => return the actual schema object as it may still change!
+                return nestedResolved;
             }
             return resolved;
         }
@@ -775,12 +776,26 @@ function consolidateArrayProperties(normalized: NormalizedJsonSchema, context: N
     if (context.additionalItems != null) {
         const extraSchemas = context.items ?? []; // include any additional items schema into additional items validation
         normalized.additionalItems = consolidateSchemaList([...extraSchemas, ...context.additionalItems], true);
+    } else {
+        // no additional items allowed, if tuple items then infer maxItems
+        if (normalized.tupleItems != null) {
+            if (normalized.maxItems == null || normalized.maxItems > normalized.tupleItems.length) {
+                normalized.maxItems = normalized.tupleItems.length;
+            }
+        }
     }
 }
 
 
+export interface ItemDescription {
+    itemIndex: number;
+    itemTitle: string;
+    itemSchema: NormalizedApiSchema;
+}
+
 export interface PropertyDescription {
     propertyName: string;
+    propertyTitle: string;
     propertySchema: NormalizedApiSchema;
     isPatternProperty: boolean;
     isAdditionalProperty: boolean;
@@ -819,6 +834,43 @@ export class NormalizedApiSchema {
         return normalized;
     }
 
+    public getItemList(currentLength: number = 0): ItemDescription[] {
+        if (!this.normalized.type.has("array")) {
+            throw Error("Cannot read properties of a non array schema!");
+        }
+
+        const itemSchemas: ItemDescription[] = [];
+
+        const maxLength = this.normalized.maxItems ?? currentLength;
+
+        for (let i = 0; i < currentLength && i < maxLength; i++) {
+            if (this.normalized.tupleItems != null) {
+                const tupleItems = this.normalized.tupleItems;
+                if (i < tupleItems.length) {
+                    itemSchemas.push({
+                        itemIndex: i,
+                        itemTitle: tupleItems[i].normalized?.title ?? i.toString(),
+                        itemSchema: tupleItems[i],
+                    });
+                } else {
+                    itemSchemas.push({
+                        itemIndex: i,
+                        itemTitle: (this.normalized.additionalItems as NormalizedApiSchema).normalized?.title ?? i.toString(),
+                        itemSchema: this.normalized.additionalItems as NormalizedApiSchema,
+                    });
+                }
+            } else {
+                itemSchemas.push({
+                    itemIndex: i,
+                    itemTitle: this.normalized.items.normalized?.title ?? i.toString(),
+                    itemSchema: this.normalized.items,
+                });
+            }
+        }
+
+        return itemSchemas;
+    }
+
     // eslint-disable-next-line complexity
     public getPropertyList(objectKeys?: string[], options: { includeHidden?: boolean, excludeReadOnly?: boolean, excludeWriteOnly?: boolean, allowList?: Iterable<string>, blockList?: Iterable<string> } = { blockList: ["self"] }): PropertyDescription[] {
         if (!this.normalized.type.has("object")) {
@@ -855,6 +907,7 @@ export class NormalizedApiSchema {
                 }
                 props.push({
                     propertyName: propName,
+                    propertyTitle: propSchema.normalized?.title ?? propName,
                     propertySchema: propSchema,
                     isAdditionalProperty: false,
                     isPatternProperty: false,
@@ -898,6 +951,7 @@ export class NormalizedApiSchema {
                         foundKey = true;
                         props.push({
                             propertyName: propName,
+                            propertyTitle: schema.normalized?.title ?? propName,
                             propertySchema: schema,
                             isAdditionalProperty: false,
                             isPatternProperty: true,
@@ -909,6 +963,7 @@ export class NormalizedApiSchema {
             if (additionalProperties !== false && !foundKey) {
                 props.push({
                     propertyName: propName,
+                    propertyTitle: additionalSchema.normalized?.title ?? propName,
                     propertySchema: additionalSchema,
                     isAdditionalProperty: false,
                     isPatternProperty: true,

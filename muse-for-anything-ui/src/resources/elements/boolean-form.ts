@@ -69,8 +69,7 @@ export class BooleanForm {
         }
     }
 
-    // eslint-disable-next-line complexity
-    valueChanged(newValue, oldValue) { // TODO value does not change for float input with integer type
+    valueChanged(newValue, oldValue) {
         if (this.initialData === undefined) {
             this.dirty = !(newValue == null || (!this.isNullable && newValue === ""));
         } else {
@@ -86,17 +85,16 @@ export class BooleanForm {
     }
 
     updateCheckbox() {
+        // TODO update only works when checkbox is not directly clicked
         const input = this.formInput as HTMLInputElement;
         if (input != null) {
             if (this.value == null) {
                 input.checked = false;
                 input.indeterminate = true;
-                console.log("reset", input.checked, input.indeterminate);
                 return;
             }
             input.checked = this.value;
             input.indeterminate = false;
-            console.log("update", this.value, input.checked, input.indeterminate)
         }
     }
 

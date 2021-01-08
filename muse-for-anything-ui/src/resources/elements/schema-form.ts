@@ -55,8 +55,11 @@ export class SchemaForm {
     }
 
     valueObserverChanged(newObserver, oldObserver) {
+        if (oldObserver == null) {
+            return; // the first ever observer is set when value and etc. is not set yet
+        }
         if (this.valueObserver?.onValueChanged != null) {
-            this.valueObserver.onValueChanged(this.key, this.value, undefined);
+            this.valueObserver.onValueChanged(this.key, this.valuePush ?? this.value, undefined);
         }
         if (this.valueObserver?.onValidityChanged != null) {
             this.valueObserver.onValidityChanged(this.key, this.valid, undefined);
@@ -64,24 +67,12 @@ export class SchemaForm {
     }
 
     valueChanged(newValue, oldValue) {
-        const event = new CustomEvent<{ newValue: unknown, oldValue: unknown }>("change", {
-            detail: { newValue, oldValue },
-            cancelable: false,
-            bubbles: true,
-        });
-        this.element.dispatchEvent(event);
         if (this.valueObserver?.onValueChanged != null) {
             this.valueObserver.onValueChanged(this.key, newValue, oldValue);
         }
     }
 
     validChanged(newValue, oldValue) {
-        const event = new CustomEvent<{ newValue: unknown, oldValue: unknown }>("valid-change", {
-            detail: { newValue, oldValue },
-            cancelable: false,
-            bubbles: true,
-        });
-        this.element.dispatchEvent(event);
         if (this.valueObserver?.onValidityChanged != null) {
             this.valueObserver.onValidityChanged(this.key, newValue, oldValue);
         }

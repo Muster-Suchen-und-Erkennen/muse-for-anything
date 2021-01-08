@@ -1,0 +1,16 @@
+<template>
+    <require from="./validity-indicator"></require>
+
+    <div class="flex flex-col form-field">
+        <div class="w-full flex items-center">
+            <label class="font-semibold form-title" for.bind="key+slug">${label}</label>
+            <validity-indicator class="ml-1" valid.bind="valid" if.bind="!valid"></validity-indicator>
+        </div>
+        <select class="bg-gray-100 border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1" name.bind="key+slug"
+            required.bind="required && !isNullable && minLength != null & empty" value.bind="value">
+            <option repeat.for="choice of enumChoices" model.bind="choice">
+                ${choice}
+            </option>
+        </select>
+    </div>
+</template>

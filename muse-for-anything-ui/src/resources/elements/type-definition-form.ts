@@ -43,7 +43,7 @@ export class TypeDefinitionForm {
             return;
         }
         if (newValue.normalized.oneOf == null) {
-            console.warn(newValue)
+            console.warn(newValue, this)
         }
         const rawChoices = [...(newValue.normalized.oneOf ?? [])];
         const choices = rawChoices.map(schema => {
@@ -82,7 +82,6 @@ export class TypeDefinitionForm {
         if (newSchemaValue == null) {
             return;
         }
-        console.log(newSchemaValue)
         const newValue: any = {};
         if (newSchemaValue.schema.normalized.default != null) {
             const defaultValue = newSchemaValue.schema.normalized.default;
@@ -101,6 +100,7 @@ export class TypeDefinitionForm {
                 newValue[attr] = oldValue[attr];
             }
         });
+        console.log(newSchemaValue.title, Object.keys(newValue))
         this.valuePush = newValue;
     }
 }
