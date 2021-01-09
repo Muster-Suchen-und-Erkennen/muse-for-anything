@@ -1,7 +1,12 @@
 import { bindable, observable, bindingMode } from "aurelia-framework";
 import { NormalizedApiSchema, PropertyDescription } from "rest/schema-objects";
-import { SchemaValueObserver } from "./schema-value-observer";
 import { nanoid } from "nanoid";
+
+interface SchemaDescription {
+    title: string;
+    description: string;
+    schema: NormalizedApiSchema;
+}
 
 export class TypeDefinitionForm {
     @bindable key: string;
@@ -11,39 +16,29 @@ export class TypeDefinitionForm {
     @bindable required: boolean = false;
     @bindable debug: boolean = false;
     @bindable valuePush: any;
-    @bindable({ defaultBindingMode: bindingMode.fromView }) value: any;
+    @bindable({ defaultBindingMode: bindingMode.twoWay }) value: any;
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean = false;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
 
     slug = nanoid(8);
 
-    choices: Array<{ title: string, description: string, schema: NormalizedApiSchema }> = [];
-    @observable() chosenSchema: { title: string, description: string, schema: NormalizedApiSchema };
+    choices: SchemaDescription[] = [];
+    @observable() chosenSchema: SchemaDescription;
+
+    activeSchema: SchemaDescription;
 
     valueCache: Map<string, any> = new Map();
-
-    typeValueObserver: SchemaValueObserver = {
-        onValueChanged: (key, newValue, oldValue) => {
-            //this.propChanged(key, newValue);
-            this.value = newValue;
-        },
-        onValidityChanged: (key, newValue, oldValue) => {
-            //this.propValidityChanged(key, newValue);
-            this.valid = newValue;
-        },
-    };
-
-    initialDataChanged(newValue, oldValue) {
-
-    }
 
     schemaChanged(newValue: NormalizedApiSchema, oldValue) {
         this.valid = false;
         if (newValue == null) {
             return;
         }
+        if (newValue.normalized.customType !== "typeDefinition") {
+            return;
+        }
         if (newValue.normalized.oneOf == null) {
-            console.warn(newValue, this)
+            console.warn(this.key, this.slug, newValue, this)
         }
         const rawChoices = [...(newValue.normalized.oneOf ?? [])];
         const choices = rawChoices.map(schema => {
@@ -71,14 +66,17 @@ export class TypeDefinitionForm {
 
 
     valueChanged(newValue, oldValue) {
-
+        console.log(JSON.stringify(newValue))
     }
 
-    chosenSchemaChanged(newSchemaValue, oldSchemaValue) {
+    chosenSchemaChanged(newSchemaValue: SchemaDescription, oldSchemaValue: SchemaDescription) {
         const oldValue = this.value ?? {};
+        console.log(Object.keys(oldValue))
         if (oldSchemaValue != null) {
             this.valueCache.set(oldSchemaValue.title, oldValue);
         }
+        this.value = {};
+        this.activeSchema = null; // always set active schema to null first to reset child form
         if (newSchemaValue == null) {
             return;
         }
@@ -89,18 +87,25 @@ export class TypeDefinitionForm {
         }
         if (this.valueCache.has(newSchemaValue.title)) {
             const cachedValue = this.valueCache.get(newSchemaValue.title);
+            console.log(JSON.stringify(newValue), cachedValue, Object.keys(cachedValue))
             Object.keys(cachedValue).forEach(key => {
                 if (cachedValue[key] != null) {
                     newValue[key] = cachedValue[key];
                 }
             });
         }
+        console.log(Object.keys(newValue));
         ["title", "description", "$comment", "deprecated"].forEach(attr => {
             if (oldValue[attr] != null) {
                 newValue[attr] = oldValue[attr];
             }
         });
-        console.log(newSchemaValue.title, Object.keys(newValue))
-        this.valuePush = newValue;
+
+        // use timeout so that aurelia bindings resgister the reset before setting the new values!
+        window.setTimeout(() => {
+            this.activeSchema = newSchemaValue;
+
+            this.value = newValue;
+        }, 0);
     }
 }

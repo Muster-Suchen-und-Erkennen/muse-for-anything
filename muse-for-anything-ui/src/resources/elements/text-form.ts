@@ -10,9 +10,8 @@ export class TextForm {
     @bindable schema: NormalizedApiSchema;
     @bindable required: boolean = false;
     @bindable debug: boolean = false;
-    @bindable valuePush: string;
-    @bindable({ defaultBindingMode: bindingMode.fromView }) value: string;
-    @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean = false;
+    @bindable({ defaultBindingMode: bindingMode.twoWay }) value: string;
+    @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
 
     slug = nanoid(8);
@@ -46,13 +45,6 @@ export class TextForm {
             this.formIsValid = (this.formInput as HTMLInputElement).validity.valid;
             this.updateValid();
         }
-    }
-
-    valuePushChanged(newValue, oldValue) {
-        if (this.value === newValue) {
-            return;
-        }
-        this.value = newValue;
     }
 
     // eslint-disable-next-line complexity

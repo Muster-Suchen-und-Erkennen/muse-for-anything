@@ -1,6 +1,5 @@
-import { bindable, bindingMode, children, child, observable } from "aurelia-framework";
+import { bindable, bindingMode, observable } from "aurelia-framework";
 import { ItemDescription, NormalizedApiSchema } from "rest/schema-objects";
-import { SchemaValueObserver } from "./schema-value-observer";
 
 export class ArrayForm {
     @bindable key: string;
@@ -9,42 +8,27 @@ export class ArrayForm {
     @bindable schema: NormalizedApiSchema;
     @bindable debug: boolean = false;
     @bindable valuePush: any[];
-    @bindable({ defaultBindingMode: bindingMode.fromView }) value: any[];
-    @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
+    @bindable({ defaultBindingMode: bindingMode.twoWay }) value: any[];
+    @bindable({ defaultBindingMode: bindingMode.twoWay }) valid: boolean;
+    @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
 
     itemSchemas: ItemDescription[] = [];
 
     minItems: number;
     maxItems: number;
 
-    invalidItems: Set<number> = new Set();
-    validItems: Set<number> = new Set();
-
-    valueObserver: SchemaValueObserver = {
-        onValueChanged: (key, newValue, oldValue) => {
-            this.itemChanged(key as number, newValue);
-        },
-        onValidityChanged: (key, newValue, oldValue) => {
-            this.itemValidityChanged(key as number, newValue);
-        },
-    };
+    @observable() itemsValid: boolean[] = [];
+    @observable() itemsDirty: boolean[] = [];
 
     initialDataChanged(newValue, oldValue) {
         this.reloadItems();
     }
 
-    valuePushChanged(newValue, oldValue) {
-        if (this.value === newValue) {
-            return;
-        }
-        this.value = newValue;
+    valueChanged(newValue, oldValue) {
         this.reloadItems();
     }
 
     schemaChanged(newValue, oldValue) {
-        this.invalidItems = new Set();
-        this.validItems = new Set();
-        this.valid = null;
         this.reloadItems();
     }
 
@@ -53,11 +37,15 @@ export class ArrayForm {
             this.itemSchemas = [];
             this.minItems = null;
             this.maxItems = 0;
+            this.itemsValid = [];
+            this.itemsDirty = [];
+            this.valid = false;
             return;
         }
         const normalized = this.schema.normalized;
-        if (!normalized.type.has("array")) {
-            console.error("Not an array!", this.schema); // FIXME better error!
+        if (normalized.type == null || !normalized.type.has("array")) {
+            //console.error("Not an array!", this.schema); // FIXME better error!
+            // can happen when switching type schema...
             this.itemSchemas = [];
             this.minItems = null;
             this.maxItems = 0;
@@ -67,55 +55,45 @@ export class ArrayForm {
         this.maxItems = normalized.maxItems;
         const currentLength = this.initialData?.length ?? this.value?.length ?? 0;
 
+
+        while (currentLength > this.itemsValid.length) {
+            this.itemsValid.push(false);
+        }
+        while (currentLength > this.itemsDirty.length) {
+            this.itemsDirty.push(false);
+        }
+        if (currentLength < this.itemsValid.length) {
+            this.itemsValid = this.itemsValid.slice(0, currentLength);
+        }
+        if (currentLength < this.itemsDirty.length) {
+            this.itemsDirty = this.itemsDirty.slice(0, currentLength);
+        }
+
         this.itemSchemas = this.schema.getItemList(currentLength);
+    }
+
+    updateSignal() {
+        this.itemsValidChanged(this.itemsValid);
+        this.itemsDirtyChanged(this.itemsDirty);
+    }
+
+    itemsValidChanged(newValue: boolean[], oldValue?) {
+        const valuesValid = newValue?.every(valid => valid) ?? false;
+        const minItemsValid = (this.minItems ?? 0) <= (newValue?.length ?? 0);
+        const maxItemsValid = this.maxItems == null || this.maxItems >= (newValue?.length ?? 0);
+        // TODO unique items
+        this.valid = valuesValid && minItemsValid && maxItemsValid;
+    }
+
+    itemsDirtyChanged(newValue: boolean[], oldValue?) {
+        this.dirty = newValue?.some(valid => valid) ?? false;
     }
 
     addItem() {
         const newValue = [...(this.value ?? [])];
         newValue.push(null);
-        this.valuePush = newValue;
+        this.value = newValue;
     }
 
-    itemChanged(key: number, newValue) {
-        if (this.value != null && this.value[key] === newValue) {
-            return;
-        }
-        console.log("item changed", key, newValue)
-        if (key > (this.minItems ?? 0) && newValue == null) {
-            // if key is not required then remove it if value is null
-            const tmpValue = [];
-            this.value.forEach((val, i) => {
-                if (i === key) {
-                    return;
-                }
-                tmpValue.push(val);
-            });
-            // TODO test if this actually works (or loops)
-            // this.value = newValue;
-            return;
-        }
-        if (this.value[key] == null && newValue == null) {
-            return;
-        }
-        const tmpValue = [...this.value];
-        tmpValue[key] = newValue;
-        this.value = tmpValue;
-    }
 
-    itemValidityChanged(key: number, newValue) {
-        if (newValue) {
-            this.invalidItems.delete(key);
-            this.validItems.add(key);
-        } else {
-            this.invalidItems.add(key);
-            this.validItems.delete(key);
-        }
-        const knownProps = this.invalidItems.size + this.validItems.size;
-        if (knownProps < this.itemSchemas.length) {
-            // valid status not known for all props
-            this.valid = (this.invalidItems.size > 0) ? true : null;
-        } else {
-            this.valid = this.invalidItems.size === 0;
-        }
-    }
 }

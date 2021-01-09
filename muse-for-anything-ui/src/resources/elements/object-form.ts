@@ -1,6 +1,5 @@
-import { bindable, bindingMode, children, child, observable } from "aurelia-framework";
+import { bindable, bindingMode, observable } from "aurelia-framework";
 import { NormalizedApiSchema, PropertyDescription } from "rest/schema-objects";
-import { SchemaValueObserver } from "./schema-value-observer";
 
 export class ObjectForm {
     @bindable key: string;
@@ -9,39 +8,24 @@ export class ObjectForm {
     @bindable schema: NormalizedApiSchema;
     @bindable debug: boolean = false;
     @bindable valuePush: any;
-    @bindable({ defaultBindingMode: bindingMode.fromView }) value: any = {};
+    @bindable({ defaultBindingMode: bindingMode.twoWay }) value: any = {};
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
+    @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
 
     properties: PropertyDescription[] = [];
     propertiesByKey: Map<string, PropertyDescription> = new Map();
     required: Set<string> = new Set();
 
-    invalidProps: Set<string> = new Set();
-    validProps: Set<string> = new Set();
+    updateCount = 100;
 
-    valueObserver: SchemaValueObserver = {
-        onValueChanged: (key, newValue, oldValue) => {
-            this.propChanged(key as string, newValue);
-        },
-        onValidityChanged: (key, newValue, oldValue) => {
-            this.propValidityChanged(key as string, newValue);
-        },
-    };
+    @observable() propertiesValid = {};
+    @observable() propertiesDirty = {};
 
     initialDataChanged(newValue, oldValue) {
         this.reloadProperties();
     }
 
-    valuePushChanged(newValue, oldValue) {
-        if (this.value === newValue) {
-            return;
-        }
-        this.value = newValue;
-    }
-
     schemaChanged(newValue, oldValue) {
-        this.invalidProps = new Set();
-        this.validProps = new Set();
         this.valid = null;
         this.reloadProperties();
     }
@@ -52,7 +36,7 @@ export class ObjectForm {
             this.required = new Set();
             return;
         }
-        if (!this.schema.normalized.type.has("object")) {
+        if (this.schema.normalized.type == null || !this.schema.normalized.type.has("object")) {
             console.error("Not an object!"); // FIXME better error!
             this.properties = [];
             this.required = new Set();
@@ -70,45 +54,33 @@ export class ObjectForm {
         this.required = this.schema.normalized.required;
     }
 
-    propChanged(key: string, newValue) {
-        if (this.value[key] === newValue) {
-            return;
-        }
-        if (!this.required.has(key) && newValue == null) {
-            // if key is not required then remove it if value is null
-            if (this.value[key] !== undefined) {
-                // only remove it if key is present in the object
-                const temp = {
-                    ...this.value,
-                };
-                delete temp[key];
-                this.value = temp;
-                return;
-            }
-        }
-        if (this.value[key] == null && newValue == null) {
-            return;
-        }
-        this.value = {
-            ...this.value,
-            [key]: newValue,
-        };
+    updateSignal() {
+        this.propertiesValidChanged(this.propertiesValid);
+        this.propertiesDirtyChanged(this.propertiesDirty);
     }
 
-    propValidityChanged(key: string, newValue) {
-        if (newValue) {
-            this.invalidProps.delete(key);
-            this.validProps.add(key);
-        } else {
-            this.invalidProps.add(key);
-            this.validProps.delete(key);
+    valueChanged(newValue) {
+        this.reloadProperties();
+    }
+
+    propertiesValidChanged(newValue: { [prop: string]: boolean }) {
+        if (newValue == null) {
+            this.valid = false;
+            return;
         }
-        const knownProps = this.invalidProps.size + this.validProps.size;
-        if (knownProps < this.properties.length) {
-            // valid status not known for all props
-            this.valid = (this.invalidProps.size > 0) ? true : null;
-        } else {
-            this.valid = this.invalidProps.size === 0;
+        const propKeys = Object.keys(this.value ?? {});
+        const allPropertiesValid = propKeys.every(key => newValue[key]);
+        const requiredPropKeys = propKeys.filter(key => this.required.has(key));
+        const allRequiredPresent = this.required.size === requiredPropKeys.length;
+        this.valid = allPropertiesValid && allRequiredPresent;
+    }
+
+    propertiesDirtyChanged(newValue: { [prop: string]: boolean }) {
+        if (newValue == null) {
+            this.dirty = false;
+            return;
         }
+        const propKeys = Object.keys(this.value ?? {});
+        this.dirty = (propKeys.length === 0) || propKeys.some(key => newValue[key]);
     }
 }

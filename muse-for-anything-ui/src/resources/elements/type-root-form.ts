@@ -1,6 +1,5 @@
-import { bindable, bindingMode, child } from "aurelia-framework";
+import { bindable, bindingMode, observable } from "aurelia-framework";
 import { NormalizedApiSchema, PropertyDescription } from "rest/schema-objects";
-import { SchemaValueObserver } from "./schema-value-observer";
 
 
 export class TypeRootForm {
@@ -11,8 +10,8 @@ export class TypeRootForm {
     @bindable required: boolean = false;
     @bindable debug: boolean = false;
     @bindable valuePush: any;
-    @bindable({ defaultBindingMode: bindingMode.fromView }) value: any;
-    @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean = false;
+    @bindable({ defaultBindingMode: bindingMode.twoWay }) value: any = {};
+    @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
 
     typeSchema: NormalizedApiSchema;
@@ -23,29 +22,9 @@ export class TypeRootForm {
     invalidProps: Set<string> = new Set();
     validProps: Set<string> = new Set();
 
+    @observable() childSchemas = {};
+
     containedTypes: string[] = [];
-
-    propertyValueObserver: SchemaValueObserver = {
-        onValueChanged: (key, newValue, oldValue) => {
-            //this.propChanged(key, newValue);
-        },
-        onValidityChanged: (key, newValue, oldValue) => {
-            //this.propValidityChanged(key, newValue);
-        },
-    };
-
-    typeValueObserver: SchemaValueObserver = {
-        onValueChanged: (key, newValue, oldValue) => {
-            //this.propChanged(key, newValue);
-        },
-        onValidityChanged: (key, newValue, oldValue) => {
-            //this.propValidityChanged(key, newValue);
-        },
-    };
-
-    constructor() {
-        this.value = {};
-    }
 
     initialDataChanged(newValue, oldValue) {
 
@@ -99,6 +78,9 @@ export class TypeRootForm {
     }
 
     valueChanged(newValue, oldValue) {
+        if (newValue == null) {
+            return;
+        }
         const defs = newValue?.definitions;
         const containedTypes = Object.keys(defs).filter(t => t !== "root");
         containedTypes.sort();

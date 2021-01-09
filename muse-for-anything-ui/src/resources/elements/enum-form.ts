@@ -10,9 +10,8 @@ export class EnumForm {
     @bindable schema: NormalizedApiSchema;
     @bindable required: boolean = false;
     @bindable debug: boolean = false;
-    @bindable valuePush: string | number | boolean | null;
-    @bindable({ defaultBindingMode: bindingMode.fromView }) value: string | number | boolean | null;
-    @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean = false;
+    @bindable({ defaultBindingMode: bindingMode.twoWay }) value: string | number | boolean | null;
+    @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
 
     slug = nanoid(8);
@@ -30,13 +29,6 @@ export class EnumForm {
             }
             this.dirty = false;
         }
-    }
-
-    valuePushChanged(newValue, oldValue) {
-        if (this.value === newValue) {
-            return;
-        }
-        this.value = newValue;
     }
 
     // eslint-disable-next-line complexity
@@ -92,6 +84,7 @@ export class EnumForm {
         if (!this.isNullable && this.value == null && enumChoicesArray.length > 0) {
             this.value = enumChoicesArray[0];
         }
+        this.updateValid();
     }
 
     valueChanged(newValue, oldValue) {
@@ -100,8 +93,12 @@ export class EnumForm {
         } else {
             this.dirty = this.initialData !== newValue;
         }
+        this.updateValid();
+    }
 
-        this.valid = this.enumChoices?.some(choice => choice === newValue) ?? false;
+    updateValid() {
+        this.dirty = this.initialData !== this.value;
+        this.valid = this.enumChoices?.some(choice => choice === this.value) ?? false;
     }
 
 }

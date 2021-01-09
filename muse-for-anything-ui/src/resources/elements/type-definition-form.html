@@ -5,7 +5,7 @@
 
 
     <div class="form-container">
-        <p class="font-semibold mb-2 form-container-title">${label}: ${slug}</p>
+        <p class="font-semibold mb-2 form-container-title">${label}:</p>
 
         <select class="bg-gray-100 border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1"
             value.bind="chosenSchema">
@@ -14,12 +14,10 @@
                 ${choice.title}
             </option>
         </select>
-        ${value|json}
-        <div if.bind="chosenSchema != null">
-            <p>Type Schema</p>
-            <schema-form class="w-full properties" value-observer.bind="typeValueObserver" key.bind="chosenSchema.title"
-                label.bind="'Type Schema'" initial-data.bind="initialData" value-push.bind="valuePush"
-                schema.bind="chosenSchema.schema" required.bind="true" debug.bind="debug">
+        <div if.bind="activeSchema != null">
+            <schema-form class="w-full properties" key.bind="activeSchema.title" label.bind="'Type Schema'"
+                initial-data.bind="initialData" value.bind="value" value-push.bind="valuePush"
+                schema.bind="activeSchema.schema" required.bind="true" debug.bind="debug">
             </schema-form>
         </div>
     </div>

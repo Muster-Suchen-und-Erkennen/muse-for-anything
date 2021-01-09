@@ -10,55 +10,55 @@
     <require from="./enum-form"></require>
 
     <template if.bind="schemaType === 'custom'">
-        <div class="card px-2 py-2 mt-4" if.bind="extraType === 'typeRoot'">
-            <type-root-form key.bind="key" label.bind="label" initial-data.bind="initialData" schema.bind="schema"
-                required.bind="required" debug.bind="debug" value-push.bind="valuePush"
-                value.from-view="value & viewSignal:'update-values'" valid.from-view="valid & viewSignal:'revalidate'">
+        <div class="${noCard ? '' : 'card px-2 py-2 mt-4'}" if.bind="extraType === 'typeRoot'">
+            <type-root-form key.bind="key" label.bind="label" initial-data.bind="initialData" schema.bind="activeSchema"
+                required.bind="required" debug.bind="debug" value-push.bind="valuePush" value.bind="value"
+                valid.from-view="valid" dirty.from-view="dirty">
             </type-root-form>
         </div>
-        <div class="card px-2 py-2 mt-4" if.bind="extraType === 'typeDefinition'">
-            <type-definition-form key.bind="key" label.bind="label" initial-data.bind="initialData" schema.bind="schema"
-                required.bind="required" debug.bind="debug" value-push.bind="valuePush"
-                value.from-view="value & viewSignal:'update-values'" valid.from-view="valid & viewSignal:'revalidate'">
+        <div class="${noCard ? '' : 'card px-2 py-2 mt-4'}" if.bind="extraType === 'typeDefinition'">
+            <type-definition-form key.bind="key" label.bind="label" initial-data.bind="initialData"
+                schema.bind="activeSchema" required.bind="required" debug.bind="debug" value-push.bind="valuePush"
+                value.bind="value" valid.from-view="valid" dirty.from-view="dirty">
             </type-definition-form>
         </div>
     </template>
     <template if.bind="schemaType === 'object'">
-        <div class="card px-2 py-2 mt-4">
-            <object-form key.bind="key" label.bind="label" initial-data.bind="initialData" schema.bind="schema"
-                required.bind="required" debug.bind="debug" value-push.bind="valuePush"
-                value.from-view="value & viewSignal:'update-values'" valid.from-view="valid & viewSignal:'revalidate'">
+        <div class="${noCard ? '' : 'card px-2 py-2 mt-4'}">
+            <object-form key.bind="key" label.bind="label" initial-data.bind="initialData" schema.bind="activeSchema"
+                required.bind="required" debug.bind="debug" value-push.bind="valuePush" value.bind="value"
+                valid.from-view="valid" dirty.from-view="dirty">
             </object-form>
         </div>
     </template>
     <template if.bind="schemaType === 'array'">
         <array-form class="mt-4 block" key.bind="key" label.bind="label" initial-data.bind="initialData"
-            schema.bind="schema" required.bind="required" debug.bind="debug" value-push.bind="valuePush"
-            value.from-view="value & viewSignal:'update-values'" valid.from-view="valid & viewSignal:'revalidate'">
+            schema.bind="activeSchema" required.bind="required" debug.bind="debug" value-push.bind="valuePush"
+            value.bind="value" valid.from-view="valid" dirty.from-view="dirty">
         </array-form>
     </template>
     <template if.bind="schemaType === 'string'">
-        <text-form key.bind="key" label.bind="label" initial-data.bind="initialData" schema.bind="schema"
-            required.bind="required" debug.bind="debug" value-push.bind="valuePush"
-            value.from-view="value & viewSignal:'update-values'" valid.from-view="valid & viewSignal:'revalidate'">
+        <text-form key.bind="key" label.bind="label" initial-data.bind="initialData" schema.bind="activeSchema"
+            required.bind="required" debug.bind="debug" value.bind="value" valid.from-view="valid"
+            dirty.from-view="dirty">
         </text-form>
     </template>
     <template if.bind="schemaType === 'number'">
-        <number-form key.bind="key" label.bind="label" initial-data.bind="initialData" schema.bind="schema"
-            required.bind="required" debug.bind="debug" value-push.bind="valuePush"
-            value.from-view="value & viewSignal:'update-values'" valid.from-view="valid & viewSignal:'revalidate'">
+        <number-form key.bind="key" label.bind="label" initial-data.bind="initialData" schema.bind="activeSchema"
+            required.bind="required" debug.bind="debug" value.bind="value" valid.from-view="valid"
+            dirty.from-view="dirty">
         </number-form>
     </template>
     <template if.bind="schemaType === 'boolean'">
-        <boolean-form key.bind="key" label.bind="label" initial-data.bind="initialData" schema.bind="schema"
-            required.bind="required" debug.bind="debug" value-push.bind="valuePush"
-            value.from-view="value & viewSignal:'update-values'" valid.from-view="valid & viewSignal:'revalidate'">
+        <boolean-form key.bind="key" label.bind="label" initial-data.bind="initialData" schema.bind="activeSchema"
+            required.bind="required" debug.bind="debug" value.bind="value" valid.from-view="valid"
+            dirty.from-view="dirty">
         </boolean-form>
     </template>
     <template if.bind="schemaType === 'enum'">
-        <enum-form key.bind="key" label.bind="label" initial-data.bind="initialData" schema.bind="schema"
-            required.bind="required" debug.bind="debug" value-push.bind="valuePush"
-            value.from-view="value & viewSignal:'update-values'" valid.from-view="valid & viewSignal:'revalidate'">
+        <enum-form key.bind="key" label.bind="label" initial-data.bind="initialData" schema.bind="activeSchema"
+            required.bind="required" debug.bind="debug" value.bind="value" valid.from-view="valid"
+            dirty.from-view="dirty">
         </enum-form>
     </template>
     <template if.bind="schemaType === 'const'">

@@ -10,25 +10,25 @@
         <!-- FIXME add translations -->
         <div class="flex flex-wrap" repeat.for="prop of extraProperties">
             ${prop.propertyName}
-            <schema-form class="w-full properties" value-observer.bind="propertyValueObserver"
-                key.bind="prop.propertyName" label.bind="prop.propertyName"
-                initial-data.bind="initialData[prop.propertyName]" schema.bind="prop.propertySchema"
-                required.bind="required != null && required.has(prop.propertyName)" debug.bind="debug">
+            <schema-form class="w-full properties" key.bind="prop.propertyName" label.bind="prop.propertyName"
+                initial-data.bind="initialData[prop.propertyName]" value.bind="value[prop.propertyName]"
+                schema.bind="prop.propertySchema" required.bind="required != null && required.has(prop.propertyName)"
+                debug.bind="debug">
             </schema-form>
         </div>
         <div>
             <p>Root Type</p>
             ${value.definitions["root"]|json}
-            <schema-form class="w-full properties" value-observer.bind="typeValueObserver" key.bind="'root'"
-                label.bind="'root'" initial-data.bind="initialData.definitions['root']" schema.bind="typeSchema"
-                required.bind="true" debug.bind="debug">
+            <schema-form class="w-full properties" key.bind="'root'" label.bind="'root'"
+                initial-data.bind="initialData.definitions['root']" value.bind="childSchemas['root']"
+                schema.bind="typeSchema" required.bind="true" debug.bind="debug">
             </schema-form>
         </div>
         <div repeat.for="typeId of containedTypes">
             ${value.definitions[typeId]|json}
-            <schema-form class="w-full properties" value-observer.bind="typeValueObserver" key.bind="typeId"
-                label.bind="typeId" initial-data.bind="initialData.definitions[typeId]" schema.bind="typeSchema"
-                required.bind="true" debug.bind="debug">
+            <schema-form class="w-full properties" key.bind="typeId" label.bind="typeId"
+                initial-data.bind="initialData.definitions[typeId]" value.bind="childSchemas[typeId]"
+                schema.bind="typeSchema" required.bind="true" debug.bind="debug">
             </schema-form>
         </div>
     </div>
