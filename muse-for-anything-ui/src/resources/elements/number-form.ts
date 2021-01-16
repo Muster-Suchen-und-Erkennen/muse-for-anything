@@ -24,7 +24,7 @@ export class NumberForm {
 
     isInteger: boolean = true;
 
-    step: number = 0.1;
+    step: number;
 
     minimum: number;
     maximum: number;
@@ -63,7 +63,7 @@ export class NumberForm {
             this.step = 1;
             this.isInteger = true;
         } else {
-            this.step = 0;
+            this.step = null;
             this.isInteger = false;
         }
 

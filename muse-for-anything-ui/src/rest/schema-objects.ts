@@ -1080,7 +1080,8 @@ export class NormalizedApiSchema {
         }
         consolidateExtraProperties(this.resolvedSchema, normalized, context);
         if (normalized.type == null) {
-            console.error(this, normalized);
+            normalized.mainType = "any";
+            return;
         }
         if (normalized.type.has("object")) {
             normalized.mainType = "object";

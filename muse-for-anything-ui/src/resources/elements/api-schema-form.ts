@@ -14,7 +14,7 @@ export class ApiSchemaForm {
     @bindable apiLink: ApiLink;
     @bindable debug: boolean = false;
     @bindable valuePush: any;
-    @bindable({ defaultBindingMode: bindingMode.fromView }) data: any;
+    @bindable({ defaultBindingMode: bindingMode.twoWay }) data: any;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) submitting: boolean = false;
     @bindable({ defaultBindingMode: bindingMode.fromView }) abortSignal: AbortSignal;
@@ -78,6 +78,7 @@ export class ApiSchemaForm {
             console.warn("Tried to submit a form that is not valid!");
             return;
         }
+        console.log(JSON.stringify(this.data))
         this.submitting = true;
         this.api.submitByApiLink(this.apiLink, this.data, this.abortSignal)
             .then((response) => {

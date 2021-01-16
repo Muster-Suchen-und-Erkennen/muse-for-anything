@@ -10,6 +10,8 @@ export class TextForm {
     @bindable schema: NormalizedApiSchema;
     @bindable required: boolean = false;
     @bindable debug: boolean = false;
+    @bindable actions: Iterable<string>;
+    @bindable actionSignal: unknown;
     @bindable({ defaultBindingMode: bindingMode.twoWay }) value: string;
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
@@ -43,7 +45,10 @@ export class TextForm {
         }
         if (this.formInput != null) {
             this.formIsValid = (this.formInput as HTMLInputElement).validity.valid;
-            this.updateValid();
+
+            window.setTimeout(() => {
+                this.updateValid();
+            }, 0);
         }
     }
 
@@ -75,10 +80,9 @@ export class TextForm {
         } else {
             this.isSingelLine = false;
         }
-        if (this.formInput != null) {
-            this.formIsValid = (this.formInput as HTMLInputElement).validity.valid;
+        window.setTimeout(() => {
             this.updateValid();
-        }
+        }, 0);
     }
 
     valueChanged(newValue, oldValue) {
@@ -89,7 +93,6 @@ export class TextForm {
         }
         let updatedValidStatus = false;
         if (this.formInput != null) {
-            this.formIsValid = (this.formInput as HTMLInputElement).validity.valid;
             updatedValidStatus = true;
         }
         if (this.extraPatterns) {
@@ -117,6 +120,11 @@ export class TextForm {
                 this.valid = false;
                 return;
             }
+        }
+        if (this.formInput != null) {
+            this.formIsValid = (this.formInput as HTMLInputElement).validity.valid;
+        } else {
+            console.log("no form input")
         }
         this.valid = this.formIsValid && this.extraIsValid;
     }

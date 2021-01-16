@@ -38,6 +38,9 @@ export class BooleanForm {
         if (!this.isNullable && this.value == null) {
             this.value = false;
         }
+        window.setTimeout(() => {
+            this.updateValid();
+        }, 0);
     }
 
     cycle(event?: Event) {
@@ -68,8 +71,16 @@ export class BooleanForm {
             this.dirty = this.initialData !== newValue;
         }
         this.updateCheckbox();
+        this.updateValid();
+        if (this.isNullable) {
+            this.dirty = this.value !== this.initialData;
+        } else {
+            this.dirty = this.value !== (this.initialData ?? false);
+        }
+    }
 
-        this.valid = this.isNullable || newValue != null;
+    updateValid() {
+        this.valid = this.isNullable || this.value != null;
     }
 
     formInputChanged() {

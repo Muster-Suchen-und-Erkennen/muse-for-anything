@@ -14,6 +14,8 @@ export class SchemaForm {
     @bindable noCard: boolean = false;
     @bindable valuePush: any;
     @bindable updateSignal: UpdateSignal;
+    @bindable actions: Iterable<string>;
+    @bindable actionSignal: unknown;
     @bindable({ defaultBindingMode: bindingMode.twoWay }) value: unknown;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
@@ -33,19 +35,21 @@ export class SchemaForm {
         const normalized = newValue.normalized;
         if (normalized.enum != null) {
             this.schemaType = "enum";
-        } else if (normalized.const != null) {
+        } else if (normalized.const !== undefined) {
             this.schemaType = "const";
-            this.valid = true;
             this.constValue = normalized.const;
             this.value = normalized.const;
+            window.setTimeout(() => {
+                this.valid = true;
+                if (this.updateSignal != null) {
+                    this.updateSignal();
+                }
+            }, 0);
+        } else if (normalized.customType != null) {
+            this.extraType = normalized.customType;
+            this.schemaType = "custom";
         } else if (normalized.mainType === "object") {
-            if (normalized.customType != null) {
-                this.extraType = normalized.customType;
-                this.schemaType = "custom";
-            } else {
-                this.schemaType = "object";
-                // TODO type for mappings?
-            }
+            this.schemaType = "object";
         } else if (normalized.mainType === "array") {
             this.schemaType = "array";
         } else if (normalized.mainType === "string") {

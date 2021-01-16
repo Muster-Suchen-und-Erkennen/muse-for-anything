@@ -17,7 +17,7 @@ export class TypeDefinitionForm {
     @bindable debug: boolean = false;
     @bindable valuePush: any;
     @bindable({ defaultBindingMode: bindingMode.twoWay }) value: any;
-    @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean = false;
+    @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
 
     slug = nanoid(8);
@@ -29,8 +29,9 @@ export class TypeDefinitionForm {
 
     valueCache: Map<string, any> = new Map();
 
+    childValid: boolean;
+
     schemaChanged(newValue: NormalizedApiSchema, oldValue) {
-        this.valid = false;
         if (newValue == null) {
             return;
         }
@@ -62,22 +63,32 @@ export class TypeDefinitionForm {
             return 0;
         });
         this.choices = choices;
+
+        window.setTimeout(() => {
+            this.updateValid();
+        }, 0);
     }
 
 
     valueChanged(newValue, oldValue) {
-        console.log(JSON.stringify(newValue))
+        this.updateValid();
+    }
+
+    updateValid() {
+        if (this.value == null) {
+            this.valid = !this.required;
+        }
     }
 
     chosenSchemaChanged(newSchemaValue: SchemaDescription, oldSchemaValue: SchemaDescription) {
         const oldValue = this.value ?? {};
-        console.log(Object.keys(oldValue))
         if (oldSchemaValue != null) {
             this.valueCache.set(oldSchemaValue.title, oldValue);
         }
         this.value = {};
         this.activeSchema = null; // always set active schema to null first to reset child form
         if (newSchemaValue == null) {
+            this.value = null;
             return;
         }
         const newValue: any = {};
@@ -94,7 +105,6 @@ export class TypeDefinitionForm {
                 }
             });
         }
-        console.log(Object.keys(newValue));
         ["title", "description", "$comment", "deprecated"].forEach(attr => {
             if (oldValue[attr] != null) {
                 newValue[attr] = oldValue[attr];

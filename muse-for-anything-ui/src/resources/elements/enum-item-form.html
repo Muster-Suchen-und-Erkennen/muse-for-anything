@@ -1,26 +1,23 @@
 <template>
     <require from="./validity-indicator"></require>
     <require from="./schema-form"></require>
-    <!-- TODO translations -->
+    <!-- TODO translations-->
 
-
-    <div class="form-container">
+    <div class="flex flex-col form-field form-container">
         <p class="font-semibold mb-2 form-container-title">${label}:</p>
 
         <select class="bg-gray-100 border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1"
-            value.bind="chosenSchema">
+            value.bind="selectedChoice">
             <option model.bind="null">Choose...</option>
             <option repeat.for="choice of choices" model.bind="choice">
                 ${choice.title}
             </option>
         </select>
         <div if.bind="activeSchema != null">
-            <schema-form class="w-full properties" key.bind="activeSchema.title" label.bind="'Type Schema'"
-                initial-data.bind="initialData" value.bind="value" value-push.bind="valuePush"
-                schema.bind="activeSchema.schema" required.bind="true" valid.from-view="valid" dirty.from-view="dirty"
-                debug.bind="debug">
+            <schema-form class="w-full" key.bind="activeSchema.title" label.bind="activeSchema.title"
+                initial-data.bind="initialData" value.bind="value" schema.bind="activeSchema.schema"
+                valid.from-view="valid" dirty.from-view="dirty" required.bind="true" debug.bind="debug">
             </schema-form>
         </div>
     </div>
-
 </template>

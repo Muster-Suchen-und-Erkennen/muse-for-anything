@@ -93,18 +93,27 @@ JSON_META_PROPERTIES_SCHEMA = {
         "$id": {"type": "string", "format": "uri-reference"},
         "title": {"type": "string", "maxLength": 300},
         "description": {"type": "string"},
-        "$comment": {"type": "string"},
+        "$comment": {"title": "comment", "type": "string"},
         "default": NESTED_JSON_SCHEMA_REF,
         "deprecated": {"type": "boolean", "default": False},
         "readOnly": {"type": "boolean", "default": False},
         "writeOnly": {"type": "boolean", "default": False},
         "allOf": {
+            "title": "base types",
             "type": "array",
             "minItems": 1,
             "items": NESTED_JSON_SCHEMA_REF,
         },
     },
     "hiddenProperties": ["$id", "default", "readOnly", "writeOnly"],
+    "propertyOrder": {
+        "type": 10,
+        "deprecated": 20,
+        "title": 30,
+        "description": 40,
+        "$comment": 50,
+        "allOf": 90,
+    },
 }
 
 JSON_OBJECT_PROPERTIES_SCHEMA = {
@@ -133,13 +142,14 @@ JSON_OBJECT_PROPERTIES_SCHEMA = {
                 None,
                 "typeRoot",
                 "typeDefinition",
+                "enumItem",
             ],
         },
         "maxProperties": {"type": "integer", "minimum": 0},
         "minProperties": {"type": "integer", "minimum": 0, "default": 0},
         "required": {
             "type": "array",
-            "items": {"type": "string"},
+            "items": {"type": "string", "singleLine": True},
             "uniqueItems": True,
             "default": [],
         },
@@ -151,7 +161,7 @@ JSON_OBJECT_PROPERTIES_SCHEMA = {
         "patternProperties": {
             "type": "object",
             "additionalProperties": NESTED_JSON_SCHEMA_REF,
-            "propertyNames": {"type": "string", "format": "regex"},
+            "propertyNames": {"type": "string", "format": "regex", "singleLine": True},
             "default": {},
         },
         "propertyNames": JSON_SCHEMA_REF,  # TODO
@@ -159,20 +169,26 @@ JSON_OBJECT_PROPERTIES_SCHEMA = {
         # custom properties
         "hiddenProperties": {
             "type": "array",
-            "items": {"type": "string"},
+            "items": {"type": "string", "singleLine": True},
             "uniqueItems": True,
             "default": [],
         },
         "propertyOrder": {
             "type": "object",
-            "additionalProperties": {
-                "name": {"type": ["number", "integer"]},
-            },
+            "additionalProperties": {"type": "number"},
         },
-        "showAdditionalProperties": {
-            "type": "boolean",
-            "default": False,
-        },
+    },
+    "propertyOrder": {
+        "customType": 15,
+        "properties": 100,
+        "required": 110,
+        "propertyOrder": 120,
+        "hiddenProperties": 130,
+        "patternProperties": 140,
+        "additionalProperties": 150,
+        "propertyNames": 160,
+        "minProperties": 170,
+        "maxProperties": 180,
     },
 }
 
@@ -224,7 +240,19 @@ JSON_ARRAY_PROPERTIES_SCHEMA = {
     "properties": {
         "items": NESTED_JSON_SCHEMA_REF,
         "arrayType": {"const": "array"},
-        "orderedItems": {"type": "boolean", "default": True},
+        "unorderedItems": {"type": "boolean", "default": False},
+    },
+    "hiddenProperties": [
+        "contains",
+        "additionalItems",
+    ],
+    "propertyOrder": {
+        "arrayType": 100,
+        "items": 110,
+        "minItems": 120,
+        "maxItems": 130,
+        "uniqueItems": 140,
+        "unorderedItems": 150,
     },
 }
 
@@ -241,6 +269,17 @@ JSON_TUPLE_PROPERTIES_SCHEMA = {
             "items": NESTED_JSON_SCHEMA_REF,
         },
         "arrayType": {"const": "tuple"},
+    },
+    "hiddenProperties": [
+        "contains",
+    ],
+    "propertyOrder": {
+        "arrayType": 100,
+        "items": 110,
+        "minItems": 120,
+        "maxItems": 130,
+        "uniqueItems": 140,
+        "unorderedItems": 150,
     },
 }
 
@@ -272,6 +311,19 @@ JSON_STRING_PROPERTIES_SCHEMA = {
         "contentMediaType": {"type": "string", "singleLine": True},
         "contentEncoding": {"type": "string", "singleLine": True},
         "contentSchema": NESTED_JSON_SCHEMA_REF,
+    },
+    "hiddenProperties": [
+        "contentEncoding",
+        "contentSchema",
+    ],
+    "propertyOrder": {
+        "minLength": 100,
+        "maxLength": 110,
+        "pattern": 120,
+        "format": 130,
+        "contentMediaType": 140,
+        "contentEncoding": 150,
+        "contentSchema": 160,
     },
 }
 
@@ -310,6 +362,13 @@ JSON_NUMBER_PROPERTIES_SCHEMA = {
             "uniqueItems": True,
         },
     },
+    "propertyOrder": {
+        "minimum": 100,
+        "maximum": 110,
+        "exclusiveMinimum": 120,
+        "exclusiveMaximum": 130,
+        "multipleOf": 140,
+    },
 }
 
 JSON_INTEGER_PROPERTIES_SCHEMA = {
@@ -334,13 +393,20 @@ JSON_INTEGER_PROPERTIES_SCHEMA = {
             "uniqueItems": True,
         },
     },
+    "propertyOrder": {
+        "minimum": 100,
+        "maximum": 110,
+        "exclusiveMinimum": 120,
+        "exclusiveMaximum": 130,
+        "multipleOf": 140,
+    },
 }
 
 JSON_BOOLEAN_PROPERTIES_SCHEMA = {
     "$id": JSON_BOOLEAN_PROPERTIES_SCHEMA_REF["$ref"],
     "type": ["object"],
     "default": {"type": ["boolean"]},
-    "required": ["boolean"],
+    "required": ["type"],
     "allOf": [JSON_META_PROPERTIES_SCHEMA_REF],
     "properties": {
         "type": {
@@ -372,7 +438,11 @@ JSON_BASE_TYPE_INTEGER = {"$id": JSON_BASE_TYPE_INTEGER_REF["$ref"], "type": "in
 
 JSON_BASE_TYPE_NUMBER = {"$id": JSON_BASE_TYPE_NUMBER_REF["$ref"], "type": "number"}
 
-JSON_BASE_TYPE_STRING = {"$id": JSON_BASE_TYPE_STRING_REF["$ref"], "type": "string"}
+JSON_BASE_TYPE_STRING = {
+    "$id": JSON_BASE_TYPE_STRING_REF["$ref"],
+    "type": "string",
+    "singleLine": True,
+}
 
 
 JSON_ENUM_PROPERTIES_SCHEMA = {
@@ -392,9 +462,13 @@ JSON_ENUM_PROPERTIES_SCHEMA = {
                     JSON_BASE_TYPE_NUMBER_REF,
                     JSON_BASE_TYPE_STRING_REF,
                 ],
+                "customType": "enumItem",
             },
         },
         # "const": {"type": ["boolean", "integer", "null", "number", "string"]},
+    },
+    "propertyOrder": {
+        "enum": 100,
     },
 }
 
@@ -407,6 +481,9 @@ JSON_REF_PROPERTIES_SCHEMA = {
     "allOf": [JSON_META_PROPERTIES_SCHEMA_REF],
     "properties": {
         "$ref": {"type": "string", "format": "uri-reference", "singleLine": True},
+    },
+    "propertyOrder": {
+        "$ref": 100,
     },
 }
 
