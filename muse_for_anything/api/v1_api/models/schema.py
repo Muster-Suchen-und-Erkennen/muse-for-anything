@@ -44,6 +44,13 @@ class SchemaApiObject(BaseApiObject):
     schema: Dict[str, Any]
 
 
+class JSONSchemaSchema(MaBaseSchema):
+    definitions = ma.fields.Mapping(
+        ma.fields.String(), SchemaField(allow_none=False), required=True, allow_none=False
+    )
+    abstract = ma.fields.Boolean(required=False)
+
+
 JSON_SCHEMA_ROOT_SCHEMA_REF = {"$ref": "#/definitions/root"}
 
 JSON_SCHEMA_REF = {"$ref": "#/definitions/schema"}
@@ -139,7 +146,6 @@ JSON_OBJECT_PROPERTIES_SCHEMA = {
         },
         "customType": {
             "enum": [
-                None,
                 "typeRoot",
                 "typeDefinition",
                 "enumItem",
@@ -167,6 +173,18 @@ JSON_OBJECT_PROPERTIES_SCHEMA = {
         "propertyNames": JSON_SCHEMA_REF,  # TODO
         "additionalProperties": NESTED_JSON_SCHEMA_REF,
         # custom properties
+        "titleProperty": {
+            "title": "Title Property",
+            "description": "The name of the property that should be treated as the title or name of this object.",
+            "type": "string",
+            "singleLine": True,
+        },
+        "descriptionProperty": {
+            "title": "Description Property",
+            "description": "The name of the property that should be treated as the description of this object.",
+            "type": "string",
+            "singleLine": True,
+        },
         "hiddenProperties": {
             "type": "array",
             "items": {"type": "string", "singleLine": True},
@@ -182,13 +200,15 @@ JSON_OBJECT_PROPERTIES_SCHEMA = {
         "customType": 15,
         "properties": 100,
         "required": 110,
-        "propertyOrder": 120,
-        "hiddenProperties": 130,
-        "patternProperties": 140,
-        "additionalProperties": 150,
-        "propertyNames": 160,
-        "minProperties": 170,
-        "maxProperties": 180,
+        "titleProperty": 120,
+        "descriptionProperty": 130,
+        "propertyOrder": 140,
+        "hiddenProperties": 150,
+        "patternProperties": 160,
+        "additionalProperties": 170,
+        "propertyNames": 180,
+        "minProperties": 190,
+        "maxProperties": 200,
     },
 }
 
@@ -306,6 +326,12 @@ JSON_STRING_PROPERTIES_SCHEMA = {
         },
         "maxLength": {"type": "integer", "minimum": 0},
         "minLength": {"type": "integer", "minimum": 0, "default": 0},
+        "singleLine": {
+            "title": "Single-Line",
+            "description": "Display a single line input instead of a text field.",
+            "type": "boolean",
+            "default": False,
+        },
         "pattern": {"type": "string", "format": "regex", "singleLine": True},
         "format": {"type": "string", "singleLine": True},
         "contentMediaType": {"type": "string", "singleLine": True},
@@ -319,11 +345,12 @@ JSON_STRING_PROPERTIES_SCHEMA = {
     "propertyOrder": {
         "minLength": 100,
         "maxLength": 110,
-        "pattern": 120,
-        "format": 130,
-        "contentMediaType": 140,
-        "contentEncoding": 150,
-        "contentSchema": 160,
+        "singleLine": 120,
+        "pattern": 130,
+        "format": 140,
+        "contentMediaType": 150,
+        "contentEncoding": 160,
+        "contentSchema": 170,
     },
 }
 
@@ -501,6 +528,7 @@ JSON_SCHEMA_ROOT_SCHEMA = {
             "additionalProperties": JSON_SCHEMA_REF,
             "default": {},
         },
+        "abstract": {"title": "Is Abstract", "type": "boolean", "default": False},
     },
     "customType": "typeRoot",
 }

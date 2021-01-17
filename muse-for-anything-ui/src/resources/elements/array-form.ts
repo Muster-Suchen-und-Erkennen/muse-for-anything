@@ -6,11 +6,16 @@ export class ArrayForm {
     @bindable label: string;
     @bindable initialData: any;
     @bindable schema: NormalizedApiSchema;
+    @bindable required: boolean = false;
     @bindable debug: boolean = false;
     @bindable valuePush: any[];
+    @bindable actions: Iterable<string>;
+    @bindable actionSignal: unknown;
     @bindable({ defaultBindingMode: bindingMode.twoWay }) value: any[];
     @bindable({ defaultBindingMode: bindingMode.twoWay }) valid: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
+
+    isNullable: boolean = false;
 
     itemSchemas: ItemDescription[] = [];
 
@@ -51,13 +56,14 @@ export class ArrayForm {
             this.maxItems = 0;
             return;
         }
+        this.isNullable = normalized.type.has("null");
         this.minItems = normalized.minItems;
         this.maxItems = normalized.maxItems;
         const currentLength = this.initialData?.length ?? this.value?.length ?? 0;
 
 
         while (currentLength > this.itemsValid.length) {
-            this.itemsValid.push(false);
+            this.itemsValid.push(null);
         }
         while (currentLength > this.itemsDirty.length) {
             this.itemsDirty.push(false);
@@ -70,15 +76,22 @@ export class ArrayForm {
         }
 
         this.itemSchemas = this.schema.getItemList(currentLength);
+        this.updateSignal();
     }
 
     updateSignal() {
-        this.itemsValidChanged(this.itemsValid);
-        this.itemsDirtyChanged(this.itemsDirty);
+        window.setTimeout(() => {
+            this.itemsValidChanged(this.itemsValid);
+            this.itemsDirtyChanged(this.itemsDirty);
+        }, 1);
     }
 
     itemsValidChanged(newValue: boolean[], oldValue?) {
-        const valuesValid = newValue?.every(valid => valid) ?? false;
+        if (this.value == null) {
+            this.valid = this.isNullable;
+            return;
+        }
+        const valuesValid = newValue?.every((valid, i) => valid || (i >= this.value.length)) ?? false;
         const minItemsValid = (this.minItems ?? 0) <= (newValue?.length ?? 0);
         const maxItemsValid = this.maxItems == null || this.maxItems >= (newValue?.length ?? 0);
         // TODO unique items
@@ -93,6 +106,17 @@ export class ArrayForm {
         const newValue = [...(this.value ?? [])];
         newValue.push(null);
         this.value = newValue;
+    }
+
+    actionSignalCallback(action: { actionType: string, key: number }) {
+        if (action.actionType === "remove" && this.value[action.key] !== undefined) {
+            const newValue = [...this.value];
+            newValue.splice(action.key, 1);
+            this.value = newValue;
+        } else {
+            // TODO other actions
+            console.log(action)
+        }
     }
 
 

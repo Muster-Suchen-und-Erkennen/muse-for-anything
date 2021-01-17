@@ -1,10 +1,18 @@
 <template>
     <require from="./validity-indicator"></require>
     <require from="./schema-form"></require>
+    <require from="./schema-form-actions"></require>
     <!-- TODO translations-->
 
     <div class="flex flex-col form-field form-container">
-        <p class="font-semibold mb-2 form-container-title">${label}:</p>
+        <div class="mb-2 flex items-center form-container-title">
+            <p class="font-semibold">${label}:</p>
+            <div class="flex-grow"></div>
+            <div class="justify-items-end flex items-center" if.bind="actions != null">
+                <schema-form-actions actions.bind="actions" key.bind="key" action-signal.call="actionSignal($event)">
+                </schema-form-actions>
+            </div>
+        </div>
 
         <select class="bg-gray-100 border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1"
             value.bind="selectedChoice">

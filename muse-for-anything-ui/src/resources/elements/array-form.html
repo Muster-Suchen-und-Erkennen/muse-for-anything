@@ -1,12 +1,18 @@
 <template>
     <require from="./schema-form"></require>
     <require from="./validity-indicator"></require>
+    <require from="./schema-form-actions"></require>
     <!-- TODO translations -->
 
     <div class="form-container">
         <div class="mb-2 flex items-center form-container-title">
             <p class="font-semibold text-lg">${label}</p>
             <validity-indicator class="ml-2" valid.bind="valid"></validity-indicator>
+            <div class="flex-grow"></div>
+            <div class="justify-items-end flex items-center" if.bind="actions != null">
+                <schema-form-actions actions.bind="actions" key.bind="key" action-signal.call="actionSignal($event)">
+                </schema-form-actions>
+            </div>
         </div>
         <div class="flex flex-wrap card px-2 py-2" repeat.for="i of itemSchemas.length">
             <schema-form class="w-full" key.bind="$parent.itemSchemas[i].itemIndex"
@@ -14,6 +20,7 @@
                 value.bind="$parent.value[i]" value-push.bind="null" schema.bind="$parent.itemSchemas[i].itemSchema"
                 valid.from-view="$parent.itemsValid[i]" dirty.from-view="$parent.itemsDirty[i]"
                 required.bind="minItems != null && i < minItems" update-signal.call="updateSignal()" no-card="true"
+                actions.bind="$parent.itemSchemas[i].itemActions" action-signal.call="actionSignalCallback($event)"
                 debug.bind="debug">
             </schema-form>
         </div>

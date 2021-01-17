@@ -10,6 +10,8 @@ export class TypeRootForm {
     @bindable required: boolean = false;
     @bindable debug: boolean = false;
     @bindable valuePush: any;
+    @bindable actions: Iterable<string>;
+    @bindable actionSignal: unknown;
     @bindable({ defaultBindingMode: bindingMode.twoWay }) value: any;
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
@@ -128,6 +130,34 @@ export class TypeRootForm {
         }
     }
 
+    propertyActionSignal(action: { actionType: string, key: string }) {
+        if (action.actionType === "remove" && this.value[action.key] !== undefined) {
+            const newValue = { ...this.value };
+            delete newValue[action.key];
+            this.value = newValue;
+        }
+    }
+
+    typeActionSignal(action: { actionType: string, key: string }) {
+        if (action.actionType === "remove" && this.containedTypes.some(typeId => typeId === action.key)) {
+            if (action.key === "root") {
+                return; // never delete the root type
+            }
+            this.containedTypes = this.containedTypes.filter(typeId => typeId !== action.key);
+            delete this.childSchemas[action.key];
+            this.schemaUpdateSignal();
+        }
+    }
+
+    addGhostProperty(propName: string) {
+        if (this.value?.[propName] === undefined) {
+            this.value = {
+                ...(this.value ?? {}),
+                [propName]: null,
+            };
+        }
+    }
+
     addType() {
         if (this.value == null) {
             this.value = {
@@ -178,7 +208,13 @@ export class TypeRootForm {
             return;
         }
         const propKeys = this.extraProperties.map(prop => prop.propertyName);
-        const allPropertiesValid = propKeys.every(key => newValue[key]);
+        const allPropertiesValid = propKeys.every(key => {
+            if (newValue[key] != null) {
+                return newValue[key]; // property validity is known
+            }
+            // assume valid if not required and not present
+            return !this.requiredProperties.has(key) && this.value[key] === undefined;
+        });
         if (!allPropertiesValid) {
             this.invalidProps = propKeys.filter(key => !newValue[key]);
         } else {
@@ -211,6 +247,10 @@ export class TypeRootForm {
     }
 
     updateValid() {
+        if (this.value == null) {
+            this.valid = false; // this can never be nullable!
+            return;
+        }
         this.valid = this.propertiesAreValid && this.childSchemasAreValid;
     }
 

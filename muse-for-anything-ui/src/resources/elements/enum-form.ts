@@ -10,6 +10,8 @@ export class EnumForm {
     @bindable schema: NormalizedApiSchema;
     @bindable required: boolean = false;
     @bindable debug: boolean = false;
+    @bindable actions: Iterable<string>;
+    @bindable actionSignal: unknown;
     @bindable({ defaultBindingMode: bindingMode.twoWay }) value: string | number | boolean | null;
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
@@ -27,14 +29,14 @@ export class EnumForm {
             } else {
                 this.value = newValue ?? false;
             }
-            this.dirty = false;
+            this.updateValid();
         }
     }
 
     // eslint-disable-next-line complexity
     schemaChanged(newValue: NormalizedApiSchema, oldValue) {
         const normalized = newValue.normalized;
-        this.isNullable = normalized.enum.some(item => item === null) || normalized.type?.has(null) || !this.required;
+        this.isNullable = normalized.enum.some(item => item === null) || normalized.type?.has("null");
         const enumChoices = new Set(normalized.enum);
         if (this.isNullable) {
             enumChoices.add(null);
@@ -97,8 +99,10 @@ export class EnumForm {
     }
 
     updateValid() {
-        this.dirty = this.initialData !== this.value;
-        this.valid = this.enumChoices?.some(choice => choice === this.value) ?? false;
+        window.setTimeout(() => {
+            this.dirty = this.initialData !== this.value;
+            this.valid = this.enumChoices?.some(choice => choice === this.value) ?? false;
+        }, 1);
     }
 
 }

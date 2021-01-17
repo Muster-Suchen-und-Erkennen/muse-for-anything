@@ -1,6 +1,8 @@
+from muse_for_anything.api.v1_api.models.schema import TYPE_SCHEMA
 from muse_for_anything.api.v1_api.namespace_helpers import query_params_to_api_key
 from typing import Any, Dict, List, Union
 from flask import url_for
+from jsonschema import validate, Draft7Validator
 
 from muse_for_anything.api.base_models import ApiLink, ApiResponse
 from muse_for_anything.api.v1_api.models.ontology import (
@@ -152,3 +154,12 @@ def type_to_api_response(object_type: OntologyObjectType) -> ApiResponse:
         ),
         data=raw_object_type,
     )
+
+
+def validate_type_schema(schema: Any):
+    # FIXME implement this
+    print(schema)
+    validator = Draft7Validator(TYPE_SCHEMA)
+    for error in sorted(validator.iter_errors(schema), key=str):
+        print("VALIDATION ERROR", error.message)
+    validate(schema, TYPE_SCHEMA)

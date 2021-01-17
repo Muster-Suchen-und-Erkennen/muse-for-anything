@@ -1,6 +1,6 @@
 """Module containing ontology object table definitions."""
 
-from typing import Any
+from typing import Any, Optional
 from sqlalchemy.sql.schema import ForeignKey, Column, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declared_attr
@@ -61,6 +61,33 @@ class OntologyObjectType(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
             return None
         return self.current_version.data
 
+    def __init__(
+        self,
+        namespace: Namespace,
+        name: str,
+        description: Optional[str] = None,
+        is_top_level_type: Optional[bool] = True,
+        **kwargs,
+    ) -> None:
+        self.namespace = namespace
+        self.update(name, description, is_top_level_type=is_top_level_type, **kwargs)
+
+    def update(
+        self,
+        name: str,
+        description: Optional[str] = None,
+        is_top_level_type: Optional[bool] = None,
+        **kwargs,
+    ):
+        if kwargs:
+            raise ValueError("Got unknown keyword arguments!")
+        self.name = name
+        self.description = description
+        if is_top_level_type is None and self.is_toplevel_type is None:
+            self.is_toplevel_type = True
+        elif is_top_level_type is not None:
+            self.is_toplevel_type = is_top_level_type
+
 
 class OntologyObjectTypeVersion(MODEL, IdMixin, CreateDeleteMixin):
     """Ontology object type version model."""
@@ -98,6 +125,18 @@ class OntologyObjectTypeVersion(MODEL, IdMixin, CreateDeleteMixin):
         lazy="select",
         back_populates="ontology_type_version",
     )
+
+    def __init__(
+        self, ontology_type: OntologyObjectType, version: int, data: Any, **kwargs
+    ) -> None:
+        self.ontology_type = ontology_type
+        self.version = version
+        self.update(data, **kwargs)
+
+    def update(self, data: Any, **kwargs):
+        if kwargs:
+            raise ValueError("Got unknown keyword arguments!")
+        self.data = data
 
 
 class OntologyObject(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):

@@ -747,6 +747,9 @@ function consolidateObjectProperties(normalized: NormalizedJsonSchema, context: 
         // normalize this to default to `true`
         normalized.additionalProperties = true;
     }
+    if (normalized.required == null) {
+        normalized.required = new Set();
+    }
 }
 
 function consolidateArrayProperties(normalized: NormalizedJsonSchema, context: NormalizationContext) {
@@ -791,6 +794,7 @@ export interface ItemDescription {
     itemIndex: number;
     itemTitle: string;
     itemSchema: NormalizedApiSchema;
+    itemActions: Array<"remove" | "moveUp" | "moveDown">;
 }
 
 export interface PropertyDescription {
@@ -834,6 +838,7 @@ export class NormalizedApiSchema {
         return normalized;
     }
 
+    // eslint-disable-next-line complexity
     public getItemList(currentLength: number = 0): ItemDescription[] {
         if (!this.normalized.type.has("array")) {
             throw Error("Cannot read properties of a non array schema!");
@@ -846,24 +851,51 @@ export class NormalizedApiSchema {
         for (let i = 0; i < currentLength && i < maxLength; i++) {
             if (this.normalized.tupleItems != null) {
                 const tupleItems = this.normalized.tupleItems;
+                const itemActions: Array<"remove" | "moveUp" | "moveDown"> = [];
                 if (i < tupleItems.length) {
+                    if (this.normalized.minItems == null || i >= this.normalized.minItems) {
+                        if (i === tupleItems.length - 1) {
+                            // tuple items can only be deleted from the end
+                            itemActions.push("remove");
+                        }
+                    }
                     itemSchemas.push({
                         itemIndex: i,
                         itemTitle: tupleItems[i].normalized?.title ?? i.toString(),
                         itemSchema: tupleItems[i],
+                        itemActions: itemActions,
                     });
                 } else {
+                    if (this.normalized.minItems == null || currentLength >= this.normalized.minItems) {
+                        // all additional items can be deleted in any order
+                        itemActions.push("remove");
+                    }
+                    if (currentLength > 1) {
+                        itemActions.push("moveUp");
+                        itemActions.push("moveDown");
+                    }
                     itemSchemas.push({
                         itemIndex: i,
                         itemTitle: (this.normalized.additionalItems as NormalizedApiSchema).normalized?.title ?? i.toString(),
                         itemSchema: this.normalized.additionalItems as NormalizedApiSchema,
+                        itemActions: itemActions,
                     });
                 }
             } else {
+                const itemActions: Array<"remove" | "moveUp" | "moveDown"> = [];
+                if (currentLength > 1) {
+                    itemActions.push("moveUp");
+                    itemActions.push("moveDown");
+                }
+                if (this.normalized.minItems == null || currentLength >= this.normalized.minItems) {
+                    // all additional items can be deleted in any order
+                    itemActions.push("remove");
+                }
                 itemSchemas.push({
                     itemIndex: i,
                     itemTitle: this.normalized.items.normalized?.title ?? i.toString(),
                     itemSchema: this.normalized.items,
+                    itemActions: itemActions,
                 });
             }
         }

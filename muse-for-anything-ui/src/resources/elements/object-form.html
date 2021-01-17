@@ -1,6 +1,7 @@
 <template>
     <require from="./schema-form"></require>
     <require from="./validity-indicator"></require>
+    <require from="./schema-form-actions"></require>
 
     <!-- TODO translations -->
 
@@ -8,6 +9,11 @@
         <div class="mb-2 flex items-center form-container-title">
             <p class="font-semibold text-lg">${label}</p>
             <validity-indicator class="ml-2" valid.bind="valid"></validity-indicator>
+            <div class="flex-grow"></div>
+            <div class="justify-items-end flex items-center" if.bind="actions != null">
+                <schema-form-actions actions.bind="actions" key.bind="key" action-signal.call="actionSignal($event)">
+                </schema-form-actions>
+            </div>
         </div>
         <div if.bind="debug && invalidProps">
             Invalid: ${invalidProps|json}
@@ -16,14 +22,21 @@
             <button class="button-outline w-full" click.delegate="editObject()">edit object</button>
         </div>
         <div class="flex flex-wrap" repeat.for="prop of properties" if.bind="value != null">
-            <schema-form class="w-full properties" key.bind="prop.propertyName" label.bind="prop.propertyTitle"
+            <div class="w-full flex items-center"
+                if.bind="value[prop.propertyName] === undefined && initialData[prop.propertyName] === undefined && (requiredProperties == null || !requiredProperties.has(prop.propertyName))">
+                <p class="font-semibold form-container-title">${prop.propertyTitle}</p>
+                <button class="button-flat" click.delegate="addGhostProperty(prop.propertyName)">
+                    Add Property
+                </button>
+            </div>
+            <schema-form else class="w-full properties" key.bind="prop.propertyName" label.bind="prop.propertyTitle"
                 initial-data.bind="initialData[prop.propertyName]" value.bind="value[prop.propertyName]"
                 value-push.bind="null" schema.bind="prop.propertySchema"
                 required.bind="requiredProperties != null && requiredProperties.has(prop.propertyName)"
                 valid.from-view="propertiesValid[prop.propertyName]"
                 dirty.from-view="propertiesDirty[prop.propertyName]" update-signal.call="updateSignal()"
                 actions.bind="(requiredProperties == null || !requiredProperties.has(prop.propertyName)) ? ['remove'] : null"
-                action-signal.call="actionSignal($event)" debug.bind="debug">
+                action-signal.call="actionSignalCallback($event)" debug.bind="debug">
             </schema-form>
         </div>
         <div class="mt-6 form-field" if.bind="hasExtraProperties && value != null">

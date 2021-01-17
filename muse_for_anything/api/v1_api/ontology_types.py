@@ -1,6 +1,9 @@
 """Module containing the namespace API endpoints of the v1 API."""
 
 from datetime import datetime
+
+from marshmallow.utils import INCLUDE
+from muse_for_anything.api.v1_api.models.schema import JSONSchemaSchema
 from muse_for_anything.api.v1_api.ontology_types_helpers import (
     action_links_for_type,
     action_links_for_type_page,
@@ -8,7 +11,7 @@ from muse_for_anything.api.v1_api.ontology_types_helpers import (
     nav_links_for_type_page,
     type_page_params_to_key,
     type_to_api_response,
-    type_to_type_data,
+    type_to_type_data, validate_type_schema,
 )
 from flask_babel import gettext
 from muse_for_anything.api.util import template_url_for
@@ -249,9 +252,39 @@ class TypesView(MethodView):
             ),
         )
 
-    @API_V1.arguments(NamespaceSchema(only=("name", "description")))
+    @API_V1.arguments(JSONSchemaSchema(unknown=INCLUDE))
     @API_V1.response(DynamicApiResponseSchema(NewApiObjectSchema()))
-    def post(self, namespace_data):
+    def post(self, data, namespace: str):
+        validate_type_schema(data)
+        # FIXME add proper introspection to get linked types out of the schema
+        rootSchema: Dict[str, Any] = data.get("definitions", {}).get("root", {})
+        is_abstract: bool = data.get("abstract", False)
+        title: str = rootSchema.get("title", "")
+        description: str = rootSchema.get("description", "")
+        print(namespace, title, description, is_abstract, data)
+
+        namespace_id = int(namespace)
+        found_namespace: Optional[Namespace] = Namespace.query.filter(
+            Namespace.id == namespace_id
+        ).first()
+
+        if found_namespace is None:
+            abort(HTTPStatus.NOT_FOUND, message=gettext("Namespace not found."))
+        object_type = OntologyObjectType(
+            namespace=found_namespace,
+            name=title,
+            description=description,
+            is_top_level_type=(not is_abstract),
+        )
+        DB.session.add(object_type)
+        DB.session.flush()
+        object_type_version = OntologyObjectTypeVersion(
+            ontology_type=object_type, version=1, data=data
+        )
+        object_type.current_version = object_type_version
+        DB.session.add(object_type)
+        DB.session.add(object_type_version)
+        DB.session.commit()
         abort(
             500,
             f"Not Implemented yet",

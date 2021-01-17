@@ -10,9 +10,13 @@ export class ObjectForm {
     @bindable required: boolean = false;
     @bindable debug: boolean = false;
     @bindable valuePush: any;
+    @bindable actions: Iterable<string>;
+    @bindable actionSignal: unknown;
     @bindable({ defaultBindingMode: bindingMode.twoWay }) value: any = {};
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
+
+    isNullable: boolean = false;
 
     properties: PropertyDescription[] = [];
     propertiesByKey: Map<string, PropertyDescription> = new Map();
@@ -55,6 +59,12 @@ export class ObjectForm {
             return;
         }
 
+        // check if nullable
+        this.isNullable = this.schema.normalized.type.has("null");
+        if (!this.isNullable && this.value == null) {
+            this.value = {};
+        }
+
         // setup additionalProperties
         let hasAdditionalProperties = false;
         const additionalProperties = this.schema.normalized.additionalProperties;
@@ -91,7 +101,7 @@ export class ObjectForm {
         this.updateSignal();
     }
 
-    actionSignal(action: { actionType: string, key: string }) {
+    actionSignalCallback(action: { actionType: string, key: string }) {
         if (action.actionType === "remove" && this.value[action.key] !== undefined) {
             const newValue = { ...this.value };
             delete newValue[action.key];
@@ -138,6 +148,15 @@ export class ObjectForm {
         this.extraPropertyNameValid = true;
     }
 
+    addGhostProperty(propName: string) {
+        if (this.value?.[propName] === undefined) {
+            this.value = {
+                ...(this.value ?? {}),
+                [propName]: null,
+            };
+        }
+    }
+
     addProperty() {
         if (!this.extraPropertyNameValid) {
             return;
@@ -156,11 +175,17 @@ export class ObjectForm {
 
     propertiesValidChanged(newValue: { [prop: string]: boolean }) {
         if (newValue == null) {
-            this.valid = !this.required;
+            this.valid = this.isNullable;
             return;
         }
         const propKeys = Object.keys(this.value ?? {});
-        const allPropertiesValid = propKeys.every(key => newValue[key]);
+        const allPropertiesValid = propKeys.every(key => {
+            if (newValue[key] != null) {
+                return newValue[key]; // property validity is known
+            }
+            // assume valid if not required and not present
+            return !this.requiredProperties.has(key) && this.value[key] === undefined;
+        });
         if (!allPropertiesValid) {
             this.invalidProps = propKeys.filter(key => !newValue[key]);
         } else {

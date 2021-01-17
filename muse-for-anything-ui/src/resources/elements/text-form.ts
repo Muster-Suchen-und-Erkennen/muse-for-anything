@@ -55,7 +55,7 @@ export class TextForm {
     // eslint-disable-next-line complexity
     schemaChanged(newValue: NormalizedApiSchema, oldValue) {
         const normalized = newValue.normalized;
-        this.isNullable = normalized.type.has(null) || !this.required;
+        this.isNullable = normalized.type.has("null");
         if (!this.isNullable && this.value == null) {
             this.value = "";
         }
@@ -113,13 +113,8 @@ export class TextForm {
 
     updateValid() {
         if (this.value == null) {
-            if (this.isNullable) {
-                this.valid = true;
-                return;
-            } else {
-                this.valid = false;
-                return;
-            }
+            this.valid = this.isNullable;
+            return;
         }
         if (this.formInput != null) {
             this.formIsValid = (this.formInput as HTMLInputElement).validity.valid;

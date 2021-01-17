@@ -16,6 +16,8 @@ export class TypeDefinitionForm {
     @bindable required: boolean = false;
     @bindable debug: boolean = false;
     @bindable valuePush: any;
+    @bindable actions: Iterable<string>;
+    @bindable actionSignal: unknown;
     @bindable({ defaultBindingMode: bindingMode.twoWay }) value: any;
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
@@ -74,9 +76,15 @@ export class TypeDefinitionForm {
         this.updateValid();
     }
 
+    childValidChanged() {
+        this.updateValid();
+    }
+
     updateValid() {
         if (this.value == null) {
-            this.valid = !this.required;
+            this.valid = false; // this object type is never nullable
+        } else {
+            this.valid = this.childValid ?? false;
         }
     }
 

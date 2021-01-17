@@ -10,6 +10,8 @@ export class BooleanForm {
     @bindable schema: NormalizedApiSchema;
     @bindable required: boolean = false;
     @bindable debug: boolean = false;
+    @bindable actions: Iterable<string>;
+    @bindable actionSignal: unknown;
     @bindable({ defaultBindingMode: bindingMode.twoWay }) value: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
@@ -34,7 +36,7 @@ export class BooleanForm {
     // eslint-disable-next-line complexity
     schemaChanged(newValue: NormalizedApiSchema, oldValue) {
         const normalized = newValue.normalized;
-        this.isNullable = normalized.type.has(null) || !this.required;
+        this.isNullable = normalized.type.has(null);
         if (!this.isNullable && this.value == null) {
             this.value = false;
         }

@@ -16,6 +16,8 @@ export class EnumItemForm {
     @bindable schema: NormalizedApiSchema;
     @bindable required: boolean = false;
     @bindable debug: boolean = false;
+    @bindable actions: Iterable<string>;
+    @bindable actionSignal: unknown;
     @bindable({ defaultBindingMode: bindingMode.twoWay }) value: string | number | boolean | null;
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
