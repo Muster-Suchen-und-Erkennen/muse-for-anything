@@ -52,7 +52,7 @@ def action_links_for_namespace(namespace: Namespace) -> List[ApiLink]:
     actions: List[ApiLink] = [
         ApiLink(
             href=url_for("api-v1.NamespacesView", _external=True),
-            rel=("create", "post", "ont-namespace"),
+            rel=("create", "post"),
             resource_type="ont-namespace",
             schema=url_for("api-v1.ApiSchemaView", schema_id="Namespace", _external=True),
         ),
@@ -68,7 +68,7 @@ def action_links_for_namespace(namespace: Namespace) -> List[ApiLink]:
                     namespace=str(namespace.id),
                     _external=True,
                 ),
-                rel=("update", "put", "ont-namespace"),
+                rel=("update", "put"),
                 resource_type="ont-namespace",
                 resource_key=resource_key,
                 schema=url_for(
@@ -83,7 +83,7 @@ def action_links_for_namespace(namespace: Namespace) -> List[ApiLink]:
                     namespace=str(namespace.id),
                     _external=True,
                 ),
-                rel=("delete", "ont-namespace"),
+                rel=("delete",),
                 resource_type="ont-namespace",
                 resource_key=resource_key,
             )
@@ -96,7 +96,7 @@ def action_links_for_namespace(namespace: Namespace) -> List[ApiLink]:
                     namespace=str(namespace.id),
                     _external=True,
                 ),
-                rel=("restore", "post", "ont-namespace"),
+                rel=("restore", "post"),
                 resource_type="ont-namespace",
                 resource_key=resource_key,
             )

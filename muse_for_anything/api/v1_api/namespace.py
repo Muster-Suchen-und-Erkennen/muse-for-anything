@@ -314,7 +314,7 @@ class NamespaceView(MethodView):
 
     @API_V1.arguments(NamespaceSchema(only=("name", "description")))
     @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
-    def put(self, namespace_data, namespace: str):  # restore action
+    def put(self, namespace_data, namespace: str):
         if not namespace or not namespace.isdigit():
             abort(
                 HTTPStatus.BAD_REQUEST,
@@ -327,6 +327,14 @@ class NamespaceView(MethodView):
 
         if found_namespace is None:
             abort(HTTPStatus.NOT_FOUND, message=gettext("Namespace not found."))
+        if found_namespace.deleted_on is not None:
+            # cannot modify deleted namespace!
+            abort(
+                HTTPStatus.CONFLICT,
+                message=gettext(
+                    "Namespace is marked as deleted and cannot be modified further."
+                ),
+            )
 
         if found_namespace.name != namespace_data.get("name"):
             existing: bool = (
@@ -358,7 +366,6 @@ class NamespaceView(MethodView):
                 self=ApiLink(
                     href=url_for("api-v1.NamespacesView", _external=True),
                     rel=(
-                        "changed",
                         "create",
                         "post",
                         "ont-namespace",
@@ -399,10 +406,11 @@ class NamespaceView(MethodView):
             embedded=[namespace_data],
             data=ChangedApiObject(
                 self=ApiLink(
-                    href=url_for("api-v1.NamespacesView", _external=True),
+                    href=url_for(
+                        "api-v1.NamespaceView", namespace=namespace, _external=True
+                    ),
                     rel=(
-                        "changed",
-                        "create",
+                        "restore",
                         "post",
                         "ont-namespace",
                     ),
@@ -442,11 +450,11 @@ class NamespaceView(MethodView):
             embedded=[namespace_data],
             data=ChangedApiObject(
                 self=ApiLink(
-                    href=url_for("api-v1.NamespacesView", _external=True),
+                    href=url_for(
+                        "api-v1.NamespaceView", namespace=namespace, _external=True
+                    ),
                     rel=(
-                        "changed",
-                        "create",
-                        "post",
+                        "delete",
                         "ont-namespace",
                     ),
                     resource_type="changed",

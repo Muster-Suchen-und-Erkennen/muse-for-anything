@@ -6,6 +6,9 @@ import { BaseApiService } from "rest/base-api";
 import { ApiLink, ApiLinkKey, ApiResponse, isApiObject } from "rest/api-objects";
 import { API_RESOURCE_CHANGES_CHANNEL, NAV_LINKS_CHANNEL } from "resources/events";
 
+const NESTED_SCHEMA_OBJECT_TYPES = new Set(["ont-type", "ont-type-version"]);
+const NESTED_DATA_OBJECT_TYPES = new Set(["ont-object", "ont-object-version"]);
+
 @autoinject
 export class UpdateContent {
 
@@ -89,9 +92,20 @@ export class UpdateContent {
             .then(response => {
                 this.currentResponse = response;
                 if (isApiObject(response.data) && response.data.self.resourceType === this.updateResourceType) {
-                    const initialData = {
-                        ...response.data,
-                    };
+                    let initialData;
+                    if (NESTED_SCHEMA_OBJECT_TYPES.has(this.updateResourceType)) {
+                        initialData = {
+                            ...((response.data as any)?.schema ?? {}),
+                        };
+                    } else if (NESTED_DATA_OBJECT_TYPES.has(this.updateResourceType)) {
+                        initialData = {
+                            ...((response.data as any)?.data ?? {}),
+                        };
+                    } else {
+                        initialData = {
+                            ...response.data,
+                        };
+                    }
                     delete initialData.self;
                     this.initialData = initialData;
                 }

@@ -24,12 +24,14 @@ export class BooleanForm {
 
     initialDataChanged(newValue, oldValue) {
         if (newValue !== undefined && !this.dirty) {
-            if (this.isNullable) {
-                this.value = newValue;
-            } else {
-                this.value = newValue ?? false;
-            }
-            this.dirty = false;
+            window.setTimeout(() => {
+                if (this.isNullable) {
+                    this.value = newValue;
+                } else {
+                    this.value = newValue ?? false;
+                }
+                this.dirty = false;
+            }, 0);
         }
     }
 

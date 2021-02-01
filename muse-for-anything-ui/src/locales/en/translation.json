@@ -15,9 +15,11 @@
     },
     "loading": "loading…",
     "deleted": "Deleted",
+    "version": "Version",
     "resource-type": {
         "ont-namespace": "Namespace",
-        "ont-type": "Type"
+        "ont-type": "Type",
+        "ont-type-version": "Type Version"
     },
     "nav": {
         "up": "Back",
@@ -25,7 +27,8 @@
         "navigations": "Navigation",
         "collection": {
             "ont-namespace": "Namespaces",
-            "ont-type": "Types"
+            "ont-type": "Types",
+            "ont-type-version": "Type Versions"
         },
         "create": {
             "ont-namespace": "Create Namespace",
@@ -44,7 +47,8 @@
             "ont-type": "Restore Type"
         },
         "ont-namespace": "Namespace",
-        "ont-type": "Type"
+        "ont-type": "Type",
+        "ont-type-version": "Type Version"
     },
     "pages": {
         "page": "page",

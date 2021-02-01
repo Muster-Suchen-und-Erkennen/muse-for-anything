@@ -1,6 +1,6 @@
 """Module containing ontology object table definitions."""
 
-from typing import Any, Optional
+from typing import Any, Dict, Optional, cast
 from sqlalchemy.sql.schema import ForeignKey, Column, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declared_attr
@@ -32,6 +32,7 @@ class OntologyObjectType(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
     namespace = relationship(Namespace, innerjoin=True, lazy="joined")
     current_version = relationship(
         "OntologyObjectTypeVersion",
+        post_update=True,
         innerjoin=True,
         lazy="joined",
         primaryjoin="OntologyObjectType.current_version_id == OntologyObjectTypeVersion.id",
@@ -126,6 +127,33 @@ class OntologyObjectTypeVersion(MODEL, IdMixin, CreateDeleteMixin):
         back_populates="ontology_type_version",
     )
 
+    @property
+    def root_schema(self):
+        root_schema: Dict[str, Any] = {}
+        if self.data is not None:
+            root_schema = self.data
+        if root_schema.get("$ref", "").startswith("#/definitions/"):
+            schema_key = cast(str, root_schema.get("$ref"))[14:]
+            schema = root_schema.get("definitions", {}).get(schema_key, None)
+            if schema is not None:
+                root_schema = schema
+        return root_schema
+
+    @property
+    def abstract(self) -> bool:
+        return self.data is not None and self.data.get("abstract", False)
+
+    @property
+    def name(self) -> str:
+        return self.root_schema.get("title", "")
+
+    @property
+    def description(self) -> str:
+        description: Optional[str] = self.root_schema.get("description", "")
+        if description:
+            return description
+        return ""
+
     def __init__(
         self, ontology_type: OntologyObjectType, version: int, data: Any, **kwargs
     ) -> None:
@@ -162,6 +190,7 @@ class OntologyObject(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
     )
     current_version = relationship(
         "OntologyObjectVersion",
+        post_update=True,
         innerjoin=True,
         lazy="joined",
         primaryjoin="OntologyObject.current_version_id == OntologyObjectVersion.id",

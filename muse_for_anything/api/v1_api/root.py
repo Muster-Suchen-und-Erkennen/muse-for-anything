@@ -90,6 +90,34 @@ class RootView(MethodView):
                     resource_type="ont-type",
                     key=("namespaceId", "typeId"),
                 ),
+                KeyedApiLink(
+                    href=template_url_for(
+                        "api-v1.TypeVersionsView",
+                        {
+                            "namespace": "namespaceId",
+                            "object_type": "typeId",
+                        },
+                        _external=True,
+                    ),
+                    rel=("collection", "page"),
+                    resource_type="ont-type-version",
+                    key=("namespaceId", "typeId"),
+                    query_key=("item-count", "cursor", "sort"),
+                ),
+                KeyedApiLink(
+                    href=template_url_for(
+                        "api-v1.TypeVersionView",
+                        {
+                            "namespace": "namespaceId",
+                            "object_type": "typeId",
+                            "version": "typeVersion",
+                        },
+                        _external=True,
+                    ),
+                    rel=tuple(),
+                    resource_type="ont-type-version",
+                    key=("namespaceId", "typeId", "typeVersion"),
+                ),
             ],
             data=RootData(
                 self=ApiLink(

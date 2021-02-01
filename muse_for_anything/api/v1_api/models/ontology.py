@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 import marshmallow as ma
 from marshmallow.validate import Length
 
@@ -44,7 +44,7 @@ class NamespaceSchema(ChangesSchemaMixin, ApiObjectSchema):
     name = ma.fields.String(
         required=True, allow_none=False, validate=Length(1, MAX_STRING_LENGTH)
     )
-    description = ma.fields.String()
+    description = ma.fields.String(missing="")
 
 
 @dataclass
@@ -62,6 +62,7 @@ class ObjectTypeSchema(ChangesSchemaMixin, ApiObjectSchema):
     )
     description = ma.fields.String(allow_none=False, dump_only=True)
     version = ma.fields.Integer(allow_none=False, dump_only=True)
+    abstract = ma.fields.Boolean(required=False, missing=False, default=False)
     schema = ma.fields.Raw(allow_none=False, dump_only=True)
 
 
@@ -73,6 +74,7 @@ class ObjectTypeData(BaseApiObject):
     updated_on: datetime
     deleted_on: datetime
     version: int
+    abstract: bool
     schema: Any
 
 

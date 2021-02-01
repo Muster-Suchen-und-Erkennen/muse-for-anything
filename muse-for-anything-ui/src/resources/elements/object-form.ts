@@ -12,7 +12,7 @@ export class ObjectForm {
     @bindable valuePush: any;
     @bindable actions: Iterable<string>;
     @bindable actionSignal: unknown;
-    @bindable({ defaultBindingMode: bindingMode.twoWay }) value: any = {};
+    @bindable({ defaultBindingMode: bindingMode.twoWay }) value: any;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
 
@@ -62,7 +62,10 @@ export class ObjectForm {
         // check if nullable
         this.isNullable = this.schema.normalized.type.has("null");
         if (!this.isNullable && this.value == null) {
-            this.value = {};
+            window.setTimeout(() => {
+                this.value = {};
+            }, 1);
+            return; // change in value will trigger reloadProperties again
         }
 
         // setup additionalProperties

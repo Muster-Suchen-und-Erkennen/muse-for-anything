@@ -5,3 +5,4 @@ from . import schema  # noqa
 from . import auth  # noqa
 from . import namespace  # noqa
 from . import ontology_types  # noqa
+from . import ontology_type_versions  # noqa

@@ -33,6 +33,62 @@ export class TypeDefinitionForm {
 
     childValid: boolean;
 
+    initialDataChanged(newValue, oldValue) {
+        this.updateChoiceFromInitialData(true);
+    }
+
+    // eslint-disable-next-line complexity
+    updateChoiceFromInitialData(forceUpdate: boolean = false) {
+        if (!(this.choices?.length > 0)) {
+            return; // no choices to choose from
+        }
+        if (!this.initialData) {
+            return; // no initial data to update from
+        }
+        if (this.chosenSchema != null && !forceUpdate) {
+            return; // some schema already chosen
+        }
+        let schemaId: string;
+        const initialType = this.initialData.type;
+        if (initialType.some(t => t === "object")) {
+            schemaId = "#/definitions/object";
+            const customObjectType = this.initialData.customType;
+            // TODO use customObject type for object and taxonomy and type references!
+            if (this.initialData.$ref != null) {
+                schemaId = "#/definitions/ref";
+            }
+        }
+        if (initialType.some(t => t === "array")) {
+            schemaId = "#/definitions/array";
+            if (this.initialData.arrayType === "tuple") {
+                schemaId = "#/definitions/tuple";
+            }
+        } else if (initialType.some(t => t === "string")) {
+            schemaId = "#/definitions/string";
+        } else if (initialType.some(t => t === "number")) {
+            schemaId = "#/definitions/number";
+        } else if (initialType.some(t => t === "integer")) {
+            schemaId = "#/definitions/integer";
+        } else if (initialType.some(t => t === "boolean")) {
+            schemaId = "#/definitions/boolean";
+        } else if (this.initialData.enum != null) {
+            schemaId = "#/definitions/enum";
+        }
+
+        const choice = this.choices.find(choice => {
+            return choice.schema.normalized.$id.endsWith(schemaId);
+        });
+        if (choice != null) {
+            window.setTimeout(() => {
+                if (this.value == null) {
+                    this.value = {};
+                }
+                this.activeSchema = choice;
+                this.chosenSchema = choice;
+            }, 0);
+        }
+    }
+
     schemaChanged(newValue: NormalizedApiSchema, oldValue) {
         if (newValue == null) {
             return;
@@ -65,6 +121,7 @@ export class TypeDefinitionForm {
             return 0;
         });
         this.choices = choices;
+        this.updateChoiceFromInitialData();
 
         window.setTimeout(() => {
             this.updateValid();
@@ -89,6 +146,9 @@ export class TypeDefinitionForm {
     }
 
     chosenSchemaChanged(newSchemaValue: SchemaDescription, oldSchemaValue: SchemaDescription) {
+        if (this.activeSchema === newSchemaValue) {
+            return; // change is from code to ui
+        }
         const oldValue = this.value ?? {};
         if (oldSchemaValue != null) {
             this.valueCache.set(oldSchemaValue.title, oldValue);
