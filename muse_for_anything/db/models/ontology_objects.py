@@ -29,8 +29,8 @@ class OntologyObjectType(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
     is_toplevel_type: Column = DB.Column(DB.Boolean, nullable=False)
 
     # relationships
-    namespace = relationship(Namespace, innerjoin=True, lazy="joined")
-    current_version = relationship(
+    namespace: Namespace = relationship(Namespace, innerjoin=True, lazy="joined")
+    current_version: "OntologyObjectTypeVersion" = relationship(
         "OntologyObjectTypeVersion",
         post_update=True,
         innerjoin=True,
@@ -44,11 +44,22 @@ class OntologyObjectType(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
         back_populates="ontology_type",
         primaryjoin="OntologyObjectType.id == OntologyObjectTypeVersion.object_type_id",
     )
-    ontology_objects = relationship(
+    ontology_objects: "OntologyObject" = relationship(
         "OntologyObject",
         lazy="select",
         back_populates="ontology_type",
     )
+
+    @declared_attr
+    def __table_args__(cls):
+        return (
+            Index(
+                f"ix_search{cls.__tablename__}",
+                "name",
+                "description",
+                **FULLTEXT_INDEX_PARAMS,
+            ),
+        )
 
     @property
     def version(self) -> int:
@@ -114,14 +125,14 @@ class OntologyObjectTypeVersion(MODEL, IdMixin, CreateDeleteMixin):
         )
 
     # relationships
-    ontology_type = relationship(
+    ontology_type: OntologyObjectType = relationship(
         OntologyObjectType,
         innerjoin=True,
         lazy="joined",
         back_populates="versions",
         primaryjoin=OntologyObjectType.id == object_type_id,
     )
-    ontology_object_versions = relationship(
+    ontology_object_versions: "OntologyObjectVersion" = relationship(
         "OntologyObjectVersion",
         lazy="select",
         back_populates="ontology_type_version",
@@ -181,14 +192,14 @@ class OntologyObject(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
     )
 
     # relationships
-    namespace = relationship(Namespace, innerjoin=True, lazy="joined")
-    ontology_type = relationship(
+    namespace: Namespace = relationship(Namespace, innerjoin=True, lazy="joined")
+    ontology_type: OntologyObjectType = relationship(
         OntologyObjectType,
         innerjoin=True,
         lazy="joined",
         back_populates="ontology_objects",
     )
-    current_version = relationship(
+    current_version: "OntologyObjectVersion" = relationship(
         "OntologyObjectVersion",
         post_update=True,
         innerjoin=True,
@@ -227,14 +238,14 @@ class OntologyObjectVersion(MODEL, IdMixin, CreateDeleteMixin):
         )
 
     # relationships
-    ontology_object = relationship(
+    ontology_object: OntologyObject = relationship(
         OntologyObject,
         innerjoin=True,
         lazy="joined",
         back_populates="versions",
         primaryjoin=OntologyObject.id == object_id,
     )
-    ontology_type_version = relationship(
+    ontology_type_version: OntologyObjectTypeVersion = relationship(
         OntologyObjectTypeVersion,
         innerjoin=True,
         lazy="joined",

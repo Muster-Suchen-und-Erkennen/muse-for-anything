@@ -2,3 +2,4 @@
 
 from . import namespace  # noqa
 from . import ontology_objects  # noqa
+from . import taxonomies  # noqa
