@@ -260,7 +260,6 @@ class NamespacesView(MethodView):
                 self=ApiLink(
                     href=url_for("api-v1.NamespacesView", _external=True),
                     rel=(
-                        "new",
                         "create",
                         "post",
                         "ont-namespace",
@@ -438,7 +437,7 @@ class NamespaceView(MethodView):
         # only actually delete when not already deleted
         if found_namespace.deleted_on is None:
             # soft delete namespace
-            found_namespace.deleted_on = datetime.now()
+            found_namespace.deleted_on = datetime.utcnow()
             DB.session.add(found_namespace)
             DB.session.commit()
 

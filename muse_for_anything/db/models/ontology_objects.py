@@ -29,7 +29,7 @@ class OntologyObjectType(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
     is_toplevel_type: Column = DB.Column(DB.Boolean, nullable=False)
 
     # relationships
-    namespace: Namespace = relationship(Namespace, innerjoin=True, lazy="joined")
+    namespace: Namespace = relationship(Namespace, innerjoin=True, lazy="selectin")
     current_version: "OntologyObjectTypeVersion" = relationship(
         "OntologyObjectTypeVersion",
         post_update=True,
@@ -127,8 +127,7 @@ class OntologyObjectTypeVersion(MODEL, IdMixin, CreateDeleteMixin):
     # relationships
     ontology_type: OntologyObjectType = relationship(
         OntologyObjectType,
-        innerjoin=True,
-        lazy="joined",
+        lazy="select",  # should already be in chache in most cases
         back_populates="versions",
         primaryjoin=OntologyObjectType.id == object_type_id,
     )
@@ -192,11 +191,11 @@ class OntologyObject(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
     )
 
     # relationships
-    namespace: Namespace = relationship(Namespace, innerjoin=True, lazy="joined")
+    namespace: Namespace = relationship(Namespace, innerjoin=True, lazy="selectin")
     ontology_type: OntologyObjectType = relationship(
         OntologyObjectType,
         innerjoin=True,
-        lazy="joined",
+        lazy="selectin",  # load the type in a seperate query (and maybe benefit from session chache)
         back_populates="ontology_objects",
     )
     current_version: "OntologyObjectVersion" = relationship(
@@ -241,13 +240,13 @@ class OntologyObjectVersion(MODEL, IdMixin, CreateDeleteMixin):
     ontology_object: OntologyObject = relationship(
         OntologyObject,
         innerjoin=True,
-        lazy="joined",
+        lazy="select",  # should already be in session cache
         back_populates="versions",
         primaryjoin=OntologyObject.id == object_id,
     )
     ontology_type_version: OntologyObjectTypeVersion = relationship(
         OntologyObjectTypeVersion,
         innerjoin=True,
-        lazy="joined",
+        lazy="selectin",  # selectin uses a second (or more) queries and is more memory efficient compared to direct join
         back_populates="ontology_object_versions",
     )

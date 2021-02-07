@@ -53,7 +53,17 @@ class ApiLinkBaseSchema(MaBaseSchema):
 
 class ApiLinkSchema(ApiLinkBaseSchema):
     resource_key = ma.fields.Mapping(
-        ma.fields.String, ma.fields.String, reqired=False, allow_none=True, dump_only=True
+        ma.fields.String,
+        ma.fields.String,
+        reqired=False,
+        allow_none=True,
+        dump_only=True,
+        metadata={
+            "_jsonschema_type_mapping": {
+                "type": "object",
+                "additionalProperties": {"type": "string"},
+            }
+        },
     )
 
 

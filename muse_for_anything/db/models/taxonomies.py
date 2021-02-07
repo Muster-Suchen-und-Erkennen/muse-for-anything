@@ -1,6 +1,8 @@
 """Module containing ontology object table definitions."""
 
 from typing import Any, Dict, List, Optional, cast
+from sqlalchemy.orm.query import Query
+from sqlalchemy.orm.strategy_options import selectinload
 from sqlalchemy.sql.schema import ForeignKey, Column, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declared_attr
@@ -25,15 +27,22 @@ class Taxonomy(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
     namespace_id: Column = DB.Column(DB.Integer, ForeignKey(Namespace.id), nullable=False)
 
     # relationships
-    namespace = relationship(Namespace, innerjoin=True, lazy="joined")
+    namespace = relationship(Namespace, innerjoin=True, lazy="selectin")
 
     items: List["TaxonomyItem"] = relationship(
         "TaxonomyItem",
-        innerjoin=True,
-        lazy="joined",
+        lazy="select",  # do not always load this
         order_by="TaxonomyItem.id",
         back_populates="taxonomy",
         primaryjoin="Taxonomy.id == TaxonomyItem.taxonomy_id",
+    )
+    current_items: List["TaxonomyItem"] = relationship(
+        "TaxonomyItem",
+        viewonly=True,
+        lazy="select",  # do not always load this
+        order_by="TaxonomyItem.id",
+        back_populates="taxonomy",
+        primaryjoin="and_(Taxonomy.id == TaxonomyItem.taxonomy_id, TaxonomyItem.deleted_on == None)",
     )
 
     def __init__(
@@ -57,6 +66,10 @@ class Taxonomy(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
         self.name = name
         self.description = description
 
+    @staticmethod
+    def get_eager_query() -> Query:
+        return Taxonomy.query.options(selectinload(Taxonomy.current_items))
+
 
 class TaxonomyItem(MODEL, IdMixin, ChangesMixin):
     """Taxonomy Item model."""
@@ -70,7 +83,7 @@ class TaxonomyItem(MODEL, IdMixin, ChangesMixin):
 
     # relationships
     taxonomy: Taxonomy = relationship(
-        Taxonomy, innerjoin=True, lazy="joined", back_populates="items"
+        Taxonomy, innerjoin=True, lazy="selectin", back_populates="items"
     )
     current_version: "TaxonomyItemVersion" = relationship(
         "TaxonomyItemVersion",
@@ -85,6 +98,34 @@ class TaxonomyItem(MODEL, IdMixin, ChangesMixin):
         order_by="TaxonomyItemVersion.version",
         back_populates="taxonomy_item",
         primaryjoin="TaxonomyItem.id == TaxonomyItemVersion.taxonomy_item_id",
+    )
+    related: List["TaxonomyItemRelation"] = relationship(
+        "TaxonomyItemRelation",
+        lazy="select",
+        order_by="TaxonomyItemRelation.id",
+        back_populates="taxonomy_item_source",
+        primaryjoin="TaxonomyItem.id == TaxonomyItemRelation.taxonomy_item_source_id",
+    )
+    ancestors: List["TaxonomyItemRelation"] = relationship(
+        "TaxonomyItemRelation",
+        lazy="select",
+        order_by="TaxonomyItemRelation.id",
+        back_populates="taxonomy_item_target",
+        primaryjoin="TaxonomyItem.id == TaxonomyItemRelation.taxonomy_item_target_id",
+    )
+    current_related: List["TaxonomyItemRelation"] = relationship(
+        "TaxonomyItemRelation",
+        viewonly=True,
+        lazy="selectin",  # deals better with multiple levels of hierarchy
+        order_by="TaxonomyItemRelation.id",
+        primaryjoin="and_(TaxonomyItem.id == TaxonomyItemRelation.taxonomy_item_source_id, TaxonomyItemRelation.deleted_on == None)",
+    )
+    current_ancestors: List["TaxonomyItemRelation"] = relationship(
+        "TaxonomyItemRelation",
+        viewonly=True,
+        lazy="selectin",  # deals better with multiple levels of hierarchy
+        order_by="TaxonomyItemRelation.id",
+        primaryjoin="and_(TaxonomyItem.id == TaxonomyItemRelation.taxonomy_item_target_id, TaxonomyItemRelation.deleted_on == None)",
     )
 
     @property
@@ -102,6 +143,25 @@ class TaxonomyItem(MODEL, IdMixin, ChangesMixin):
             return ""
         return description
 
+    @property
+    def sort_key(self) -> float:
+        if self.current_version is None:
+            return 10
+        return self.current_version.sort_key
+
+    @property
+    def version(self) -> int:
+        if self.current_version is None:
+            return 0
+        return self.current_version.version
+
+    def __init__(
+        self,
+        taxonomy: Taxonomy,
+        **kwargs,
+    ) -> None:
+        self.taxonomy = taxonomy
+
 
 class TaxonomyItemVersion(MODEL, IdMixin, NameDescriptionMixin, CreateDeleteMixin):
     """Taxonomy Item version model."""
@@ -112,7 +172,7 @@ class TaxonomyItemVersion(MODEL, IdMixin, NameDescriptionMixin, CreateDeleteMixi
         DB.Integer, ForeignKey(TaxonomyItem.id), nullable=False
     )
     version: Column = DB.Column(DB.Integer, nullable=False)
-    sort_key: Column = DB.Column(DB.Float, nullable=True, default=10)
+    sort_key: Column = DB.Column(DB.Float, nullable=True)
 
     @declared_attr
     def __table_args__(cls):
@@ -135,25 +195,25 @@ class TaxonomyItemVersion(MODEL, IdMixin, NameDescriptionMixin, CreateDeleteMixi
     taxonomy_item: TaxonomyItem = relationship(
         TaxonomyItem,
         innerjoin=True,
-        lazy="joined",
+        lazy="select",  # normally loaded from the taxonmy item -> less queries needed
         back_populates="versions",
         primaryjoin=TaxonomyItem.id == taxonomy_item_id,
     )
-    related: List["TaxonomyItemRelation"] = relationship(
-        "TaxonomyItemRelation",
-        innerjoin=True,
-        lazy="joined",
-        order_by="TaxonomyItemRelation.id",
-        back_populates="taxonomy_item_source",
-        primaryjoin="TaxonomyItem.id == TaxonomyItemRelation.taxonomy_item_source_id",
-    )
-    ancestors: List["TaxonomyItemRelation"] = relationship(
-        "TaxonomyItemRelation",
-        lazy="select",
-        order_by="TaxonomyItemRelation.id",
-        back_populates="taxonomy_item_target",
-        primaryjoin="TaxonomyItem.id == TaxonomyItemRelation.taxonomy_item_target_id",
-    )
+
+    def __init__(
+        self,
+        taxonomy_item: TaxonomyItem,
+        version: int,
+        name: str,
+        description: Optional[str] = None,
+        sort_key: Optional[float] = 10,
+        **kwargs,
+    ) -> None:
+        self.taxonomy_item = taxonomy_item
+        self.version = version
+        self.name = name
+        self.description = description
+        self.sort_key = sort_key if sort_key is not None else 10
 
 
 class TaxonomyItemRelation(MODEL, IdMixin, CreateDeleteMixin):
@@ -162,26 +222,34 @@ class TaxonomyItemRelation(MODEL, IdMixin, CreateDeleteMixin):
     __tablename__ = "TaxonomyItemRelation"
 
     taxonomy_item_source_id: Column = DB.Column(
-        DB.Integer, ForeignKey(TaxonomyItemVersion.id), nullable=False
+        DB.Integer, ForeignKey(TaxonomyItem.id), nullable=False
     )
 
     taxonomy_item_target_id: Column = DB.Column(
-        DB.Integer, ForeignKey(TaxonomyItemVersion.id), nullable=False
+        DB.Integer, ForeignKey(TaxonomyItem.id), nullable=False
     )
 
     # relationships
-    taxonomy_item_source: TaxonomyItemVersion = relationship(
-        TaxonomyItemVersion,
-        lazy="select",
+    taxonomy_item_source: TaxonomyItem = relationship(
+        TaxonomyItem,
+        lazy="select",  # is nearly always in cache anyway
         back_populates="related",
-        primaryjoin=TaxonomyItemVersion.id == taxonomy_item_source_id,
+        primaryjoin=TaxonomyItem.id == taxonomy_item_source_id,
     )
 
     # relationships
-    taxonomy_item_source: TaxonomyItemVersion = relationship(
-        TaxonomyItemVersion,
-        innerjoin=True,
-        lazy="joined",
+    taxonomy_item_target: TaxonomyItem = relationship(
+        TaxonomyItem,
+        lazy="select",  # is nearly always in cache anyway
         back_populates="ancestors",
-        primaryjoin=TaxonomyItemVersion.id == taxonomy_item_target_id,
+        primaryjoin=TaxonomyItem.id == taxonomy_item_target_id,
     )
+
+    def __init__(
+        self,
+        taxonomy_item_source: TaxonomyItem,
+        taxonomy_item_target: TaxonomyItem,
+        **kwargs,
+    ) -> None:
+        self.taxonomy_item_source = taxonomy_item_source
+        self.taxonomy_item_target = taxonomy_item_target

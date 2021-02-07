@@ -138,6 +138,8 @@ poetry run flask create-db
 poetry run flask drop-db
 ```
 
+This tool uses `select IN` eager loading which is incompatible with SQL Server and SQLite `< 3.15`.
+
 ## Migrations
 
 ```bash

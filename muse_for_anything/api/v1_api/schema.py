@@ -13,7 +13,7 @@ from http import HTTPStatus
 from .root import API_V1
 from ..util import JSON_SCHEMA
 from ..base_models import ApiLink, ApiResponse, BaseApiObject, DynamicApiResponseSchema
-from .models.ontology import NamespaceSchema, ObjectTypeSchema
+from .models.ontology import NamespaceSchema, ObjectTypeSchema, TaxonomyItemRelationPostSchema, TaxonomyItemRelationSchema, TaxonomyItemSchema, TaxonomySchema
 from .models.schema import SchemaApiObject, SchemaApiObjectSchema, TYPE_SCHEMA
 
 
@@ -56,6 +56,33 @@ SCHEMAS: Dict[str, Dict[str, Any]] = {
         },
     ),
     "TypeSchema": TYPE_SCHEMA,
+    "TaxonomySchema": create_schema_from_model(
+        TaxonomySchema(exclude=("self",)),
+        TaxonomySchema={
+            "propertyOrder": {"name": 10, "description": 20},
+            "hiddenProperties": ["createdOn", "updatedOn", "deletedOn", "items"],
+        },
+    ),
+    "TaxonomyItemSchema": create_schema_from_model(
+        TaxonomyItemSchema(exclude=("self",)),
+        TaxonomyItemSchema={
+            "propertyOrder": {"name": 10, "description": 20, "version": 30, "sortKey": 40},
+            "hiddenProperties": ["createdOn", "updatedOn", "deletedOn"],
+        },
+    ),
+    "TaxonomyItemRelationSchema": create_schema_from_model(
+        TaxonomyItemRelationSchema(exclude=("self",)),
+        TaxonomyItemRelationSchema={
+            "propertyOrder": {"taxonomyItemSource": 10, "taxonomyItemTarget": 20},
+            "hiddenProperties": ["createdOn", "deletedOn"],
+        },
+    ),
+    "TaxonomyItemRelationPostSchema": create_schema_from_model(
+        TaxonomyItemRelationPostSchema(),
+        TaxonomyItemRelationPostSchema={
+            "propertyOrder": {"namespaceId": 10, "taxonomyId": 20, "taxonomyItemId": 30},
+        },
+    ),
 }
 
 

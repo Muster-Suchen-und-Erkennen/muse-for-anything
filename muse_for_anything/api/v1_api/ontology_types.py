@@ -173,7 +173,7 @@ class TypesView(MethodView):
                 extra_links.append(
                     ApiLink(
                         href=url_for(
-                            "api-v1.NamespacesView",
+                            "api-v1.TypesView",
                             namespace=namespace,
                             _external=True,
                             **last_query_params,
@@ -211,7 +211,7 @@ class TypesView(MethodView):
             extra_links.append(
                 ApiLink(
                     href=url_for(
-                        "api-v1.NamespacesView",
+                        "api-v1.TypesView",
                         namespace=namespace,
                         _external=True,
                         **page_query_params,
@@ -316,8 +316,8 @@ class TypesView(MethodView):
         object_type_data = type_to_api_response(object_type)
 
         self_link = create_action_link_for_type_page(namespace=namespace)
-        self_link.rel = tuple(*self_link.rel, "ont-type")
-        self_link.resource_type = "changed"
+        self_link.rel = (*self_link.rel, "ont-type")
+        self_link.resource_type = "new"
 
         return ApiResponse(
             links=[object_type_link],
@@ -395,7 +395,7 @@ class TypeView(MethodView):
                         item_count=50,
                         sort="name",
                     ),
-                    rel=("first", "page", "collection", "ont-namespace"),
+                    rel=("first", "page", "collection", "nav"),
                     resource_type="ont-namespace",
                     schema=url_for(
                         "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
@@ -449,7 +449,7 @@ class TypeView(MethodView):
                         _external=True,
                     ),
                     rel=(
-                        "create",
+                        "update",
                         "put",
                         "ont-type",
                     ),
@@ -512,7 +512,7 @@ class TypeView(MethodView):
         # only actually delete when not already deleted
         if found_object_type.deleted_on is None:
             # soft delete namespace
-            found_object_type.deleted_on = datetime.now()
+            found_object_type.deleted_on = datetime.utcnow()
             DB.session.add(found_object_type)
             DB.session.commit()
 
