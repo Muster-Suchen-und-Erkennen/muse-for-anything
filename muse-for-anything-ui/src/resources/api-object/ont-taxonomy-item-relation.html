@@ -1,0 +1,24 @@
+<template>
+    <require from="../elements/api-resource"></require>
+    <require from="../elements/api-schema-view"></require>
+    <!-- TODO translations -->
+
+    <div if.bind="!isRoot">
+        <a class="link-hover" href="/explore/${clientUrl}" aria-disabled.bind="clientUrl == null ? true : null">
+            <p class="my-1 font-bold"><span class="mr-2 uppercase" if.bind="apiObject.deletedOn != null"
+                    t="deleted"></span>${"resource-type.ont-taxonomy-item-relation" | t}</p>
+        </a>
+        <api-resource class="block px-3 py-2 card" api-link.bind="apiObject.targetItem" is-root.one-time="false">
+        </api-resource>
+    </div>
+    <div class="px-3 py-2 card" if.bind="isRoot">
+        <h3 class="mt-1 mb-2 font-bold text-lg"><span class="mr-2 uppercase" if.bind="apiObject.deletedOn != null"
+                t="deleted"></span>${"resource-type.ont-taxonomy-item-relation" | t}</h3>
+        <p class="font-semibold">Source:</p>
+        <api-resource class="block px-3 py-2 card" api-link.bind="apiObject.sourceItem" is-root.one-time="false">
+        </api-resource>
+        <p class="font-semibold">Target:</p>
+        <api-resource class="block px-3 py-2 card" api-link.bind="apiObject.targetItem" is-root.one-time="false">
+        </api-resource>
+    </div>
+</template>

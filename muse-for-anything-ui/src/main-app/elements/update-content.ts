@@ -107,7 +107,10 @@ export class UpdateContent {
                         };
                     }
                     delete initialData.self;
-                    this.initialData = initialData;
+                    console.log(initialData)
+                    window.setTimeout(() => {
+                        this.initialData = initialData;
+                    }, 50); // FIXME remove bad waiting workaround for race conditions…
                 }
                 this.navService.setMainApiResponse(this.currentResponse);
             });

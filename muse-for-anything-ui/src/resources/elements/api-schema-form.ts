@@ -10,6 +10,7 @@ import { API_RESOURCE_CHANGES_CHANNEL } from "resources/events";
 
 @autoinject
 export class ApiSchemaForm {
+    @bindable autoNavigate: boolean = true;
     @bindable initialData;
     @bindable apiLink: ApiLink;
     @bindable debug: boolean = false;
@@ -102,9 +103,11 @@ export class ApiSchemaForm {
     }
 
     private navigateToNewResource(newResourceLink: ApiLink) {
-        this.api.buildClientUrl(newResourceLink)
-            .then(clientUrl => {
-                this.router.navigate(`/explore/${clientUrl}`);
-            });
+        if (this.autoNavigate) {
+            this.api.buildClientUrl(newResourceLink)
+                .then(clientUrl => {
+                    this.router.navigate(`/explore/${clientUrl}`);
+                });
+        }
     }
 }

@@ -44,6 +44,19 @@ def nav_links_for_namespace(namespace: Namespace) -> List[ApiLink]:
                 "api-v1.ApiSchemaView", schema_id="OntologyType", _external=True
             ),
         ),
+        ApiLink(
+            href=url_for(
+                "api-v1.TaxonomiesView",
+                namespace=str(namespace.id),
+                _external=True,
+            ),
+            rel=("nav", "collection", "page", "first"),
+            resource_type="ont-taxonomy",
+            resource_key=namespace_to_key(namespace),
+            schema=url_for(
+                "api-v1.ApiSchemaView", schema_id="TaxonomySchema", _external=True
+            ),
+        ),
     ]
     return nav_links
 

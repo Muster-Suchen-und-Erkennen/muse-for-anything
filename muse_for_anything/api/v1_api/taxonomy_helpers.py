@@ -99,6 +99,23 @@ def nav_links_for_taxonomy(taxonomy: Taxonomy) -> List[ApiLink]:
         ),
         ApiLink(
             href=url_for(
+                "api-v1.TaxonomyItemsView",
+                namespace=str(taxonomy.namespace_id),
+                taxonomy=str(taxonomy.id),
+                _external=True,
+            ),
+            rel=("nav", "page", "first", "collection"),
+            resource_type="ont-taxonomy-item",
+            resource_key={
+                "namespaceId": str(taxonomy.namespace_id),
+                "taxonomyId": str(taxonomy.id),
+            },
+            schema=url_for(
+                "api-v1.ApiSchemaView", schema_id="TaxonomyItemSchema", _external=True
+            ),
+        ),
+        ApiLink(
+            href=url_for(
                 "api-v1.NamespaceView",
                 namespace=str(taxonomy.namespace_id),
                 _external=True,

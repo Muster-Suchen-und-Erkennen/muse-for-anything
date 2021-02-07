@@ -665,7 +665,9 @@ class TaxonomyItemsView(MethodView):
         embedded_items: List[ApiResponse] = [
             taxonomy_item_to_api_response(item) for item in taxonomy_items
         ]
-        items: List[ApiLink] = [item.data.get("self") for item in embedded_items]
+        items: List[ApiLink] = [
+            item.data.get("self") for item in embedded_items
+        ]  # FIXME this uses already marshalled data…
 
         query_params = {
             "item_count": item_count,

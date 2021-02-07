@@ -6,20 +6,37 @@
         "explore": "Explore",
         "create": {
             "ont-namespace": "Create New Namespace",
-            "ont-type": "Create New Type"
+            "ont-type": "Create New Type",
+            "ont-taxonomy": "Create New Taxonomy",
+            "ont-taxonomy-item": "Create New Taxonomy-Item",
+            "ont-taxonomy-item-relation": "Create New Taxonomy-Item-Relation"
         },
         "update": {
             "ont-namespace": "Edit Namespace",
-            "ont-type": "Edit Type"
+            "ont-type": "Edit Type",
+            "ont-taxonomy": "Edit Taxonomy",
+            "ont-taxonomy-item": "Edit Item"
         }
+    },
+    "noItems": {
+        "ont-namespace": "No Namespaces, create one!",
+        "ont-type": "No Types, create one!",
+        "ont-taxonomy": "No Taxonomies, create one!",
+        "ont-taxonomy-item": "No Taxonomy-Items create one!"
     },
     "loading": "loading…",
     "deleted": "Deleted",
     "version": "Version",
+    "parents": "Parents",
+    "children": "Children",
     "resource-type": {
         "ont-namespace": "Namespace",
         "ont-type": "Type",
-        "ont-type-version": "Type Version"
+        "ont-type-version": "Type Version",
+        "ont-taxonomy": "Taxonomy",
+        "ont-taxonomy-item": "Taxonomy-Item",
+        "ont-taxonomy-item-relation": "Taxonomy-Item Relation",
+        "ont-taxonomy-item-version": "Taxonomy-Item Version"
     },
     "nav": {
         "up": "Back",
@@ -28,27 +45,45 @@
         "collection": {
             "ont-namespace": "Namespaces",
             "ont-type": "Types",
-            "ont-type-version": "Type Versions"
+            "ont-type-version": "Type Versions",
+            "ont-taxonomy": "Taxonomies",
+            "ont-taxonomy-item": "Taxonomy-Items",
+            "ont-taxonomy-item-relation": "Taxonomy-Item-Relations",
+            "ont-taxonomy-item-version": "Taxonomy-Item Versions"
         },
         "create": {
             "ont-namespace": "Create Namespace",
-            "ont-type": "Create Type"
+            "ont-type": "Create Type",
+            "ont-taxonomy": "Create Taxonomy",
+            "ont-taxonomy-item": "Create Taxonomy-Item",
+            "ont-taxonomy-item-relation": "Create Taxonomy-Item-Relation"
         },
         "update": {
             "ont-namespace": "Edit Namespace",
-            "ont-type": "Edit Type"
+            "ont-type": "Edit Type",
+            "ont-taxonomy": "Edit Taxonomy",
+            "ont-taxonomy-item": "Edit Taxonomy-Item"
         },
         "delete": {
             "ont-namespace": "Delete Namespace",
-            "ont-type": "Delete Type"
+            "ont-type": "Delete Type",
+            "ont-taxonomy": "Delete Taxonomy",
+            "ont-taxonomy-item": "Delete Taxonomy-Item",
+            "ont-taxonomy-item-relation": "Delete Taxonomy-Item-Relation"
         },
         "restore": {
             "ont-namespace": "Restore Namespace",
-            "ont-type": "Restore Type"
+            "ont-type": "Restore Type",
+            "ont-taxonomy": "Restore Taxonomy",
+            "ont-taxonomy-item": "Restore Taxonomy-Item"
         },
         "ont-namespace": "Namespace",
         "ont-type": "Type",
-        "ont-type-version": "Type Version"
+        "ont-type-version": "Type Version",
+        "ont-taxonomy": "Taxonomy",
+        "ont-taxonomy-item": "Taxonomy-Item",
+        "ont-taxonomy-item-relation": "Taxonomy-Item-Relation",
+        "ont-taxonomy-item-version": "Taxonomy-Item Version"
     },
     "pages": {
         "page": "page",

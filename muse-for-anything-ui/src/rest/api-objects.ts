@@ -81,15 +81,16 @@ export function checkKeyMatchesKeyedLink(key: ApiLinkKey, keyedLink: KeyedApiLin
     return keyedLink.key.every(keyVariable => key[keyVariable] != null);
 }
 
-export function checkKeyMatchesKeyedLinkExact(key: ApiLinkKey, keyedLink: KeyedApiLink): boolean {
+export function checkKeyMatchesKeyedLinkExact(key: ApiLinkKey, keyedLink: KeyedApiLink, resourceType?: string): boolean {
+    const resourceTypeMatch = resourceType === undefined || keyedLink.resourceType === resourceType;
     const allKeysMatch = checkKeyMatchesKeyedLink(key, keyedLink);
     const queryKeys = Object.keys(key).filter(keyVariable => keyVariable.startsWith("?"));
     if (queryKeys.length === 0) {
-        return allKeysMatch;
+        return resourceTypeMatch && allKeysMatch;
     }
     const allowedQueryKeys = new Set(keyedLink.queryKey?.map(k => `?${k}`) ?? []);
     const allQueryKeysAllowed = queryKeys.every(queryKey => allowedQueryKeys.has(queryKey));
-    return allKeysMatch && allQueryKeysAllowed && Object.keys(key).filter(keyVariable => !keyVariable.startsWith("?")).length === keyedLink.key.length;
+    return resourceTypeMatch && allKeysMatch && allQueryKeysAllowed && Object.keys(key).filter(keyVariable => !keyVariable.startsWith("?")).length === keyedLink.key.length;
 }
 
 export function applyKeyToLinkedKey(keyedLink: KeyedApiLink, key: ApiLinkKey): ApiLink {

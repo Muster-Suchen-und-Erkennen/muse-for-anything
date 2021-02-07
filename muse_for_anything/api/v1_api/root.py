@@ -44,6 +44,7 @@ class RootView(MethodView):
             ],
             embedded=[],
             keyed_links=[
+                # Namespaces
                 KeyedApiLink(
                     href=template_url_for(
                         "api-v1.NamespaceView",
@@ -64,6 +65,7 @@ class RootView(MethodView):
                     resource_type="ont-namespace",
                     query_key=("item-count", "cursor", "sort"),
                 ),
+                # Types
                 KeyedApiLink(
                     href=template_url_for(
                         "api-v1.TypesView",
@@ -117,6 +119,123 @@ class RootView(MethodView):
                     rel=tuple(),
                     resource_type="ont-type-version",
                     key=("namespaceId", "typeId", "typeVersion"),
+                ),
+                # Taxonomies
+                KeyedApiLink(
+                    href=template_url_for(
+                        "api-v1.TaxonomiesView",
+                        {
+                            "namespace": "namespaceId",
+                        },
+                        _external=True,
+                    ),
+                    rel=("collection", "page"),
+                    resource_type="ont-taxonomy",
+                    key=("namespaceId",),
+                    query_key=("item-count", "cursor", "sort"),
+                ),
+                KeyedApiLink(
+                    href=template_url_for(
+                        "api-v1.TaxonomyView",
+                        {
+                            "namespace": "namespaceId",
+                            "taxonomy": "taxonomyId",
+                        },
+                        _external=True,
+                    ),
+                    rel=tuple(),
+                    resource_type="ont-taxonomy",
+                    key=("namespaceId", "taxonomyId"),
+                ),
+                # TaxonomyItems
+                KeyedApiLink(
+                    href=template_url_for(
+                        "api-v1.TaxonomyItemsView",
+                        {
+                            "namespace": "namespaceId",
+                            "taxonomy": "taxonomyId",
+                        },
+                        _external=True,
+                    ),
+                    rel=("collection", "page"),
+                    resource_type="ont-taxonomy-item",
+                    key=("namespaceId", "taxonomyId"),
+                    query_key=("item-count", "cursor", "sort"),
+                ),
+                KeyedApiLink(
+                    href=template_url_for(
+                        "api-v1.TaxonomyItemView",
+                        {
+                            "namespace": "namespaceId",
+                            "taxonomy": "taxonomyId",
+                            "taxonomy_item": "taxonomyItemId",
+                        },
+                        _external=True,
+                    ),
+                    rel=tuple(),
+                    resource_type="ont-taxonomy-item",
+                    key=("namespaceId", "taxonomyId", "taxonomyItemId"),
+                ),
+                KeyedApiLink(
+                    href=template_url_for(
+                        "api-v1.TaxonomyItemVersionsView",
+                        {
+                            "namespace": "namespaceId",
+                            "taxonomy": "taxonomyId",
+                            "taxonomy_item": "taxonomyItemId",
+                        },
+                        _external=True,
+                    ),
+                    rel=("collection", "page"),
+                    resource_type="ont-taxonomy-item-version",
+                    key=("namespaceId", "taxonomyId", "taxonomyItemId"),
+                    query_key=("item-count", "cursor", "sort"),
+                ),
+                KeyedApiLink(
+                    href=template_url_for(
+                        "api-v1.TaxonomyItemVersionView",
+                        {
+                            "namespace": "namespaceId",
+                            "taxonomy": "taxonomyId",
+                            "taxonomy_item": "taxonomyItemId",
+                            "version": "version",
+                        },
+                        _external=True,
+                    ),
+                    rel=tuple(),
+                    resource_type="ont-taxonomy-item-version",
+                    key=("namespaceId", "taxonomyId", "taxonomyItemId", "version"),
+                ),
+                # taxonomy item relations
+                KeyedApiLink(
+                    href=template_url_for(
+                        "api-v1.TaxonomyItemRelationsView",
+                        {
+                            "namespace": "namespaceId",
+                            "taxonomy": "taxonomyId",
+                            "taxonomy_item": "taxonomyItemId",
+                        },
+                        _external=True,
+                    ),
+                    rel=("collection", "page"),
+                    resource_type="ont-taxonomy-item-relation",
+                    key=("namespaceId", "taxonomyId", "taxonomyItemId"),
+                    query_key=("item-count", "cursor", "sort"),
+                ),
+                KeyedApiLink(
+                    href=template_url_for(
+                        "api-v1.TaxonomyItemRelationView",
+                        {
+                            "namespace": "namespaceId",
+                            "taxonomy": "taxonomyId",
+                            "taxonomy_item": "taxonomyItemId",
+                            "relation": "relationId",
+                        },
+                        _external=True,
+                    ),
+                    rel=tuple(),
+                    resource_type="ont-taxonomy-item-relation",
+                    key=("namespaceId", "taxonomyId", "taxonomyItemId", "relationId"),
                 ),
             ],
             data=RootData(

@@ -363,7 +363,10 @@ export class BaseApiService {
                 if (checkKeyMatchesKeyedLink(fullKey, keyedLink)) {
                     if (matchingKeys.some(match => {
                         if (match.key.length !== keyedLink.key.length || match.queryKey.length !== (keyedLink.queryKey?.length ?? 0)) {
-                            return false;
+                            return false; // key or query key do not match in length
+                        }
+                        if (match.rel !== keyedLink.resourceType) {
+                            return false; // also discriminate keyed links by resource type!
                         }
                         return match.key.every(keyVar => keyedLink.key.includes(keyVar));
                     })) {
@@ -392,8 +395,9 @@ export class BaseApiService {
         if (matchingKeys.length === 0) {
             throw Error("Could not find any matching key!");
         }
-        const containsFullMatch = matchingKeys.some(match => checkKeyMatchesKeyedLinkExact(fullKey, match.link));
+        const containsFullMatch = matchingKeys.some(match => checkKeyMatchesKeyedLinkExact(fullKey, match.link, selfLink.resourceType));
         if (!containsFullMatch) {
+            console.info(selfLink, matchingKeys);
             throw Error("Could not find a fully matching key to build the client url with!");
         }
 

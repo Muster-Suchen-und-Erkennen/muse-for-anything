@@ -2,9 +2,8 @@
 
 from typing import Any, Dict, List, Optional, cast
 from sqlalchemy.orm.query import Query
-from sqlalchemy.orm.strategy_options import selectinload
 from sqlalchemy.sql.schema import ForeignKey, Column, Index
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, selectinload
 from sqlalchemy.ext.declarative import declared_attr
 
 from ..db import DB, MODEL
@@ -39,7 +38,7 @@ class Taxonomy(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
     current_items: List["TaxonomyItem"] = relationship(
         "TaxonomyItem",
         viewonly=True,
-        lazy="select",  # do not always load this
+        # lazy="select",  # do not always load this
         order_by="TaxonomyItem.id",
         back_populates="taxonomy",
         primaryjoin="and_(Taxonomy.id == TaxonomyItem.taxonomy_id, TaxonomyItem.deleted_on == None)",

@@ -106,7 +106,7 @@ class TaxonomyItemSchema(ChangesSchemaMixin, ApiObjectSchema):
     name = ma.fields.String(
         allow_none=False, required=True, validate=Length(1, MAX_STRING_LENGTH)
     )
-    description = ma.fields.String(allow_none=True, required=False)
+    description = ma.fields.String(missing="", required=False)
     sort_key = ma.fields.Float(allow_nan=False, allow_none=True, required=False)
     is_toplevel_item = ma.fields.Boolean(allow_none=False, dump_only=True)
     version = ma.fields.Integer(allow_none=False, dump_only=True)
@@ -136,9 +136,15 @@ class TaxonomyItemRelationSchema(CreateSchemaMixin, DeleteSchemaMixin, ApiObject
 
 
 class TaxonomyItemRelationPostSchema(MaBaseSchema):
-    namespace_id = ma.fields.String(required=True, allow_none=False, validate=Regexp(r"^[0-9]+$"))
-    taxonomy_id = ma.fields.String(required=True, allow_none=False, validate=Regexp(r"^[0-9]+$"))
-    taxonomy_item_id = ma.fields.String(required=True, allow_none=False, validate=Regexp(r"^[0-9]+$"))
+    namespace_id = ma.fields.String(
+        required=True, allow_none=False, validate=Regexp(r"^[0-9]+$")
+    )
+    taxonomy_id = ma.fields.String(
+        required=True, allow_none=False, validate=Regexp(r"^[0-9]+$")
+    )
+    taxonomy_item_id = ma.fields.String(
+        required=True, allow_none=False, validate=Regexp(r"^[0-9]+$")
+    )
 
 
 @dataclass

@@ -1,0 +1,29 @@
+<template>
+    <require from="../elements/api-resource"></require>
+    <require from="../elements/api-schema-view"></require>
+
+    <div if.bind="!isRoot">
+        <a class="link-hover" href="/explore/${clientUrl}" aria-disabled.bind="clientUrl == null ? true : null">
+            <p class="my-1 font-bold"><span class="mr-2 uppercase" if.bind="apiObject.deletedOn != null"
+                    t="deleted"></span>${apiObject.name}</p>
+        </a>
+        <p class="my-1">${apiObject.description}</p>
+    </div>
+    <div class="px-3 py-2 card" if.bind="isRoot">
+        <h3 class="mt-1 mb-2 font-bold text-lg"><span class="mr-2 uppercase" if.bind="apiObject.deletedOn != null"
+                t="deleted"></span>${"resource-type.ont-taxonomy-item" | t}: ${apiObject.name}</h3>
+        <api-schema-view data.bind="apiObject" schema-url.bind="apiObject.self.schema"></api-schema-view>
+    </div>
+    <template if.bind="isRoot && apiObject.children && apiObject.children.length > 0">
+        <h2 class="mt-3 mb-2 font-bold text-lg" t="children"></h2>
+        <api-resource repeat.for="link of apiObject.children" class="block px-3 py-2 card" api-link.bind="link"
+            is-root.one-time="false">
+        </api-resource>
+    </template>
+    <template if.bind="isRoot && apiObject.parents && apiObject.parents.length > 0">
+        <h2 class="mt-3 mb-2 font-bold text-lg" t="parents"></h2>
+        <api-resource repeat.for="link of apiObject.parents" class="block px-3 py-2 card" api-link.bind="link"
+            is-root.one-time="false">
+        </api-resource>
+    </template>
+</template>

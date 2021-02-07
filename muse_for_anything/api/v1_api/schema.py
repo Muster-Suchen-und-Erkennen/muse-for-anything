@@ -13,7 +13,14 @@ from http import HTTPStatus
 from .root import API_V1
 from ..util import JSON_SCHEMA
 from ..base_models import ApiLink, ApiResponse, BaseApiObject, DynamicApiResponseSchema
-from .models.ontology import NamespaceSchema, ObjectTypeSchema, TaxonomyItemRelationPostSchema, TaxonomyItemRelationSchema, TaxonomyItemSchema, TaxonomySchema
+from .models.ontology import (
+    NamespaceSchema,
+    ObjectTypeSchema,
+    TaxonomyItemRelationPostSchema,
+    TaxonomyItemRelationSchema,
+    TaxonomyItemSchema,
+    TaxonomySchema,
+)
 from .models.schema import SchemaApiObject, SchemaApiObjectSchema, TYPE_SCHEMA
 
 
@@ -66,8 +73,20 @@ SCHEMAS: Dict[str, Dict[str, Any]] = {
     "TaxonomyItemSchema": create_schema_from_model(
         TaxonomyItemSchema(exclude=("self",)),
         TaxonomyItemSchema={
-            "propertyOrder": {"name": 10, "description": 20, "version": 30, "sortKey": 40},
-            "hiddenProperties": ["createdOn", "updatedOn", "deletedOn"],
+            "propertyOrder": {
+                "name": 10,
+                "description": 20,
+                "version": 30,
+                "sortKey": 40,
+            },
+            "hiddenProperties": [
+                "createdOn",
+                "updatedOn",
+                "deletedOn",
+                "parents",
+                "children",
+                "isToplevelItem",
+            ],
         },
     ),
     "TaxonomyItemRelationSchema": create_schema_from_model(
