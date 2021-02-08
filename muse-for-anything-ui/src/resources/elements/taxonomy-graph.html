@@ -1,8 +1,170 @@
 <template>
+    <require from="./schema-form"></require>
+    <require from="./validity-indicator"></require>
+    <!-- TODO translations -->
+    <template id="taxonomyGraphTemplate">
+        <svg>
+            <style>
+                svg {
+                    display: block;
+                    width: 100%;
+                    height: 100%;
+                    min-height: 60vh;
+                    border-radius: 0.375rem;
+                    --line-color: black;
+                    --line-highlight-color: #6d28d9;
+                    --text-color: black;
+                    --text-highlight-color: #6d28d9;
+                    --fill-color: white;
+                    --fill-highlight-color: white;
+                }
+
+                .ghost {
+                    opacity: 0.5;
+                }
+
+                .node>rect {
+                    fill: var(--fill-color);
+                    stroke: var(--line-color);
+                }
+
+                .link-handle {
+                    display: none;
+                    fill: var(--line-color);
+                    opacity: 0.1;
+                }
+
+                .link-handle>* {
+                    transition: transform 0.25s ease-out;
+                }
+
+                .edge-group .link-handle {
+                    display: initial
+                }
+
+                .link-handle:hover {
+                    opacity: 0.7;
+                }
+
+                .link-handle:hover>* {
+                    transform: scale(1.5);
+                }
+
+                .title {
+                    fill: var(--text-color);
+                    font-size: initial;
+                    text-overflow: ellipsis;
+                    word-break: break-all;
+                }
+
+                .description {
+                    fill: var(--text-color);
+                    font-size: 6pt;
+                    text-overflow: ellipsis;
+                }
+
+                .sort-key {
+                    fill: var(--text-color);
+                    opacity: 0.8;
+                    font-size: 6pt;
+                    text-overflow: ellipsis;
+                    text-anchor: end;
+                }
+
+                .node.hovered:not(.deleted) .link-handle {
+                    display: initial;
+                }
+
+                .node.hovered>rect {
+                    fill: var(--fill-highlight-color);
+                    stroke: var(--line-highlight-color);
+                }
+
+                .node.selected>rect {
+                    fill: var(--fill-highlight-color);
+                    stroke: var(--line-highlight-color);
+                }
+
+                .node.selected .title {
+                    fill: var(--text-highlight-color);
+                }
+
+                .edge {
+                    stroke: var(--line-color);
+                }
+
+                .edge-group .marker {
+                    fill: var(--line-color);
+                }
+
+                .highlight-outgoing .edge {
+                    stroke: var(--line-highlight-color);
+                }
+
+                .highlight-outgoing.edge-group .marker {
+                    fill: var(--line-highlight-color);
+                }
+            </style>
+            <defs class="templates">
+                <g id="taxonomy-item" data-template-type="node">
+                    <rect width="120" height="60" x="-60" y="-30" rx="5" data-link-handles="edges"></rect>
+                    <text class="title" data-content="title" x="-55" y="-13" width="110"></text>
+                    <text class="description" data-content="description" x="-55" y="2"
+                        data-wrap-lines="110 110 70"></text>
+                    <text class="sort-key" data-content="sortKey" x="55" y="26" width="35"></text>
+                </g>
+                <g id="arrow" data-template-type="marker" data-line-attachement-point="-9 0">
+                    <path d="M -9 -4 L 0 0 L -9 4 z" />
+                </g>
+            </defs>
+        </svg>
+    </template>
+
     <div if.bind="apiObject == null">
         <h1 t="loading">Loading</h1>
     </div>
-    <div else>
-        Graph (TODO)
-    </div>
+    <template else>
+        <network-graph class="graph" style="contain: strict;" mode="layout" zoom="both"
+            svg-template="#taxonomyGraphTemplate">
+        </network-graph>
+        <div class="buttons card mx-2 my-3 bg-white px-3 py-2 flex flex-row items-center" style="contain: strict;">
+            <button class="button-flat px-2" click.delegate="resetLayout()">reset layout</button>
+            <div class="flex flex-row items-center justify-center" style="flex-basis: 3rem; flex-shrink: 1;">
+                <div class="border-l h-6"></div>
+            </div>
+            <button class="button-flat px-2" click.delegate="addItem()" show.bind="selectedNode == null">
+                add item
+            </button>
+            <button class="button-flat px-2" click.delegate="editSelectedItem()"
+                show.bind="selectedNode.updateItemAction != null">
+                edit item
+            </button>
+            <button class="button-flat px-2" click.delegate="deleteSelectedItem()"
+                show.bind="selectedNode.deleteItemAction != null">
+                delete item
+            </button>
+            <button class="button-flat px-2" click.delegate="deleteSelectedItem()"
+                show.bind="selectedNode.restoreItemAction != null">
+                restore item
+            </button>
+        </div>
+        <div class="minimap card mx-2 my-3 bg-white" style="contain: strict;" show.bind="false">Minimap (TODO)</div>
+        <div class="form card mx-2 my-3 bg-white px-3 py-2" style="contain: strict;" show.bind="showForm">
+
+            <form submit.trigger="submitForm()">
+                <div class="flex flex-wrap" repeat.for="prop of formProperties" if.bind="formProperties != null">
+                    <schema-form class="w-full properties" key.bind="prop.propertyName" label.bind="prop.propertyTitle"
+                        initial-data.bind="initialFormData[prop.propertyName]" value.bind="formData[prop.propertyName]"
+                        schema.bind="prop.propertySchema" required.bind="true"
+                        valid.from-view="propertiesValid[prop.propertyName]"
+                        dirty.from-view="propertiesDirty[prop.propertyName]" debug.bind="false">
+                    </schema-form>
+                </div>
+                <button class="w-full button-outline" style="margin-top: 1rem" click.delegate="submitForm()"
+                    disabled.bind="!propertiesValid.name || !propertiesValid.description || !propertiesValid.sortKey">
+                    save
+                </button>
+            </form>
+        </div>
+    </template>
 </template>

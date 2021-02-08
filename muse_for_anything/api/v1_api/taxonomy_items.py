@@ -731,7 +731,7 @@ class TaxonomyItemRelationView(MethodView):
         self._check_if_modifiable(found_relation)
 
         # only actually delete when not already deleted
-        if found_relation.deleted_on is not None:
+        if found_relation.deleted_on is None:
             # delete taxonomy item relation
             found_relation.deleted_on = datetime.utcnow()
             DB.session.add(found_relation)

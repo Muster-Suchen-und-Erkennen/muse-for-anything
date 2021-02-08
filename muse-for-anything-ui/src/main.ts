@@ -6,6 +6,9 @@ import { I18N, TCustomAttribute } from "aurelia-i18n";
 import Backend from "i18next-xhr-backend";
 import * as environment from "../config/environment.json";
 
+// import grapheditor library to enable webcomponent
+import "@ustutt/grapheditor-webcomponent";
+
 export function configure(aurelia: Aurelia): void {
     aurelia.use
         .standardConfiguration()

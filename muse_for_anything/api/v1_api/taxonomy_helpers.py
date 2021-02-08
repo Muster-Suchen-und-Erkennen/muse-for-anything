@@ -236,6 +236,11 @@ def action_links_for_taxonomy(taxonomy: Taxonomy) -> List[ApiLink]:
                     resource_key=resource_key,
                 )
             )
+            actions.append(
+                create_action_link_for_taxonomy_item_page(
+                    str(taxonomy.namespace_id), str(taxonomy.id)
+                )
+            )
         else:
             actions.append(
                 ApiLink(

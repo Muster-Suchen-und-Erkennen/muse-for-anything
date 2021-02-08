@@ -173,6 +173,35 @@ button:disabled {
     text-decoration: none;
 }
 
+/* Taxonomy Graph styles */
+
+taxonomy-graph {
+    min-height: 60vh;
+    display: grid;
+    grid-template-columns: minmax(8rem, 1fr) 1fr 2fr;
+    grid-template-rows: 4rem 1fr 1fr 8rem;
+    grid-template-areas: "buttons buttons buttons" ". . ." ". . form" "minimap . form"; /*  "empty empty empty empty" "empty empty form form" "minimap empty form form" */
+}
+
+taxonomy-graph .graph {
+    grid-row-start: 1;
+    grid-row-end: -1;
+    grid-column-start: 1;
+    grid-column-end: -1;
+}
+
+taxonomy-graph .buttons {
+    grid-area: buttons;
+}
+
+taxonomy-graph .minimap {
+    grid-area: minimap;
+}
+
+taxonomy-graph .form {
+    grid-area: form;
+}
+
 /* Tailwind CSS styles (ignore css errors...) */
 
 /* form styles */
