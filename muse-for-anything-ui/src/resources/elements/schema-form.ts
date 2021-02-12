@@ -22,6 +22,8 @@ export class SchemaForm {
 
     constructor(private element: Element) { }
 
+    initialDataFix: any;
+
     activeSchema: NormalizedApiSchema;
     schemaType: string;
     extraType: string;
@@ -66,6 +68,13 @@ export class SchemaForm {
             this.schemaType = "unknown";
         }
         this.activeSchema = newValue;
+    }
+
+    initialDataChanged(newValue, oldValue) {
+        window.setTimeout(() => {
+            // manually delay updates of initialData by a bit to get the right update order in form fields
+            this.initialDataFix = newValue;
+        }, 3);
     }
 
     valueChanged(newValue, oldValue) {
