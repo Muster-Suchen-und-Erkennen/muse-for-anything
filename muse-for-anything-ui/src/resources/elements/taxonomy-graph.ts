@@ -143,7 +143,13 @@ class ItemRelationEdge implements Edge {
 
     deleteAction: ApiLink;
 
-    dragHandles = null;
+    dragHandles = [
+        {
+            "template": "default-marker",
+            "positionOnLine": 0.95,
+            "absolutePositionOnLine": -25,
+        },
+    ];
 
     markerEnd = {
         template: "arrow",
@@ -195,6 +201,7 @@ export class TaxonomyGraph {
     initialFormData: { name: string, description: string, sortKey: number } = { name: "", description: "", sortKey: 0 };
     propertiesValid: { name: boolean, description: boolean, sortKey: boolean } = { name: false, description: false, sortKey: false };
     propertiesDirty: { name: boolean, description: boolean, sortKey: boolean } = { name: false, description: false, sortKey: false };
+    savingForm: boolean = false;
 
     @child("network-graph.graph") graph: GraphEditor;
 
@@ -327,20 +334,113 @@ export class TaxonomyGraph {
         if (this.selectedNode == null || this.formProperties == null) {
             return;
         }
+        if (this.selectedNode.deleteItemAction == null) {
+            return;
+        }
 
-        // TODO implement delete
+        this.restoreOrDeleteSelectedItem(this.selectedNode.deleteItemAction);
     }
 
     restoreSelectedItem() {
         if (this.selectedNode == null || this.formProperties == null) {
             return;
         }
+        if (this.selectedNode.restoreItemAction == null) {
+            return;
+        }
 
-        // TODO implement delete
+        this.restoreOrDeleteSelectedItem(this.selectedNode.restoreItemAction);
+    }
+
+    private restoreOrDeleteSelectedItem(action: ApiLink) {
+        this.api.submitByApiLink<ChangedApiObject>(action).then(result => {
+            const promises = [];
+            result.links.forEach(link => {
+                if (link.resourceType === "ont-taxonomy-item") {
+                    // reload changed taxonomy items
+                    const promise = this.api.getByApiLink<TaxonomyItemApiObject>(link).then(itemResult => {
+                        const nodeId = apiLinkToId(itemResult.data.self);
+                        const itemNode = this.graph.getNode(nodeId);
+                        if (itemNode != null) {
+                            itemNode.data = itemResult;
+                        } else {
+                            // new node
+                            this.graph.addNode(new TaxonomyItemNode(itemResult));
+                        }
+                    });
+                    promises.push(promise);
+                } else if (link.resourceType === "ont-taxonomy-item-relation") {
+                    // reload changed taxonomy items relations
+                    const promise = this.api.getByApiLink<TaxonomyItemRelationApiObject>(link).then(relationResult => {
+                        const edge = new ItemRelationEdge(relationResult);
+                        if (edge.deleted) {
+                            this.graph.removeEdge(edge.id);
+                        } else {
+                            const existingEdge = this.graph.getEdge(edge.id);
+                            if (existingEdge != null) {
+                                existingEdge.data = relationResult;
+                            } else {
+                                this.graph.addEdge(edge);
+                            }
+                        }
+                    });
+                    promises.push(promise);
+                }
+            });
+            return Promise.all(promises).then(() => {
+                this.graph.completeRender();
+                this.layout();
+            });
+        });
     }
 
     submitForm() {
-        // TODO implement item creation/edit
+        if (!this.propertiesValid.name || !this.propertiesValid.description || !this.propertiesValid.sortKey) {
+            return; // invalid form data
+        }
+        if (this.savingForm) {
+            return; // save request already running
+        }
+        let submitLink: ApiLink;
+        if (this.selectedNode == null) {
+            submitLink = this.createItemAction;
+        }
+        if (this.selectedNode != null) {
+            submitLink = this.selectedNode.updateItemAction;
+        }
+        if (submitLink == null) {
+            return; // no submit action
+        }
+
+        this.savingForm = true;
+        this.api.submitByApiLink<NewApiObject | ChangedApiObject>(submitLink, this.formData)
+            .then(result => {
+                this.showForm = false;
+                const promises = [];
+                result.links.forEach(link => {
+                    if (link.resourceType !== "ont-taxonomy-item") {
+                        return;
+                    }
+                    // reload changed taxonomy items
+                    const promise = this.api.getByApiLink<TaxonomyItemApiObject>(link).then(itemResult => {
+                        const nodeId = apiLinkToId(itemResult.data.self);
+                        const itemNode = this.graph.getNode(nodeId);
+                        if (itemNode != null) {
+                            itemNode.data = itemResult;
+                        } else {
+                            // new node
+                            this.graph.addNode(new TaxonomyItemNode(itemResult));
+                        }
+                    });
+                    promises.push(promise);
+                });
+                return Promise.all(promises).then(() => {
+                    this.graph.completeRender();
+                    this.layout();
+                });
+            })
+            .finally(() => this.savingForm = false);
+
     }
 
     private resetGraph() {
@@ -420,42 +520,66 @@ export class TaxonomyGraph {
 
         let currentY = 0;
 
-        const recursivePositionAssign = (node: TaxonomyItemNode) => {
+        const recursivePositionAssign = (node: TaxonomyItemNode, isFirstChildItem = false) => {
             if (layoutedNodes.has(node.id)) {
                 return;
             }
             layoutedNodes.add(node.id);
-            node.x = node.level * 200;
+            if (isFirstChildItem) {
+                currentY -= 80;
+            }
+            node.x = node.level * 220;
             node.y = currentY;
+            currentY += 80;
             const related = this.graph.getEdgesBySource(node.id);
-            let hasChildItems = false;
+            const relatedNodes: Node[] = [];
             related.forEach(edge => {
                 if (edge.type !== "item-relation") {
                     return;
                 }
-                const targetNode = this.graph.getNode(edge.target);
-                if (targetNode?.type === "taxonomy-item") {
-                    hasChildItems = true;
-                    recursivePositionAssign(targetNode as TaxonomyItemNode);
+                if (!layoutedNodes.has(edge.target as string)) {
+                    relatedNodes.push(this.graph.getNode(edge.target));
                 }
             });
-            if (!hasChildItems) {
-                currentY += 80;
-            }
+            relatedNodes.sort(taxonomyItemNodeComparator);
+            relatedNodes.forEach((node, index) => {
+                if (node?.type === "taxonomy-item") {
+                    recursivePositionAssign(node as TaxonomyItemNode, index === 0);
+                }
+            });
         };
         startNodes.forEach(node => recursivePositionAssign(node));
         this.graph.updateGraphPositions();
     }
 
     graphChanged(newGraph: GraphEditor, oldGraph) {
-        console.log(newGraph)
         if (newGraph == null) {
             return;
         }
+        newGraph.addEventListener("backgroundclick", (event) => this.onBackgroundClick(event as any));
         newGraph.addEventListener("nodeclick", (event) => this.onNodeClick(event as any));
         newGraph.onCreateDraggedEdge = (edge: DraggedEdge) => this.onCreateDraggedEdge(edge);
         newGraph.addEventListener("edgeadd", (event) => this.onEdgeAdd(event as any));
         newGraph.addEventListener("edgeremove", (event) => this.onEdgeRemove(event as any));
+
+        newGraph.setNodeClass = (className: string, node: Node): boolean => this.setNodeClass(className, node);
+    }
+
+    private setNodeClass(className: string, node: Node): boolean {
+        if (className === node.type) {
+            return true;
+        }
+        if (className === "deleted" && node.deleted) {
+            return true;
+        }
+        return false;
+    }
+
+    private onBackgroundClick(event: CustomEvent<{ eventSource: "API" | "USER_INTERACTION" | "INTERNAL", node: Node }>) {
+        if (this.selectedNode != null) {
+            this.graph.deselectNode(this.selectedNode.id);
+            this.selectedNode = null;
+        }
     }
 
     private onNodeClick(event: CustomEvent<{ eventSource: "API" | "USER_INTERACTION" | "INTERNAL", node: Node }>) {
@@ -532,7 +656,6 @@ export class TaxonomyGraph {
     }
 
     private onEdgeAdd(event: CustomEvent<{ eventSource: "API" | "USER_INTERACTION" | "INTERNAL", edge: Edge }>) {
-        console.log(event.detail)
         if (event.detail.eventSource !== "USER_INTERACTION") {
             return;
         }
@@ -562,7 +685,7 @@ export class TaxonomyGraph {
                         return;
                     }
                     // reload changed taxonomy items
-                    const promise = this.api.getByApiLink<TaxonomyApiObject>(link).then(itemResult => {
+                    const promise = this.api.getByApiLink<TaxonomyItemApiObject>(link).then(itemResult => {
                         const nodeId = apiLinkToId(itemResult.data.self);
                         const itemNode = this.graph.getNode(nodeId);
                         if (itemNode != null) {

@@ -11,6 +11,7 @@
                     height: 100%;
                     min-height: 60vh;
                     border-radius: 0.375rem;
+                    background-color: var(--fill-color);
                     --line-color: black;
                     --line-highlight-color: #6d28d9;
                     --text-color: black;
@@ -89,6 +90,10 @@
                     fill: var(--text-highlight-color);
                 }
 
+                .node.deleted {
+                    opacity: 0.5;
+                }
+
                 .edge {
                     stroke: var(--line-color);
                 }
@@ -110,8 +115,11 @@
                     <rect width="120" height="60" x="-60" y="-30" rx="5" data-link-handles="edges"></rect>
                     <text class="title" data-content="title" x="-55" y="-13" width="110"></text>
                     <text class="description" data-content="description" x="-55" y="2"
-                        data-wrap-lines="110 110 70"></text>
+                        data-wrap-lines="110 70|110 110 70"></text>
                     <text class="sort-key" data-content="sortKey" x="55" y="26" width="35"></text>
+                </g>
+                <g id="default-marker" data-template-type="marker" data-line-attachement-point="6">
+                    <circle cx="0" cy="0" r="6"></circle>
                 </g>
                 <g id="arrow" data-template-type="marker" data-line-attachement-point="-9 0">
                     <path d="M -9 -4 L 0 0 L -9 4 z" />
@@ -124,7 +132,7 @@
         <h1 t="loading">Loading</h1>
     </div>
     <template else>
-        <network-graph class="graph" style="contain: strict;" mode="layout" zoom="both"
+        <network-graph class="graph" style="contain: strict;" classes="taxonomy-item deleted" mode="layout" zoom="both"
             svg-template="#taxonomyGraphTemplate">
         </network-graph>
         <div class="buttons card mx-2 my-3 bg-white px-3 py-2 flex flex-row items-center" style="contain: strict;">
@@ -143,7 +151,7 @@
                 show.bind="selectedNode.deleteItemAction != null">
                 delete item
             </button>
-            <button class="button-flat px-2" click.delegate="deleteSelectedItem()"
+            <button class="button-flat px-2" click.delegate="restoreSelectedItem()"
                 show.bind="selectedNode.restoreItemAction != null">
                 restore item
             </button>
@@ -161,7 +169,7 @@
                     </schema-form>
                 </div>
                 <button class="w-full button-outline" style="margin-top: 1rem" click.delegate="submitForm()"
-                    disabled.bind="!propertiesValid.name || !propertiesValid.description || !propertiesValid.sortKey">
+                    disabled.bind="!propertiesValid.name || !propertiesValid.description || !propertiesValid.sortKey || savingForm">
                     save
                 </button>
             </form>

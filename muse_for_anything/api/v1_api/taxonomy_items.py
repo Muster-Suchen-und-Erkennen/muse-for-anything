@@ -290,6 +290,8 @@ class TaxonomyItemView(MethodView):
 
             # add changed items to be embedded into the response
             for relation in found_taxonomy_item.current_ancestors:
+                changed_links.append(taxonomy_item_relation_to_api_link(relation))
+                embedded.append(taxonomy_item_relation_to_api_response(relation))
                 changed_links.append(
                     taxonomy_item_to_api_link(relation.taxonomy_item_source)
                 )
@@ -350,7 +352,7 @@ class TaxonomyItemView(MethodView):
         embedded: List[ApiResponse] = []
 
         # only actually delete when not already deleted
-        if found_taxonomy_item.deleted_on is not None:
+        if found_taxonomy_item.deleted_on is None:
             # delete taxonomy item
             deleted_timestamp = datetime.utcnow()
             found_taxonomy_item.deleted_on = deleted_timestamp
@@ -369,6 +371,8 @@ class TaxonomyItemView(MethodView):
 
             # add changed items to be embedded into the response
             for relation in ancestors:
+                changed_links.append(taxonomy_item_relation_to_api_link(relation))
+                embedded.append(taxonomy_item_relation_to_api_response(relation))
                 changed_links.append(
                     taxonomy_item_to_api_link(relation.taxonomy_item_source)
                 )
