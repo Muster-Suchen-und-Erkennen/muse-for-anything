@@ -147,6 +147,34 @@ class RootView(MethodView):
                     resource_type="ont-object",
                     key=("namespaceId", "objectId"),
                 ),
+                KeyedApiLink(
+                    href=template_url_for(
+                        "api-v1.ObjectVersionsView",
+                        {
+                            "namespace": "namespaceId",
+                            "object_id": "objectId",
+                        },
+                        _external=True,
+                    ),
+                    rel=("collection", "page", "schema"),
+                    resource_type="ont-object-version",
+                    key=("namespaceId", "objectId"),
+                    query_key=("item-count", "cursor", "sort"),
+                ),
+                KeyedApiLink(
+                    href=template_url_for(
+                        "api-v1.ObjectVersionView",
+                        {
+                            "namespace": "namespaceId",
+                            "object_id": "objectId",
+                            "version": "objectVersion",
+                        },
+                        _external=True,
+                    ),
+                    rel=("schema",),
+                    resource_type="ont-object-version",
+                    key=("namespaceId", "objectId", "objectVersion"),
+                ),
                 # Taxonomies
                 KeyedApiLink(
                     href=template_url_for(

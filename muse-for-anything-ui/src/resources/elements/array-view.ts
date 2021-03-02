@@ -1,31 +1,32 @@
 import { bindable } from "aurelia-framework";
-import { NormalizedApiSchema, PropertyDescription } from "rest/schema-objects";
+import { ItemDescription, NormalizedApiSchema } from "rest/schema-objects";
 
-export class ObjectView {
-    @bindable data: any;
+export class ArrayView {
+    @bindable data: any[];
     @bindable schema: NormalizedApiSchema;
 
-    properties: PropertyDescription[] = [];
+    items: ItemDescription[] = [];
 
     dataChanged(newValue, oldValue) {
-        this.reloadProperties();
+        this.reloadItems();
     }
 
     schemaChanged(newValue, oldValue) {
-        this.reloadProperties();
+        this.reloadItems();
     }
 
-    reloadProperties() {
+    reloadItems() {
         if (this.schema == null) {
-            this.properties = [];
+            this.items = [];
             return;
         }
-        if (!this.schema.normalized.type.has("object")) {
-            console.error("Not an object!"); // FIXME better error!
-            this.properties = [];
+        if (!this.schema.normalized.type.has("array")) {
+            console.error("Not an array!"); // FIXME better error!
+            this.items = [];
             return;
         }
-        this.properties = this.schema.getPropertyList(Object.keys(this.data));
+        this.items = this.schema.getItemList(this.data?.length ?? 0);
+        const t: ItemDescription;
     }
 
     isObjectProperty(schema: NormalizedApiSchema): boolean {

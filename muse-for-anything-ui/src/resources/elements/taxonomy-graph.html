@@ -157,7 +157,8 @@
             </button>
         </div>
         <div class="minimap card mx-2 my-3 bg-white" style="contain: strict;" show.bind="false">Minimap (TODO)</div>
-        <div class="form card mx-2 my-3 bg-white px-3 py-2" style="contain: strict;" show.bind="showForm">
+        <div class="form card mx-2 my-3 bg-white px-3 py-2 overflow-y-auto" style="contain: strict;"
+            show.bind="showForm">
 
             <form submit.trigger="submitForm()">
                 <div class="flex flex-wrap" repeat.for="prop of formProperties" if.bind="formProperties != null">

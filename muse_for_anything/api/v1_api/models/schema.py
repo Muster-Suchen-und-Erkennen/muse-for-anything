@@ -577,6 +577,7 @@ JSON_RESOURCE_REFERENCE_BASE_SCHEMA = {
             ],
         },
     },
+    "additionalProperties": False,
     "propertyOrder": {
         "customType": 0,
         "referenceType": 10,
@@ -593,10 +594,11 @@ JSON_TAXONOMY_RESOURCE_REFERENCE_SCHEMA = {
         "referenceType": {"const": "ont-taxonomy"},
     },
     "required": ["type"],
-    # "allOf": [JSON_RESOURCE_REFERENCE_SCHEMA_BASE_REF],
+    "allOf": [JSON_RESOURCE_REFERENCE_SCHEMA_BASE_REF],
     "properties": {
         "referenceType": {"const": "ont-taxonomy"},
     },
+    "additionalProperties": False,
 }
 
 JSON_TYPE_RESOURCE_REFERENCE_SCHEMA = {

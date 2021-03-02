@@ -1,8 +1,12 @@
 <template>
     <require from="./object-view"></require>
+    <require from="./array-view"></require>
 
     <template if.bind="schemaType === 'object'">
         <object-view data.bind="data" schema.bind="schema"></object-view>
+    </template>
+    <template if.bind="schemaType === 'array'">
+        <array-view data.bind="data" schema.bind="schema"></array-view>
     </template>
     <template if.bind="schemaType === 'string'">
         <p class="m-0 whitespace-pre-line">${data != null ? data : ''}</p>

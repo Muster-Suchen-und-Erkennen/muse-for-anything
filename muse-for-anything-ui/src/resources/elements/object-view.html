@@ -1,10 +1,12 @@
 <template>
     <require from="./schema-view"></require>
 
-    <div class="flex flex-wrap" repeat.for="prop of properties">
-        <p class="mr-2 font-semibold">
+    <div class="flex flex-wrap ${isObjectProperty(prop.propertySchema) ? 'card px-2 py-2 mt-4' : ''}"
+        repeat.for="prop of properties">
+        <p class="mr-2 font-semibold ${isObjectProperty(prop.propertySchema) ? 'text-lg' : ''}">
             ${prop.propertyName}:
         </p>
-        <schema-view data.bind="data[prop.propertyName]" schema.bind="prop.propertySchema"></schema-view>
+        <schema-view style.bind="propertyStyle(prop.propertySchema)" data.bind="data[prop.propertyName]"
+            schema.bind="prop.propertySchema"></schema-view>
     </div>
 </template>

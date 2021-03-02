@@ -91,11 +91,11 @@ class ObjectTypeData(BaseApiObject, ChangesDataMixin, NameDescriptionMixin):
 
 class ObjectSchema(ChangesSchemaMixin, ApiObjectSchema):
     name = ma.fields.String(
-        allow_none=False, dump_only=True, validate=Length(1, MAX_STRING_LENGTH)
+        allow_none=False, required=True, validate=Length(1, MAX_STRING_LENGTH)
     )
-    description = ma.fields.String(allow_none=False, dump_only=True)
+    description = ma.fields.String(allow_none=True)
     version = ma.fields.Integer(allow_none=False, dump_only=True)
-    data = ma.fields.Raw(allow_none=False, dump_only=True)
+    data = ma.fields.Raw(allow_none=True, required=True)
 
 
 @dataclass

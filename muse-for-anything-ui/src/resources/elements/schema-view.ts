@@ -30,6 +30,7 @@ export class SchemaView {
             this.schemaType = "null";
         } else {
             this.schemaType = "unknown";
+            // FIXME type mappings in type definitions wont work because of oneOf…
         }
     }
 

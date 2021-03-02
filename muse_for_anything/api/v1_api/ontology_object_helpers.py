@@ -7,7 +7,8 @@ from jsonschema import validate, Draft7Validator
 
 from muse_for_anything.api.base_models import ApiLink, ApiResponse
 from muse_for_anything.api.v1_api.models.ontology import (
-    ObjectSchema, ObjectTypeSchema,
+    ObjectSchema,
+    ObjectTypeSchema,
     ObjectTypeData,
     ObjectData,
 )
@@ -17,6 +18,8 @@ from muse_for_anything.db.models.ontology_objects import (
     OntologyObjectTypeVersion,
     OntologyObjectVersion,
 )
+
+from .ontology_types_helpers import type_to_key
 
 
 def object_page_params_to_key(
@@ -51,8 +54,20 @@ def action_links_for_object_page(
 ) -> List[ApiLink]:
     actions: List[ApiLink] = []
     if type is not None and type.deleted_on is None and namespace.deleted_on is None:
-        # TODO include create object action here
-        pass
+        actions.append(
+            ApiLink(
+                href=url_for(
+                    "api-v1.ObjectsView",
+                    namespace=str(namespace.id),
+                    **{"type-id": str(type.id)},
+                    _external=True,
+                ),
+                rel=("create", "post"),
+                resource_type="ont-object",
+                resource_key={"namespaceId": str(namespace.id), "?type-id": str(type.id)},
+                schema=type_version_to_schema_url(type.current_version),
+            )
+        )
     return actions
 
 
@@ -62,16 +77,14 @@ def object_to_key(object: OntologyObject) -> Dict[str, str]:
 
 def object_version_to_key(version: OntologyObjectVersion) -> Dict[str, str]:
     start_key = object_to_key(version.ontology_object)
-    start_key["version"] = str(version.version)
+    start_key["objectVersion"] = str(version.version)
     return start_key
 
 
 def type_version_to_schema_url(version: OntologyObjectTypeVersion) -> str:
     return url_for(
-        "api-v1.TypeVersionView",
-        namespace=str(version.ontology_type.namespace_id),
-        object_type=str(version.object_type_id),
-        version=str(version.version),
+        "api-v1.TypeSchemaView",
+        schema_id=str(version.id),
         _external=True,
     )
 
@@ -112,16 +125,25 @@ def nav_links_for_object(object: OntologyObject) -> List[ApiLink]:
         ),
     ]
 
+    if isinstance(object, OntologyObject):
+        nav_links.append(
+            ApiLink(
+                href=url_for(
+                    "api-v1.TypeView",
+                    namespace=str(object.namespace_id),
+                    object_type=str(object.object_type_id),
+                    _external=True,
+                ),
+                rel=("nav",),
+                resource_type="ont-type",
+                resource_key=type_to_key(object.ontology_type),
+                schema=url_for(
+                    "api-v1.ApiSchemaView", schema_id="TypeSchema", _external=True
+                ),
+            )
+        )
+
     # TODO add more nav links to type and to current version…
-    object_type_version = object.ontology_type_version
-    assert (
-        object_type_version is not None
-    ), "An object should always have a current version!"
-    object_type_schema = type_version_to_schema_url(object_type_version)
-    current_object_type_schema = type_version_to_schema_url(
-        object.ontology_type.current_version
-    )
-    #
     return nav_links
 
 
@@ -136,7 +158,7 @@ def object_to_self_link(object: OntologyObject) -> ApiLink:
         rel=tuple(),
         resource_type="ont-object",
         resource_key=object_to_key(object),
-        schema=type_version_to_schema_url(object.object_type_version),
+        schema=type_version_to_schema_url(object.ontology_type_version),
     )
 
 
@@ -197,7 +219,7 @@ def action_links_for_object(object: OntologyObject) -> List[ApiLink]:
         actions.append(
             ApiLink(
                 href=url_for(
-                    "api-v1.ObjectssView",
+                    "api-v1.ObjectsView",
                     namespace=str(object.namespace_id),
                     type_id=str(object.object_type_id),
                     _external=True,
@@ -234,7 +256,7 @@ def action_links_for_object(object: OntologyObject) -> List[ApiLink]:
                     href=url_for(
                         "api-v1.ObjectView",
                         namespace=str(object.namespace_id),
-                        object_type=str(object.id),
+                        object_id=str(object.id),
                         _external=True,
                     ),
                     rel=("delete",),
@@ -248,7 +270,7 @@ def action_links_for_object(object: OntologyObject) -> List[ApiLink]:
                     href=url_for(
                         "api-v1.ObjectView",
                         namespace=str(object.namespace_id),
-                        object_type=str(object.id),
+                        object_id=str(object.id),
                         _external=True,
                     ),
                     rel=("restore", "post"),
@@ -273,5 +295,8 @@ def object_to_api_response(object: OntologyObject) -> ApiResponse:
 
 
 def validate_object_schema(object_data: Any, type: OntologyObjectType):
-    # FIXME implement schema checking
-    pass
+    # FIXME implement better schema checking
+    validator = Draft7Validator(type.schema)
+    for error in sorted(validator.iter_errors(object_data), key=str):
+        print("VALIDATION ERROR", error.message)
+    validate(object_data, type.schema)

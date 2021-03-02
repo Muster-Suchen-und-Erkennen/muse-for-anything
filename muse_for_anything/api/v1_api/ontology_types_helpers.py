@@ -208,6 +208,27 @@ def action_links_for_type(object_type: OntologyObjectType) -> List[ApiLink]:
                     resource_key=resource_key,
                 )
             )
+            actions.append(
+                ApiLink(
+                    href=url_for(
+                        "api-v1.ObjectsView",
+                        namespace=str(object_type.namespace_id),
+                        **{"type-id": str(object_type.id)},
+                        _external=True,
+                    ),
+                    rel=("create", "post"),
+                    resource_type="ont-object",
+                    resource_key={
+                        "namespaceId": str(object_type.namespace_id),
+                        "?type-id": str(object_type.id),
+                    },
+                    schema=url_for(
+                        "api-v1.TypeSchemaView",
+                        schema_id=str(object_type.current_version_id),
+                        _external=True,
+                    ),
+                )
+            )
         else:
             actions.append(
                 ApiLink(

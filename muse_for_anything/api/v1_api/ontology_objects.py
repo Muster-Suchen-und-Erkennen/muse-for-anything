@@ -65,6 +65,7 @@ from muse_for_anything.api.v1_api.ontology_object_helpers import (
     object_to_api_response,
     nav_links_for_object_page,
     object_to_object_data,
+    validate_object_schema,
 )
 
 
@@ -128,9 +129,9 @@ class ObjectsView(MethodView):
             OntologyObject.namespace_id == int(namespace),
         )
 
-        found_type: Optional[OntologyObjectType]
-        if "type-id" in kwargs:
-            type_id: str = kwargs.get("type-id")
+        found_type: Optional[OntologyObjectType] = None
+        if "type_id" in kwargs:
+            type_id: str = kwargs.get("type_id")
             self._check_type_param(type_id=type_id)
             found_type = self._get_ontology_type(namespace=namespace, type_id=type_id)
             ontology_object_filter = (
@@ -173,8 +174,8 @@ class ObjectsView(MethodView):
             "sort": sort,
         }
 
-        if "type-id" in kwargs:
-            query_params["type-id"] = kwargs["type-id"]
+        if found_type is not None:
+            query_params["type-id"] = str(found_type.id)
 
         self_query_params = dict(query_params)
 
@@ -311,9 +312,7 @@ class ObjectsView(MethodView):
     def post(self, data, namespace: str, **kwargs):
         """Create a new object."""
         self._check_path_params(namespace=namespace)
-        self._check_type_param(type_id=kwargs.get("type-id"))
-
-        print(data)
+        self._check_type_param(type_id=kwargs.get("type_id"))
 
         found_namespace = self._get_namespace(namespace=namespace)
         if found_namespace.deleted_on is not None:
@@ -326,7 +325,7 @@ class ObjectsView(MethodView):
             )
 
         found_object_type = self._get_ontology_type(
-            namespace=namespace, type_id=kwargs.get("type-id")
+            namespace=namespace, type_id=kwargs.get("type_id")
         )
         if found_object_type.deleted_on is not None:
             # cannot modify deleted object type!
@@ -336,6 +335,8 @@ class ObjectsView(MethodView):
                     "Object type is marked as deleted. No new Objects of this type can be created!"
                 ),
             )
+
+        validate_object_schema(object_data=data.get("data"), type=found_object_type)
 
         name = data.get("name")
         description = data.get("description", "")
@@ -435,7 +436,7 @@ class ObjectView(MethodView):
                 ),
             )
 
-    @API_V1.response(DynamicApiResponseSchema(ObjectTypeSchema()))
+    @API_V1.response(DynamicApiResponseSchema(ObjectSchema()))
     def get(self, namespace: str, object_id: str, **kwargs: Any):
         """Get a single object."""
         self._check_path_params(namespace=namespace, object_id=object_id)
@@ -475,6 +476,10 @@ class ObjectView(MethodView):
             namespace=namespace, object_id=object_id
         )
         self._check_if_modifiable(found_object)
+
+        validate_object_schema(
+            object_data=data.get("data"), type=found_object.ontology_type
+        )
 
         name = data.get("name")
         description = data.get("description", "")
@@ -602,3 +607,21 @@ class ObjectView(MethodView):
                 changed=object_link,
             ),
         )
+
+# FIXME implement endpoints
+@API_V1.route("/namespaces/<string:namespace>/objects/<string:object_id>/versions/")
+class ObjectVersionsView(MethodView):
+    """Endpoint for all versions of a type."""
+
+    def get(self, namespace: str, object_id: str):
+        abort(HTTPStatus.NOT_IMPLEMENTED, "Not Implemented")
+
+
+@API_V1.route(
+    "/namespaces/<string:namespace>/objects/<string:object_id>/versions/version/"
+)
+class ObjectVersionView(MethodView):
+    """Endpoint for all versions of a type."""
+
+    def get(self, namespace: str, object_id: str, version: str):
+        abort(HTTPStatus.NOT_IMPLEMENTED, "Not Implemented")

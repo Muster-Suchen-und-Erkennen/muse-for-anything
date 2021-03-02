@@ -7,6 +7,7 @@
         "create": {
             "ont-namespace": "Create New Namespace",
             "ont-type": "Create New Type",
+            "ont-object": "Create New Object",
             "ont-taxonomy": "Create New Taxonomy",
             "ont-taxonomy-item": "Create New Taxonomy-Item",
             "ont-taxonomy-item-relation": "Create New Taxonomy-Item-Relation"
@@ -14,6 +15,7 @@
         "update": {
             "ont-namespace": "Edit Namespace",
             "ont-type": "Edit Type",
+            "ont-object": "Edit Object",
             "ont-taxonomy": "Edit Taxonomy",
             "ont-taxonomy-item": "Edit Item"
         }
@@ -21,6 +23,7 @@
     "noItems": {
         "ont-namespace": "No Namespaces, create one!",
         "ont-type": "No Types, create one!",
+        "ont-object": "No Objects, create one!",
         "ont-taxonomy": "No Taxonomies, create one!",
         "ont-taxonomy-item": "No Taxonomy-Items create one!"
     },
@@ -33,6 +36,8 @@
         "ont-namespace": "Namespace",
         "ont-type": "Type",
         "ont-type-version": "Type Version",
+        "ont-object": "Object",
+        "ont-object-version": "Object Version",
         "ont-taxonomy": "Taxonomy",
         "ont-taxonomy-item": "Taxonomy-Item",
         "ont-taxonomy-item-relation": "Taxonomy-Item Relation",
@@ -46,6 +51,8 @@
             "ont-namespace": "Namespaces",
             "ont-type": "Types",
             "ont-type-version": "Type Versions",
+            "ont-object": "Objects",
+            "ont-object-version": "Object Versions",
             "ont-taxonomy": "Taxonomies",
             "ont-taxonomy-item": "Taxonomy-Items",
             "ont-taxonomy-item-relation": "Taxonomy-Item-Relations",
@@ -54,6 +61,7 @@
         "create": {
             "ont-namespace": "Create Namespace",
             "ont-type": "Create Type",
+            "ont-object": "Create Object",
             "ont-taxonomy": "Create Taxonomy",
             "ont-taxonomy-item": "Create Taxonomy-Item",
             "ont-taxonomy-item-relation": "Create Taxonomy-Item-Relation"
@@ -61,12 +69,14 @@
         "update": {
             "ont-namespace": "Edit Namespace",
             "ont-type": "Edit Type",
+            "ont-object": "Edit Object",
             "ont-taxonomy": "Edit Taxonomy",
             "ont-taxonomy-item": "Edit Taxonomy-Item"
         },
         "delete": {
             "ont-namespace": "Delete Namespace",
             "ont-type": "Delete Type",
+            "ont-object": "Delete Object",
             "ont-taxonomy": "Delete Taxonomy",
             "ont-taxonomy-item": "Delete Taxonomy-Item",
             "ont-taxonomy-item-relation": "Delete Taxonomy-Item-Relation"
@@ -74,12 +84,15 @@
         "restore": {
             "ont-namespace": "Restore Namespace",
             "ont-type": "Restore Type",
+            "ont-object": "Restore Object",
             "ont-taxonomy": "Restore Taxonomy",
             "ont-taxonomy-item": "Restore Taxonomy-Item"
         },
         "ont-namespace": "Namespace",
         "ont-type": "Type",
         "ont-type-version": "Type Version",
+        "ont-object": "Object",
+        "ont-object-version": "Object Version",
         "ont-taxonomy": "Taxonomy",
         "ont-taxonomy-item": "Taxonomy-Item",
         "ont-taxonomy-item-relation": "Taxonomy-Item-Relation",
@@ -97,5 +110,6 @@
         "false": "False"
     },
     "namespace": "Namespace",
-    "type": "type"
+    "type": "Type",
+    "object": "Object"
 }
