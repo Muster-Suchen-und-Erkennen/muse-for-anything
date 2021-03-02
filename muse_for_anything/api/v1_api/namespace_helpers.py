@@ -33,6 +33,16 @@ def nav_links_for_namespace(namespace: Namespace) -> List[ApiLink]:
     nav_links: List[ApiLink] = [
         ApiLink(
             href=url_for(
+                "api-v1.ObjectsView",
+                namespace=str(namespace.id),
+                _external=True,
+            ),
+            rel=("nav", "collection", "page", "first"),
+            resource_type="ont-object",
+            resource_key=namespace_to_key(namespace),
+        ),
+        ApiLink(
+            href=url_for(
                 "api-v1.TypesView",
                 namespace=str(namespace.id),
                 _external=True,

@@ -93,12 +93,26 @@ def nav_links_for_type(object_type: OntologyObjectType) -> List[ApiLink]:
                 object_type=str(object_type.id),
                 _external=True,
             ),
-            rel=("nav", "page", "first", "collection"),
+            rel=("nav", "page", "first", "collection", "schema"),
             resource_type="ont-type-version",
             resource_key=type_to_key(object_type),
             schema=url_for(
                 "api-v1.ApiSchemaView", schema_id="OntologyType", _external=True
             ),
+        ),
+        ApiLink(
+            href=url_for(
+                "api-v1.ObjectsView",
+                namespace=str(object_type.namespace_id),
+                **{"type-id": str(object_type.id)},
+                _external=True,
+            ),
+            rel=("nav", "collection", "page", "first"),
+            resource_type="ont-object",
+            resource_key={
+                "namespaceId": str(object_type.namespace_id),
+                "?type-id": str(object_type.id),
+            },
         ),
         ApiLink(
             href=url_for(
@@ -120,7 +134,7 @@ def type_to_type_data(object_type: OntologyObjectType) -> ObjectTypeData:
         self=ApiLink(
             href=url_for(
                 "api-v1.TypeView",
-                namespace=str(object_type.id),
+                namespace=str(object_type.namespace_id),
                 object_type=str(object_type.id),
                 _external=True,
             ),

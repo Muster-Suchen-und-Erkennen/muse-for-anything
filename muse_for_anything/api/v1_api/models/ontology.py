@@ -12,6 +12,7 @@ from ...base_models import (
     ApiLink,
     ApiLinkSchema,
     ApiObjectSchema,
+    CursorPageArgumentsSchema,
     MaBaseSchema,
     ApiResponseSchema,
     BaseApiObject,
@@ -85,6 +86,26 @@ class ObjectTypeData(BaseApiObject, ChangesDataMixin, NameDescriptionMixin):
     version: int
     abstract: bool
     schema: Any
+    """Dataclass for Namespaces."""
+
+
+class ObjectSchema(ChangesSchemaMixin, ApiObjectSchema):
+    name = ma.fields.String(
+        allow_none=False, dump_only=True, validate=Length(1, MAX_STRING_LENGTH)
+    )
+    description = ma.fields.String(allow_none=False, dump_only=True)
+    version = ma.fields.Integer(allow_none=False, dump_only=True)
+    data = ma.fields.Raw(allow_none=False, dump_only=True)
+
+
+@dataclass
+class ObjectData(BaseApiObject, ChangesDataMixin, NameDescriptionMixin):
+    version: int
+    data: Any
+
+
+class ObjectsCursorPageArgumentsSchema(CursorPageArgumentsSchema):
+    type_id = ma.fields.String(data_key="type-id", allow_none=True, load_only=True)
 
 
 class TaxonomySchema(ChangesSchemaMixin, ApiObjectSchema):

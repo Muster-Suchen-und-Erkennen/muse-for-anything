@@ -101,7 +101,7 @@ class RootView(MethodView):
                         },
                         _external=True,
                     ),
-                    rel=("collection", "page"),
+                    rel=("collection", "page", "schema"),
                     resource_type="ont-type-version",
                     key=("namespaceId", "typeId"),
                     query_key=("item-count", "cursor", "sort"),
@@ -116,9 +116,36 @@ class RootView(MethodView):
                         },
                         _external=True,
                     ),
-                    rel=tuple(),
+                    rel=("schema",),
                     resource_type="ont-type-version",
                     key=("namespaceId", "typeId", "typeVersion"),
+                ),
+                # Objects
+                KeyedApiLink(
+                    href=template_url_for(
+                        "api-v1.ObjectsView",
+                        {
+                            "namespace": "namespaceId",
+                        },
+                        _external=True,
+                    ),
+                    rel=("collection", "page"),
+                    resource_type="ont-object",
+                    key=("namespaceId",),
+                    query_key=("item-count", "cursor", "sort", "type-id"),
+                ),
+                KeyedApiLink(
+                    href=template_url_for(
+                        "api-v1.ObjectView",
+                        {
+                            "namespace": "namespaceId",
+                            "object_id": "objectId",
+                        },
+                        _external=True,
+                    ),
+                    rel=tuple(),
+                    resource_type="ont-object",
+                    key=("namespaceId", "objectId"),
                 ),
                 # Taxonomies
                 KeyedApiLink(

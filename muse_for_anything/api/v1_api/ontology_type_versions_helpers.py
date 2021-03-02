@@ -95,7 +95,7 @@ def nav_links_for_type_version(
                 object_type=str(object_type_version.object_type_id),
                 _external=True,
             ),
-            rel=("up", "page", "first", "collection"),
+            rel=("up", "page", "first", "collection", "schema"),
             resource_type="ont-type-version",
             resource_key=type_to_key(object_type_version.ontology_type),
             schema=url_for(
@@ -156,7 +156,7 @@ def type_version_to_type_data(
                 version=str(object_type_version.version),
                 _external=True,
             ),
-            rel=tuple(),
+            rel=("schema",),
             resource_type="ont-type-version",
             resource_key=type_version_to_key(object_type_version),
             schema=url_for(

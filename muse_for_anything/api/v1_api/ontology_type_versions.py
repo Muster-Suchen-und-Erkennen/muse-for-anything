@@ -1,5 +1,6 @@
 """Module containing the type versions API endpoints of the v1 API."""
 
+from flask import request, Response, jsonify
 from flask.helpers import url_for
 from marshmallow.utils import INCLUDE
 from muse_for_anything.api.v1_api.ontology_type_versions_helpers import (
@@ -18,6 +19,7 @@ from flask_smorest import abort
 from http import HTTPStatus
 
 from .root import API_V1
+from ..util import JSON_MIMETYPE, JSON_SCHEMA_MIMETYPE
 from ..base_models import (
     ApiLink,
     ApiResponse,
@@ -148,6 +150,7 @@ class TypeVersionsView(MethodView):
                 "page",
                 f"page-{pagination_info.cursor_page}",
                 "collection",
+                "schema",
             ),
             resource_type="ont-type-version",
             resource_key=type_version_page_params_to_key(
@@ -180,6 +183,7 @@ class TypeVersionsView(MethodView):
                             "page",
                             f"page-{pagination_info.last_page.page}",
                             "collection",
+                            "schema",
                         ),
                         resource_type="ont-type-version",
                         resource_key=type_version_page_params_to_key(
@@ -219,6 +223,7 @@ class TypeVersionsView(MethodView):
                         "page",
                         f"page-{page.page}",
                         "collection",
+                        "schema",
                     ),
                     resource_type="ont-type-version",
                     resource_key=type_version_page_params_to_key(
@@ -251,7 +256,7 @@ class TypeVersionsView(MethodView):
                         _external=True,
                         **query_params,
                     ),
-                    rel=("first", "page", "page-1", "collection"),
+                    rel=("first", "page", "page-1", "collection", "schema"),
                     resource_type="ont-type-version",
                     resource_key=type_version_page_params_to_key(
                         found_object_type, query_params
@@ -327,6 +332,17 @@ class TypeVersionView(MethodView):
                 namespace=namespace, object_type=object_type, version=version
             )
         )
+
+        match = request.accept_mimetypes.best_match(
+            (JSON_MIMETYPE, JSON_SCHEMA_MIMETYPE),
+            default=JSON_MIMETYPE,
+        )
+
+        if match == JSON_SCHEMA_MIMETYPE:
+            # only return jsonschema if schema mimetype is requested
+            response: Response = jsonify(found_object_type_version.data)
+            response.mimetype = JSON_SCHEMA_MIMETYPE
+            return response
 
         return ApiResponse(
             links=[

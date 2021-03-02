@@ -6,5 +6,6 @@ from . import auth  # noqa
 from . import namespace  # noqa
 from . import ontology_types  # noqa
 from . import ontology_type_versions  # noqa
+from . import ontology_objects  # noqa
 from . import taxonomy  # noqa
 from . import taxonomy_items  # noqa

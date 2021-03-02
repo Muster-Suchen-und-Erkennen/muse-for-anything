@@ -213,8 +213,49 @@ class OntologyObject(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
         primaryjoin="OntologyObject.id == OntologyObjectVersion.object_id",
     )
 
+    @property
+    def data(self):
+        if self.current_version is None:
+            return None
+        return self.current_version.data
 
-class OntologyObjectVersion(MODEL, IdMixin, CreateDeleteMixin):
+    @property
+    def version(self):
+        if self.current_version is None:
+            return None
+        return self.current_version.version
+
+    @property
+    def ontology_type_version(self) -> Optional[OntologyObjectTypeVersion]:
+        if self.current_version is None:
+            return None
+        return self.current_version.ontology_type_version
+
+    def __init__(
+        self,
+        namespace: Namespace,
+        ontology_type: OntologyObjectType,
+        name: str,
+        description: Optional[str] = None,
+        **kwargs,
+    ) -> None:
+        self.namespace = namespace
+        self.ontology_type = ontology_type
+        self.update(name, description, **kwargs)
+
+    def update(
+        self,
+        name: str,
+        description: Optional[str] = None,
+        **kwargs,
+    ):
+        if kwargs:
+            raise ValueError("Got unknown keyword arguments!")
+        self.name = name
+        self.description = description
+
+
+class OntologyObjectVersion(MODEL, IdMixin, NameDescriptionMixin, CreateDeleteMixin):
     """Ontology object version model."""
 
     __tablename__ = "ObjectVersion"
@@ -250,3 +291,24 @@ class OntologyObjectVersion(MODEL, IdMixin, CreateDeleteMixin):
         lazy="selectin",  # selectin uses a second (or more) queries and is more memory efficient compared to direct join
         back_populates="ontology_object_versions",
     )
+
+    @property
+    def updated_on(self):
+        return self.created_on
+
+    def __init__(
+        self, object: OntologyObject, type_version: OntologyObjectTypeVersion, version: int, name: str, data: Any, description: Optional[str]=None, **kwargs
+    ) -> None:
+        self.ontology_object = object
+        self.ontology_type_version = type_version
+        self.version = version
+        self.update(data=data, name=name, description=description, **kwargs)
+
+    def update(self, data: Any, 
+        name: str,
+        description: Optional[str] = None,**kwargs):
+        if kwargs:
+            raise ValueError("Got unknown keyword arguments!")
+        self.data = data
+        self.name = name
+        self.description = description

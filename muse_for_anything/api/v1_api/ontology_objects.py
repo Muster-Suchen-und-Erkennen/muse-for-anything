@@ -1,4 +1,4 @@
-"""Module containing the type API endpoints of the v1 API."""
+"""Module containing the object API endpoints of the v1 API."""
 
 from datetime import datetime
 
@@ -38,20 +38,39 @@ from ..base_models import (
     NewApiObject,
     NewApiObjectSchema,
 )
-from .models.ontology import ObjectTypeSchema
+from .models.ontology import (
+    ObjectSchema,
+    ObjectTypeSchema,
+    ObjectsCursorPageArgumentsSchema,
+)
 from ...db.db import DB
 from ...db.pagination import get_page_info
 from ...db.models.namespace import Namespace
-from ...db.models.ontology_objects import OntologyObjectType, OntologyObjectTypeVersion
+from ...db.models.ontology_objects import (
+    OntologyObject,
+    OntologyObjectType,
+    OntologyObjectTypeVersion,
+    OntologyObjectVersion,
+)
 
 from .namespace_helpers import (
     query_params_to_api_key,
 )
 
+from muse_for_anything.api.v1_api.ontology_object_helpers import (
+    action_links_for_object,
+    action_links_for_object_page,
+    nav_links_for_object,
+    object_page_params_to_key,
+    object_to_api_response,
+    nav_links_for_object_page,
+    object_to_object_data,
+)
 
-@API_V1.route("/namespaces/<string:namespace>/types/")
-class TypesView(MethodView):
-    """Endpoint for all namespace types."""
+
+@API_V1.route("/namespaces/<string:namespace>/objects/")
+class ObjectsView(MethodView):
+    """Endpoint for all objects of a namespace."""
 
     def _check_path_params(self, namespace: str):
         if not namespace or not namespace.isdigit():
@@ -70,10 +89,29 @@ class TypesView(MethodView):
             abort(HTTPStatus.NOT_FOUND, message=gettext("Namespace not found."))
         return found_namespace  # is not None because abort raises exception
 
-    @API_V1.arguments(CursorPageArgumentsSchema, location="query", as_kwargs=True)
+    def _check_type_param(self, type_id: str):
+        if not type_id or not type_id.isdigit():
+            abort(
+                HTTPStatus.BAD_REQUEST,
+                message=gettext("The requested type id has the wrong format!"),
+            )
+
+    def _get_ontology_type(self, namespace: str, type_id: str) -> OntologyObjectType:
+        namespace_id = int(namespace)
+        object_type_id = int(type_id)
+        found_type: Optional[OntologyObjectType] = OntologyObjectType.query.filter(
+            OntologyObjectType.id == object_type_id,
+            OntologyObjectType.namespace_id == namespace_id,
+        ).first()
+
+        if found_type is None:
+            abort(HTTPStatus.NOT_FOUND, message=gettext("Object type not found."))
+        return found_type  # is not None because abort raises exception
+
+    @API_V1.arguments(ObjectsCursorPageArgumentsSchema, location="query", as_kwargs=True)
     @API_V1.response(DynamicApiResponseSchema(CursorPageSchema()))
     def get(self, namespace: str, **kwargs: Any):
-        """Get the page of types."""
+        """Get the page of objects."""
         self._check_path_params(namespace=namespace)
         found_namespace = self._get_namespace(namespace=namespace)
 
@@ -85,29 +123,37 @@ class TypesView(MethodView):
         )
         sort_key: str = sort.lstrip("+-") if sort is not None else "name"
 
-        ontology_type_filter = (
-            OntologyObjectType.deleted_on == None,
-            OntologyObjectType.namespace_id == int(namespace),
+        ontology_object_filter = (
+            OntologyObject.deleted_on == None,
+            OntologyObject.namespace_id == int(namespace),
         )
 
+        found_type: Optional[OntologyObjectType]
+        if "type-id" in kwargs:
+            type_id: str = kwargs.get("type-id")
+            self._check_type_param(type_id=type_id)
+            found_type = self._get_ontology_type(namespace=namespace, type_id=type_id)
+            ontology_object_filter = (
+                *ontology_object_filter,
+                OntologyObject.object_type_id == found_type.id,
+            )
+
         pagination_info = get_page_info(
-            OntologyObjectType,
-            OntologyObjectType.id,
-            [OntologyObjectType.name],
+            OntologyObject,
+            OntologyObject.id,
+            [OntologyObject.name],
             cursor,
             sort,
             item_count,
-            filter_criteria=ontology_type_filter,
+            filter_criteria=ontology_object_filter,
         )
 
-        query: Query = OntologyObjectType.query.filter(*ontology_type_filter)
+        query: Query = OntologyObject.query.filter(*ontology_object_filter)
 
-        query = query.order_by(asc(OntologyObjectType.id))
+        query = query.order_by(asc(OntologyObject.id))
 
         if sort_key == "name":
-            query = query.order_by(
-                sort_function(OntologyObjectType.name.collate("NOCASE"))
-            )
+            query = query.order_by(sort_function(OntologyObject.name.collate("NOCASE")))
 
         if cursor is not None and cursor.isdigit():
             # hope that cursor row has not jumped compared to last query in get_page_info
@@ -115,10 +161,10 @@ class TypesView(MethodView):
 
         query = query.limit(item_count)
 
-        object_types: List[OntologyObjectType] = query.all()
+        objects: List[OntologyObject] = query.all()
 
         embedded_items: List[ApiResponse] = [
-            type_to_api_response(object_type) for object_type in object_types
+            object_to_api_response(object) for object in objects
         ]
         items: List[ApiLink] = [item.data.get("self") for item in embedded_items]
 
@@ -126,6 +172,9 @@ class TypesView(MethodView):
             "item_count": item_count,
             "sort": sort,
         }
+
+        if "type-id" in kwargs:
+            query_params["type-id"] = kwargs["type-id"]
 
         self_query_params = dict(query_params)
 
@@ -143,7 +192,7 @@ class TypesView(MethodView):
 
         self_link = ApiLink(
             href=url_for(
-                "api-v1.TypesView",
+                "api-v1.ObjectsView",
                 namespace=namespace,
                 _external=True,
                 **self_query_params,
@@ -154,11 +203,8 @@ class TypesView(MethodView):
                 f"page-{pagination_info.cursor_page}",
                 "collection",
             ),
-            resource_type="ont-type",
-            resource_key=type_page_params_to_key(namespace, self_query_params),
-            schema=url_for(
-                "api-v1.ApiSchemaView", schema_id="OntologyType", _external=True
-            ),
+            resource_type="ont-object",
+            resource_key=object_page_params_to_key(namespace, self_query_params),
         )
 
         extra_links: List[ApiLink] = [self_link]
@@ -172,7 +218,7 @@ class TypesView(MethodView):
                 extra_links.append(
                     ApiLink(
                         href=url_for(
-                            "api-v1.TypesView",
+                            "api-v1.ObjectsView",
                             namespace=namespace,
                             _external=True,
                             **last_query_params,
@@ -183,14 +229,9 @@ class TypesView(MethodView):
                             f"page-{pagination_info.last_page.page}",
                             "collection",
                         ),
-                        resource_type="ont-type",
-                        resource_key=type_page_params_to_key(
+                        resource_type="ont-object",
+                        resource_key=object_page_params_to_key(
                             namespace, last_query_params
-                        ),
-                        schema=url_for(
-                            "api-v1.ApiSchemaView",
-                            schema_id="OntologyType",
-                            _external=True,
                         ),
                     )
                 )
@@ -210,7 +251,7 @@ class TypesView(MethodView):
             extra_links.append(
                 ApiLink(
                     href=url_for(
-                        "api-v1.TypesView",
+                        "api-v1.ObjectsView",
                         namespace=namespace,
                         _external=True,
                         **page_query_params,
@@ -221,17 +262,14 @@ class TypesView(MethodView):
                         f"page-{page.page}",
                         "collection",
                     ),
-                    resource_type="ont-type",
-                    resource_key=type_page_params_to_key(namespace, page_query_params),
-                    schema=url_for(
-                        "api-v1.ApiSchemaView", schema_id="OntologyType", _external=True
-                    ),
+                    resource_type="ont-object",
+                    resource_key=object_page_params_to_key(namespace, page_query_params),
                 )
             )
 
-        extra_links.extend(nav_links_for_type_page(namespace))
+        extra_links.extend(nav_links_for_object_page(namespace))
 
-        extra_links.extend(action_links_for_type_page(found_namespace))
+        extra_links.extend(action_links_for_object_page(found_namespace, type=found_type))
 
         return ApiResponse(
             links=[
@@ -246,17 +284,14 @@ class TypesView(MethodView):
                 ),
                 ApiLink(
                     href=url_for(
-                        "api-v1.TypesView",
+                        "api-v1.ObjectsView",
                         namespace=namespace,
                         _external=True,
                         **query_params,
                     ),
                     rel=("first", "page", "page-1", "collection"),
-                    resource_type="ont-type",
-                    resource_key=type_page_params_to_key(namespace, query_params),
-                    schema=url_for(
-                        "api-v1.ApiSchemaView", schema_id="OntologyType", _external=True
-                    ),
+                    resource_type="ont-object",
+                    resource_key=object_page_params_to_key(namespace, query_params),
                 ),
                 *extra_links,
             ],
@@ -270,20 +305,15 @@ class TypesView(MethodView):
             ),
         )
 
-    @API_V1.arguments(JSONSchemaSchema(unknown=INCLUDE))
+    @API_V1.arguments(ObjectsCursorPageArgumentsSchema, location="query", as_kwargs=True)
+    @API_V1.arguments(ObjectSchema())
     @API_V1.response(DynamicApiResponseSchema(NewApiObjectSchema()))
-    def post(self, data, namespace: str):
-        """Create a new type."""
+    def post(self, data, namespace: str, **kwargs):
+        """Create a new object."""
         self._check_path_params(namespace=namespace)
-        validate_type_schema(data)
-        # FIXME add proper introspection to get linked types out of the schema
-        schema_key = "root"
-        if data.get("$ref", "").startswith("#/definitions/"):
-            schema_key = cast(str, data.get("$ref"))[14:]
-        root_schema: Dict[str, Any] = data.get("definitions", {}).get(schema_key, {})
-        is_abstract: bool = data.get("abstract", False)
-        title: str = root_schema.get("title", "")
-        description: str = root_schema.get("description", "")
+        self._check_type_param(type_id=kwargs.get("type-id"))
+
+        print(data)
 
         found_namespace = self._get_namespace(namespace=namespace)
         if found_namespace.deleted_on is not None:
@@ -295,69 +325,89 @@ class TypesView(MethodView):
                 ),
             )
 
-        object_type = OntologyObjectType(
+        found_object_type = self._get_ontology_type(
+            namespace=namespace, type_id=kwargs.get("type-id")
+        )
+        if found_object_type.deleted_on is not None:
+            # cannot modify deleted object type!
+            abort(
+                HTTPStatus.CONFLICT,
+                message=gettext(
+                    "Object type is marked as deleted. No new Objects of this type can be created!"
+                ),
+            )
+
+        name = data.get("name")
+        description = data.get("description", "")
+
+        object = OntologyObject(
             namespace=found_namespace,
-            name=title,
+            ontology_type=found_object_type,
+            name=name,
             description=description,
-            is_top_level_type=(not is_abstract),
         )
-        DB.session.add(object_type)
+        DB.session.add(object)
         DB.session.flush()
-        object_type_version = OntologyObjectTypeVersion(
-            ontology_type=object_type, version=1, data=data
+        object_version = OntologyObjectVersion(
+            object=object,
+            type_version=found_object_type.current_version,
+            version=1,
+            name=name,
+            description=description,
+            data=data.get("data"),
         )
-        object_type.current_version = object_type_version
-        DB.session.add(object_type)
-        DB.session.add(object_type_version)
+        object.current_version = object_version
+        DB.session.add(object)
+        DB.session.add(object_version)
         DB.session.commit()
 
-        object_type_link = type_to_type_data(object_type).self
-        object_type_data = type_to_api_response(object_type)
+        object_link = object_to_object_data(object).self
+        object_data = object_to_api_response(object)
 
         self_link = create_action_link_for_type_page(namespace=namespace)
-        self_link.rel = (*self_link.rel, "ont-type")
+        self_link.rel = (*self_link.rel, "ont-object")
         self_link.resource_type = "new"
 
         return ApiResponse(
-            links=[object_type_link],
-            embedded=[object_type_data],
+            links=[object_link],
+            embedded=[object_data],
             data=NewApiObject(
                 self=self_link,
-                new=object_type_link,
+                new=object_link,
             ),
         )
 
 
-@API_V1.route("/namespaces/<string:namespace>/types/<string:object_type>/")
-class TypeView(MethodView):
-    """Endpoint a single object type resource."""
+@API_V1.route("/namespaces/<string:namespace>/objects/<string:object_id>/")
+class ObjectView(MethodView):
+    """Endpoint a single object resource."""
 
-    def _check_path_params(self, namespace: str, object_type: str):
+    def _check_path_params(self, namespace: str, object_id: str):
         if not namespace or not namespace.isdigit():
             abort(
                 HTTPStatus.BAD_REQUEST,
                 message=gettext("The requested namespace id has the wrong format!"),
             )
-        if not object_type or not object_type.isdigit():
+        if not object_id or not object_id.isdigit():
             abort(
                 HTTPStatus.BAD_REQUEST,
-                message=gettext("The requested type id has the wrong format!"),
+                message=gettext("The requested object id has the wrong format!"),
             )
 
-    def _get_object_type(self, namespace: str, object_type: str) -> OntologyObjectType:
+    def _get_object(self, namespace: str, object_id: str) -> OntologyObject:
         namespace_id = int(namespace)
-        object_type_id = int(object_type)
-        found_object_type: Optional[OntologyObjectType] = OntologyObjectType.query.filter(
-            OntologyObjectType.id == object_type_id,
-            OntologyObjectType.namespace_id == namespace_id,
+        ontology_object_id = int(object_id)
+        found_object: Optional[OntologyObject] = OntologyObject.query.filter(
+            OntologyObject.id == ontology_object_id,
+            OntologyObject.namespace_id == namespace_id,
         ).first()
 
-        if found_object_type is None:
-            abort(HTTPStatus.NOT_FOUND, message=gettext("Object Type not found."))
-        return found_object_type  # is not None because abort raises exception
+        if found_object is None:
+            abort(HTTPStatus.NOT_FOUND, message=gettext("Object not found."))
+        return found_object  # is not None because abort raises exception
 
-    def _check_if_namespace_modifiable(self, object_type: OntologyObjectType):
-        if object_type.namespace.deleted_on is not None:
+    def _check_if_namespace_and_type_modifiable(self, object: OntologyObject):
+        if object.namespace.deleted_on is not None:
             # cannot modify deleted namespace!
             abort(
                 HTTPStatus.CONFLICT,
@@ -365,24 +415,32 @@ class TypeView(MethodView):
                     "Namespace is marked as deleted and cannot be modified further."
                 ),
             )
+        if object.ontology_type.deleted_on is not None:
+            # cannot modify deleted object type!
+            abort(
+                HTTPStatus.CONFLICT,
+                message=gettext(
+                    "Object type is marked as deleted and objects of that type cannot be modified further."
+                ),
+            )
 
-    def _check_if_modifiable(self, object_type: OntologyObjectType):
-        self._check_if_namespace_modifiable(object_type=object_type)
-        if object_type.deleted_on is not None:
+    def _check_if_modifiable(self, object: OntologyObject):
+        self._check_if_namespace_and_type_modifiable(object=object)
+        if object.deleted_on is not None:
             # cannot modify deleted type!
             abort(
                 HTTPStatus.CONFLICT,
                 message=gettext(
-                    "Object Type is marked as deleted and cannot be modified further."
+                    "Object is marked as deleted and cannot be modified further."
                 ),
             )
 
     @API_V1.response(DynamicApiResponseSchema(ObjectTypeSchema()))
-    def get(self, namespace: str, object_type: str, **kwargs: Any):
-        """Get a single type."""
-        self._check_path_params(namespace=namespace, object_type=object_type)
-        found_object_type: OntologyObjectType = self._get_object_type(
-            namespace=namespace, object_type=object_type
+    def get(self, namespace: str, object_id: str, **kwargs: Any):
+        """Get a single object."""
+        self._check_path_params(namespace=namespace, object_id=object_id)
+        found_object: OntologyObject = self._get_object(
+            namespace=namespace, object_id=object_id
         )
 
         return ApiResponse(
@@ -400,141 +458,147 @@ class TypeView(MethodView):
                         "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
                     ),
                 ),
-                *nav_links_for_type(found_object_type),
-                *action_links_for_type(found_object_type),
+                *nav_links_for_object(found_object),
+                *action_links_for_object(found_object),
             ],
-            data=type_to_type_data(found_object_type),
+            data=object_to_object_data(found_object),
         )
 
-    @API_V1.arguments(JSONSchemaSchema(unknown=INCLUDE))
+    @API_V1.arguments(ObjectSchema())
     @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
-    def put(self, data, namespace: str, object_type: str):
-        """Update type (creates a new version)."""
-        validate_type_schema(data)
+    def put(self, data, namespace: str, object_id: str):
+        """Update object (creates a new version)."""
+        # FIXME add validation… validate_type_schema(data)
         # FIXME add proper introspection to get linked types out of the schema and type compatibility
-        self._check_path_params(namespace=namespace, object_type=object_type)
-        found_object_type: OntologyObjectType = self._get_object_type(
-            namespace=namespace, object_type=object_type
+        self._check_path_params(namespace=namespace, object_id=object_id)
+        found_object: OntologyObject = self._get_object(
+            namespace=namespace, object_id=object_id
         )
-        self._check_if_modifiable(found_object_type)
+        self._check_if_modifiable(found_object)
 
-        object_type_version = OntologyObjectTypeVersion(
-            ontology_type=found_object_type,
-            version=found_object_type.version + 1,
-            data=data,
+        name = data.get("name")
+        description = data.get("description", "")
+
+        object_version = OntologyObjectVersion(
+            object=found_object,
+            type_version=found_object.ontology_type.current_version,
+            version=found_object.version + 1,
+            name=name,
+            description=description,
+            data=data.get("data"),
         )
-        found_object_type.update(
-            name=object_type_version.name,
-            description=object_type_version.description,
-            is_top_level_type=not object_type_version.abstract,
+        found_object.update(
+            name=name,
+            description=description,
         )
-        found_object_type.current_version = object_type_version
-        DB.session.add(object_type_version)
-        DB.session.add(found_object_type)
+        found_object.current_version = object_version
+        DB.session.add(object_version)
+        DB.session.add(found_object)
         DB.session.commit()
 
-        object_type_link = type_to_type_data(found_object_type).self
-        object_type_data = type_to_api_response(found_object_type)
+        object_link = object_to_object_data(found_object).self
+        object_data = object_to_api_response(found_object)
 
         return ApiResponse(
-            links=[object_type_link],
-            embedded=[object_type_data],
+            links=[object_link],
+            embedded=[object_data],
             data=ChangedApiObject(
                 self=ApiLink(
                     href=url_for(
-                        "api-v1.TypeView",
+                        "api-v1.ObjectView",
                         namespace=namespace,
-                        object_type=object_type,
+                        object_id=object_id,
                         _external=True,
                     ),
                     rel=(
                         "update",
                         "put",
-                        "ont-type",
+                        "ont-object",
                     ),
                     resource_type="changed",
                 ),
-                changed=object_type_link,
+                changed=object_link,
             ),
         )
 
     @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
-    def post(self, namespace: str, object_type: str):  # restore action
-        """Restore a deleted type."""
-        self._check_path_params(namespace=namespace, object_type=object_type)
-        found_object_type: OntologyObjectType = self._get_object_type(
-            namespace=namespace, object_type=object_type
+    def post(self, namespace: str, object_id: str):  # restore action
+        """Restore a deleted object."""
+        self._check_path_params(namespace=namespace, object_id=object_id)
+        found_object: OntologyObject = self._get_object(
+            namespace=namespace, object_id=object_id
         )
-        self._check_if_namespace_modifiable(object_type=found_object_type)
+        self._check_if_namespace_and_type_modifiable(object=found_object)
 
         # only actually restore when not already restored
-        if found_object_type.deleted_on is not None:
-            # restore object type
-            found_object_type.deleted_on = None
-            DB.session.add(found_object_type)
+        if found_object.deleted_on is not None:
+            # restore object
+            found_object.deleted_on = None
+            DB.session.add(found_object)
             DB.session.commit()
 
-        object_type_link = type_to_type_data(found_object_type).self
-        object_type_data = type_to_api_response(found_object_type)
+        object_link = object_to_object_data(found_object).self
+        object_data = object_to_api_response(found_object)
 
         return ApiResponse(
-            links=[object_type_link],
-            embedded=[object_type_data],
+            links=[object_link],
+            embedded=[object_data],
             data=ChangedApiObject(
                 self=ApiLink(
                     href=url_for(
-                        "api-v1.TypeView",
+                        "api-v1.ObjectView",
                         namespace=namespace,
-                        object_type=object_type,
+                        object_id=object_id,
                         _external=True,
                     ),
                     rel=(
                         "restore",
                         "post",
-                        "ont-type",
+                        "ont-object",
                     ),
                     resource_type="changed",
                 ),
-                changed=object_type_link,
+                changed=object_link,
             ),
         )
 
     @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
-    def delete(self, namespace: str, object_type: str):
-        """Delete a type."""
-        self._check_path_params(namespace=namespace, object_type=object_type)
-        found_object_type: OntologyObjectType = self._get_object_type(
-            namespace=namespace, object_type=object_type
+    def delete(self, namespace: str, object_id: str):
+        """Delete an object."""
+        self._check_path_params(namespace=namespace, object_id=object_id)
+        found_object: OntologyObject = self._get_object(
+            namespace=namespace, object_id=object_id
         )
-        self._check_if_namespace_modifiable(object_type=found_object_type)
+        self._check_if_namespace_and_type_modifiable(object=found_object)
 
         # only actually delete when not already deleted
-        if found_object_type.deleted_on is None:
-            # soft delete namespace
-            found_object_type.deleted_on = datetime.utcnow()
-            DB.session.add(found_object_type)
+        if found_object.deleted_on is None:
+            # soft delete object
+            found_object.deleted_on = datetime.utcnow()
+            # TODO soft delete komposition objects (also implement undelete…)
+            DB.session.add(found_object)
             DB.session.commit()
 
-        object_type_link = type_to_type_data(found_object_type).self
-        object_type_data = type_to_api_response(found_object_type)
+        object_link = object_to_object_data(found_object).self
+        object_data = object_to_api_response(found_object)
 
         return ApiResponse(
-            links=[object_type_link],
-            embedded=[object_type_data],
+            links=[object_link],
+            embedded=[object_data],
             data=ChangedApiObject(
                 self=ApiLink(
                     href=url_for(
-                        "api-v1.TypeView",
+                        "api-v1.ObjectView",
                         namespace=namespace,
-                        object_type=object_type,
+                        object_id=object_id,
                         _external=True,
                     ),
                     rel=(
                         "delete",
-                        "ont-type",
+                        "ont-object",
                     ),
                     resource_type="changed",
                 ),
-                changed=object_type_link,
+                changed=object_link,
             ),
         )

@@ -7,6 +7,10 @@ from marshmallow_jsonschema import JSONSchema
 from .jwt import JWTMixin
 
 
+JSON_MIMETYPE = "application/json"
+JSON_SCHEMA_MIMETYPE = "application/schema+json"
+
+
 JSON_SCHEMA = JSONSchema()
 
 

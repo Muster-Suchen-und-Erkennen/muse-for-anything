@@ -1,5 +1,8 @@
 """Module containing the schema API of the v1 API."""
 
+from muse_for_anything.api.v1_api.ontology_type_versions_helpers import (
+    type_version_to_key,
+)
 from typing import Any, Callable, Dict, List, Optional, cast
 from flask import request, jsonify, Response
 from flask.helpers import url_for
@@ -11,7 +14,7 @@ from marshmallow.fields import Field
 from http import HTTPStatus
 
 from .root import API_V1
-from ..util import JSON_SCHEMA
+from ..util import JSON_SCHEMA, JSON_MIMETYPE, JSON_SCHEMA_MIMETYPE
 from ..base_models import ApiLink, ApiResponse, BaseApiObject, DynamicApiResponseSchema
 from .models.ontology import (
     NamespaceSchema,
@@ -22,6 +25,13 @@ from .models.ontology import (
     TaxonomySchema,
 )
 from .models.schema import SchemaApiObject, SchemaApiObjectSchema, TYPE_SCHEMA
+
+from ...db.models.ontology_objects import (
+    OntologyObject,
+    OntologyObjectType,
+    OntologyObjectTypeVersion,
+    OntologyObjectVersion,
+)
 
 
 def create_schema_from_model(
@@ -119,10 +129,6 @@ SCHEMA_FIXERS: Dict[str, Callable[[Dict[str, Any]], Dict[str, Any]]] = {
 RELATED_SCHEMA: Dict[str, List[str]] = {"OntologyType": ["TypeSchema"]}
 
 
-JSON_MIMETYPE = "application/json"
-JSON_SCHEMA_MIMETYPE = "application/schema+json"
-
-
 @API_V1.route("/schemas/")
 class SchemaRootView(MethodView):
     """Root endpoint for all schemas."""
@@ -134,7 +140,12 @@ class SchemaRootView(MethodView):
             links=[
                 ApiLink(
                     href=url_for("api-v1.ApiSchemaRootView", _external=True),
-                    rel=("collection", "schema"),
+                    rel=("collection",),
+                    resource_type="schema",
+                ),
+                ApiLink(
+                    href=url_for("api-v1.TypeSchemaRootView", _external=True),
+                    rel=("collection",),
                     resource_type="schema",
                 ),
             ],
@@ -155,12 +166,13 @@ class ApiSchemaRootView(MethodView):
     @API_V1.response(DynamicApiResponseSchema())
     def get(self):
         """Get the urls for the schema api."""
+        # TODO add data
         return ApiResponse(
             links=[],
             data=BaseApiObject(
                 self=ApiLink(
                     href=url_for("api-v1.ApiSchemaRootView", _external=True),
-                    rel=("collection", "schema"),
+                    rel=("collection",),
                     resource_type="schema",
                 )
             ),
@@ -183,7 +195,8 @@ class ApiSchemaView(MethodView):
             schema = fixer(schema)
 
         match = request.accept_mimetypes.best_match(
-            (JSON_MIMETYPE, JSON_SCHEMA_MIMETYPE), default=JSON_MIMETYPE
+            (JSON_MIMETYPE, JSON_SCHEMA_MIMETYPE),
+            default=JSON_MIMETYPE,
         )
 
         if match == JSON_SCHEMA_MIMETYPE:
@@ -216,6 +229,159 @@ class ApiSchemaView(MethodView):
                 self=ApiLink(
                     href=url_for(
                         "api-v1.ApiSchemaView", schema_id=schema_id, _external=True
+                    ),
+                    rel=tuple(),
+                    resource_type="schema",
+                ),
+                schema=schema,
+            ),
+        )
+
+
+@API_V1.route("/schemas/ontology/")
+class TypeSchemaRootView(MethodView):
+    """Root endpoint for all ontology type schemas."""
+
+    @API_V1.response(DynamicApiResponseSchema())
+    def get(self):
+        """TODO"""
+        # TODO add data
+        return ApiResponse(
+            links=[],
+            data=BaseApiObject(
+                self=ApiLink(
+                    href=url_for("api-v1.TypeSchemaRootView", _external=True),
+                    rel=("collection",),
+                    resource_type="schema",
+                )
+            ),
+        )
+
+
+@API_V1.route("/schemas/ontology/<string:schema_id>/")
+class TypeSchemaView(MethodView):
+    """Endpoint for ontology type schemas."""
+
+    def _get_object_type_version(self, schema_id: str) -> OntologyObjectTypeVersion:
+        if not schema_id or not schema_id.isdigit():
+            abort(
+                HTTPStatus.BAD_REQUEST,
+                message=gettext("The requested version has the wrong format!"),
+            )
+
+        type_version_id = int(schema_id)
+        found_object_type_version: Optional[
+            OntologyObjectTypeVersion
+        ] = OntologyObjectTypeVersion.query.filter(
+            OntologyObjectTypeVersion.id == type_version_id
+        ).first()
+
+        if found_object_type_version is None:
+            abort(HTTPStatus.NOT_FOUND, message=gettext("Schema id not found."))
+        return found_object_type_version  # is not None because abort raises exception
+
+    @API_V1.response(DynamicApiResponseSchema(SchemaApiObjectSchema()))
+    def get(self, schema_id: str):
+        """TODO"""
+        found_type_version = self._get_object_type_version(schema_id=schema_id)
+
+        match = request.accept_mimetypes.best_match(
+            (JSON_MIMETYPE, JSON_SCHEMA_MIMETYPE), default=JSON_MIMETYPE
+        )
+
+        schema_id_url = url_for(
+            "api-v1.TypeSchemaView",
+            schema_id=schema_id,
+            _external=True,
+        )
+
+        type_version_schema_url = url_for(
+            "api-v1.TypeVersionView",
+            namespace=str(found_type_version.ontology_type.namespace_id),
+            object_type=str(found_type_version.object_type_id),
+            version=str(found_type_version.version),
+            _external=True,
+        )
+
+        schema = {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "$ref": "#/definitions/ObjectSchema",
+            "$id": f"{schema_id_url}#",
+            "definitions": {
+                "ObjectSchema": {
+                    "$id": "#/definitions/ObjectSchema",
+                    "type": "object",
+                    "required": ["name"],
+                    "properties": {
+                        "createdOn": {
+                            "title": "created_on",
+                            "type": "string",
+                            "format": "date-time",
+                            "readonly": True,
+                        },
+                        "updatedOn": {
+                            "title": "updated_on",
+                            "type": "string",
+                            "format": "date-time",
+                            "readonly": True,
+                        },
+                        "deletedOn": {
+                            "title": "deleted_on",
+                            "type": "string",
+                            "format": "date-time",
+                            "readonly": True,
+                        },
+                        "description": {
+                            "title": "description",
+                            "type": "string",
+                        },
+                        "name": {
+                            "title": "name",
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 170,
+                        },
+                        "data": {
+                            "title": "Object Data",
+                            "$ref": f"{type_version_schema_url}#",
+                        },
+                    },
+                    "additionalProperties": False,
+                    "propertyOrder": {
+                        "name": 10,
+                        "description": 20,
+                        "data": 30,
+                    },
+                    "hiddenProperties": ["createdOn", "updatedOn", "deletedOn"],
+                },
+            },
+        }
+
+        if match == JSON_SCHEMA_MIMETYPE:
+            # only return jsonschema if schema mimetype is requested
+            response: Response = jsonify(schema)
+            response.mimetype = JSON_SCHEMA_MIMETYPE
+            return response
+
+        related_schema_links = [
+            ApiLink(
+                href=type_version_schema_url,
+                rel=("schema",),
+                resource_type="ont-type-version",
+                resource_key=type_version_to_key(found_type_version),
+                schema=url_for(
+                    "api-v1.ApiSchemaView", schema_id="OntologyType", _external=True
+                ),
+            ),
+        ]
+
+        # return full api response otherwise
+        return ApiResponse(
+            links=related_schema_links,
+            data=SchemaApiObject(
+                self=ApiLink(
+                    href=url_for(
+                        "api-v1.TypeSchemaView", schema_id=schema_id, _external=True
                     ),
                     rel=tuple(),
                     resource_type="schema",
