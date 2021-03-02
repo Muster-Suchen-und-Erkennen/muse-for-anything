@@ -82,7 +82,11 @@ class TaxonomyItem(MODEL, IdMixin, ChangesMixin):
 
     # relationships
     taxonomy: Taxonomy = relationship(
-        Taxonomy, innerjoin=True, lazy="selectin", back_populates="items"
+        Taxonomy,
+        innerjoin=True,
+        lazy="selectin",
+        back_populates="items",
+        sync_backref=False,
     )
     current_version: "TaxonomyItemVersion" = relationship(
         "TaxonomyItemVersion",
