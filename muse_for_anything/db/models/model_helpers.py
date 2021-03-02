@@ -19,14 +19,18 @@ class IdMixin:
 class NameDescriptionMixin:
     """Add a 'name' and 'description' column to the table."""
 
-    name: Column = DB.Column(DB.Unicode, nullable=False, index=True)
+    name: Column = DB.Column(
+        DB.Unicode, nullable=False, index=True, info={"collate": "NOCASE"}
+    )
     description: Column = DB.Column(DB.UnicodeText, nullable=True, index=True)
 
 
 class UniqueNameDescriptionMixin:
     """Add a 'name' (with a unique constraint) and 'description' column to the table."""
 
-    name: Column = DB.Column(DB.Unicode, nullable=False, unique=True, index=True)
+    name: Column = DB.Column(
+        DB.Unicode, nullable=False, unique=True, index=True, info={"collate": "NOCASE"}
+    )
     description: Column = DB.Column(DB.UnicodeText, nullable=True, index=True)
 
 

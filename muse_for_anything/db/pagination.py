@@ -59,7 +59,13 @@ def get_page_info(
     sort_column_name = sort.lstrip("+-")
     sort_direction: Any = desc if sort.startswith("-") else asc
 
-    order_by = sort_direction(sort_columns[sort_column_name])
+    sort_column = sort_columns[sort_column_name]
+    if "collate" in sort_column.info:
+        order_by = sort_direction(
+            sort_columns[sort_column_name].collate(sort_column.info["collate"])
+        )
+    else:
+        order_by = sort_direction(sort_columns[sort_column_name])
     row_numbers: Any = func.row_number().over(order_by=order_by)
 
     collection_size: int = (
