@@ -718,13 +718,17 @@ function consolidateExtraProperties(rootSchema: JsonSchema, normalized: Normaliz
         }
         const oneOf: NormalizedApiSchema[] = [];
         context.oneOf[0].forEach(schema => {
-            const combined = {
+            const combined: JsonSchema = {
                 allOf: [
                     rootSchema,
                     schema,
                 ],
             };
-            oneOf.push(new NormalizedApiSchema(combined, ["oneOf", "customType"]));
+            if (schema.customType != null) {
+                console.log(schema.customType); // TODO test workaround
+                combined.customType = schema.customType;
+            }
+            oneOf.push(new NormalizedApiSchema(combined, ["oneOf", "customType"])); // FIXME do not ignore custom type of schema, only ignore root schema…
         });
         normalized.oneOf = oneOf;
     }
@@ -811,6 +815,8 @@ export class NormalizedApiSchema {
     private resolvedSchema: JsonSchema;
     private normalizedSchema: NormalizedJsonSchema;
     private ignoredKeys: Set<string> = new Set();
+    private maxAllowedNestingDepth = 20;
+    private ignoreKeysAtDepth = 19;
 
     constructor(resolvedJsonSchema: JsonSchema, ignoredKeys?: Iterable<string>) {
         this.resolvedSchema = resolvedJsonSchema;
@@ -829,7 +835,7 @@ export class NormalizedApiSchema {
         }
         const normalized: NormalizedJsonSchema = { type: null };
         const context: NormalizationContext = {
-            maxDepth: 20,
+            maxDepth: this.maxAllowedNestingDepth,
             incompatibleKeys: new Set(),
         };
         this.normalizeSchema(normalized, this.resolvedSchema, context, context.maxDepth);
@@ -1013,7 +1019,8 @@ export class NormalizedApiSchema {
             return;
         }
         if (maxDepth < 0) {
-            console.warn(`Schema was nested too deep with inheritance (allOf) and not all constraints will be applied correctly! Maximum allowed depth is ${context.maxDepth}!`, normalized);
+            console.warn(`Schema was nested too deep with inheritance (allOf) and not all constraints will be applied correctly! Maximum allowed depth is ${context.maxDepth}!`, normalized, toNormalize);
+            throw new Error("Cannot normalize schema!");
         }
 
         // check all of before all other keys
@@ -1034,7 +1041,7 @@ export class NormalizedApiSchema {
 
         // check other keys
         Object.keys(toNormalize).forEach(key => {
-            if (IGNORED_KEYS.has(key) || this.ignoredKeys.has(key)) {
+            if (IGNORED_KEYS.has(key) || (this.ignoredKeys.has(key) && maxDepth <= this.ignoreKeysAtDepth)) {
                 return;
             }
             if (INCOMPATIBLE_KEYS.has(key)) {

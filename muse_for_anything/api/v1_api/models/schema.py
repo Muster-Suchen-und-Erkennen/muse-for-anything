@@ -81,6 +81,11 @@ JSON_ENUM_PROPERTIES_SCHEMA_REF = {"$ref": "#/definitions/enum"}
 
 JSON_REF_PROPERTIES_SCHEMA_REF = {"$ref": "#/definitions/ref"}
 
+JSON_RESOURCE_REFERENCE_SCHEMA_BASE_REF = {"$ref": "#/definitions/resourceReference"}
+
+JSON_TAXONOMY_RESOURCE_REFERENCE_SCHEMA_REF = {"$ref": "#/definitions/taxonomyReference"}
+
+JSON_TYPE_RESOURCE_REFERENCE_SCHEMA_REF = {"$ref": "#/definitions/typeReference"}
 
 JSON_BASE_TYPE_NULL_REF = {"$ref": "#/definitions/typeNull"}
 
@@ -514,6 +519,100 @@ JSON_REF_PROPERTIES_SCHEMA = {
     },
 }
 
+
+JSON_RESOURCE_REFERENCE_BASE_SCHEMA = {
+    "$id": JSON_RESOURCE_REFERENCE_SCHEMA_BASE_REF["$ref"],
+    "type": ["object"],
+    "default": {"type": ["object"], "required": ["key", "referenceType"]},
+    "required": ["type", "key", "referenceType", "customType"],
+    "customType": "resourceReferenceDefinition",
+    "allOf": [JSON_META_PROPERTIES_SCHEMA_REF],
+    "properties": {
+        "type": {
+            "type": "array",
+            "items": {
+                "enum": [
+                    "null",
+                    "object",
+                ]
+            },
+            "contains": {
+                "const": "object",
+            },
+            "minItems": 1,
+            "uniqueItems": True,
+        },
+        "customType": {
+            "enum": [
+                "resourceReference",
+            ],
+        },
+        "required": {
+            "type": "array",
+            "items": {"type": "string", "singleLine": True},
+            "uniqueItems": True,
+        },
+        "key": {
+            "type": "object",
+            # "allOf": [JSON_META_PROPERTIES_SCHEMA_REF],
+            "properties": {
+                "type": {"const": "object"},
+                "additionalProperties": {
+                    "type": "object",
+                    "properties": {
+                        "type": {"const": "string"},
+                        "singleLine": {"const": True},
+                    },
+                },
+            },
+            "required": ["type", "additionalProperties"],
+        },
+        "referenceType": {
+            "type": "object",
+            "properties": {
+                "referenceType": {"type": "string", "singleLine": True},
+            },
+            "required": [
+                "referenceType",
+            ],
+        },
+    },
+    "propertyOrder": {
+        "customType": 0,
+        "referenceType": 10,
+        "key": 20,
+    },
+}
+
+JSON_TAXONOMY_RESOURCE_REFERENCE_SCHEMA = {
+    "$id": JSON_TAXONOMY_RESOURCE_REFERENCE_SCHEMA_REF["$ref"],
+    "type": ["object"],
+    "customType": "taxonomyReferenceDefinition",
+    "default": {
+        "type": ["object"],
+        "referenceType": {"const": "ont-taxonomy"},
+    },
+    "required": ["type"],
+    # "allOf": [JSON_RESOURCE_REFERENCE_SCHEMA_BASE_REF],
+    "properties": {
+        "referenceType": {"const": "ont-taxonomy"},
+    },
+}
+
+JSON_TYPE_RESOURCE_REFERENCE_SCHEMA = {
+    "$id": JSON_TYPE_RESOURCE_REFERENCE_SCHEMA_REF["$ref"],
+    "type": ["object"],
+    "customType": "typeReferenceDefinition",
+    "default": {
+        "type": ["object"],
+    },
+    "required": ["type"],
+    "allOf": [JSON_RESOURCE_REFERENCE_SCHEMA_BASE_REF],
+    "properties": {
+        "referenceType": {"const": "ont-type"},
+    },
+}
+
 JSON_SCHEMA_ROOT_SCHEMA = {
     "$id": JSON_SCHEMA_ROOT_SCHEMA_REF["$ref"],
     "type": ["object"],
@@ -540,6 +639,8 @@ BASIC_JSON_SCHEMA_SCHEMAS = [
     JSON_INTEGER_PROPERTIES_SCHEMA_REF,
     JSON_NUMBER_PROPERTIES_SCHEMA_REF,
     JSON_STRING_PROPERTIES_SCHEMA_REF,
+    JSON_TAXONOMY_RESOURCE_REFERENCE_SCHEMA_REF,
+    JSON_TYPE_RESOURCE_REFERENCE_SCHEMA_REF,
 ]
 
 RECURSIVE_JSON_SCHEMA_SCHEMAS = [
@@ -587,6 +688,9 @@ TYPE_SCHEMA = {
         "boolean": JSON_BOOLEAN_PROPERTIES_SCHEMA,
         "enum": JSON_ENUM_PROPERTIES_SCHEMA,
         "ref": JSON_REF_PROPERTIES_SCHEMA,
+        "resourceReference": JSON_RESOURCE_REFERENCE_BASE_SCHEMA,
+        "taxonomyReference": JSON_TAXONOMY_RESOURCE_REFERENCE_SCHEMA,
+        "typeReference": JSON_TYPE_RESOURCE_REFERENCE_SCHEMA,
         # value types
         "typeNull": JSON_BASE_TYPE_NULL,
         "typeBoolean": JSON_BASE_TYPE_BOOLEAN,
