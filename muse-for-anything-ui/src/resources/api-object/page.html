@@ -3,11 +3,11 @@
     <require from="../elements/page-nav"></require>
 
     <div class="flex flex-col" if.bind="apiObject.items != null && apiObject.items.length > 0">
-        <page-nav api-response.bind="apiResponse"></page-nav>
+        <page-nav api-response.bind="apiResponse" skip-navigation.bind="skipNavigation"></page-nav>
         <api-resource repeat.for="link of apiObject.items" class="px-3 py-2 card" api-link.bind="link"
-            is-root.one-time="false">
+            is-root.one-time="false" skip-navigation.bind="skipNavigation">
         </api-resource>
-        <page-nav api-response.bind="apiResponse"></page-nav>
+        <page-nav api-response.bind="apiResponse" skip-navigation.bind="skipNavigation"></page-nav>
     </div>
     <div class="flex items-center justify-center" else>
         <p class="font-bold">${'noItems.' + apiObject.self.resourceType | t}</p>

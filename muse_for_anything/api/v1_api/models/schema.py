@@ -57,6 +57,8 @@ JSON_SCHEMA_REF = {"$ref": "#/definitions/schema"}
 
 NESTED_JSON_SCHEMA_REF = {"$ref": "#/definitions/nestedSchema"}
 
+JSON_MINIMAL_META_PROPERTIES_SCHEMA_REF = {"$ref": "#/definitions/minMeta"}
+
 JSON_META_PROPERTIES_SCHEMA_REF = {"$ref": "#/definitions/meta"}
 
 JSON_OBJECT_PROPERTIES_SCHEMA_REF = {"$ref": "#/definitions/object"}
@@ -81,11 +83,7 @@ JSON_ENUM_PROPERTIES_SCHEMA_REF = {"$ref": "#/definitions/enum"}
 
 JSON_REF_PROPERTIES_SCHEMA_REF = {"$ref": "#/definitions/ref"}
 
-JSON_RESOURCE_REFERENCE_SCHEMA_BASE_REF = {"$ref": "#/definitions/resourceReference"}
-
-JSON_TAXONOMY_RESOURCE_REFERENCE_SCHEMA_REF = {"$ref": "#/definitions/taxonomyReference"}
-
-JSON_TYPE_RESOURCE_REFERENCE_SCHEMA_REF = {"$ref": "#/definitions/typeReference"}
+JSON_RESOURCE_REFERENCE_SCHEMA_REF = {"$ref": "#/definitions/resourceReference"}
 
 JSON_BASE_TYPE_NULL_REF = {"$ref": "#/definitions/typeNull"}
 
@@ -97,6 +95,28 @@ JSON_BASE_TYPE_NUMBER_REF = {"$ref": "#/definitions/typeNumber"}
 
 JSON_BASE_TYPE_STRING_REF = {"$ref": "#/definitions/typeString"}
 
+
+JSON_MINIMAL_META_PROPERTIES_SCHEMA = {
+    "$id": JSON_MINIMAL_META_PROPERTIES_SCHEMA_REF["$ref"],
+    "type": ["object"],
+    "properties": {
+        "$id": {"type": "string", "format": "uri-reference"},
+        "title": {"type": "string", "maxLength": 300},
+        "description": {"type": "string"},
+        "$comment": {"title": "comment", "type": "string"},
+        "deprecated": {"type": "boolean", "default": False},
+        "readOnly": {"type": "boolean", "default": False},
+        "writeOnly": {"type": "boolean", "default": False},
+    },
+    "hiddenProperties": ["$id", "default", "readOnly", "writeOnly"],
+    "propertyOrder": {
+        "type": 10,
+        "deprecated": 20,
+        "title": 30,
+        "description": 40,
+        "$comment": 50,
+    },
+}
 
 JSON_META_PROPERTIES_SCHEMA = {
     "$id": JSON_META_PROPERTIES_SCHEMA_REF["$ref"],
@@ -520,13 +540,13 @@ JSON_REF_PROPERTIES_SCHEMA = {
 }
 
 
-JSON_RESOURCE_REFERENCE_BASE_SCHEMA = {
-    "$id": JSON_RESOURCE_REFERENCE_SCHEMA_BASE_REF["$ref"],
-    "type": ["object"],
-    "default": {"type": ["object"], "required": ["key", "referenceType"]},
-    "required": ["type", "key", "referenceType", "customType"],
+JSON_RESOURCE_REFERENCE_SCHEMA = {
+    "$id": JSON_RESOURCE_REFERENCE_SCHEMA_REF["$ref"],
+    "type": "object",
+    # "default": {"type": ["object"], "required": ["key", "referenceType"]},
+    "required": ["type", "customType", "referenceType", "required", "properties"],
     "customType": "resourceReferenceDefinition",
-    "allOf": [JSON_META_PROPERTIES_SCHEMA_REF],
+    "allOf": [JSON_MINIMAL_META_PROPERTIES_SCHEMA_REF],
     "properties": {
         "type": {
             "type": "array",
@@ -542,76 +562,57 @@ JSON_RESOURCE_REFERENCE_BASE_SCHEMA = {
             "minItems": 1,
             "uniqueItems": True,
         },
-        "customType": {
-            "enum": [
-                "resourceReference",
-            ],
+        "customType": {"const": "resourceReference"},
+        "referenceType": {
+            "title": "Reference Type",
+            "enum": ["ont-taxonomy", "ont-type"],  # update to include more...
+        },
+        "referenceKey": {
+            "type": "object",
+            "additionalProperties": {"type": "string", "singleLine": True},
         },
         "required": {
             "type": "array",
-            "items": {"type": "string", "singleLine": True},
-            "uniqueItems": True,
+            "items": [
+                {"const": "referenceType"},
+                {"const": "referenceKey"},
+            ],
+            "minItems": 2,
+            "maxItems": 2,
+            "additionalItems": False,
         },
-        "key": {
+        "properties": {
             "type": "object",
-            # "allOf": [JSON_META_PROPERTIES_SCHEMA_REF],
+            "required": ["referenceType", "referenceKey"],
             "properties": {
-                "type": {"const": "object"},
-                "additionalProperties": {
+                "referenceType": {
                     "type": "object",
+                    "allOf": [JSON_MINIMAL_META_PROPERTIES_SCHEMA_REF],
                     "properties": {
-                        "type": {"const": "string"},
-                        "singleLine": {"const": True},
+                        "title": {"type": "string", "singleLine": True},
+                        "const": {"type": "string", "singleLine": True},
                     },
+                    "required": ["const"],
+                },
+                "referenceKey": {
+                    "type": "object",
+                    "allOf": [JSON_MINIMAL_META_PROPERTIES_SCHEMA_REF],
+                    "properties": {
+                        "title": {"type": "string", "singleLine": True},
+                        "type": {"const": "object"},
+                        "additionalProperties": {
+                            "type": "object",
+                            "properties": {
+                                "type": {"const": "string"},
+                                "singleLine": {"const": True},
+                            },
+                            "required": ["type", "singleLine"],
+                        },
+                    },
+                    "required": ["type", "additionalProperties"],
                 },
             },
-            "required": ["type", "additionalProperties"],
         },
-        "referenceType": {
-            "type": "object",
-            "properties": {
-                "referenceType": {"type": "string", "singleLine": True},
-            },
-            "required": [
-                "referenceType",
-            ],
-        },
-    },
-    "additionalProperties": False,
-    "propertyOrder": {
-        "customType": 0,
-        "referenceType": 10,
-        "key": 20,
-    },
-}
-
-JSON_TAXONOMY_RESOURCE_REFERENCE_SCHEMA = {
-    "$id": JSON_TAXONOMY_RESOURCE_REFERENCE_SCHEMA_REF["$ref"],
-    "type": ["object"],
-    "customType": "taxonomyReferenceDefinition",
-    "default": {
-        "type": ["object"],
-        "referenceType": {"const": "ont-taxonomy"},
-    },
-    "required": ["type"],
-    "allOf": [JSON_RESOURCE_REFERENCE_SCHEMA_BASE_REF],
-    "properties": {
-        "referenceType": {"const": "ont-taxonomy"},
-    },
-    "additionalProperties": False,
-}
-
-JSON_TYPE_RESOURCE_REFERENCE_SCHEMA = {
-    "$id": JSON_TYPE_RESOURCE_REFERENCE_SCHEMA_REF["$ref"],
-    "type": ["object"],
-    "customType": "typeReferenceDefinition",
-    "default": {
-        "type": ["object"],
-    },
-    "required": ["type"],
-    "allOf": [JSON_RESOURCE_REFERENCE_SCHEMA_BASE_REF],
-    "properties": {
-        "referenceType": {"const": "ont-type"},
     },
 }
 
@@ -641,8 +642,7 @@ BASIC_JSON_SCHEMA_SCHEMAS = [
     JSON_INTEGER_PROPERTIES_SCHEMA_REF,
     JSON_NUMBER_PROPERTIES_SCHEMA_REF,
     JSON_STRING_PROPERTIES_SCHEMA_REF,
-    JSON_TAXONOMY_RESOURCE_REFERENCE_SCHEMA_REF,
-    JSON_TYPE_RESOURCE_REFERENCE_SCHEMA_REF,
+    JSON_RESOURCE_REFERENCE_SCHEMA_REF,
 ]
 
 RECURSIVE_JSON_SCHEMA_SCHEMAS = [
@@ -677,6 +677,7 @@ TYPE_SCHEMA = {
         "schema": JSON_SCHEMA_SCHEMA,
         "nestedSchema": NESTED_JSON_SCHEMA_SCHEMA,
         # meta
+        "minMeta": JSON_MINIMAL_META_PROPERTIES_SCHEMA,
         "meta": JSON_META_PROPERTIES_SCHEMA,
         # type definition schemas
         "object": JSON_OBJECT_PROPERTIES_SCHEMA,
@@ -690,9 +691,7 @@ TYPE_SCHEMA = {
         "boolean": JSON_BOOLEAN_PROPERTIES_SCHEMA,
         "enum": JSON_ENUM_PROPERTIES_SCHEMA,
         "ref": JSON_REF_PROPERTIES_SCHEMA,
-        "resourceReference": JSON_RESOURCE_REFERENCE_BASE_SCHEMA,
-        "taxonomyReference": JSON_TAXONOMY_RESOURCE_REFERENCE_SCHEMA,
-        "typeReference": JSON_TYPE_RESOURCE_REFERENCE_SCHEMA,
+        "resourceReference": JSON_RESOURCE_REFERENCE_SCHEMA,
         # value types
         "typeNull": JSON_BASE_TYPE_NULL,
         "typeBoolean": JSON_BASE_TYPE_BOOLEAN,

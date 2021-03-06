@@ -7,12 +7,14 @@ import { API_RESOURCE_CHANGES_CHANNEL } from "resources/events";
 
 @autoinject
 export class ApiResource {
+    @bindable isObjectChooser = false;
+    @bindable skipNavigation = false;
     @bindable isMain = false;
     @bindable isRoot;
     @bindable apiLink;
 
     apiObject: ApiObject;
-    modelData: { apiObject: ApiObject, apiResponse: ApiResponse<unknown>, isRoot: boolean };
+    modelData: { apiObject: ApiObject, apiResponse: ApiResponse<unknown>, isRoot: boolean, skipNavigation: boolean, isObjectChooser: boolean, onObjectSelect?: (object: any) => void };
     objectType: string;
 
     private api: BaseApiService;
@@ -57,6 +59,9 @@ export class ApiResource {
                 apiObject: apiResponse.data,
                 apiResponse: apiResponse,
                 isRoot: Boolean(this.isRoot),
+                skipNavigation: Boolean(this.skipNavigation),
+                isObjectChooser: Boolean(this.isObjectChooser),
+                onObjectSelect: (object) => console.log(object),
             };
             if (isMain) {
                 this.navService.setMainApiResponse(apiResponse);

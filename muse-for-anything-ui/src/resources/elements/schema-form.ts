@@ -12,6 +12,7 @@ export class SchemaForm {
     @bindable required: boolean = false;
     @bindable debug: boolean = false;
     @bindable noCard: boolean = false;
+    @bindable context: any;
     @bindable valuePush: any;
     @bindable updateSignal: UpdateSignal;
     @bindable actions: Iterable<string>;
@@ -19,6 +20,8 @@ export class SchemaForm {
     @bindable({ defaultBindingMode: bindingMode.twoWay }) value: unknown;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
+
+    private maxConstUpdateTries = 100; // FIXME remove workaround
 
     constructor(private element: Element) { }
 
@@ -79,6 +82,11 @@ export class SchemaForm {
 
     valueChanged(newValue, oldValue) {
         if (this.constValue !== undefined && newValue !== this.constValue) {
+            if (this.maxConstUpdateTries <= 0) {
+                console.error("Const update loop detected.", this.key, this.label, this.schema);
+                return;
+            }
+            this.maxConstUpdateTries--;
             this.valid = true;
             this.value = this.constValue;
         }

@@ -2,7 +2,8 @@
     <require from="../elements/api-schema-view"></require>
 
     <div if.bind="!isRoot">
-        <a class="link-hover" href="/explore/${clientUrl}" aria-disabled.bind="clientUrl == null ? true : null">
+        <a class="link-hover" href="/explore/${clientUrl}" data-router-ignore.bind="skipNavigation & empty"
+            aria-disabled.bind="clientUrl == null ? true : null">
             <p class="my-1 font-bold"><span class="mr-2 uppercase" if.bind="apiObject.deletedOn != null"
                     t="deleted"></span>${apiObject.name}</p>
         </a>

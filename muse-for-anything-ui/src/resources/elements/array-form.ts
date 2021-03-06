@@ -8,6 +8,7 @@ export class ArrayForm {
     @bindable schema: NormalizedApiSchema;
     @bindable required: boolean = false;
     @bindable debug: boolean = false;
+    @bindable context: any;
     @bindable valuePush: any[];
     @bindable actions: Iterable<string>;
     @bindable actionSignal: unknown;

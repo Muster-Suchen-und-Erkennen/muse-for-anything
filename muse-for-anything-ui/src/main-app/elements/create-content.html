@@ -3,6 +3,6 @@
 
     <div class="px-1 py-1" if.bind="createApiLink != null">
         <h1 class="content-title" t="titles.create.${createResourceType}"></h1>
-        <api-schema-form api-link.bind="createApiLink"></api-schema-form>
+        <api-schema-form api-link.bind="createApiLink" context.bind="context"></api-schema-form>
     </div>
 </template>

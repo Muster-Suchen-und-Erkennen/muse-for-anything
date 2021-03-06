@@ -3,6 +3,7 @@
 
     <div class="px-1 py-1" if.bind="updateApiLink != null">
         <h1 class="content-title" t="titles.update.${updateResourceType}"></h1>
-        <api-schema-form api-link.bind="updateApiLink" initial-data.bind="initialData"></api-schema-form>
+        <api-schema-form api-link.bind="updateApiLink" initial-data.bind="initialData" context.bind="context">
+        </api-schema-form>
     </div>
 </template>

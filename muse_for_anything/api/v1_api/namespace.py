@@ -86,7 +86,7 @@ class NamespacesView(MethodView):
         items: List[ApiLink] = [item.data.get("self") for item in embedded_items]
 
         query_params = {
-            "item_count": item_count,
+            "item-count": item_count,
             "sort": sort,
         }
 
@@ -214,12 +214,12 @@ class NamespacesView(MethodView):
                 KeyedApiLink(
                     href=template_url_for(
                         "api-v1.NamespacesView",
-                        {"item_count": "item_count", "sort": "sort", "cursor": "cursor"},
+                        {"item-count": "item-count", "sort": "sort", "cursor": "cursor"},
                         _external=True,
                     ),
                     rel=("collection", "ont-namespace"),
                     resource_type="ont-namespace",
-                    key=("item_count", "cursor", "sort"),
+                    key=("item-count", "cursor", "sort"),
                 ),
             ],
             data=CursorPage(
@@ -296,7 +296,7 @@ class NamespaceView(MethodView):
                     href=url_for(
                         "api-v1.NamespacesView",
                         _external=True,
-                        item_count=50,
+                        **{"item-count": 50},
                         sort="name",
                     ),
                     rel=("first", "page", "up", "collection", "ont-namespace"),

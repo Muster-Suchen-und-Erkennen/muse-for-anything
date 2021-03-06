@@ -167,7 +167,7 @@ class TaxonomyItemView(MethodView):
                     href=url_for(
                         "api-v1.NamespacesView",
                         _external=True,
-                        item_count=50,
+                        **{"item-count": 50},
                         sort="name",
                     ),
                     rel=("first", "page", "collection", "nav"),
@@ -875,7 +875,7 @@ class TaxonomyItemVersionView(MethodView):
                     href=url_for(
                         "api-v1.NamespacesView",
                         _external=True,
-                        item_count=50,
+                        **{"item-count": 50},
                         sort="name",
                     ),
                     rel=("first", "page", "collection", "nav"),

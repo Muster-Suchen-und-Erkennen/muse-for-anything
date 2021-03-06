@@ -3,7 +3,7 @@ import { EventAggregator, Subscription } from "aurelia-event-aggregator";
 import { activationStrategy } from "aurelia-router";
 import { NavigationLinksService, NavLinks } from "services/navigation-links";
 import { BaseApiService } from "rest/base-api";
-import { ApiLink, ApiLinkKey, ApiResponse, isApiObject } from "rest/api-objects";
+import { ApiLink, ApiLinkKey, ApiObject, ApiResponse, isApiObject } from "rest/api-objects";
 import { API_RESOURCE_CHANGES_CHANNEL, NAV_LINKS_CHANNEL } from "resources/events";
 
 const NESTED_SCHEMA_OBJECT_TYPES = new Set(["ont-type", "ont-type-version"]);
@@ -16,6 +16,7 @@ export class UpdateContent {
     updateApiLink: ApiLink;
 
     initialData: any;
+    context: any;
 
     private api: BaseApiService;
     private events: EventAggregator;
@@ -24,7 +25,7 @@ export class UpdateContent {
     private changeSubscription: Subscription;
 
     private path: string;
-    private currentResponse: ApiResponse<unknown>;
+    private currentResponse: ApiResponse<ApiObject>;
 
     constructor(baseApi: BaseApiService, events: EventAggregator, navService: NavigationLinksService) {
         this.api = baseApi;
@@ -43,6 +44,11 @@ export class UpdateContent {
                     return actionLink.apiLink?.resourceType === this.updateResourceType;
                 });
                 this.updateApiLink = actionLink?.apiLink;
+                this.context = {
+                    action: "update",
+                    actionLink: this.updateApiLink,
+                    baseApiLink: this.currentResponse?.data?.self,
+                };
             } else {
                 this.updateApiLink = null;
             }
@@ -90,7 +96,10 @@ export class UpdateContent {
     private loadData(link: ApiLink, ignoreCache: boolean) {
         this.api.getByApiLink(link, ignoreCache)
             .then(response => {
-                this.currentResponse = response;
+                if (!isApiObject(response.data)) {
+                    return; // TODO better error handling
+                }
+                this.currentResponse = response as ApiResponse<ApiObject>;
                 if (isApiObject(response.data) && response.data.self.resourceType === this.updateResourceType) {
                     let initialData;
                     if (NESTED_SCHEMA_OBJECT_TYPES.has(this.updateResourceType)) {

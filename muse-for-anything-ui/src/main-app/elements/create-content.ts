@@ -3,7 +3,7 @@ import { EventAggregator, Subscription } from "aurelia-event-aggregator";
 import { activationStrategy, RoutableComponentDetermineActivationStrategy } from "aurelia-router";
 import { NavigationLinksService, NavLinks } from "services/navigation-links";
 import { BaseApiService } from "rest/base-api";
-import { ApiLink, ApiResponse } from "rest/api-objects";
+import { ApiLink, ApiObject, ApiResponse, isApiObject } from "rest/api-objects";
 import { NAV_LINKS_CHANNEL } from "resources/events";
 
 @autoinject
@@ -11,6 +11,7 @@ export class CreateContent {
 
     createResourceType: string;
     createApiLink: ApiLink;
+    context: any;
 
     private api: BaseApiService;
     private events: EventAggregator;
@@ -18,7 +19,7 @@ export class CreateContent {
     private subscription: Subscription;
 
     private path: string;
-    private currentResponse: ApiResponse<unknown>;
+    private currentResponse: ApiResponse<ApiObject>;
 
     constructor(baseApi: BaseApiService, events: EventAggregator, navService: NavigationLinksService) {
         this.api = baseApi;
@@ -37,6 +38,11 @@ export class CreateContent {
                     return actionLink.apiLink?.resourceType === this.createResourceType;
                 });
                 this.createApiLink = actionLink?.apiLink;
+                this.context = {
+                    action: "create",
+                    actionLink: this.createApiLink,
+                    baseApiLink: this.currentResponse?.data?.self,
+                };
             } else {
                 this.createApiLink = null;
             }
@@ -63,7 +69,10 @@ export class CreateContent {
                 return this.api.getByApiLink(link);
             })
             .then(response => {
-                this.currentResponse = response;
+                if (!isApiObject(response.data)) {
+                    return; // TODO better error handling
+                }
+                this.currentResponse = response as ApiResponse<ApiObject>;
                 this.navService.setMainApiResponse(this.currentResponse);
             });
     }

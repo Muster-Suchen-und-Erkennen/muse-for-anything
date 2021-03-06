@@ -2,6 +2,7 @@
     <require from="./validity-indicator"></require>
     <require from="./schema-form"></require>
     <require from="./schema-form-actions"></require>
+    <require from="./api-resource"></require>
 
     <div class="flex flex-col form-container">
         <div class="w-full mb-2 flex items-center form-container-title">
@@ -32,25 +33,16 @@
                 action-signal.call="propertyActionSignal($event)" debug.bind="debug">
             </schema-form>
         </div>
-        <div class="mt-6">
-            <schema-form class="w-full properties" key.bind="'root'" label.bind="'root'"
-                initial-data.bind="initialData.definitions['root']" value.bind="childSchemas['root']"
-                schema.bind="typeSchema" required.bind="true" valid.from-view="childSchemasValid['root']"
-                dirty.from-view="childSchemasDirty['root']" update-signal.call="schemaUpdateSignal()" debug.bind="debug"
-                context.bind="context">
-            </schema-form>
+
+        <p class="font-semibold text-lg">
+            Chosen Reference:
+        </p>
+        <div class="card px-2 py-2 mt-4" if.bind="currentResourceLink != null">
+            <api-resource api-link.bind="currentResourceLink" is-root.one-time="false">
+            </api-resource>
         </div>
-        <div class="mt-4" repeat.for="typeId of containedTypes">
-            <schema-form class="w-full properties" key.bind="typeId" label.bind="typeId"
-                initial-data.bind="initialData.definitions[typeId]" value.bind="childSchemas[typeId]"
-                schema.bind="typeSchema" required.bind="true" valid.from-view="childSchemasValid[typeId]"
-                dirty.from-view="childSchemasDirty[typeId]" update-signal.call="schemaUpdateSignal()"
-                actions.bind="['remove']" action-signal.call="typeActionSignal($event)" debug.bind="debug"
-                context.bind="context">
-            </schema-form>
-        </div>
-        <button class="button-outline w-full" click.delegate="addType()">
-            Add Type
+        <button class="button-outline" click.delegate="openResourceChooser()">
+            Choose
         </button>
     </div>
 </template>

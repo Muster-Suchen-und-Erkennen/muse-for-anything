@@ -26,7 +26,6 @@ export class ArrayView {
             return;
         }
         this.items = this.schema.getItemList(this.data?.length ?? 0);
-        const t: ItemDescription;
     }
 
     isObjectProperty(schema: NormalizedApiSchema): boolean {

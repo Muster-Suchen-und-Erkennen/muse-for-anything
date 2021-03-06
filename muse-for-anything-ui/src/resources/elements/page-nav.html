@@ -2,20 +2,25 @@
     <div class="w-full flex flex-row justify-between">
         <div class="flex flex-row gap-1">
             <a class="button-flat" href="/explore/${firstPage.clientUrl}"
-                aria-disabled.bind="firstPage == null ? true : null" t="pages.first"></a>
+                data-router-ignore.bind="skipNavigation & empty" aria-disabled.bind="firstPage == null ? true : null"
+                t="pages.first"></a>
             <a class="button-flat" href="/explore/${previousPage.clientUrl}"
-                aria-disabled.bind="previousPage == null ? true : null" t="pages.previous"></a>
+                data-router-ignore.bind="skipNavigation & empty" aria-disabled.bind="previousPage == null ? true : null"
+                t="pages.previous"></a>
         </div>
         <div class="flex flex-row">
             <a class="button-flat ${page.nr === 1 && firstPageGap ? 'mr-4' : ''} ${page.nr === lastPageNumber && lastPageGap ? 'ml-4' : ''}"
                 href="/explore/${page.clientUrl}" repeat.for="page of pages"
+                data-router-ignore.bind="skipNavigation & empty"
                 aria-disabled.bind="page.nr === currentPageNumber ? true : null">${page.nr}</a>
         </div>
         <div class="flex flex-row">
             <a class="button-flat" href="/explore/${nextPage.clientUrl}"
-                aria-disabled.bind="nextPage == null ? true : null" t="pages.next"></a>
+                data-router-ignore.bind="skipNavigation & empty" aria-disabled.bind="nextPage == null ? true : null"
+                t="pages.next"></a>
             <a class="button-flat" href="/explore/${lastPage.clientUrl}"
-                aria-disabled.bind="lastPage == null ? true : null" t="pages.last"></a>
+                data-router-ignore.bind="skipNavigation & empty" aria-disabled.bind="lastPage == null ? true : null"
+                t="pages.last"></a>
         </div>
     </div>
 </template>

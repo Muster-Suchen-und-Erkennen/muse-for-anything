@@ -1,8 +1,13 @@
-import { bindable, bindingMode, observable } from "aurelia-framework";
+import { bindable, bindingMode, observable, autoinject } from "aurelia-framework";
+import { DialogService } from "aurelia-dialog";
 import { NormalizedApiSchema, PropertyDescription } from "rest/schema-objects";
+import { ApiObjectChooserDialog } from "./api-object-chooser-dialog";
+import { BaseApiService } from "rest/base-api";
+import { ApiLink } from "rest/api-objects";
 
 
-export class TypeRootForm {
+@autoinject()
+export class ResourceReferenceDefinitionForm {
     @bindable key: string;
     @bindable label: string;
     @bindable initialData: any;
@@ -17,8 +22,6 @@ export class TypeRootForm {
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
 
-    typeSchema: NormalizedApiSchema;
-
     extraProperties: PropertyDescription[] = [];
     requiredProperties: Set<string> = new Set();
 
@@ -30,15 +33,18 @@ export class TypeRootForm {
 
     invalidProps: string[];
 
-    @observable() childSchemas = {};
+    referenceType: string;
+    namespaceApiLink: ApiLink;
 
-    @observable() childSchemasValid = {};
-    @observable() childSchemasDirty = {};
+    currentResourceLink: ApiLink;
 
-    @observable() childSchemasAreValid: boolean = false;
-    @observable() childSchemasAreDirty: boolean = false;
+    private dialogService: DialogService;
+    private apiService: BaseApiService;
 
-    containedTypes: string[] = [];
+    constructor(dialogService: DialogService, apiService: BaseApiService) {
+        this.dialogService = dialogService;
+        this.apiService = apiService;
+    }
 
     initialDataChanged(newValue, oldValue) {
         this.reloadProperties();
@@ -46,8 +52,32 @@ export class TypeRootForm {
 
     schemaChanged(newValue: NormalizedApiSchema, oldValue) {
         this.valid = null;
-        this.typeSchema = newValue.normalized.properties?.get("definitions")?.normalized?.additionalProperties as NormalizedApiSchema;
         this.reloadProperties();
+    }
+
+    contextChanged(newValue, oldValue) {
+        if (newValue?.baseApiLink?.href === oldValue?.baseApiLink?.href) {
+            return;
+        }
+        this.namespaceApiLink = null;
+        if (newValue?.baseApiLink == null) {
+            return;
+        }
+
+        this.apiService.getByApiLink(newValue?.baseApiLink).then(response => {
+            this.namespaceApiLink = response.links.find(link => {
+                if (link.resourceType !== "ont-namespace") {
+                    return false;
+                }
+                if (link.rel.some(rel => rel === "collection")) {
+                    return false;
+                }
+                if (link.rel.some(rel => rel === "nav" || rel === "up")) {
+                    return true;
+                }
+                return false;
+            });
+        });
     }
 
     // eslint-disable-next-line complexity
@@ -63,7 +93,7 @@ export class TypeRootForm {
             this.requiredProperties = new Set();
             return;
         }
-        const propertyBlockList = ["$schema", "$ref", "definitions", "$comment", "title", "description", "deprecated", "allOf"];
+        const propertyBlockList = ["$comment", "deprecated", "required", "customType", "referenceKey", "properties"];
         this.extraProperties = this.schema.getPropertyList([], { // FIXME proper object keys...
             excludeReadOnly: true,
             blockList: propertyBlockList,
@@ -73,61 +103,63 @@ export class TypeRootForm {
         propertyBlockList.forEach(propKey => requiredProperties.delete(propKey));
         this.requiredProperties = requiredProperties;
 
+        this.fixValue();
+        this.updateSignal();
+    }
+
+    // eslint-disable-next-line complexity
+    private fixValue() {
         // calculate and apply default values
         const valueUpdate: any = {};
-        const schemaRef = normalized.properties.get("$schema").normalized.const;
-        if (this.value?.$schema !== schemaRef) {
-            valueUpdate.$schema = schemaRef;
+        if (this.value?.customType !== "resourceReference") {
+            valueUpdate.customType = "resourceReference";
         }
-        if (this.value?.$ref !== "#/definitions/root") {
-            valueUpdate.$ref = "#/definitions/root";
+        if (this.value?.type == null) {
+            valueUpdate.type = ["object"];
         }
-        if (this.value?.definitions == null) {
-            valueUpdate.definitions = { root: {} };
+        if (this.value?.required == null) {
+            valueUpdate.required = ["referenceType", "referenceKey"];
         }
-        if (valueUpdate || (this.value == null && this.required)) {
-            window.setTimeout(() => {
+
+        const refType = this.value?.referenceType ?? "ont-type";
+        let childRefType = "ont-object";
+        if (refType === "ont-type") {
+            childRefType = "ont-object";
+        }
+        if (refType === "ont-taxonomy") {
+            childRefType = "ont-taxonomy-item";
+        }
+        if (this.value?.properties == null || this.value?.properties?.referenceType?.const !== childRefType) {
+            valueUpdate.properties = {
+                referenceType: { const: childRefType },
+                referenceKey: {
+                    type: "object",
+                    additionalProperties: { type: "string", singleLine: true },
+                },
+            };
+        }
+
+        if (Object.keys(valueUpdate).length > 0 || (this.value == null && this.required)) {
+            window.setTimeout(() => { // FIXME this trigger very often...
                 this.value = {
                     ...(this.value ?? {}),
                     ...valueUpdate,
                 };
             }, 1);
         }
-        this.updateSignal();
     }
 
     valueChanged(newValue, oldValue) {
-        if (newValue == null) {
-            if (this.required) {
-                window.setTimeout(() => {
-                    this.value = {
-                        $schema: "http://json-schema.org/draft-07/schema#",
-                        $ref: "#/definitions/root",
-                        definitions: this.childSchemas,
-                    };
-                }, 1);
-            }
-            return;
-        }
-        const defs = newValue?.definitions;
-        const containedTypes = Object.keys(defs).filter(t => t !== "root");
-        containedTypes.sort();
-        if (containedTypes.length !== this.containedTypes.length) {
-            // different lengths
-            this.containedTypes = containedTypes;
-        } else if (containedTypes.some((t, i) => this.containedTypes[i] !== t)) {
-            // different contents
-            this.containedTypes = containedTypes;
-        }
-        if (newValue.definitions == null) {
-            window.setTimeout(() => {
-                this.value = {
-                    ...newValue,
-                    definitions: this.childSchemas,
-                };
-            }, 1);
-        } else if (newValue.definitions !== this.childSchemas) {
-            this.childSchemas = newValue.definitions;
+        this.fixValue();
+        this.checkReferenceType();
+    }
+
+    checkReferenceType() {
+        // TODO change resource type?
+        if (this.referenceType !== this.value?.referenceType) {
+            this.value.referenceKey = null; // TODO save for reuse?
+            this.referenceType = this.value?.referenceType;
+            this.updateValid();
         }
     }
 
@@ -136,17 +168,6 @@ export class TypeRootForm {
             const newValue = { ...this.value };
             delete newValue[action.key];
             this.value = newValue;
-        }
-    }
-
-    typeActionSignal(action: { actionType: string, key: string }) {
-        if (action.actionType === "remove" && this.containedTypes.some(typeId => typeId === action.key)) {
-            if (action.key === "root") {
-                return; // never delete the root type
-            }
-            this.containedTypes = this.containedTypes.filter(typeId => typeId !== action.key);
-            delete this.childSchemas[action.key];
-            this.schemaUpdateSignal();
         }
     }
 
@@ -159,44 +180,9 @@ export class TypeRootForm {
         }
     }
 
-    addType() {
-        if (this.value == null) {
-            this.value = {
-                $schema: "http://json-schema.org/draft-07/schema#",
-                $ref: "#/definitions/root",
-                definitions: this.childSchemas,
-            };
-        }
-        let nextTypeId = 1;
-        this.containedTypes.forEach(typeId => {
-            if (/[0-9]+/.test(typeId)) {
-                const nextId = Number(typeId) + 1;
-                if (nextId > nextTypeId) {
-                    nextTypeId = nextId;
-                }
-            }
-        });
-        this.containedTypes.push(nextTypeId.toString());
-    }
-
-    schemaUpdateSignal() {
-        window.setTimeout(() => {
-            this.childSchemasValidChanged(this.childSchemasValid);
-            this.childSchemasDirtyChanged(this.childSchemasDirty);
-        }, 1);
-    }
-
-    childSchemasValidChanged(newValue: { [prop: string]: boolean }) {
-        const typesToCheck = ["root", ...(this.containedTypes ?? [])];
-        this.childSchemasAreValid = typesToCheck.every(key => newValue[key]);
-    }
-
-    childSchemasDirtyChanged(newValue: { [prop: string]: boolean }) {
-        const typesToCheck = ["root", ...(this.containedTypes ?? [])];
-        this.childSchemasAreDirty = typesToCheck.some(key => newValue[key]);
-    }
-
     updateSignal() {
+        this.checkReferenceType();
+        this.fixValue();
         window.setTimeout(() => {
             this.propertiesValidChanged(this.propertiesValid);
             this.propertiesDirtyChanged(this.propertiesDirty);
@@ -243,28 +229,50 @@ export class TypeRootForm {
         this.updateValid();
     }
 
-    childSchemasAreValidChanged() {
-        this.updateValid();
-    }
 
     updateValid() {
         if (this.value == null) {
             this.valid = false; // this can never be nullable!
             return;
         }
-        this.valid = this.propertiesAreValid && this.childSchemasAreValid;
+        let referenceKeyValid = false;
+        if (this.referenceType === "ont-object") {
+            referenceKeyValid = true;
+        }
+        if (this.referenceType === "ont-taxonomy") {
+            referenceKeyValid = this.value.referenceKey != null;
+        }
+        this.valid = this.propertiesAreValid && referenceKeyValid;
     }
 
     propertiesAreDirtyChanged() {
         this.updateDirty();
     }
 
-    childSchemasAreDirtyChanged() {
-        this.updateDirty();
-
-    }
 
     updateDirty() {
-        this.dirty = this.propertiesAreDirty || this.childSchemasAreDirty;
+        this.dirty = this.propertiesAreDirty;
+    }
+
+    openResourceChooser() {
+        if (this.referenceType == null || this.namespaceApiLink == null) {
+            return;
+        }
+        const model = {
+            referenceType: this.referenceType,
+            baseApiLink: this.namespaceApiLink,
+        };
+        this.dialogService.open({ viewModel: ApiObjectChooserDialog, model: model, lock: false }).whenClosed(response => {
+            if (!response.wasCancelled) {
+                if (this.value == null || this.referenceType !== model.referenceType) {
+                    return;
+                }
+                this.value.referenceKey = (response.output as ApiLink).resourceKey;
+                this.currentResourceLink = (response.output as ApiLink);
+                this.updateValid();
+            } else {
+                // do nothing on cancel
+            }
+        });
     }
 }

@@ -17,7 +17,7 @@
         <div class="flex flex-wrap card px-2 py-2" repeat.for="i of itemSchemas.length">
             <schema-form class="w-full" key.bind="$parent.itemSchemas[i].itemIndex"
                 label.bind="$parent.itemSchemas[i].itemTitle" initial-data.bind="$parent.initialData[i]"
-                value.bind="$parent.value[i]" value-push.bind="null" schema.bind="$parent.itemSchemas[i].itemSchema"
+                value.bind="$parent.value[i]" context.bind="context" schema.bind="$parent.itemSchemas[i].itemSchema"
                 valid.from-view="$parent.itemsValid[i]" dirty.from-view="$parent.itemsDirty[i]"
                 required.bind="minItems != null && i < minItems" update-signal.call="updateSignal()" no-card="true"
                 actions.bind="$parent.itemSchemas[i].itemActions" action-signal.call="actionSignalCallback($event)"

@@ -170,7 +170,7 @@ class ObjectsView(MethodView):
         items: List[ApiLink] = [item.data.get("self") for item in embedded_items]
 
         query_params = {
-            "item_count": item_count,
+            "item-count": item_count,
             "sort": sort,
         }
 
@@ -450,7 +450,7 @@ class ObjectView(MethodView):
                     href=url_for(
                         "api-v1.NamespacesView",
                         _external=True,
-                        item_count=50,
+                        **{"item-count": 50},
                         sort="name",
                     ),
                     rel=("first", "page", "collection", "nav"),

@@ -1,0 +1,25 @@
+<template>
+    <require from="./api-resource"></require>
+
+    <!-- TODO translations -->
+
+    <ux-dialog>
+        <ux-dialog-body>
+            <h2 t="dialogTitle">Choose:</h2>
+            <div class="flex flex-row">
+                <button class="button-flat flex-grow mr-2" show.bind="currentApiLink.href !== baseApiLink.href"
+                    click.trigger="navigateBack()" t="back">back</button>
+                <button class="button-outline" style="flex-grow: 2;" show.bind="chosenReference != null"
+                    click.trigger="confirm()" t="confirm-choice">Confirm Selection</button>
+            </div>
+            <api-resource api-link.bind="currentApiLink" is-root.one-time="true" is-object-chooser.one-time="true"
+                skip-navigation.one-time="true" click.delegate="onClick($event)">
+            </api-resource>
+            <input value.bind="person.firstName">
+        </ux-dialog-body>
+
+        <ux-dialog-footer>
+            <button click.trigger="controller.cancel()" t="cancel"></button>
+        </ux-dialog-footer>
+    </ux-dialog>
+</template>

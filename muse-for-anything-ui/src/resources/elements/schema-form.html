@@ -3,6 +3,7 @@
     <require from="./schema-form-actions"></require>
     <require from="./type-root-form"></require>
     <require from="./type-definition-form"></require>
+    <require from="./resource-reference-definition-form"></require>
     <require from="./enum-item-form"></require>
     <require from="./object-form"></require>
     <require from="./array-form"></require>
@@ -14,28 +15,38 @@
     <template if.bind="schemaType === 'custom'">
         <div class="${noCard ? '' : 'card px-2 py-2 mt-4'}" if.bind="extraType === 'typeRoot'">
             <type-root-form key.bind="key" label.bind="label" initial-data.bind="initialDataFix"
-                schema.bind="activeSchema" required.bind="required" debug.bind="debug" value-push.bind="valuePush"
+                schema.bind="activeSchema" required.bind="required" debug.bind="debug" context.bind="context"
                 value.bind="value" valid.from-view="valid" dirty.from-view="dirty" actions.bind="actions"
                 action-signal.call="actionSignal($event)">
             </type-root-form>
         </div>
         <div class="${noCard ? '' : 'card px-2 py-2 mt-4'}" if.bind="extraType === 'typeDefinition'">
             <type-definition-form key.bind="key" label.bind="label" initial-data.bind="initialDataFix"
-                schema.bind="activeSchema" required.bind="required" debug.bind="debug" value-push.bind="valuePush"
+                schema.bind="activeSchema" required.bind="required" debug.bind="debug" context.bind="context"
                 value.bind="value" valid.from-view="valid" dirty.from-view="dirty" actions.bind="actions"
                 action-signal.call="actionSignal($event)">
             </type-definition-form>
         </div>
+        <div class="${noCard ? '' : 'card px-2 py-2 mt-4'}" if.bind="extraType === 'resourceReferenceDefinition'">
+            <resource-reference-definition-form key.bind="key" label.bind="label" initial-data.bind="initialDataFix"
+                schema.bind="activeSchema" required.bind="required" debug.bind="debug" context.bind="context"
+                value.bind="value" valid.from-view="valid" dirty.from-view="dirty" actions.bind="actions"
+                action-signal.call="actionSignal($event)">
+            </resource-reference-definition-form>
+        </div>
+        <div if.bind="extraType === 'resourceReference'">
+            TODO: Resource reference form element
+        </div>
         <enum-item-form if.bind="extraType === 'enumItem'" key.bind="key" label.bind="label"
             initial-data.bind="initialDataFix" schema.bind="activeSchema" required.bind="required" debug.bind="debug"
-            value-push.bind="valuePush" value.bind="value" valid.from-view="valid" dirty.from-view="dirty"
+            context.bind="context" value.bind="value" valid.from-view="valid" dirty.from-view="dirty"
             actions.bind="actions" action-signal.call="actionSignal($event)">
         </enum-item-form>
     </template>
     <template if.bind="schemaType === 'object'">
         <div class="${noCard ? '' : 'card px-2 py-2 mt-4'}">
             <object-form key.bind="key" label.bind="label" initial-data.bind="initialDataFix" schema.bind="activeSchema"
-                required.bind="required" debug.bind="debug" value-push.bind="valuePush" value.bind="value"
+                required.bind="required" debug.bind="debug" context.bind="context" value.bind="value"
                 valid.from-view="valid" dirty.from-view="dirty" actions.bind="actions"
                 action-signal.call="actionSignal($event)">
             </object-form>
@@ -43,7 +54,7 @@
     </template>
     <template if.bind="schemaType === 'array'">
         <array-form class="mt-4 block" key.bind="key" label.bind="label" initial-data.bind="initialDataFix"
-            schema.bind="activeSchema" required.bind="required" debug.bind="debug" value-push.bind="valuePush"
+            schema.bind="activeSchema" required.bind="required" debug.bind="debug" context.bind="context"
             value.bind="value" valid.from-view="valid" dirty.from-view="dirty" actions.bind="actions"
             action-signal.call="actionSignal($event)">
         </array-form>

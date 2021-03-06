@@ -14,6 +14,7 @@ interface ClientPageLink extends ClientLink {
 @autoinject
 export class PageNav {
     @bindable apiResponse;
+    @bindable skipNavigation = false;
 
     isFirstPage: boolean = true;
     isLastPage: boolean = true;

@@ -13,6 +13,7 @@ export class ApiSchemaForm {
     @bindable autoNavigate: boolean = true;
     @bindable initialData;
     @bindable apiLink: ApiLink;
+    @bindable context: any;
     @bindable debug: boolean = false;
     @bindable valuePush: any;
     @bindable({ defaultBindingMode: bindingMode.twoWay }) data: any;
