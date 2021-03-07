@@ -32,7 +32,7 @@ export class TypeDefinitionView {
 
         let schemaId: string;
         const initialType = this.data.type;
-        if (initialType.some(t => t === "object")) {
+        if (initialType?.some(t => t === "object") ?? false) {
             schemaId = "#/definitions/object";
             const customObjectType = this.data.customType;
             // TODO use customObject type for object and taxonomy and type references!
@@ -43,18 +43,18 @@ export class TypeDefinitionView {
                 schemaId = "#/definitions/ref";
             }
         }
-        if (initialType.some(t => t === "array")) {
+        if (initialType?.some(t => t === "array") ?? false) {
             schemaId = "#/definitions/array";
             if (this.data.arrayType === "tuple") {
                 schemaId = "#/definitions/tuple";
             }
-        } else if (initialType.some(t => t === "string")) {
+        } else if (initialType?.some(t => t === "string") ?? false) {
             schemaId = "#/definitions/string";
-        } else if (initialType.some(t => t === "number")) {
+        } else if (initialType?.some(t => t === "number") ?? false) {
             schemaId = "#/definitions/number";
-        } else if (initialType.some(t => t === "integer")) {
+        } else if (initialType?.some(t => t === "integer") ?? false) {
             schemaId = "#/definitions/integer";
-        } else if (initialType.some(t => t === "boolean")) {
+        } else if (initialType?.some(t => t === "boolean") ?? false) {
             schemaId = "#/definitions/boolean";
         } else if (this.data.enum != null) {
             schemaId = "#/definitions/enum";

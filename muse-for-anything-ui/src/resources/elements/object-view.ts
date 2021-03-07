@@ -25,6 +25,9 @@ export class ObjectView {
             this.properties = [];
             return;
         }
+        if (this.data == null) {
+            return;
+        }
         this.properties = this.schema.getPropertyList(Object.keys(this.data));
     }
 

@@ -155,14 +155,11 @@ class OntologyObjectTypeVersion(MODEL, IdMixin, CreateDeleteMixin):
 
     @property
     def name(self) -> str:
-        return self.root_schema.get("title", "")
+        return self.data is not None and self.data.get("title", "")
 
     @property
     def description(self) -> str:
-        description: Optional[str] = self.root_schema.get("description", "")
-        if description:
-            return description
-        return ""
+        return self.data is not None and self.data.get("description", "")
 
     def __init__(
         self, ontology_type: OntologyObjectType, version: int, data: Any, **kwargs
@@ -297,16 +294,21 @@ class OntologyObjectVersion(MODEL, IdMixin, NameDescriptionMixin, CreateDeleteMi
         return self.created_on
 
     def __init__(
-        self, object: OntologyObject, type_version: OntologyObjectTypeVersion, version: int, name: str, data: Any, description: Optional[str]=None, **kwargs
+        self,
+        object: OntologyObject,
+        type_version: OntologyObjectTypeVersion,
+        version: int,
+        name: str,
+        data: Any,
+        description: Optional[str] = None,
+        **kwargs,
     ) -> None:
         self.ontology_object = object
         self.ontology_type_version = type_version
         self.version = version
         self.update(data=data, name=name, description=description, **kwargs)
 
-    def update(self, data: Any, 
-        name: str,
-        description: Optional[str] = None,**kwargs):
+    def update(self, data: Any, name: str, description: Optional[str] = None, **kwargs):
         if kwargs:
             raise ValueError("Got unknown keyword arguments!")
         self.data = data

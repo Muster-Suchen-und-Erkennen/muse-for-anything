@@ -277,13 +277,9 @@ class TypesView(MethodView):
         self._check_path_params(namespace=namespace)
         validate_type_schema(data)
         # FIXME add proper introspection to get linked types out of the schema
-        schema_key = "root"
-        if data.get("$ref", "").startswith("#/definitions/"):
-            schema_key = cast(str, data.get("$ref"))[14:]
-        root_schema: Dict[str, Any] = data.get("definitions", {}).get(schema_key, {})
         is_abstract: bool = data.get("abstract", False)
-        title: str = root_schema.get("title", "")
-        description: str = root_schema.get("description", "")
+        title: str = data.get("title", "")
+        description: str = data.get("description", "")
 
         found_namespace = self._get_namespace(namespace=namespace)
         if found_namespace.deleted_on is not None:

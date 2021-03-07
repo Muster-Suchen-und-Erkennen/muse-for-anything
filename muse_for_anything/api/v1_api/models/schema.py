@@ -108,7 +108,14 @@ JSON_MINIMAL_META_PROPERTIES_SCHEMA = {
         "readOnly": {"type": "boolean", "default": False},
         "writeOnly": {"type": "boolean", "default": False},
     },
-    "hiddenProperties": ["$id", "default", "readOnly", "writeOnly"],
+    "hiddenProperties": [
+        "$id",
+        "default",
+        "readOnly",
+        "writeOnly",
+        "$comment",
+        "abstract",
+    ],
     "propertyOrder": {
         "type": 10,
         "deprecated": 20,
@@ -137,7 +144,14 @@ JSON_META_PROPERTIES_SCHEMA = {
             "items": NESTED_JSON_SCHEMA_REF,
         },
     },
-    "hiddenProperties": ["$id", "default", "readOnly", "writeOnly"],
+    "hiddenProperties": [
+        "$id",
+        "default",
+        "readOnly",
+        "writeOnly",
+        "allOf",
+        "$comment",
+    ],
     "propertyOrder": {
         "type": 10,
         "deprecated": 20,
@@ -150,6 +164,7 @@ JSON_META_PROPERTIES_SCHEMA = {
 
 JSON_OBJECT_PROPERTIES_SCHEMA = {
     "$id": JSON_OBJECT_PROPERTIES_SCHEMA_REF["$ref"],
+    "title": "Object",
     "type": ["object"],
     "default": {"type": ["object"]},
     "required": ["type"],
@@ -198,18 +213,6 @@ JSON_OBJECT_PROPERTIES_SCHEMA = {
         "propertyNames": JSON_SCHEMA_REF,  # TODO
         "additionalProperties": NESTED_JSON_SCHEMA_REF,
         # custom properties
-        "titleProperty": {
-            "title": "Title Property",
-            "description": "The name of the property that should be treated as the title or name of this object.",
-            "type": "string",
-            "singleLine": True,
-        },
-        "descriptionProperty": {
-            "title": "Description Property",
-            "description": "The name of the property that should be treated as the description of this object.",
-            "type": "string",
-            "singleLine": True,
-        },
         "hiddenProperties": {
             "type": "array",
             "items": {"type": "string", "singleLine": True},
@@ -225,16 +228,23 @@ JSON_OBJECT_PROPERTIES_SCHEMA = {
         "customType": 15,
         "properties": 100,
         "required": 110,
-        "titleProperty": 120,
-        "descriptionProperty": 130,
-        "propertyOrder": 140,
-        "hiddenProperties": 150,
-        "patternProperties": 160,
-        "additionalProperties": 170,
-        "propertyNames": 180,
-        "minProperties": 190,
-        "maxProperties": 200,
+        "propertyOrder": 120,
+        "hiddenProperties": 130,
+        "patternProperties": 140,
+        "additionalProperties": 150,
+        "propertyNames": 160,
+        "minProperties": 170,
+        "maxProperties": 180,
     },
+    "hiddenProperties": [
+        "customType",
+        "hiddenProperties",
+        "patternProperties",
+        "propertyNames",
+        "minProperties",
+        "maxProperties",
+        "abstract",
+    ],
 }
 
 JSON_ARRAY_PROPERTIES_BASE_SCHEMA = {
@@ -274,10 +284,12 @@ JSON_ARRAY_PROPERTIES_BASE_SCHEMA = {
         "contains": NESTED_JSON_SCHEMA_REF,
         "additionalItems": NESTED_JSON_SCHEMA_REF,
     },
+    "hiddenProperties": ["contains", "abstract"],
 }
 
 JSON_ARRAY_PROPERTIES_SCHEMA = {
     "$id": JSON_ARRAY_PROPERTIES_SCHEMA_REF["$ref"],
+    "title": "Array",
     "type": ["object"],
     "default": {"type": ["array"]},
     "required": ["type", "arrayType"],
@@ -303,6 +315,7 @@ JSON_ARRAY_PROPERTIES_SCHEMA = {
 
 JSON_TUPLE_PROPERTIES_SCHEMA = {
     "$id": JSON_TUPLE_PROPERTIES_SCHEMA_REF["$ref"],
+    "title": "Tuple",
     "type": ["object"],
     "default": {"type": ["array"]},
     "required": ["type", "arrayType"],
@@ -324,12 +337,12 @@ JSON_TUPLE_PROPERTIES_SCHEMA = {
         "minItems": 120,
         "maxItems": 130,
         "uniqueItems": 140,
-        "unorderedItems": 150,
     },
 }
 
 JSON_STRING_PROPERTIES_SCHEMA = {
     "$id": JSON_STRING_PROPERTIES_SCHEMA_REF["$ref"],
+    "title": "String",
     "type": ["object"],
     "default": {"type": ["string"]},
     "required": ["type"],
@@ -366,6 +379,8 @@ JSON_STRING_PROPERTIES_SCHEMA = {
     "hiddenProperties": [
         "contentEncoding",
         "contentSchema",
+        "contentMediaType",
+        "abstract",
     ],
     "propertyOrder": {
         "minLength": 100,
@@ -394,6 +409,7 @@ JSON_NUMBER_PROPERTIES_BASE_SCHEMA = {
 
 JSON_NUMBER_PROPERTIES_SCHEMA = {
     "$id": JSON_NUMBER_PROPERTIES_SCHEMA_REF["$ref"],
+    "title": "Number",
     "type": ["object"],
     "default": {"type": ["number"]},
     "required": ["type"],
@@ -421,10 +437,12 @@ JSON_NUMBER_PROPERTIES_SCHEMA = {
         "exclusiveMaximum": 130,
         "multipleOf": 140,
     },
+    "hiddenProperties": ["abstract"],
 }
 
 JSON_INTEGER_PROPERTIES_SCHEMA = {
     "$id": JSON_INTEGER_PROPERTIES_SCHEMA_REF["$ref"],
+    "title": "Integer",
     "type": ["object"],
     "default": {"type": ["integer"]},
     "required": ["type"],
@@ -456,6 +474,7 @@ JSON_INTEGER_PROPERTIES_SCHEMA = {
 
 JSON_BOOLEAN_PROPERTIES_SCHEMA = {
     "$id": JSON_BOOLEAN_PROPERTIES_SCHEMA_REF["$ref"],
+    "title": "Boolean",
     "type": ["object"],
     "default": {"type": ["boolean"]},
     "required": ["type"],
@@ -476,6 +495,7 @@ JSON_BOOLEAN_PROPERTIES_SCHEMA = {
             "uniqueItems": True,
         },
     },
+    "hiddenProperties": ["abstract"],
 }
 
 JSON_BASE_TYPE_NULL = {
@@ -499,6 +519,7 @@ JSON_BASE_TYPE_STRING = {
 
 JSON_ENUM_PROPERTIES_SCHEMA = {
     "$id": JSON_ENUM_PROPERTIES_SCHEMA_REF["$ref"],
+    "title": "Enumeration",
     "type": ["object"],
     "default": {"enum": []},
     "required": ["enum"],
@@ -522,11 +543,13 @@ JSON_ENUM_PROPERTIES_SCHEMA = {
     "propertyOrder": {
         "enum": 100,
     },
+    "hiddenProperties": ["abstract"],
 }
 
 
 JSON_REF_PROPERTIES_SCHEMA = {
     "$id": JSON_REF_PROPERTIES_SCHEMA_REF["$ref"],
+    "title": "Schema Reference",
     "type": ["object"],
     "default": {"$ref": None},
     "required": ["$ref"],
@@ -542,6 +565,7 @@ JSON_REF_PROPERTIES_SCHEMA = {
 
 JSON_RESOURCE_REFERENCE_SCHEMA = {
     "$id": JSON_RESOURCE_REFERENCE_SCHEMA_REF["$ref"],
+    "title": "Resource Reference",
     "type": "object",
     # "default": {"type": ["object"], "required": ["key", "referenceType"]},
     "required": ["type", "customType", "referenceType", "required", "properties"],
@@ -619,8 +643,9 @@ JSON_RESOURCE_REFERENCE_SCHEMA = {
 JSON_SCHEMA_ROOT_SCHEMA = {
     "$id": JSON_SCHEMA_ROOT_SCHEMA_REF["$ref"],
     "type": ["object"],
-    "required": ["$ref"],
+    "required": ["$ref", "title"],
     "allOf": [JSON_REF_PROPERTIES_SCHEMA_REF],
+    "customType": "typeRoot",
     "properties": {
         "$schema": {"const": "http://json-schema.org/draft-07/schema#"},
         "$id": {"type": "string", "format": "uri-reference", "readOnly": True},
@@ -631,8 +656,22 @@ JSON_SCHEMA_ROOT_SCHEMA = {
             "default": {},
         },
         "abstract": {"title": "Is Abstract", "type": "boolean", "default": False},
+        "title": {
+            "title": "Title",
+            "type": "string",
+            "singleLine": True,
+            "maxLength": 150,
+        },
+        "description": {"title": "Description", "type": "string"},
     },
-    "customType": "typeRoot",
+    "propertyOrder": {
+        "title": 10,
+        "description": 20,
+        "abstract": 30,
+        "$schema": 40,
+        "$ref": 50,
+        "definitions": 60,
+    },
 }
 
 BASIC_JSON_SCHEMA_SCHEMAS = [

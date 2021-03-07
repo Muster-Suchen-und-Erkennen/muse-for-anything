@@ -32,6 +32,9 @@ export class ArrayView {
         if (schema?.normalized?.mainType === "object") {
             if (schema.normalized?.customType != null) {
                 // TODO maybe exclude some custom types
+                if (schema.normalized.customType === "resourceReference") {
+                    return false; // treat resource reference as a simple type
+                }
             }
             return true;
         }

@@ -63,7 +63,7 @@ export class TypeRootForm {
             this.requiredProperties = new Set();
             return;
         }
-        const propertyBlockList = ["$schema", "$ref", "definitions", "$comment", "title", "description", "deprecated", "allOf"];
+        const propertyBlockList = ["$schema", "$ref", "definitions", "$comment", "deprecated", "allOf"];
         this.extraProperties = this.schema.getPropertyList([], { // FIXME proper object keys...
             excludeReadOnly: true,
             blockList: propertyBlockList,

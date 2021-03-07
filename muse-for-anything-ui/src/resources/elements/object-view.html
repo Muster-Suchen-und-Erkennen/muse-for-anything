@@ -2,14 +2,15 @@
     <require from="./schema-view"></require>
 
     <template repeat.for="prop of properties">
-        <details class="card px-2 py-2 mt-4}" if.bind="isObjectProperty(prop.propertySchema)" open>
-            <summary class="font-semibold text-lg px-2">
+        <details class="card px-2 py-2 mt-2" if.bind="isObjectProperty(prop.propertySchema)"
+            open.one-time="data[prop.propertyName] != null">
+            <summary class=" font-semibold text-lg px-2">
                 ${prop.propertyTitle}:
             </summary>
-            <schema-view class="flex-grow" style.bind="propertyStyle(prop.propertySchema)"
+            <schema-view class="flex-grow block" style.bind="propertyStyle(prop.propertySchema)"
                 data.bind="data[prop.propertyName]" schema.bind="prop.propertySchema"></schema-view>
         </details>
-        <div class="flex flex-wrap items-baseline" else>
+        <div class="flex flex-wrap items-baseline" show.bind="data[prop.propertyName] != null" else>
             <p class="mr-2 font-semibold">
                 ${prop.propertyTitle}:
             </p>

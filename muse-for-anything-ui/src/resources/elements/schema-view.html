@@ -32,6 +32,9 @@
     <template if.bind="schemaType === 'const' || schemaType === 'enum'">
         <p class="m-0">${data != null ? data : '–'}</p>
     </template>
+    <template if.bind="schemaType === 'uri-reference'">
+        <p class="m-0">${data != null ? data : '–'}</p>
+    </template>
     <template if.bind="schemaType === 'unknown'">
         <p class="m-0" style="white-space: pre;">${data | json}</p>
     </template>

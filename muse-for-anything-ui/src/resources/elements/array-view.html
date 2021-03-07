@@ -4,7 +4,7 @@
     <div class="flex flex-wrap items-baseline ${isObjectProperty(item.itemSchema) ? 'card px-2 py-2 mt-4' : ''}"
         repeat.for="item of items">
         <p class="mr-2 font-semibold ${isObjectProperty(item.itemSchema) ? 'text-lg' : ''}">
-            ${item.itemTitle}:
+            ${item.itemIndex}:
         </p>
         <schema-view class="flex-grow" style.bind="propertyStyle(item.itemSchema)" data.bind="data[item.itemIndex]"
             schema.bind="item.itemSchema"></schema-view>
