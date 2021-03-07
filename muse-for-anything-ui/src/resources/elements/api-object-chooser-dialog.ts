@@ -56,7 +56,7 @@ export class ApiObjectChooserDialog {
         const linkElement = event.composedPath().find(element => (element as Element).tagName === "A") as HTMLAnchorElement;
         if (linkElement != null) {
             event.preventDefault();
-            const clientUrl = linkElement.pathname;
+            const clientUrl = linkElement.pathname + linkElement.search;
             if (!clientUrl.startsWith("/explore/")) {
                 return;
             }

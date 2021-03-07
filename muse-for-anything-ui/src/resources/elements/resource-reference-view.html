@@ -1,0 +1,12 @@
+<template>
+    <require from="./api-resource"></require>
+    <!-- TODO Translations-->
+
+    <div class="card px-2 py-2 mt-4" if.bind="resourceLink">
+        <api-resource api-link.bind="resourceLink" is-root.one-time="false">
+        </api-resource>
+    </div>
+    <div else>
+        No Reference
+    </div>
+</template>

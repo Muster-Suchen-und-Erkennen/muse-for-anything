@@ -111,5 +111,7 @@
     },
     "namespace": "Namespace",
     "type": "Type",
-    "object": "Object"
+    "object": "Object",
+    "cancel": "cancel",
+    "back": "back"
 }

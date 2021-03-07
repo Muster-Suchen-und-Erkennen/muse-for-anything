@@ -1,6 +1,6 @@
 import { autoinject } from "aurelia-framework";
 import { HttpClient } from "aurelia-fetch-client";
-import { ApiResponse, ApiLink, GenericApiObject, ApiObject, matchesLinkRel, ApiLinkKey, KeyedApiLink, applyKeyToLinkedKey, checkKeyMatchesKeyedLink, isApiResponse, checkKeyMatchesKeyedLinkExact } from "./api-objects";
+import { ApiResponse, ApiLink, GenericApiObject, ApiObject, matchesLinkRel, ApiLinkKey, KeyedApiLink, applyKeyToLinkedKey, checkKeyMatchesKeyedLink, isApiResponse, checkKeyMatchesKeyedLinkExact, checkKeyCompatibleWithKeyedLink } from "./api-objects";
 
 @autoinject
 export class BaseApiService {
@@ -445,14 +445,35 @@ export class BaseApiService {
         return concreteUrl;
     }
 
-    public async resolveClientUrl(clientUrl: string, queryParams?: ApiLinkKey): Promise<ApiLink> {
+    public async resolveLinkKey(apiKey: ApiLinkKey, resourceType?: string): Promise<ApiLink[]> {
+        const foundLinks: ApiLink[] = [];
+
+        if (resourceType != null) {
+            this.keyedLinkyByResourceType.get(resourceType)?.forEach(keyedLink => {
+                if (checkKeyCompatibleWithKeyedLink(apiKey, keyedLink, resourceType)) {
+                    foundLinks.push(applyKeyToLinkedKey(keyedLink, apiKey));
+                }
+            });
+        } else {
+            this.keyedLinksByKey.forEach(keyedLink => {
+                if (checkKeyCompatibleWithKeyedLink(apiKey, keyedLink)) {
+                    foundLinks.push(applyKeyToLinkedKey(keyedLink, apiKey));
+                }
+            });
+        }
+
+        return foundLinks;
+    }
+
+    public async resolveClientUrl(clientUrl: string, queryParams?: ApiLinkKey): Promise<ApiLink> { // FIXME remove query params
         await this.resolveApiRoot(); // must be connected to api for this!
         if (this.clientUrlToApiLink.has(clientUrl)) {
             return this.clientUrlToApiLink.get(clientUrl);
         }
         let includesKey = false;
         let resourceType: string = null;
-        const steps: Array<{ type: "rel" | "key", value: string }> = clientUrl.split("/")
+        const [path, search] = clientUrl.split("?");
+        const steps: Array<{ type: "rel" | "key", value: string }> = path.split("/")
             .filter(step => step != null && step.length > 0)
             .map(step => {
                 if (step.startsWith(":")) {
@@ -463,6 +484,17 @@ export class BaseApiService {
                 resourceType = step;
                 return { type: "rel", value: step };
             });
+        if (search) {
+            const searchKey: ApiLinkKey = {};
+            search.split("&").forEach(entry => {
+                const [key, value] = entry.split("=");
+                searchKey[key] = value;
+                queryParams = {
+                    ...queryParams,
+                    ...searchKey,
+                };
+            });
+        }
         if (!includesKey) {
             const rels = steps.map(step => step.value);
             const resolvedLink = await this.searchResolveRels(rels);
@@ -471,10 +503,11 @@ export class BaseApiService {
                 const query = Object.keys(queryParams)
                     .map(k => `${k}=${queryParams[k]}`)
                     .join("&");
+                const queryStart = resolvedLink.href.includes("?") ? "&" : "?";
                 return {
                     ...resolvedLink,
-                    href: `${resolvedLink.href}?${query}`,
-                    resourceKey: { ...queryParams },
+                    href: `${resolvedLink.href}${queryStart}${query}`,
+                    resourceKey: { ...queryParams }, // FIXME add correct prefix for query params
                 };
             }
 

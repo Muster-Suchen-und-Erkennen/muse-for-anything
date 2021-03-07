@@ -311,7 +311,7 @@ class TypeSchemaView(MethodView):
                 "ObjectSchema": {
                     "$id": "#/definitions/ObjectSchema",
                     "type": "object",
-                    "required": ["name"],
+                    "required": ["name", "data"],
                     "properties": {
                         "createdOn": {
                             "title": "created_on",

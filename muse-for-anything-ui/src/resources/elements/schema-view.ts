@@ -7,6 +7,7 @@ export class SchemaView {
 
     schemaType: string;
 
+    // eslint-disable-next-line complexity
     schemaChanged(newValue: NormalizedApiSchema, oldValue) {
         const normalized = newValue.normalized;
         if (normalized.enum != null) {
@@ -16,6 +17,14 @@ export class SchemaView {
         } else if (normalized.mainType === "object") {
             this.schemaType = "object";
             // TODO type for mappings?
+            if (normalized.customType != null) {
+                if (normalized.customType === "resourceReference") {
+                    this.schemaType = "resourceReference";
+                }
+                if (normalized.customType === "typeDefinition") {
+                    this.schemaType = "typeDefinition";
+                }
+            }
         } else if (normalized.mainType === "array") {
             this.schemaType = "array";
         } else if (normalized.mainType === "string") {

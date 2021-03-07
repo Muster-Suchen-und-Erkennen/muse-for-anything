@@ -44,7 +44,7 @@ export class ArrayView {
 
     propertyStyle(schema: NormalizedApiSchema): string {
         if (this.isObjectProperty(schema) || this.isArrayProperty(schema)) {
-            return "flex-basis: 100%; margin-left: 0.5rem;";
+            return "";// FIXME remove method? "flex-basis: 100%; margin-left: 0.5rem;";
         }
         return "";
     }

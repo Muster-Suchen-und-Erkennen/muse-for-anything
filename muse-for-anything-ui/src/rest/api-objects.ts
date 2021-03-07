@@ -81,7 +81,7 @@ export function checkKeyMatchesKeyedLink(key: ApiLinkKey, keyedLink: KeyedApiLin
     return keyedLink.key.every(keyVariable => key[keyVariable] != null);
 }
 
-export function checkKeyMatchesKeyedLinkExact(key: ApiLinkKey, keyedLink: KeyedApiLink, resourceType?: string): boolean {
+export function checkKeyCompatibleWithKeyedLink(key: ApiLinkKey, keyedLink: KeyedApiLink, resourceType?: string): boolean {
     const resourceTypeMatch = resourceType === undefined || keyedLink.resourceType === resourceType;
     const allKeysMatch = checkKeyMatchesKeyedLink(key, keyedLink);
     const queryKeys = Object.keys(key).filter(keyVariable => keyVariable.startsWith("?"));
@@ -90,14 +90,18 @@ export function checkKeyMatchesKeyedLinkExact(key: ApiLinkKey, keyedLink: KeyedA
     }
     const allowedQueryKeys = new Set(keyedLink.queryKey?.map(k => `?${k}`) ?? []);
     const allQueryKeysAllowed = queryKeys.every(queryKey => allowedQueryKeys.has(queryKey));
-    return resourceTypeMatch && allKeysMatch && allQueryKeysAllowed && Object.keys(key).filter(keyVariable => !keyVariable.startsWith("?")).length === keyedLink.key.length;
+    return resourceTypeMatch && allKeysMatch && allQueryKeysAllowed;
+}
+
+export function checkKeyMatchesKeyedLinkExact(key: ApiLinkKey, keyedLink: KeyedApiLink, resourceType?: string): boolean {
+    return checkKeyCompatibleWithKeyedLink(key, keyedLink, resourceType) && Object.keys(key).filter(keyVariable => !keyVariable.startsWith("?")).length === keyedLink.key.length;
 }
 
 export function applyKeyToLinkedKey(keyedLink: KeyedApiLink, key: ApiLinkKey): ApiLink {
     let url = keyedLink.href;
     const keyVariables = Object.keys(key).filter(keyVariable => !keyVariable.startsWith("?"));
     // check if key matches
-    if (!checkKeyMatchesKeyedLink(key, keyedLink)) {
+    if (!checkKeyCompatibleWithKeyedLink(key, keyedLink)) {
         throw Error(`Cannot apply key ${key} to keyedLink with key ${keyedLink.key}`);
     }
     // apply key to templated url
@@ -107,16 +111,26 @@ export function applyKeyToLinkedKey(keyedLink: KeyedApiLink, key: ApiLinkKey): A
 
     const queryKeyVariables = Object.keys(key).filter(keyVariable => keyVariable.startsWith("?"));
     if (queryKeyVariables.length > 0) {
+        const queryStart = url.includes("?") ? "&" : "?";
         const query = queryKeyVariables.map(k => `${k.substring(1)}=${key[k]}`).join("&");
-        url += `?${query}`;
+        url += `${queryStart}${query}`;
     }
+
+    const appliedResourceKey: ApiLinkKey = {};
+    keyedLink.key?.forEach(k => appliedResourceKey[k] = key[k]);
+    keyedLink.queryKey?.forEach(k => {
+        const queryKey = `?${k}`;
+        if (key[queryKey] != null) {
+            appliedResourceKey[queryKey] = key[queryKey];
+        }
+    });
 
     // build new api link
     const apiLink: ApiLink = {
         href: url,
         rel: keyedLink.rel,
         resourceType: keyedLink.resourceType,
-        resourceKey: { ...key },
+        resourceKey: appliedResourceKey,
     };
     if (keyedLink.doc != null) {
         apiLink.doc = keyedLink.doc;

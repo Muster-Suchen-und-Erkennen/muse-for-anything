@@ -1,12 +1,12 @@
 <template>
     <require from="./schema-view"></require>
 
-    <div class="flex flex-wrap ${isObjectProperty(item.itemSchema) ? 'card px-2 py-2 mt-4' : ''}"
+    <div class="flex flex-wrap items-baseline ${isObjectProperty(item.itemSchema) ? 'card px-2 py-2 mt-4' : ''}"
         repeat.for="item of items">
         <p class="mr-2 font-semibold ${isObjectProperty(item.itemSchema) ? 'text-lg' : ''}">
             ${item.itemTitle}:
         </p>
-        <schema-view style.bind="propertyStyle(item.itemSchema)" data.bind="data[item.itemIndex]"
+        <schema-view class="flex-grow" style.bind="propertyStyle(item.itemSchema)" data.bind="data[item.itemIndex]"
             schema.bind="item.itemSchema"></schema-view>
     </div>
 </template>

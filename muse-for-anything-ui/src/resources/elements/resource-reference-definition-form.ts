@@ -236,7 +236,7 @@ export class ResourceReferenceDefinitionForm {
             return;
         }
         let referenceKeyValid = false;
-        if (this.referenceType === "ont-object") {
+        if (this.referenceType === "ont-type") {
             referenceKeyValid = true;
         }
         if (this.referenceType === "ont-taxonomy") {

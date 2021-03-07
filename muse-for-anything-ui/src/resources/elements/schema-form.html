@@ -4,6 +4,7 @@
     <require from="./type-root-form"></require>
     <require from="./type-definition-form"></require>
     <require from="./resource-reference-definition-form"></require>
+    <require from="./resource-reference-form"></require>
     <require from="./enum-item-form"></require>
     <require from="./object-form"></require>
     <require from="./array-form"></require>
@@ -35,7 +36,11 @@
             </resource-reference-definition-form>
         </div>
         <div if.bind="extraType === 'resourceReference'">
-            TODO: Resource reference form element
+            <resource-reference-form key.bind="key" label.bind="label" initial-data.bind="initialDataFix"
+                schema.bind="activeSchema" required.bind="required" debug.bind="debug" context.bind="context"
+                value.bind="value" valid.from-view="valid" dirty.from-view="dirty" actions.bind="actions"
+                action-signal.call="actionSignal($event)">
+            </resource-reference-form>
         </div>
         <enum-item-form if.bind="extraType === 'enumItem'" key.bind="key" label.bind="label"
             initial-data.bind="initialDataFix" schema.bind="activeSchema" required.bind="required" debug.bind="debug"

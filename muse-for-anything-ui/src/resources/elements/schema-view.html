@@ -1,9 +1,17 @@
 <template>
     <require from="./object-view"></require>
+    <require from="./resource-reference-view"></require>
+    <require from="./type-definition-view"></require>
     <require from="./array-view"></require>
 
     <template if.bind="schemaType === 'object'">
         <object-view data.bind="data" schema.bind="schema"></object-view>
+    </template>
+    <template if.bind="schemaType === 'resourceReference'">
+        <resource-reference-view data.bind="data" schema.bind="schema"></resource-reference-view>
+    </template>
+    <template if.bind="schemaType === 'typeDefinition'">
+        <type-definition-view data.bind="data" schema.bind="schema"></type-definition-view>
     </template>
     <template if.bind="schemaType === 'array'">
         <array-view data.bind="data" schema.bind="schema"></array-view>
@@ -20,6 +28,9 @@
     <template if.bind="schemaType === 'boolean'">
         <p class="m-0" if.bind="data" t="schemaViews.true"></p>
         <p class="m-0" if.bind="!data" t="schemaViews.false"></p>
+    </template>
+    <template if.bind="schemaType === 'const' || schemaType === 'enum'">
+        <p class="m-0">${data != null ? data : '–'}</p>
     </template>
     <template if.bind="schemaType === 'unknown'">
         <p class="m-0" style="white-space: pre;">${data | json}</p>

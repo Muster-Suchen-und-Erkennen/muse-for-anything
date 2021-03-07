@@ -202,6 +202,42 @@ taxonomy-graph .form {
     grid-area: form;
 }
 
+/* Autocomplete styles */
+.autocomplete-parent .autocomplete-options {
+    display: none;
+}
+
+.autocomplete-parent:focus-within .autocomplete-options {
+    display: initial;
+}
+
+/* Details element styling */
+  
+summary {
+    /*position: relative;*/
+    cursor: pointer;
+    display: flex;
+    align-items: baseline;
+}
+  
+summary:before {
+    content: '';
+    border-width: .3rem;
+    border-style: solid;
+    border-color: transparent transparent transparent black;/*var(--text-color, black);*/
+    transform: rotate(0);
+    transform-origin: .2rem 50%;
+    transition: .25s transform ease;
+}
+
+details[open] > summary:before {
+    transform: rotate(90deg);
+}
+  
+details summary::-webkit-details-marker {
+    display:none;
+}
+
 /* Tailwind CSS styles (ignore css errors...) */
 
 /* form styles */

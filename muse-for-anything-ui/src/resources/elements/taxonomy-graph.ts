@@ -11,13 +11,13 @@ import { PropertyDescription } from "rest/schema-objects";
 import { SchemaService } from "rest/schema-service";
 
 
-interface TaxonomyApiObject extends ApiObject {
+export interface TaxonomyApiObject extends ApiObject {
     name: string;
     description: string | null;
     items: ApiLink[];
 }
 
-interface TaxonomyItemApiObject extends ApiObject {
+export interface TaxonomyItemApiObject extends ApiObject {
     name: string;
     description: string | null;
     sortKey: number | null;
@@ -28,7 +28,7 @@ interface TaxonomyItemApiObject extends ApiObject {
     // TODO missing
 }
 
-interface TaxonomyItemRelationApiObject extends ApiObject {
+export interface TaxonomyItemRelationApiObject extends ApiObject {
     sourceItem: ApiLink;
     targetItem: ApiLink;
     deletedOn: string | null;

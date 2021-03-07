@@ -1,0 +1,38 @@
+<template>
+
+    <div class="flex flex-col form-field autocomplete-parent" keyup.delegate="onKeyUp($event)"
+        keydown.delegate="onKeyDown($event)">
+        <div class="w-full flex items-center">
+            <label class="font-semibold form-title" for.bind="'input-'+slug" if.bind="label">${label}</label>
+        </div>
+        <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1" placeholder="search"
+            value.from-view="filter & throttle" aria-owns="'datalist-'+slug" autocapitalize="none" type="text"
+            autocomplete="off" aria-autocomplete="list" role="combobox" id="'input-'+slug">
+        <!-- TODO later aria-expanded.bind="datalistVisible"-->
+        <ul id="'datalist-'+slug" role="listbox"
+            class="autocomplete-options border rounded-sm border-gray-800 focus:ring-4 max-h-56 overflow-y-auto">
+            <li class="w-full hover:text-primary hover:bg-gray-200 flex flex-row items-center"
+                click.delegate="selectItem(choice.index)" role="option" tabindex="-1"
+                aria-selected="selectedItems.has(choice.index)"
+                show.bind="(!filter && !hiddenItems.has(choice.index)) || (filter && filteredItems.has(choice.index))"
+                repeat.for="choice of datalistChoices">
+                <div style="width: ${choice.level}rem;" if.bind="showTreeControls"></div>
+                <div class="min-h-full flex flex-row items-center justify-center" style="width:1rem;"
+                    if.bind="showTreeControls">
+                    <button class="button-flat text-black hover:text-primary" click.trigger="toggleGroup(choice.index)"
+                        disabled.bind="filter" tabindex="-1" show.bind="choice.children.size > 1">
+                        ${(filter || !closedGroups.has(choice.index)) ? '-' : '+'}</button>
+                    <!-- TODO investigate why this is not full height… -->
+                    <div class="border-l-2 border-black h-full" show.bind="choice.children.size === 1"></div>
+                </div>
+                <p
+                    class="p-2 ${cursor===choice.index? 'text-primary italic' : ''} ${selectedItems.has(choice.index) ? 'underline font-semibold' : ''}">
+                    ${choice.item.name}
+                </p>
+            </li>
+        </ul>
+        <!--div aria-live="polite" role="status" class="visually-hidden">
+            13 results available.
+        </div-->
+    </div>
+</template>
