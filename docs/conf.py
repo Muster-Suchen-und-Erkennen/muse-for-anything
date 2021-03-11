@@ -24,7 +24,6 @@ from json import load
 
 ON_READTHEDOCS = environ.get("READTHEDOCS") == "True"
 
-
 # -- Project information -----------------------------------------------------
 
 current_path = Path(".").absolute()
@@ -38,6 +37,13 @@ if current_path.name == "docs":
 else:
     project_root = current_path
     pyproject_path = current_path / Path("pyproject.toml")
+
+if ON_READTHEDOCS:
+    # add dotenv file to make flask load the right app
+    dotenv_file_path: Path = project_root / Path(".env")
+    if not dotenv_file_path.exists():
+        with dotenv_file_path.open(mode="w") as env:
+            env.write("FLASK_APP=muse_for_anything\nFLASK_ENV=development\n")
 
 pyproject_toml: Any
 
@@ -132,7 +138,7 @@ if sphinx_config.get("enable-markdown", False):
     extensions.append("recommonmark")
     print("MARKDOWN ENABLED")
 
-    source_suffix[".txt"] = "markdown"
+    # source_suffix[".txt"] = "markdown"
     source_suffix[".md"] = "markdown"
 
 # enable sphinx githubpages
