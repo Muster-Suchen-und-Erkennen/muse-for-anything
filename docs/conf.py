@@ -66,10 +66,16 @@ if sphinx_config.get("html-baseurl", None):
 
 # -- update openapi specification -------------------------------------------
 
-subprocess.run(
-    ["poetry", "run", "flask", "openapi", "write", "docs/api.json"],
-    cwd=project_root,
-)
+if ON_READTHEDOCS:
+    subprocess.run(
+        ["flask", "openapi", "write", "docs/api.json"],
+        cwd=project_root,
+    )
+else:
+    subprocess.run(
+        ["poetry", "run", "flask", "openapi", "write", "docs/api.json"],
+        cwd=project_root,
+    )
 
 api_spec_path = project_root / Path("docs/api.json")
 
