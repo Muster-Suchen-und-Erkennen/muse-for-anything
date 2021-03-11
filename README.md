@@ -3,7 +3,9 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![GitHub license](https://img.shields.io/github/license/Muster-Suchen-und-Erkennen/muse-for-anything)](https://github.com/Muster-Suchen-und-Erkennen/muse-for-anything/blob/main/LICENSE)
 ![Python: >= 3.7](https://img.shields.io/badge/python-^3.7-blue)
-<!--![Requires.io](https://img.shields.io/requires/github/buehlefs/flask-template)-->
+[![Documentation Status](https://readthedocs.org/projects/muse4anything/badge/?version=latest)](https://muse4anything.readthedocs.io/en/latest/?badge=latest)
+
+The current developer documentation can be found here: <https://muse4anything.readthedocs.io/>.
 
 This package uses Poetry ([documentation](https://python-poetry.org/docs/)).
 
