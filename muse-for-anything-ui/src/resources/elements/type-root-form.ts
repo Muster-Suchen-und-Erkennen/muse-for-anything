@@ -13,9 +13,12 @@ export class TypeRootForm {
     @bindable valuePush: any;
     @bindable actions: Iterable<string>;
     @bindable actionSignal: unknown;
-    @bindable({ defaultBindingMode: bindingMode.twoWay }) value: any;
+    @bindable({ defaultBindingMode: bindingMode.toView }) valueIn: any;
+    @bindable({ defaultBindingMode: bindingMode.fromView }) valueOut: any;
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
+
+    @observable value: any = {};
 
     typeSchema: NormalizedApiSchema;
 
@@ -25,18 +28,12 @@ export class TypeRootForm {
     @observable() propertiesValid = {};
     @observable() propertiesDirty = {};
 
-    @observable() propertiesAreValid: boolean = false;
-    @observable() propertiesAreDirty: boolean = false;
-
     invalidProps: string[];
 
-    @observable() childSchemas = {};
+    @observable() childSchemas: any = {};
 
     @observable() childSchemasValid = {};
     @observable() childSchemasDirty = {};
-
-    @observable() childSchemasAreValid: boolean = false;
-    @observable() childSchemasAreDirty: boolean = false;
 
     containedTypes: string[] = [];
 
@@ -74,41 +71,20 @@ export class TypeRootForm {
         this.requiredProperties = requiredProperties;
 
         // calculate and apply default values
-        const valueUpdate: any = {};
-        const schemaRef = normalized.properties.get("$schema").normalized.const;
-        if (this.value?.$schema !== schemaRef) {
-            valueUpdate.$schema = schemaRef;
-        }
-        if (this.value?.$ref !== "#/definitions/root") {
-            valueUpdate.$ref = "#/definitions/root";
-        }
-        if (this.value?.definitions == null) {
-            valueUpdate.definitions = { root: {} };
-        }
-        if (valueUpdate || (this.value == null && this.required)) {
-            window.setTimeout(() => {
-                this.value = {
-                    ...(this.value ?? {}),
-                    ...valueUpdate,
-                };
-            }, 1);
-        }
-        this.updateSignal();
+        this.valueChanged(this.value, null);
     }
 
-    valueChanged(newValue, oldValue) {
+
+    valueInChanged(newValue) {
         if (newValue == null) {
-            if (this.required) {
-                window.setTimeout(() => {
-                    this.value = {
-                        $schema: "http://json-schema.org/draft-07/schema#",
-                        $ref: "#/definitions/root",
-                        definitions: this.childSchemas,
-                    };
-                }, 1);
-            }
             return;
         }
+
+        const value = { ...newValue };
+        this.childSchemas = { ...(value?.definitions ?? {}) };
+        delete value.definitions;
+        this.value = value;
+
         const defs = newValue?.definitions;
         const containedTypes = Object.keys(defs).filter(t => t !== "root");
         containedTypes.sort();
@@ -119,16 +95,56 @@ export class TypeRootForm {
             // different contents
             this.containedTypes = containedTypes;
         }
-        if (newValue.definitions == null) {
-            window.setTimeout(() => {
-                this.value = {
-                    ...newValue,
-                    definitions: this.childSchemas,
+
+    }
+
+    onPropertyValueUpdate = (value, binding) => {
+        this.valueChanged(this.value, null);
+    };
+
+    onSchemaValueUpdate = (value, binding) => {
+        this.valueChanged(this.value, null);
+    };
+
+    valueChanged(newValue, oldValue) {
+
+        if (newValue == null) {
+            if (this.required) {
+                this.valueOut = {
+                    $schema: "http://json-schema.org/draft-07/schema#",
+                    $ref: "#/definitions/root",
+                    definitions: { root: this.childSchemas?.root ?? {} },
                 };
-            }, 1);
-        } else if (newValue.definitions !== this.childSchemas) {
-            this.childSchemas = newValue.definitions;
+            } else {
+                this.valueOut = null;
+            }
+            return;
         }
+
+        const newValueOut: any = { ...newValue };
+
+        const normalized = this.schema?.normalized;
+        const schemaRef = normalized?.properties?.get("$schema")?.normalized?.const ?? "";
+        if (newValueOut?.$schema !== schemaRef) {
+            newValueOut.$schema = schemaRef;
+        }
+        if (newValueOut?.$ref !== "#/definitions/root") {
+            newValueOut.$ref = "#/definitions/root";
+        }
+        newValueOut.definitions = {
+            root: this.childSchemas?.root ?? {},
+        };
+        this.containedTypes?.forEach(schema => {
+            newValueOut.definitions[schema] = this.childSchemas?.[schema];
+        });
+
+        // todo maybe keep update frequency in check…
+        this.valueOut = newValueOut;
+    }
+
+    valueOutChanged(newValue) {
+        this.updateValid();
+        this.updateDirty();
     }
 
     propertyActionSignal(action: { actionType: string, key: string }) {
@@ -146,7 +162,7 @@ export class TypeRootForm {
             }
             this.containedTypes = this.containedTypes.filter(typeId => typeId !== action.key);
             delete this.childSchemas[action.key];
-            this.schemaUpdateSignal();
+            this.valueChanged(this.value, null);
         }
     }
 
@@ -160,13 +176,6 @@ export class TypeRootForm {
     }
 
     addType() {
-        if (this.value == null) {
-            this.value = {
-                $schema: "http://json-schema.org/draft-07/schema#",
-                $ref: "#/definitions/root",
-                definitions: this.childSchemas,
-            };
-        }
         let nextTypeId = 1;
         this.containedTypes.forEach(typeId => {
             if (/[0-9]+/.test(typeId)) {
@@ -177,94 +186,69 @@ export class TypeRootForm {
             }
         });
         this.containedTypes.push(nextTypeId.toString());
+        this.valueChanged(this.value, null);
     }
 
-    schemaUpdateSignal() {
-        window.setTimeout(() => {
-            this.childSchemasValidChanged(this.childSchemasValid);
-            this.childSchemasDirtyChanged(this.childSchemasDirty);
-        }, 1);
-    }
+    onPropertyValidUpdate = (value, binding) => {
+        this.updateValid();
+    };
 
-    childSchemasValidChanged(newValue: { [prop: string]: boolean }) {
+    onSchemaValidUpdate = (value, binding) => {
+        this.updateValid();
+    };
+
+    updateValid() {
         const typesToCheck = ["root", ...(this.containedTypes ?? [])];
-        this.childSchemasAreValid = typesToCheck.every(key => newValue[key]);
-    }
+        const childSchemasAreValid = typesToCheck.every(key => this.childSchemasValid[key]);
 
-    childSchemasDirtyChanged(newValue: { [prop: string]: boolean }) {
-        const typesToCheck = ["root", ...(this.containedTypes ?? [])];
-        this.childSchemasAreDirty = typesToCheck.some(key => newValue[key]);
-    }
-
-    updateSignal() {
-        window.setTimeout(() => {
-            this.propertiesValidChanged(this.propertiesValid);
-            this.propertiesDirtyChanged(this.propertiesDirty);
-        }, 1);
-    }
-
-    propertiesValidChanged(newValue: { [prop: string]: boolean }) {
-        if (newValue == null) {
-            this.propertiesAreValid = !this.required;
-            return;
-        }
         const propKeys = this.extraProperties.map(prop => prop.propertyName);
         const allPropertiesValid = propKeys.every(key => {
-            if (newValue[key] != null) {
-                return newValue[key]; // property validity is known
+            if (this.propertiesValid[key] != null) {
+                return this.propertiesValid[key]; // property validity is known
             }
             // assume valid if not required and not present
-            return !this.requiredProperties.has(key) && this.value[key] === undefined;
+            return !this.requiredProperties.has(key) && this.valueOut?.[key] === undefined;
         });
         if (!allPropertiesValid) {
-            this.invalidProps = propKeys.filter(key => !newValue[key]);
+            this.invalidProps = propKeys.filter(key => !this.propertiesValid[key]);
         } else {
             this.invalidProps = [];
         }
+
+        let propertiesAreValid: boolean = false;
         if (this.requiredProperties == null || this.requiredProperties.size === 0) {
-            this.propertiesAreValid = allPropertiesValid;
-            return;
+            propertiesAreValid = allPropertiesValid;
+        } else {
+            const requiredPropKeys = propKeys.filter(key => this.requiredProperties.has(key));
+            const allRequiredPresent = this.requiredProperties.size === requiredPropKeys.length;
+            propertiesAreValid = allPropertiesValid && allRequiredPresent;
         }
-        const requiredPropKeys = propKeys.filter(key => this.requiredProperties.has(key));
-        const allRequiredPresent = this.requiredProperties.size === requiredPropKeys.length;
-        this.propertiesAreValid = allPropertiesValid && allRequiredPresent;
-    }
 
-    propertiesDirtyChanged(newValue: { [prop: string]: boolean }) {
-        if (newValue == null) {
-            this.propertiesAreDirty = false;
-            return;
-        }
-        const propKeys = this.extraProperties.map(prop => prop.propertyName);
-        this.propertiesAreDirty = (propKeys.length === 0) || propKeys.some(key => newValue[key]);
-    }
-
-    propertiesAreValidChanged() {
-        this.updateValid();
-    }
-
-    childSchemasAreValidChanged() {
-        this.updateValid();
-    }
-
-    updateValid() {
-        if (this.value == null) {
+        if (this.valueOut == null) {
             this.valid = false; // this can never be nullable!
             return;
         }
-        this.valid = this.propertiesAreValid && this.childSchemasAreValid;
+        this.valid = propertiesAreValid && childSchemasAreValid;
     }
 
-    propertiesAreDirtyChanged() {
+    onPropertyDirtyUpdate = (value, binding) => {
         this.updateDirty();
-    }
+    };
 
-    childSchemasAreDirtyChanged() {
+    onSchemaDirtyUpdate = (value, binding) => {
         this.updateDirty();
-
-    }
+    };
 
     updateDirty() {
-        this.dirty = this.propertiesAreDirty || this.childSchemasAreDirty;
+        const typesToCheck = ["root", ...(this.containedTypes ?? [])];
+        const childSchemasAreDirty = typesToCheck.some(key => this.childSchemasDirty[key]);
+
+        let propertiesAreDirty = false;
+        if (this.propertiesDirty != null) {
+            const propKeys = this.extraProperties.map(prop => prop.propertyName);
+            propertiesAreDirty = (propKeys.length === 0) || propKeys.some(key => this.propertiesDirty[key]);
+        }
+
+        this.dirty = propertiesAreDirty || childSchemasAreDirty;
     }
 }

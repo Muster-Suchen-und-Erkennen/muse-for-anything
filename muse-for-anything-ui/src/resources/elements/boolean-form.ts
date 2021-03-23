@@ -1,4 +1,4 @@
-import { bindable, bindingMode, child } from "aurelia-framework";
+import { bindable, observable, bindingMode, child } from "aurelia-framework";
 import { NormalizedApiSchema } from "rest/schema-objects";
 import { nanoid } from "nanoid";
 
@@ -12,9 +12,12 @@ export class BooleanForm {
     @bindable debug: boolean = false;
     @bindable actions: Iterable<string>;
     @bindable actionSignal: unknown;
-    @bindable({ defaultBindingMode: bindingMode.twoWay }) value: boolean;
+    @bindable({ defaultBindingMode: bindingMode.toView }) valueIn: boolean;
+    @bindable({ defaultBindingMode: bindingMode.fromView }) valueOut: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
+
+    @observable() value: boolean | null;
 
     slug = nanoid(8);
 
@@ -23,15 +26,8 @@ export class BooleanForm {
     @child(".input-valid-check") formInput: Element;
 
     initialDataChanged(newValue, oldValue) {
-        if (newValue !== undefined && !this.dirty) {
-            window.setTimeout(() => {
-                if (this.isNullable) {
-                    this.value = newValue;
-                } else {
-                    this.value = newValue ?? false;
-                }
-                this.dirty = false;
-            }, 0);
+        if (newValue !== undefined) {
+            this.value = newValue;
         }
     }
 
@@ -42,9 +38,7 @@ export class BooleanForm {
         if (!this.isNullable && this.value == null) {
             this.value = false;
         }
-        window.setTimeout(() => {
-            this.updateValid();
-        }, 0);
+        this.updateValid();
     }
 
     cycle(event?: Event) {
@@ -68,19 +62,27 @@ export class BooleanForm {
         }
     }
 
+    valueInChanged(newValue) {
+        this.value = newValue;
+    }
+
     valueChanged(newValue, oldValue) {
+        this.updateCheckbox();
+        if (this.isNullable) {
+            this.valueOut = newValue;
+        } else {
+            this.valueOut = newValue ?? false;
+        }
+    }
+
+    valueOutChanged(newValue) {
         if (this.initialData === undefined) {
-            this.dirty = !(newValue == null || (!this.isNullable && newValue === ""));
+            this.dirty = !(newValue == null || (!this.isNullable && newValue === false));
         } else {
             this.dirty = this.initialData !== newValue;
         }
-        this.updateCheckbox();
         this.updateValid();
-        if (this.isNullable) {
-            this.dirty = this.value !== this.initialData;
-        } else {
-            this.dirty = this.value !== (this.initialData ?? false);
-        }
+
     }
 
     updateValid() {

@@ -17,79 +17,81 @@
         <div class="${noCard ? '' : 'card px-2 py-2 mt-4'}" if.bind="extraType === 'typeRoot'">
             <type-root-form key.bind="key" label.bind="label" initial-data.bind="initialDataFix"
                 schema.bind="activeSchema" required.bind="required" debug.bind="debug" context.bind="context"
-                value.bind="value" valid.from-view="valid" dirty.from-view="dirty" actions.bind="actions"
-                action-signal.call="actionSignal($event)">
+                value-in.bind="valueIn" value-out.from-view="valueOut & throttle" valid.from-view="valid"
+                dirty.from-view="dirty" actions.bind="actions" action-signal.call="actionSignal($event)">
             </type-root-form>
         </div>
-        <div class="${noCard ? '' : 'card px-2 py-2 mt-4'}" if.bind="extraType === 'typeDefinition'">
+        <div class="${noCard ? '' : 'card px-2 py-2 mt-4 focus-within:border focus-within:border-primary'}"
+            if.bind="extraType === 'typeDefinition'">
             <type-definition-form key.bind="key" label.bind="label" initial-data.bind="initialDataFix"
                 schema.bind="activeSchema" required.bind="required" debug.bind="debug" context.bind="context"
-                value.bind="value" valid.from-view="valid" dirty.from-view="dirty" actions.bind="actions"
-                action-signal.call="actionSignal($event)">
+                value-in.bind="valueIn" value-out.from-view="valueOut & throttle" valid.from-view="valid"
+                dirty.from-view="dirty" actions.bind="actions" action-signal.call="actionSignal($event)">
             </type-definition-form>
         </div>
         <div class="${noCard ? '' : 'card px-2 py-2 mt-4'}" if.bind="extraType === 'resourceReferenceDefinition'">
             <resource-reference-definition-form key.bind="key" label.bind="label" initial-data.bind="initialDataFix"
                 schema.bind="activeSchema" required.bind="required" debug.bind="debug" context.bind="context"
-                value.bind="value" valid.from-view="valid" dirty.from-view="dirty" actions.bind="actions"
-                action-signal.call="actionSignal($event)">
+                value-in.bind="valueIn" value-out.from-view="valueOut & throttle" valid.from-view="valid"
+                dirty.from-view="dirty" actions.bind="actions" action-signal.call="actionSignal($event)">
             </resource-reference-definition-form>
         </div>
         <div if.bind="extraType === 'resourceReference'">
             <resource-reference-form key.bind="key" label.bind="label" initial-data.bind="initialDataFix"
                 schema.bind="activeSchema" required.bind="required" debug.bind="debug" context.bind="context"
-                value.bind="value" valid.from-view="valid" dirty.from-view="dirty" actions.bind="actions"
-                action-signal.call="actionSignal($event)">
+                value-in.bind="valueIn" value-out.from-view="valueOut & throttle" valid.from-view="valid"
+                dirty.from-view="dirty" actions.bind="actions" action-signal.call="actionSignal($event)">
             </resource-reference-form>
         </div>
         <enum-item-form if.bind="extraType === 'enumItem'" key.bind="key" label.bind="label"
             initial-data.bind="initialDataFix" schema.bind="activeSchema" required.bind="required" debug.bind="debug"
-            context.bind="context" value.bind="value" valid.from-view="valid" dirty.from-view="dirty"
-            actions.bind="actions" action-signal.call="actionSignal($event)">
+            context.bind="context" value-in.bind="valueIn" value-out.from-view="valueOut & throttle"
+            valid.from-view="valid" dirty.from-view="dirty" actions.bind="actions"
+            action-signal.call="actionSignal($event)">
         </enum-item-form>
     </template>
     <template if.bind="schemaType === 'object'">
         <div class="${noCard ? '' : 'card px-2 py-2 mt-4'}">
             <object-form key.bind="key" label.bind="label" initial-data.bind="initialDataFix" schema.bind="activeSchema"
-                required.bind="required" debug.bind="debug" context.bind="context" value.bind="value"
-                valid.from-view="valid" dirty.from-view="dirty" actions.bind="actions"
-                action-signal.call="actionSignal($event)">
+                required.bind="required" debug.bind="debug" context.bind="context" value-in.bind="valueIn"
+                value-out.from-view="valueOut & throttle" valid.from-view="valid" dirty.from-view="dirty"
+                actions.bind="actions" action-signal.call="actionSignal($event)">
             </object-form>
         </div>
     </template>
     <template if.bind="schemaType === 'array'">
         <array-form class="mt-4 block" key.bind="key" label.bind="label" initial-data.bind="initialDataFix"
             schema.bind="activeSchema" required.bind="required" debug.bind="debug" context.bind="context"
-            value.bind="value" valid.from-view="valid" dirty.from-view="dirty" actions.bind="actions"
-            action-signal.call="actionSignal($event)">
+            value-in.bind="valueIn" value-out.from-view="valueOut & throttle" valid.from-view="valid"
+            dirty.from-view="dirty" actions.bind="actions" action-signal.call="actionSignal($event)">
         </array-form>
     </template>
     <template if.bind="schemaType === 'string'">
         <text-form class="block mt-1" key.bind="key" label.bind="label" initial-data.bind="initialDataFix"
-            schema.bind="activeSchema" required.bind="required" debug.bind="debug" value.bind="value"
-            valid.from-view="valid" key.bind="key" actions.bind="actions" action-signal.call="actionSignal($event)"
-            dirty.from-view="dirty">
+            schema.bind="activeSchema" required.bind="required" debug.bind="debug" value-in.bind="valueIn"
+            value-out.from-view="valueOut & throttle" valid.from-view="valid" key.bind="key" actions.bind="actions"
+            action-signal.call="actionSignal($event)" dirty.from-view="dirty">
         </text-form>
     </template>
     <template if.bind="schemaType === 'number'">
         <number-form class="block mt-1" key.bind="key" label.bind="label" initial-data.bind="initialDataFix"
-            schema.bind="activeSchema" required.bind="required" debug.bind="debug" value.bind="value"
-            valid.from-view="valid" dirty.from-view="dirty" actions.bind="actions"
-            action-signal.call="actionSignal($event)">
+            schema.bind="activeSchema" required.bind="required" debug.bind="debug" value-in.bind="valueIn"
+            value-out.from-view="valueOut & throttle" valid.from-view="valid" dirty.from-view="dirty"
+            actions.bind="actions" action-signal.call="actionSignal($event)">
         </number-form>
     </template>
     <template if.bind="schemaType === 'boolean'">
         <boolean-form class="block mt-2 mb-2" key.bind="key" label.bind="label" initial-data.bind="initialDataFix"
-            schema.bind="activeSchema" required.bind="required" debug.bind="debug" value.bind="value"
-            valid.from-view="valid" dirty.from-view="dirty" actions.bind="actions"
-            action-signal.call="actionSignal($event)">
+            schema.bind="activeSchema" required.bind="required" debug.bind="debug" value-in.bind="valueIn"
+            value-out.from-view="valueOut & throttle" valid.from-view="valid" dirty.from-view="dirty"
+            actions.bind="actions" action-signal.call="actionSignal($event)">
         </boolean-form>
     </template>
     <template if.bind="schemaType === 'enum'">
         <enum-form class="block mt-1" key.bind="key" label.bind="label" initial-data.bind="initialDataFix"
-            schema.bind="activeSchema" required.bind="required" debug.bind="debug" value.bind="value"
-            valid.from-view="valid" dirty.from-view="dirty" actions.bind="actions"
-            action-signal.call="actionSignal($event)">
+            schema.bind="activeSchema" required.bind="required" debug.bind="debug" value-in.bind="valueIn"
+            value-out.from-view="valueOut & throttle" valid.from-view="valid" dirty.from-view="dirty"
+            actions.bind="actions" action-signal.call="actionSignal($event)">
         </enum-form>
     </template>
     <template if.bind="schemaType === 'const'">
@@ -117,7 +119,24 @@
         </details>
         <details>
             <summary>Data</summary>
-            ${value | json}
+            <div>
+                Initial:
+                <code>
+                    ${initialData | json}
+                </code>
+            </div>
+            <div>
+                In:
+                <code>
+                    ${valueIn | json}
+                </code>
+            </div>
+            <div>
+                Out:
+                <code>
+                    ${valueOut | json}
+                </code>
+            </div>
         </details>
     </template>
 </template>

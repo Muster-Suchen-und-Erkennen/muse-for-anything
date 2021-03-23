@@ -1,7 +1,9 @@
-import { bindable, bindingMode, observable } from "aurelia-framework";
+import { bindable, bindingMode, observable, autoinject, computedFrom } from "aurelia-framework";
+import { BindingSignaler } from "aurelia-templating-resources";
 import { NormalizedApiSchema, PropertyDescription } from "rest/schema-objects";
 import { nanoid } from "nanoid";
 
+@autoinject
 export class ObjectForm {
     @bindable key: string;
     @bindable label: string;
@@ -13,14 +15,18 @@ export class ObjectForm {
     @bindable valuePush: any;
     @bindable actions: Iterable<string>;
     @bindable actionSignal: unknown;
-    @bindable({ defaultBindingMode: bindingMode.twoWay }) value: any;
+    @bindable({ defaultBindingMode: bindingMode.toView }) valueIn: any;
+    @bindable({ defaultBindingMode: bindingMode.fromView }) valueOut: any;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
+
+    @observable() value: any = {};
 
     isNullable: boolean = false;
 
     properties: PropertyDescription[] = [];
     propertiesByKey: Map<string, PropertyDescription> = new Map();
+    propertyState: { [prop: string]: "readonly" | "editable" | "missing" } = {};
     requiredProperties: Set<string> = new Set();
 
     updateCount = 100;
@@ -37,12 +43,19 @@ export class ObjectForm {
 
     invalidProps: string[];
 
+
     initialDataChanged(newValue, oldValue) {
+        if (newValue != null && !this.value) {
+            this.value = {}; // prime empty value for children to fill
+        }
         this.reloadProperties();
     }
 
     schemaChanged(newValue, oldValue) {
         this.valid = null;
+        if (this.value != null) {
+            this.value = { ...(this.value ?? {}) };
+        }
         this.reloadProperties();
     }
 
@@ -62,12 +75,6 @@ export class ObjectForm {
 
         // check if nullable
         this.isNullable = this.schema.normalized.type.has("null");
-        if (!this.isNullable && this.value == null) {
-            window.setTimeout(() => {
-                this.value = {};
-            }, 1);
-            return; // change in value will trigger reloadProperties again
-        }
 
         // setup additionalProperties
         let hasAdditionalProperties = false;
@@ -88,13 +95,19 @@ export class ObjectForm {
         };
         const properties = this.schema.getPropertyList(Object.keys(currentData));
         const propertiesByKey = new Map<string, PropertyDescription>();
+        const propertyState: { [prop: string]: "readonly" | "editable" | "missing" } = {};
         properties.forEach(prop => {
             propertiesByKey.set(prop.propertyName, prop);
+            propertyState[prop.propertyName] = this.getPropertyState(prop);
             if (prop.propertySchema.normalized.const !== undefined) {
+                // TODO remove workaround issues
                 // pre set all const properties to be valid (workaround for update problems)
                 this.propertiesValid[prop.propertyName] = true;
             }
         });
+
+
+        this.propertyState = propertyState;
         this.properties = properties;
         this.propertiesByKey = propertiesByKey;
         this.requiredProperties = this.schema.normalized.required ?? new Set();
@@ -102,7 +115,7 @@ export class ObjectForm {
         if (this.hasExtraProperties) { // recheck valid status
             this.extraPropertyNameChanged(this.extraPropertyName);
         }
-        this.updateSignal();
+        this.valueChanged(this.value);
     }
 
     actionSignalCallback(action: { actionType: string, key: string }) {
@@ -110,14 +123,14 @@ export class ObjectForm {
             const newValue = { ...this.value };
             delete newValue[action.key];
             this.value = newValue;
+            this.reloadProperties();
+        } else {
+            this.propertyState[action.key] = "missing";
+            this.properties = this.properties.filter(prop => prop.propertyName !== action.key);
+            if (this.hasExtraProperties) { // recheck valid status
+                this.extraPropertyNameChanged(this.extraPropertyName);
+            }
         }
-    }
-
-    updateSignal() {
-        window.setTimeout(() => {
-            this.propertiesValidChanged(this.propertiesValid);
-            this.propertiesDirtyChanged(this.propertiesDirty);
-        }, 1);
     }
 
     editObject() {
@@ -126,8 +139,52 @@ export class ObjectForm {
         }
     }
 
-    valueChanged(newValue) {
+    valueInChanged(newValue) {
+        if (newValue == null) {
+            this.value = null;
+        } else {
+            this.value = { ...newValue };
+        }
         this.reloadProperties();
+    }
+
+    onPropertyValueUpdate = (value, binding) => {
+        this.valueChanged(this.value);
+    };
+
+    valueChanged(newValue) {
+        const newOutValue: any = {};
+        let newValueIsDifferent = false;
+        (this.properties ?? []).forEach(prop => {
+            if (prop.propertySchema.normalized.readOnly) {
+                return; // never output readonly properties
+            }
+            const key = prop.propertyName;
+            if (newValue?.[key] !== undefined) {
+                newOutValue[key] = newValue?.[key];
+                if (prop.propertySchema.normalized.const !== undefined) {
+                    // const values always win
+                    newOutValue[key] = prop.propertySchema.normalized.const;
+                }
+                if (this.valueOut?.[key] !== newOutValue[key]) {
+                    newValueIsDifferent = true;
+                }
+            }
+        });
+        const hasLessKeys = Object.keys(newOutValue).length < Object.keys(this.valueOut ?? {}).length;
+        // FIXME console.log(newOutValue, newValueIsDifferent, hasLessKeys)
+        if (newValueIsDifferent || hasLessKeys) {
+            if (newValue == null && this.isNullable) {
+                this.valueOut = null;
+            } else {
+                this.valueOut = newOutValue;
+            }
+        }
+    }
+
+    valueOutChanged() {
+        this.propertiesValidChanged(this.propertiesValid);
+        this.propertiesDirtyChanged(this.propertiesDirty);
     }
 
     extraPropertyNameChanged(newValue) {
@@ -152,12 +209,46 @@ export class ObjectForm {
         this.extraPropertyNameValid = true;
     }
 
+    showAddPropertyButton(prop: PropertyDescription): boolean {
+        const hasNoInitialValue = this.initialData?.[prop.propertyName] === undefined;
+        const hasNoValue = this.value?.[prop.propertyName] === undefined && !(prop.propertySchema.normalized.readOnly);
+        const isNotRequired = this.requiredProperties == null || !this.requiredProperties.has(prop.propertyName);
+        return hasNoValue && hasNoInitialValue && isNotRequired;
+    }
+
+    showReadOnlyProp(prop: PropertyDescription): boolean {
+        const isReadOnly = prop.propertySchema.normalized.readOnly;
+        const hasInitialValue = this.initialData?.[prop.propertyName] !== undefined;
+        return isReadOnly && hasInitialValue && !this.showAddPropertyButton(prop);
+    }
+
+    showPropertyForm(prop: PropertyDescription): boolean {
+        const isReadOnly = prop.propertySchema.normalized.readOnly;
+        const hasInitialValue = this.initialData?.[prop.propertyName] !== undefined;
+        const hasValue = this.value?.[prop.propertyName] !== undefined;
+        return !isReadOnly && (hasInitialValue || hasValue) && !this.showAddPropertyButton(prop);
+    }
+
+    getPropertyState(prop: PropertyDescription): "readonly" | "editable" | "missing" {
+        if (this.showAddPropertyButton(prop)) {
+            return "missing";
+        }
+        if (this.showReadOnlyProp(prop)) {
+            return "readonly";
+        }
+        if (this.showPropertyForm(prop)) {
+            return "editable";
+        }
+        return "editable";
+    }
+
     addGhostProperty(propName: string) {
         if (this.value?.[propName] === undefined) {
             this.value = {
                 ...(this.value ?? {}),
                 [propName]: null,
             };
+            this.propertyState[propName] = this.getPropertyState(this.propertiesByKey.get(propName));
         }
     }
 
@@ -167,6 +258,7 @@ export class ObjectForm {
         }
         const newProperty = this.schema.getPropertyList([this.extraPropertyName], { allowList: [this.extraPropertyName] });
         if (newProperty?.length === 1) {
+            this.propertyState[newProperty[0].propertyName] = "editable";
             this.properties.push(newProperty[0]);
         }
         if (this.value == null) {
@@ -177,18 +269,22 @@ export class ObjectForm {
         this.extraPropertyNameValid = false;
     }
 
+    onPropertyValidUpdate = (value, binding) => {
+        this.propertiesValidChanged(this.propertiesValid);
+    };
+
     propertiesValidChanged(newValue: { [prop: string]: boolean }) {
         if (newValue == null) {
             this.valid = this.isNullable;
             return;
         }
-        const propKeys = Object.keys(this.value ?? {});
+        const propKeys = Object.keys(this.valueOut ?? {});
         const allPropertiesValid = propKeys.every(key => {
             if (newValue[key] != null) {
                 return newValue[key]; // property validity is known
             }
             // assume valid if not required and not present
-            return !this.requiredProperties.has(key) && this.value[key] === undefined;
+            return !this.requiredProperties.has(key) && this.valueOut[key] === undefined;
         });
         if (!allPropertiesValid) {
             this.invalidProps = propKeys.filter(key => !newValue[key]);
@@ -204,12 +300,16 @@ export class ObjectForm {
         this.valid = allPropertiesValid && allRequiredPresent;
     }
 
+    onPropertyDirtyUpdate = (value, binding) => {
+        this.propertiesDirtyChanged(this.propertiesDirty);
+    };
+
     propertiesDirtyChanged(newValue: { [prop: string]: boolean }) {
         if (newValue == null) {
             this.dirty = false;
             return;
         }
-        const propKeys = Object.keys(this.value ?? {});
+        const propKeys = Object.keys(this.valueOut ?? {});
         this.dirty = (propKeys.length === 0) || propKeys.some(key => newValue[key]);
     }
 }

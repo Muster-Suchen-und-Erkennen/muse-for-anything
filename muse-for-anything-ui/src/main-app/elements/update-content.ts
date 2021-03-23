@@ -7,7 +7,6 @@ import { ApiLink, ApiLinkKey, ApiObject, ApiResponse, isApiObject } from "rest/a
 import { API_RESOURCE_CHANGES_CHANNEL, NAV_LINKS_CHANNEL } from "resources/events";
 
 const NESTED_SCHEMA_OBJECT_TYPES = new Set(["ont-type", "ont-type-version"]);
-const NESTED_DATA_OBJECT_TYPES = new Set(["ont-object", "ont-object-version"]);
 
 @autoinject
 export class UpdateContent {
@@ -106,20 +105,13 @@ export class UpdateContent {
                         initialData = {
                             ...((response.data as any)?.schema ?? {}),
                         };
-                    } else if (NESTED_DATA_OBJECT_TYPES.has(this.updateResourceType)) {
-                        initialData = {
-                            ...((response.data as any)?.data ?? {}),
-                        };
                     } else {
                         initialData = {
                             ...response.data,
                         };
                     }
                     delete initialData.self;
-                    console.log(initialData)
-                    window.setTimeout(() => {
-                        this.initialData = initialData;
-                    }, 50); // FIXME remove bad waiting workaround for race conditions…
+                    this.initialData = initialData;
                 }
                 this.navService.setMainApiResponse(this.currentResponse);
             });

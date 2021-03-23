@@ -18,16 +18,19 @@ export class ResourceReferenceForm {
     @bindable valuePush: any;
     @bindable actions: Iterable<string>;
     @bindable actionSignal: unknown;
-    @bindable({ defaultBindingMode: bindingMode.twoWay }) value: { referenceType: string, referenceKey: ApiLinkKey };
+    @bindable({ defaultBindingMode: bindingMode.toView }) valueIn: { referenceType: string, referenceKey: ApiLinkKey };
+    @bindable({ defaultBindingMode: bindingMode.fromView }) valueOut: { referenceType: string, referenceKey: ApiLinkKey };
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
 
     referenceRootType: string;
     referenceRootKey: ApiLinkKey;
 
-    referenceType: string;
+    isNullable: boolean = false;
 
-    currentReferenceType: string;
+    isCurrentlyNull: boolean = false;
+
+    @observable() currentReferenceType: string;
     @observable() currentReferenceKey: ApiLinkKey;
 
     namespaceApiLink: ApiLink;
@@ -44,8 +47,13 @@ export class ResourceReferenceForm {
     }
 
     initialDataChanged(newValue, oldValue) {
-        // todo copy value
-        this.updateValid();
+        if (newValue != null) {
+            this.currentReferenceType = newValue.referenceType;
+            this.currentReferenceKey = newValue.referenceKey;
+        } else {
+            this.isCurrentlyNull = true;
+            this.updateValueOut();
+        }
     }
 
     schemaChanged(newValue: NormalizedApiSchema, oldValue) {
@@ -68,9 +76,11 @@ export class ResourceReferenceForm {
                     console.warn("Unknown reference definition encountered.");
                 }
             }
+            this.isNullable = schema.type?.has("null") ?? false;
             this.referenceRootType = schema.referenceType;
             this.referenceRootKey = schema.referenceKey;
-            this.referenceType = refType;
+            this.currentReferenceType = refType;
+            this.updateValueOut();
         }
         this.reloadReferenceRoot();
     }
@@ -103,21 +113,52 @@ export class ResourceReferenceForm {
         this.reloadReferenceRoot();
     }
 
+    valueInChanged(newValue) {
+        if (newValue != null) {
+            this.currentReferenceType = newValue.referenceType;
+            this.currentReferenceKey = newValue.referenceKey;
+        } else {
+            this.isCurrentlyNull = true;
+            this.updateValueOut();
+        }
+    }
+
+    currentReferenceTypeChanged(newValue: string) {
+        this.updateValueOut();
+    }
+
     currentReferenceKeyChanged(newValue: ApiLinkKey) {
-        if (newValue === this.value?.referenceKey) {
+        this.updateValueOut();
+        if (newValue == null && this.currentResourceLink != null) {
+            this.currentResourceLink = null;
             return;
         }
-        console.log(newValue)
-        this.value = {
-            referenceType: this.referenceType,
-            referenceKey: newValue,
-        };
+        if (Object.keys(newValue ?? {}).every(key => newValue[key] === this.currentResourceLink?.resourceKey?.[key])) {
+            return; // link key matches
+        }
 
-        console.log(newValue)
-
-        this.apiService.resolveLinkKey(newValue, this.referenceType).then(results => {
+        // link key does not match, find new link
+        this.apiService.resolveLinkKey(newValue, this.currentReferenceType).then(results => {
             this.currentResourceLink = results.find(link => !link.rel.some(rel => rel === "collection"));
         });
+    }
+
+    updateValueOut() {
+        if (this.isCurrentlyNull && this.valueOut !== null) {
+            this.valueOut = null;
+            return;
+        }
+        if (this.valueOut?.referenceKey === this.currentReferenceKey && this.valueOut?.referenceType === this.currentReferenceType) {
+            return;
+        }
+        this.valueOut = {
+            referenceType: this.currentReferenceType,
+            referenceKey: this.currentReferenceKey,
+        };
+    }
+
+    valueOutChanged(newValue) {
+        this.updateValid();
     }
 
     reloadReferenceRoot() {
@@ -135,57 +176,36 @@ export class ResourceReferenceForm {
         this.apiService.resolveLinkKey(key, this.referenceRootType).then(links => {
             this.referenceRootApiLink = links.find(link => !link.rel.some(rel => rel === "collection"));
         });
-
-        this.fixValue();
-
     }
 
-    // eslint-disable-next-line complexity
-    private fixValue() {
-        const valueUpdate = null;
 
-        // TODO change value if invalid?
-        //if (Object.keys(valueUpdate).length > 0 || (this.value == null && this.required)) {
-        //    window.setTimeout(() => { // FIXME this trigger very often...
-        //        this.value = {
-        //            ...(this.value ?? {}),
-        //            ...valueUpdate,
-        //        };
-        //    }, 1);
-        //}
-    }
-
-    valueChanged(newValue, oldValue) {
-        this.fixValue();
-        this.updateValid();
-    }
 
     updateValid() {
-        if (this.value == null) {
-            this.valid = false; // this can never be nullable!
+        if (this.valueOut == null) {
+            this.valid = this.isNullable;
             return;
         }
         let referenceKeyValid = false;
-        if (this.referenceType === "ont-object") {
-            referenceKeyValid = this.value?.referenceType === "ont-object" && this.value.referenceKey != null;
+        if (this.currentReferenceType === "ont-object") {
+            referenceKeyValid = this.valueOut?.referenceType === "ont-object" && this.valueOut.referenceKey != null;
         }
-        if (this.referenceType === "ont-taxonomy-item") {
-            referenceKeyValid = this.value?.referenceType === "ont-taxonomy-item" && this.value.referenceKey != null;
+        if (this.currentReferenceType === "ont-taxonomy-item") {
+            referenceKeyValid = this.valueOut?.referenceType === "ont-taxonomy-item" && this.valueOut.referenceKey != null;
         }
         this.valid = referenceKeyValid;
     }
 
     openResourceChooser() {
-        if (this.referenceType == null || this.namespaceApiLink == null) {
+        if (this.currentReferenceType == null || this.namespaceApiLink == null) {
             return;
         }
         const model = {
-            referenceType: this.referenceType,
+            referenceType: this.currentReferenceType,
             baseApiLink: this.referenceRootApiLink ?? this.namespaceApiLink,
         };
         this.dialogService.open({ viewModel: ApiObjectChooserDialog, model: model, lock: false }).whenClosed(response => {
             if (!response.wasCancelled) {
-                if (this.referenceType !== model.referenceType) {
+                if (this.currentReferenceType !== model.referenceType) {
                     return;
                 }
                 this.currentReferenceKey = (response.output as ApiLink).resourceKey;

@@ -19,49 +19,57 @@ export class TypeDefinitionForm {
     @bindable valuePush: any;
     @bindable actions: Iterable<string>;
     @bindable actionSignal: unknown;
-    @bindable({ defaultBindingMode: bindingMode.twoWay }) value: any;
+    @bindable({ defaultBindingMode: bindingMode.twoWay }) valueIn: any;
+    @bindable({ defaultBindingMode: bindingMode.twoWay }) valueOut: any;
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
+
+    @observable() value: any;
 
     slug = nanoid(8);
 
     choices: SchemaDescription[] = [];
     @observable() chosenSchema: SchemaDescription;
 
+    @observable() nextActiveSchema: SchemaDescription;
+    nextActiveValue: any;
     activeSchema: SchemaDescription;
 
     valueCache: Map<string, any> = new Map();
 
-    childValid: boolean;
+    @observable() childValid: boolean;
 
     initialDataChanged(newValue, oldValue) {
-        this.updateChoiceFromInitialData(true);
+        this.updateChoiceFromObjectData(newValue, true);
     }
 
     // eslint-disable-next-line complexity
-    updateChoiceFromInitialData(forceUpdate: boolean = false) {
+    updateChoiceFromObjectData(data: any, forceUpdate: boolean = false) {
         if (!(this.choices?.length > 0)) {
             return; // no choices to choose from
         }
-        if (!this.initialData) {
-            return; // no initial data to update from
+        if (data == null) {
+            return; // no data to update from
         }
         if (this.chosenSchema != null && !forceUpdate) {
             return; // some schema already chosen
         }
         let schemaId: string;
-        const initialType = this.initialData.type;
+        const initialType = data.type ?? [];
         if (initialType.some(t => t === "object")) {
             schemaId = "#/definitions/object";
-            const customObjectType = this.initialData.customType;
-            // TODO use customObject type for object and taxonomy and type references!
-            if (this.initialData.$ref != null) {
+            const customObjectType = data.customType;
+            if (customObjectType === "resourceReference") {
+                schemaId = "#/definitions/resourceReference";
+            }
+            // add more custom types here
+            if (data.$ref != null) {
                 schemaId = "#/definitions/ref";
             }
         }
         if (initialType.some(t => t === "array")) {
             schemaId = "#/definitions/array";
-            if (this.initialData.arrayType === "tuple") {
+            if (data.arrayType === "tuple") {
                 schemaId = "#/definitions/tuple";
             }
         } else if (initialType.some(t => t === "string")) {
@@ -72,21 +80,19 @@ export class TypeDefinitionForm {
             schemaId = "#/definitions/integer";
         } else if (initialType.some(t => t === "boolean")) {
             schemaId = "#/definitions/boolean";
-        } else if (this.initialData.enum != null) {
+        } else if (data.enum != null) {
             schemaId = "#/definitions/enum";
         }
 
         const choice = this.choices.find(choice => {
             return choice.schema.normalized.$id.endsWith(schemaId);
         });
+
         if (choice != null) {
-            window.setTimeout(() => {
-                if (this.value == null) {
-                    this.value = {};
-                }
-                this.activeSchema = choice;
-                this.chosenSchema = choice;
-            }, 0);
+            this.activeSchema = null;
+            this.chosenSchema = choice;
+            this.nextActiveValue = { ...(this.value ?? {}) };
+            this.nextActiveSchema = choice;
         }
     }
 
@@ -122,15 +128,33 @@ export class TypeDefinitionForm {
             return 0;
         });
         this.choices = choices;
-        this.updateChoiceFromInitialData();
+        this.updateChoiceFromObjectData(this.initialData);
 
-        window.setTimeout(() => {
-            this.updateValid();
-        }, 0);
+        this.updateValid();
     }
 
+    valueInChanged(newValue) {
+        if (newValue?.type === "object") {
+            console.error("Wrong input value!", newValue)
+            return;
+        }
+        this.updateChoiceFromObjectData(newValue);
+        this.value = { ...newValue };
+    }
 
     valueChanged(newValue, oldValue) {
+        if (newValue == null) {
+            return; // cannot be null
+        }
+        const newValueOut = { ...newValue };
+        const containsChanges = Object.keys(newValueOut).some(key => newValueOut[key] !== this.valueOut?.[key]);
+        const hasLessKeys = Object.keys(newValueOut).length < Object.keys(this.valueOut ?? {}).length;
+        if (containsChanges || hasLessKeys) {
+            this.valueOut = newValueOut;
+        }
+    }
+
+    valueOutChanged(newValue) {
         this.updateValid();
     }
 
@@ -139,7 +163,7 @@ export class TypeDefinitionForm {
     }
 
     updateValid() {
-        if (this.value == null) {
+        if (this.valueOut == null) {
             this.valid = false; // this object type is never nullable
         } else {
             this.valid = this.childValid ?? false;
@@ -152,11 +176,12 @@ export class TypeDefinitionForm {
         }
         const oldValue = this.value ?? {};
         if (oldSchemaValue != null) {
-            this.valueCache.set(oldSchemaValue.title, oldValue);
+            this.valueCache.set(oldSchemaValue.title, { ...(oldValue ?? {}) });
         }
-        this.value = {};
         this.activeSchema = null; // always set active schema to null first to reset child form
         if (newSchemaValue == null) {
+            this.nextActiveValue = null;
+            this.nextActiveSchema = null;
             this.value = null;
             return;
         }
@@ -180,11 +205,14 @@ export class TypeDefinitionForm {
             }
         });
 
-        // use timeout so that aurelia bindings resgister the reset before setting the new values!
-        window.setTimeout(() => {
-            this.activeSchema = newSchemaValue;
+        this.nextActiveValue = newValue;
+        this.nextActiveSchema = newSchemaValue;
+    }
 
-            this.value = newValue;
-        }, 0);
+    nextActiveSchemaChanged(newSchema) {
+        if (this.nextActiveValue !== undefined) {
+            this.value = this.nextActiveValue;
+        }
+        this.activeSchema = newSchema;
     }
 }

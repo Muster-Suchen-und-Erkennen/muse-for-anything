@@ -1,4 +1,4 @@
-import { bindable, bindingMode, child } from "aurelia-framework";
+import { bindable, observable, bindingMode, child } from "aurelia-framework";
 import { NormalizedApiSchema } from "rest/schema-objects";
 import { nanoid } from "nanoid";
 
@@ -12,9 +12,12 @@ export class EnumForm {
     @bindable debug: boolean = false;
     @bindable actions: Iterable<string>;
     @bindable actionSignal: unknown;
-    @bindable({ defaultBindingMode: bindingMode.twoWay }) value: string | number | boolean | null;
+    @bindable({ defaultBindingMode: bindingMode.toView }) valueIn: string | number | boolean | null;
+    @bindable({ defaultBindingMode: bindingMode.fromView }) valueOut: string | number | boolean | null;
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
+
+    @observable() value: string | number | boolean | null;
 
     slug = nanoid(8);
 
@@ -23,13 +26,11 @@ export class EnumForm {
     enumChoices: Array<string | number | boolean | null> = [];
 
     initialDataChanged(newValue, oldValue) {
-        if (newValue !== undefined && !this.dirty) {
-            if (this.isNullable) {
-                this.value = newValue;
-            } else {
-                this.value = newValue ?? false;
+        if (newValue !== undefined) {
+            const initialDataChoice = this.enumChoices?.find(choice => choice === this.initialData) ?? undefined;
+            if (initialDataChoice !== undefined) {
+                this.value = initialDataChoice;
             }
-            this.updateValid();
         }
     }
 
@@ -84,25 +85,34 @@ export class EnumForm {
         this.enumChoices = enumChoicesArray;
 
         if (!this.isNullable && this.value == null && enumChoicesArray.length > 0) {
-            this.value = enumChoicesArray[0];
+            const initialDataChoice = this.enumChoices?.find(choice => choice === this.initialData) ?? undefined;
+            if (initialDataChoice !== undefined) {
+                this.value = initialDataChoice;
+            } else {
+                this.value = enumChoicesArray[0];
+            }
         }
-        this.updateValid();
+    }
+
+    valueInChanged(newValue) {
+        if (this.enumChoices?.some(choice => choice === newValue)) {
+            this.value = newValue;
+        }
     }
 
     valueChanged(newValue, oldValue) {
+        window.setTimeout(() => { // this is somehow needed TODO: debug
+            this.valueOut = newValue;
+        }, 0);
+    }
+
+    valueOutChanged(newValue) {
         if (this.initialData === undefined) {
             this.dirty = !(newValue == null || !this.isNullable);
         } else {
             this.dirty = this.initialData !== newValue;
         }
-        this.updateValid();
-    }
-
-    updateValid() {
-        window.setTimeout(() => {
-            this.dirty = this.initialData !== this.value;
-            this.valid = this.enumChoices?.some(choice => choice === this.value) ?? false;
-        }, 1);
+        this.valid = this.enumChoices?.some(choice => choice === this.value) ?? false;
     }
 
 }

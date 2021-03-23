@@ -1,7 +1,7 @@
-import { bindable, bindingMode, autoinject } from "aurelia-framework";
+import { bindable, observable, bindingMode, autoinject } from "aurelia-framework";
 import { NormalizedApiSchema, NormalizedJsonSchema } from "rest/schema-objects";
 
-export type UpdateSignal = () => void;
+export type UpdateSignal = (type?: "value" | "valid" | "dirty") => void;
 
 @autoinject
 export class SchemaForm {
@@ -20,6 +20,9 @@ export class SchemaForm {
     @bindable({ defaultBindingMode: bindingMode.twoWay }) value: unknown;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
+
+    valueIn: unknown;
+    @observable() valueOut: unknown;
 
     private maxConstUpdateTries = 100; // FIXME remove workaround
 
@@ -77,10 +80,13 @@ export class SchemaForm {
         window.setTimeout(() => {
             // manually delay updates of initialData by a bit to get the right update order in form fields
             this.initialDataFix = newValue;
-        }, 3);
+        }, 1);
     }
 
     valueChanged(newValue, oldValue) {
+        if (this.valueOut === newValue) {
+            return; // value change came from child form
+        }
         if (this.constValue !== undefined && newValue !== this.constValue) {
             if (this.maxConstUpdateTries <= 0) {
                 console.error("Const update loop detected.", this.key, this.label, this.schema);
@@ -90,17 +96,12 @@ export class SchemaForm {
             this.valid = true;
             this.value = this.constValue;
         }
+        // propagate value change to child form
+        this.valueIn = newValue;
     }
 
-    validChanged(newVal, oldVal) {
-        if (this.updateSignal != null) {
-            this.updateSignal();
-        }
-    }
-
-    dirtyChanged(newVal, oldVal) {
-        if (this.updateSignal != null) {
-            this.updateSignal();
-        }
+    valueOutChanged(newValue, oldValue) {
+        // value change from child form
+        this.value = newValue;
     }
 }

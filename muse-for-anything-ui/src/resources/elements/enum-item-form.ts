@@ -18,13 +18,18 @@ export class EnumItemForm {
     @bindable debug: boolean = false;
     @bindable actions: Iterable<string>;
     @bindable actionSignal: unknown;
-    @bindable({ defaultBindingMode: bindingMode.twoWay }) value: string | number | boolean | null;
+    @bindable({ defaultBindingMode: bindingMode.toView }) valueIn: string | number | boolean | null;
+    @bindable({ defaultBindingMode: bindingMode.fromView }) valueOut: string | number | boolean | null;
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
+
+    @observable() value: string | number | boolean | null;
 
     choices: SchemaDescription[] = [];
     @observable() selectedChoice: SchemaDescription;
     activeSchema: SchemaDescription;
+
+    @observable() childValid;
 
     preferNumber: boolean = false;
 
@@ -61,27 +66,59 @@ export class EnumItemForm {
         });
         this.choices = choices;
 
-        window.setTimeout(() => {
-            this.updateSelectedSchema();
-        }, 0);
+        if (this.valueIn !== undefined) {
+            this.updateSelectedSchema(this.initialData);
+        } else if (this.initialData !== undefined) {
+            this.updateSelectedSchema(this.initialData);
+        }
+    }
+
+    initialDataChanged(newValue) {
+        if (newValue !== undefined) {
+            return;
+        }
+    }
+
+    valueInChanged(newValue, oldValue) {
+        this.updateSelectedSchema(newValue);
     }
 
     valueChanged(newValue, oldValue) {
-        this.updateSelectedSchema();
+        this.valueOut = newValue;
+    }
+
+    valueOutChanged(newValue, oldValue) {
+        if (this.initialData !== undefined) {
+            this.dirty = newValue !== this.initialData;
+        } else {
+            this.dirty = newValue !== undefined;
+        }
+
+        this.childValidChanged();
+    }
+
+    childValidChanged() {
+        if (this.valueOut == null) {
+            this.valid = this.childValid && !this.required;
+        } else {
+            this.valid = this.childValid;
+        }
     }
 
     // eslint-disable-next-line complexity
-    updateSelectedSchema() {
-        const currentValue = this.value ?? this.initialData;
-        let valueType: string;
-        if (currentValue == null && this.activeSchema == null) {
-            valueType = "Null";
-        } else if (currentValue == null) {
+    updateSelectedSchema(value) {
+        if (this.choices == null) {
             return;
-        } else if (currentValue === Boolean(currentValue)) {
+        }
+        let valueType: string;
+        if (value == null && this.activeSchema == null) {
+            valueType = "Null";
+        } else if (value == null) {
+            return;
+        } else if (value === Boolean(value)) {
             valueType = "Boolean";
-        } else if (currentValue === Number(currentValue)) {
-            if (Number.isInteger(currentValue) && !this.preferNumber) {
+        } else if (value === Number(value)) {
+            if (Number.isInteger(value) && !this.preferNumber) {
                 valueType = "Integer";
             } else {
                 valueType = "Number";
@@ -93,18 +130,15 @@ export class EnumItemForm {
         if (this.activeSchema?.schemaId?.endsWith(idSuffix)) {
             return; // schema already selected
         }
+        this.value = value;
         const selectedChoice = this.choices.find(choice => choice.schemaId.endsWith(idSuffix));
         this.activeSchema = selectedChoice;
         if (this.selectedChoice == null) {
             this.selectedChoice = selectedChoice;
         }
-        if (this.value == null) {
-            this.valid = !this.required;
-        } else {
-            this.valid = true;
-        }
     }
 
+    // eslint-disable-next-line complexity
     selectedChoiceChanged(newValue: SchemaDescription) {
         if (this.activeSchema === newValue) {
             return;
@@ -113,7 +147,7 @@ export class EnumItemForm {
             return;
         }
         const normalized = newValue.schema.normalized;
-        this.activeSchema = null;
+        this.activeSchema = newValue;
         if (normalized.const !== undefined) {
             this.value = normalized.const;
             return;
@@ -126,7 +160,7 @@ export class EnumItemForm {
             const numberValue = Number(this.value);
             if (this.value === numberValue) {
                 // no value change, trigger manually
-                this.updateSelectedSchema();
+                this.updateSelectedSchema(this.value);
                 return;
             }
             if (Number.isFinite(numberValue) && !Number.isNaN(numberValue)) {
@@ -136,7 +170,7 @@ export class EnumItemForm {
             }
         }
         if (normalized.mainType === "string") {
-            this.value = this.value.toString();
+            this.value = this.value?.toString() ?? "null";
         }
     }
 

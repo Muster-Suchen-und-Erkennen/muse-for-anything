@@ -1,4 +1,4 @@
-import { bindable, bindingMode, child } from "aurelia-framework";
+import { bindable, observable, bindingMode, child } from "aurelia-framework";
 import { NormalizedApiSchema } from "rest/schema-objects";
 import { nanoid } from "nanoid";
 
@@ -12,9 +12,12 @@ export class NumberForm {
     @bindable debug: boolean = false;
     @bindable actions: Iterable<string>;
     @bindable actionSignal: unknown;
-    @bindable({ defaultBindingMode: bindingMode.twoWay }) value: number;
+    @bindable({ defaultBindingMode: bindingMode.toView }) valueIn: number;
+    @bindable({ defaultBindingMode: bindingMode.fromView }) valueOut: number;
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
+
+    @observable() value: string;
 
     slug = nanoid(8);
 
@@ -39,13 +42,12 @@ export class NumberForm {
     @child(".input-valid-check") formInput: Element;
 
     initialDataChanged(newValue, oldValue) {
-        if (newValue !== undefined && !this.dirty) {
+        if (newValue !== undefined) {
             if (this.isNullable) {
-                this.value = newValue;
+                this.value = newValue?.toString() ?? "";
             } else {
-                this.value = newValue ?? 0;
+                this.value = newValue?.toString() ?? "0";
             }
-            this.dirty = false;
         }
         if (this.formInput != null) {
             this.formIsValid = (this.formInput as HTMLInputElement).validity.valid;
@@ -58,7 +60,7 @@ export class NumberForm {
         const normalized = newValue.normalized;
         this.isNullable = normalized.type.has(null);
         if (!this.isNullable && this.value == null) {
-            this.value = 0;
+            this.value = "0";
         }
 
         if (normalized.mainType === "integer") {
@@ -89,28 +91,47 @@ export class NumberForm {
         }
     }
 
+    valueInChanged(newValue: number) {
+        if (this.isNullable) {
+            this.value = newValue?.toString() ?? "";
+        } else {
+            this.value = newValue?.toString() ?? "0";
+        }
+    }
+
     // eslint-disable-next-line complexity
-    valueChanged(newValue, oldValue) { // TODO value does not change for float input with integer
+    valueChanged(newValue: string, oldValue) { // TODO value does not change for float input with integer
+        let newValueOut: number = null;
+        if (newValue === "" || newValue == null) {
+            this.valueOut = newValueOut;
+            return;
+        }
+        if (this.isInteger) {
+            newValueOut = parseInt(newValue, 10);
+        } else {
+            newValueOut = parseFloat(newValue);
+        }
+        this.valueOut = newValueOut;
+    }
+
+    valueOutChanged(newValue: number) {
         if (this.initialData === undefined) {
-            this.dirty = !(newValue == null || (!this.isNullable && newValue === ""));
+            this.dirty = !(newValue == null || (!this.isNullable && newValue == null));
         } else {
             this.dirty = this.initialData !== newValue;
         }
-        let updatedValidStatus = false;
-        if (this.formInput != null) {
-            this.formIsValid = (this.formInput as HTMLInputElement).validity.valid;
-            updatedValidStatus = true;
-        }
+
+        // update validity
         if (this.exclusiveMinimum != null || this.exclusiveMaximum != null) {
             this.boundsValid = (this.exclusiveMinimum == null || this.exclusiveMinimum < newValue) && (this.exclusiveMaximum == null || this.exclusiveMaximum > newValue);
-            updatedValidStatus = true;
         }
         if (this.extraMultiples) {
             // TODO
         }
-        if (updatedValidStatus) {
-            this.updateValid();
+        if (this.formInput != null) {
+            this.formIsValid = (this.formInput as HTMLInputElement).validity.valid;
         }
+        this.updateValid();
     }
 
     formInputChanged() {
@@ -121,10 +142,12 @@ export class NumberForm {
     }
 
     updateValid() {
-        if (this.value == null) {
+        if (this.valueOut == null) {
             this.valid = this.isNullable;
             return;
         }
-        this.valid = this.formIsValid && this.boundsValid;
+        const isNaN = Number.isNaN(this.valueOut);
+        const isFinite = Number.isFinite(this.valueOut);
+        this.valid = this.formIsValid && this.boundsValid && !isNaN && isFinite;
     }
 }

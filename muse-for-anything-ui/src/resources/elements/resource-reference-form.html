@@ -20,13 +20,13 @@
             <api-resource api-link.bind="currentResourceLink" is-root.one-time="false">
             </api-resource>
         </div>
-        <div if.bind="referenceRootType==='ont-taxonomy' && referenceType === 'ont-taxonomy-item'">
+        <div if.bind="referenceRootType==='ont-taxonomy' && currentReferenceType === 'ont-taxonomy-item'">
             <taxonomy-item-select label.bind="'choose taxonomy item'" taxonomy-key.bind="referenceRootKey"
                 value.bind="currentReferenceKey">
             </taxonomy-item-select>
         </div>
         <button
-            if.bind="referenceRootType != null && !(referenceRootType==='ont-taxonomy' && referenceType === 'ont-taxonomy-item')"
+            if.bind="referenceRootType != null && !(referenceRootType==='ont-taxonomy' && currentReferenceType === 'ont-taxonomy-item')"
             class="button-outline" click.delegate="openResourceChooser()">
             Choose
         </button>

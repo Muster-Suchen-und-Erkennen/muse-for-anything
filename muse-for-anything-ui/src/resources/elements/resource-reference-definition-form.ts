@@ -18,11 +18,15 @@ export class ResourceReferenceDefinitionForm {
     @bindable valuePush: any;
     @bindable actions: Iterable<string>;
     @bindable actionSignal: unknown;
-    @bindable({ defaultBindingMode: bindingMode.twoWay }) value: any;
+    @bindable({ defaultBindingMode: bindingMode.toView }) valueIn: any;
+    @bindable({ defaultBindingMode: bindingMode.fromView }) valueOut: any;
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
 
+    @observable() value: any = {};
+
     extraProperties: PropertyDescription[] = [];
+    propertyState: { [prop: string]: "readonly" | "editable" | "missing" } = {};
     requiredProperties: Set<string> = new Set();
 
     @observable() propertiesValid = {};
@@ -33,7 +37,7 @@ export class ResourceReferenceDefinitionForm {
 
     invalidProps: string[];
 
-    referenceType: string;
+    currentReferenceType: string;
     namespaceApiLink: ApiLink;
 
     currentResourceLink: ApiLink;
@@ -47,11 +51,26 @@ export class ResourceReferenceDefinitionForm {
     }
 
     initialDataChanged(newValue, oldValue) {
+        if (newValue != null) {
+            const initialValue: any = {};
+            if (newValue.referenceType != null) {
+                initialValue.referenceType = newValue.referenceType;
+                this.currentReferenceType = newValue.referenceType;
+            }
+            if (newValue.referenceKey != null) {
+                initialValue.referenceKey = newValue.referenceKey;
+                // TODO calc reference key…
+            }
+            this.value = initialValue; // prime new value for children to fill
+        }
         this.reloadProperties();
     }
 
     schemaChanged(newValue: NormalizedApiSchema, oldValue) {
         this.valid = null;
+        if (this.value != null) {
+            this.value = { ...(this.value ?? {}) };
+        }
         this.reloadProperties();
     }
 
@@ -87,7 +106,7 @@ export class ResourceReferenceDefinitionForm {
             this.requiredProperties = new Set();
             return;
         }
-        if (!this.schema.normalized.type.has("object")) {
+        if (!this.schema.normalized.type?.has("object")) {
             console.error("Not an object!"); // FIXME better error!
             this.extraProperties = [];
             this.requiredProperties = new Set();
@@ -98,30 +117,55 @@ export class ResourceReferenceDefinitionForm {
             excludeReadOnly: true,
             blockList: propertyBlockList,
         });
+        const propertyState: { [prop: string]: "readonly" | "editable" | "missing" } = {};
+        this.extraProperties.forEach(prop => {
+            propertyState[prop.propertyName] = this.getPropertyState(prop);
+        });
+        this.propertyState = propertyState;
         const normalized = this.schema.normalized;
         const requiredProperties = new Set(normalized.required);
         propertyBlockList.forEach(propKey => requiredProperties.delete(propKey));
         this.requiredProperties = requiredProperties;
 
-        this.fixValue();
-        this.updateSignal();
+        this.valueChanged(this.value, null);
     }
 
-    // eslint-disable-next-line complexity
-    private fixValue() {
-        // calculate and apply default values
-        const valueUpdate: any = {};
-        if (this.value?.customType !== "resourceReference") {
-            valueUpdate.customType = "resourceReference";
+    valueInChanged(newValue) {
+        if (newValue == null) {
+            this.value = {}; // is never nullable!
+        } else {
+            this.currentReferenceType = newValue.referenceType;
+            this.value = { ...newValue };
+            // TODO calc reference link…
         }
-        if (this.value?.type == null) {
-            valueUpdate.type = ["object"];
+        this.reloadProperties();
+    }
+
+    onPropertyValueUpdate = (value, binding) => {
+        this.valueChanged(this.value, null);
+    };
+
+    valueChanged(newValue, oldValue) {
+        this.checkReferenceType();
+        this.checkReferenceLink();
+        const newValueOut: any = {}; // TODO
+        this.extraProperties?.forEach(prop => {
+            if (newValue?.[prop.propertyName] !== undefined) {
+                newValueOut[prop.propertyName] = newValue[prop.propertyName];
+            }
+        });
+        newValueOut.referenceKey = newValue?.referenceKey ?? null;
+        if (newValueOut.customType !== "resourceReference") {
+            newValueOut.customType = "resourceReference";
         }
-        if (this.value?.required == null) {
-            valueUpdate.required = ["referenceType", "referenceKey"];
+        if (newValueOut.type == null) {
+            newValueOut.type = ["object"];
+        }
+        if (newValueOut.required == null) {
+            newValueOut.required = ["referenceType", "referenceKey"];
         }
 
-        const refType = this.value?.referenceType ?? "ont-type";
+        const refType = newValueOut.referenceType ?? "ont-type";
         let childRefType = "ont-object";
         if (refType === "ont-type") {
             childRefType = "ont-object";
@@ -129,8 +173,8 @@ export class ResourceReferenceDefinitionForm {
         if (refType === "ont-taxonomy") {
             childRefType = "ont-taxonomy-item";
         }
-        if (this.value?.properties == null || this.value?.properties?.referenceType?.const !== childRefType) {
-            valueUpdate.properties = {
+        if (newValueOut.properties == null || newValueOut.properties?.referenceType?.const !== childRefType) {
+            newValueOut.properties = {
                 referenceType: { const: childRefType },
                 referenceKey: {
                     type: "object",
@@ -138,29 +182,70 @@ export class ResourceReferenceDefinitionForm {
                 },
             };
         }
-
-        if (Object.keys(valueUpdate).length > 0 || (this.value == null && this.required)) {
-            window.setTimeout(() => { // FIXME this trigger very often...
-                this.value = {
-                    ...(this.value ?? {}),
-                    ...valueUpdate,
-                };
-            }, 1);
-        }
+        // todo: fix frequent updates?
+        this.valueOut = newValueOut;
     }
 
-    valueChanged(newValue, oldValue) {
-        this.fixValue();
-        this.checkReferenceType();
+    valueOutChanged() {
+        this.propertiesValidChanged(this.propertiesValid);
+        this.propertiesDirtyChanged(this.propertiesDirty);
     }
 
     checkReferenceType() {
         // TODO change resource type?
-        if (this.referenceType !== this.value?.referenceType) {
-            this.value.referenceKey = null; // TODO save for reuse?
-            this.referenceType = this.value?.referenceType;
-            this.updateValid();
+        if (this.currentReferenceType !== this.value?.referenceType) {
+            if (this.currentReferenceType != null) {
+                // delete current key as it is for a different ref type
+                this.value.referenceKey = null; // TODO save for reuse?
+            }
+            this.currentReferenceType = this.value?.referenceType;
         }
+    }
+
+    checkReferenceLink() {
+        if (this.value.referenceKey == null) {
+            this.currentResourceLink = null;
+        } else {
+            if (Object.keys(this.value.referenceKey).some(key => this.currentResourceLink?.resourceKey?.[key] !== this.value.referenceKey[key])) {
+                // reload reference link…
+                this.apiService.resolveLinkKey(this.value.referenceKey, this.currentReferenceType).then(links => {
+                    this.currentResourceLink = links.find(link => !link.rel.some(rel => rel === "collection"));
+                });
+            }
+        }
+    }
+
+    showAddPropertyButton(prop: PropertyDescription): boolean {
+        const hasNoInitialValue = this.initialData?.[prop.propertyName] === undefined;
+        const hasNoValue = this.value?.[prop.propertyName] === undefined && !(prop.propertySchema.normalized.readOnly);
+        const isNotRequired = this.requiredProperties == null || !this.requiredProperties.has(prop.propertyName);
+        return hasNoValue && hasNoInitialValue && isNotRequired;
+    }
+
+    showReadOnlyProp(prop: PropertyDescription): boolean {
+        const isReadOnly = prop.propertySchema.normalized.readOnly;
+        const hasInitialValue = this.initialData?.[prop.propertyName] !== undefined;
+        return isReadOnly && hasInitialValue && !this.showAddPropertyButton(prop);
+    }
+
+    showPropertyForm(prop: PropertyDescription): boolean {
+        const isReadOnly = prop.propertySchema.normalized.readOnly;
+        const hasInitialValue = this.initialData?.[prop.propertyName] !== undefined;
+        const hasValue = this.value?.[prop.propertyName] !== undefined;
+        return !isReadOnly && (hasInitialValue || hasValue) && !this.showAddPropertyButton(prop);
+    }
+
+    getPropertyState(prop: PropertyDescription): "readonly" | "editable" | "missing" {
+        if (this.showAddPropertyButton(prop)) {
+            return "missing";
+        }
+        if (this.showReadOnlyProp(prop)) {
+            return "readonly";
+        }
+        if (this.showPropertyForm(prop)) {
+            return "editable";
+        }
+        return "editable";
     }
 
     propertyActionSignal(action: { actionType: string, key: string }) {
@@ -168,6 +253,7 @@ export class ResourceReferenceDefinitionForm {
             const newValue = { ...this.value };
             delete newValue[action.key];
             this.value = newValue;
+            this.propertyState[action.key] = "missing";
         }
     }
 
@@ -177,17 +263,18 @@ export class ResourceReferenceDefinitionForm {
                 ...(this.value ?? {}),
                 [propName]: null,
             };
+            const prop = this.extraProperties.find(prop => prop.propertyName === propName);
+            if (prop != null) {
+                this.propertyState[propName] = this.getPropertyState(prop);
+            } else {
+                this.propertyState[propName] = "editable";
+            }
         }
     }
 
-    updateSignal() {
-        this.checkReferenceType();
-        this.fixValue();
-        window.setTimeout(() => {
-            this.propertiesValidChanged(this.propertiesValid);
-            this.propertiesDirtyChanged(this.propertiesDirty);
-        }, 1);
-    }
+    onPropertyValidUpdate = (value, binding) => {
+        this.propertiesValidChanged(this.propertiesValid);
+    };
 
     propertiesValidChanged(newValue: { [prop: string]: boolean }) {
         if (newValue == null) {
@@ -200,7 +287,7 @@ export class ResourceReferenceDefinitionForm {
                 return newValue[key]; // property validity is known
             }
             // assume valid if not required and not present
-            return !this.requiredProperties.has(key) && this.value[key] === undefined;
+            return !this.requiredProperties.has(key) && this.valueOut?.[key] === undefined;
         });
         if (!allPropertiesValid) {
             this.invalidProps = propKeys.filter(key => !newValue[key]);
@@ -215,6 +302,10 @@ export class ResourceReferenceDefinitionForm {
         const allRequiredPresent = this.requiredProperties.size === requiredPropKeys.length;
         this.propertiesAreValid = allPropertiesValid && allRequiredPresent;
     }
+
+    onPropertyDirtyUpdate = (value, binding) => {
+        this.propertiesDirtyChanged(this.propertiesDirty);
+    };
 
     propertiesDirtyChanged(newValue: { [prop: string]: boolean }) {
         if (newValue == null) {
@@ -231,16 +322,16 @@ export class ResourceReferenceDefinitionForm {
 
 
     updateValid() {
-        if (this.value == null) {
+        if (this.valueOut == null) {
             this.valid = false; // this can never be nullable!
             return;
         }
         let referenceKeyValid = false;
-        if (this.referenceType === "ont-type") {
+        if (this.currentReferenceType === "ont-type") {
             referenceKeyValid = true;
         }
-        if (this.referenceType === "ont-taxonomy") {
-            referenceKeyValid = this.value.referenceKey != null;
+        if (this.currentReferenceType === "ont-taxonomy") {
+            referenceKeyValid = this.valueOut.referenceKey != null;
         }
         this.valid = this.propertiesAreValid && referenceKeyValid;
     }
@@ -255,21 +346,21 @@ export class ResourceReferenceDefinitionForm {
     }
 
     openResourceChooser() {
-        if (this.referenceType == null || this.namespaceApiLink == null) {
+        if (this.currentReferenceType == null || this.namespaceApiLink == null) {
             return;
         }
         const model = {
-            referenceType: this.referenceType,
+            referenceType: this.currentReferenceType,
             baseApiLink: this.namespaceApiLink,
         };
         this.dialogService.open({ viewModel: ApiObjectChooserDialog, model: model, lock: false }).whenClosed(response => {
             if (!response.wasCancelled) {
-                if (this.value == null || this.referenceType !== model.referenceType) {
+                if (this.value == null || this.currentReferenceType !== model.referenceType) {
                     return;
                 }
                 this.value.referenceKey = (response.output as ApiLink).resourceKey;
                 this.currentResourceLink = (response.output as ApiLink);
-                this.updateValid();
+                this.valueChanged(this.value, null);
             } else {
                 // do nothing on cancel
             }

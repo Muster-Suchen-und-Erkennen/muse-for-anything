@@ -1,4 +1,4 @@
-import { bindable, bindingMode, child } from "aurelia-framework";
+import { bindable, observable, bindingMode, child } from "aurelia-framework";
 import { NormalizedApiSchema } from "rest/schema-objects";
 import { nanoid } from "nanoid";
 
@@ -12,9 +12,12 @@ export class TextForm {
     @bindable debug: boolean = false;
     @bindable actions: Iterable<string>;
     @bindable actionSignal: unknown;
-    @bindable({ defaultBindingMode: bindingMode.twoWay }) value: string;
+    @bindable({ defaultBindingMode: bindingMode.toView }) valueIn: string;
+    @bindable({ defaultBindingMode: bindingMode.fromView }) valueOut: string;
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
+
+    @observable() value: string;
 
     slug = nanoid(8);
 
@@ -46,9 +49,7 @@ export class TextForm {
         if (this.formInput != null) {
             this.formIsValid = (this.formInput as HTMLInputElement).validity.valid;
 
-            window.setTimeout(() => {
-                this.updateValid();
-            }, 0);
+            this.updateValid();
         }
     }
 
@@ -80,9 +81,16 @@ export class TextForm {
         } else {
             this.isSingelLine = false;
         }
-        window.setTimeout(() => {
-            this.updateValid();
-        }, 0);
+        this.updateValid();
+    }
+
+    valueInChanged(newValue, oldValue) {
+        // value change from outside
+        if (this.isNullable) {
+            this.value = newValue;
+        } else {
+            this.value = newValue ?? "";
+        }
     }
 
     valueChanged(newValue, oldValue) {
@@ -99,6 +107,7 @@ export class TextForm {
             this.extraIsValid = this.extraPatterns.every(pattern => pattern.test(newValue));
             updatedValidStatus = true;
         }
+        this.valueOut = newValue;
         if (updatedValidStatus) {
             this.updateValid();
         }
@@ -119,7 +128,7 @@ export class TextForm {
         if (this.formInput != null) {
             this.formIsValid = (this.formInput as HTMLInputElement).validity.valid;
         } else {
-            console.log("no form input")
+            // console.log("no form input")
         }
         this.valid = this.formIsValid && this.extraIsValid;
     }

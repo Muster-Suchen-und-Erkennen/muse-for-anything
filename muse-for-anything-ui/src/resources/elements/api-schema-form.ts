@@ -90,6 +90,7 @@ export class ApiSchemaForm {
                     this.navigateToNewResource(response.data.new);
                 }
                 if (isChangedApiObject(response.data)) {
+                    this.navigateToNewResource(response.data.changed);
                     this.events.publish(API_RESOURCE_CHANGES_CHANNEL, response.data.changed.resourceKey);
                 }
             })
@@ -106,6 +107,15 @@ export class ApiSchemaForm {
     private navigateToNewResource(newResourceLink: ApiLink) {
         if (this.autoNavigate) {
             this.api.buildClientUrl(newResourceLink)
+                .then(clientUrl => {
+                    this.router.navigate(`/explore/${clientUrl}`);
+                });
+        }
+    }
+
+    private navigateToChangedResource(changedResourceLink: ApiLink) {
+        if (this.autoNavigate) {
+            this.api.buildClientUrl(changedResourceLink)
                 .then(clientUrl => {
                     this.router.navigate(`/explore/${clientUrl}`);
                 });

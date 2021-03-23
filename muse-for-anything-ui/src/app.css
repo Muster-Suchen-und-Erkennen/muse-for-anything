@@ -4,7 +4,7 @@
 
 
 @layer utilities {
-    @variants responsive, dark, visited, hover, focus, active, disabled {
+    @variants responsive, dark, visited, hover, focus, focus-within, active, disabled {
         /* card shadow */
         .shadow-card {
             --tw-shadow: 0 1px 6px 0px rgba(0, 0, 0, 0.25), 0 2px 4px -1px rgba(0, 1, 0, 0.1);
@@ -147,7 +147,6 @@ nav {
 
 .sidebar {
     grid-area: sidebar;
-    overflow: hidden;
 }
 
 main {

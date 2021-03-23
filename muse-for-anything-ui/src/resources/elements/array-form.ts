@@ -12,9 +12,12 @@ export class ArrayForm {
     @bindable valuePush: any[];
     @bindable actions: Iterable<string>;
     @bindable actionSignal: unknown;
-    @bindable({ defaultBindingMode: bindingMode.twoWay }) value: any[];
-    @bindable({ defaultBindingMode: bindingMode.twoWay }) valid: boolean;
+    @bindable({ defaultBindingMode: bindingMode.toView }) valueIn: any[];
+    @bindable({ defaultBindingMode: bindingMode.fromView }) valueOut: any[];
+    @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
+
+    @observable() value: any[] = [];
 
     isNullable: boolean = false;
 
@@ -30,8 +33,40 @@ export class ArrayForm {
         this.reloadItems();
     }
 
-    valueChanged(newValue, oldValue) {
+    valueInChanged(newValue) {
+        if (newValue == null) {
+            this.value = null;
+        } else {
+            this.value = [...newValue];
+        }
         this.reloadItems();
+    }
+
+    onItemValueUpdate = (value, binding) => {
+        this.valueChanged(this.value, null);
+    };
+
+    valueChanged(newValue, oldValue) {
+        const newOutValue: any[] = [...(newValue ?? [])];
+        const newValueIsDifferent = newOutValue.some((item, index) => {
+            if (this.valueOut?.[index] !== item) {
+                return true;
+            }
+            return false;
+        });
+        const hasLessItems = newOutValue.length < (this.valueOut?.length ?? 0);
+        if (newValueIsDifferent || hasLessItems) {
+            if (newValue == null && this.isNullable) {
+                this.valueOut = null;
+            } else {
+                this.valueOut = newOutValue;
+            }
+        }
+    }
+
+    valueOutChanged(newValue) {
+        this.itemsValidChanged(this.itemsValid);
+        this.itemsDirtyChanged(this.itemsDirty);
     }
 
     schemaChanged(newValue, oldValue) {
@@ -60,7 +95,9 @@ export class ArrayForm {
         this.isNullable = normalized.type.has("null");
         this.minItems = normalized.minItems;
         this.maxItems = normalized.maxItems;
-        const currentLength = this.initialData?.length ?? this.value?.length ?? 0;
+        const currentValueLength = this.value?.length ?? 0;
+        const initialDataLength = this.initialData?.length ?? 0;
+        const currentLength = (currentValueLength > initialDataLength) ? currentValueLength : initialDataLength;
 
 
         while (currentLength > this.itemsValid.length) {
@@ -77,27 +114,28 @@ export class ArrayForm {
         }
 
         this.itemSchemas = this.schema.getItemList(currentLength);
-        this.updateSignal();
+        this.valueChanged(this.value, null);
     }
 
-    updateSignal() {
-        window.setTimeout(() => {
-            this.itemsValidChanged(this.itemsValid);
-            this.itemsDirtyChanged(this.itemsDirty);
-        }, 1);
-    }
+    onItemValidUpdate = (value, binding) => {
+        this.itemsValidChanged(this.itemsValid, null);
+    };
 
     itemsValidChanged(newValue: boolean[], oldValue?) {
-        if (this.value == null) {
+        if (this.valueOut == null) {
             this.valid = this.isNullable;
             return;
         }
-        const valuesValid = newValue?.every((valid, i) => valid || (i >= this.value.length)) ?? false;
+        const valuesValid = newValue?.every((valid, i) => valid || (i >= this.valueOut.length)) ?? false;
         const minItemsValid = (this.minItems ?? 0) <= (newValue?.length ?? 0);
         const maxItemsValid = this.maxItems == null || this.maxItems >= (newValue?.length ?? 0);
         // TODO unique items
         this.valid = valuesValid && minItemsValid && maxItemsValid;
     }
+
+    onItemDirtyUpdate = (value, binding) => {
+        this.itemsDirtyChanged(this.itemsDirty, null);
+    };
 
     itemsDirtyChanged(newValue: boolean[], oldValue?) {
         this.dirty = newValue?.some(valid => valid) ?? false;
@@ -107,6 +145,7 @@ export class ArrayForm {
         const newValue = [...(this.value ?? [])];
         newValue.push(null);
         this.value = newValue;
+        this.reloadItems();
     }
 
     actionSignalCallback(action: { actionType: string, key: number }) {
@@ -114,6 +153,7 @@ export class ArrayForm {
             const newValue = [...this.value];
             newValue.splice(action.key, 1);
             this.value = newValue;
+            this.reloadItems();
         } else {
             // TODO other actions
             console.log(action)
