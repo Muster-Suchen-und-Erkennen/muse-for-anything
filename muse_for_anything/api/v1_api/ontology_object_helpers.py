@@ -243,7 +243,7 @@ def action_links_for_object(object: OntologyObject) -> List[ApiLink]:
                         "api-v1.ObjectView",
                         namespace=str(object.namespace_id),
                         object_id=str(object.id),
-                        external=True,
+                        _external=True,
                     ),
                     rel=("update", "put"),
                     resource_type="ont-object",

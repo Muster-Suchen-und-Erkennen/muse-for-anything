@@ -50,7 +50,6 @@ class SPA(MethodView):
                 matches = self._BODY_REGEX.match(html)
                 body = matches.group("body") if matches else ""
                 skripts = self._SKRIPT_REGEX.findall(body)
-                print(html)
                 return skripts
         else:
             # when in watch mode webpack does not compile the index.html...

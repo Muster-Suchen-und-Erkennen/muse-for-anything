@@ -185,7 +185,7 @@ def action_links_for_type(object_type: OntologyObjectType) -> List[ApiLink]:
                         "api-v1.TypeView",
                         namespace=str(object_type.namespace_id),
                         object_type=str(object_type.id),
-                        external=True,
+                        _external=True,
                     ),
                     rel=("update", "put"),
                     resource_type="ont-type",
