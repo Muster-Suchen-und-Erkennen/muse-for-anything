@@ -1,4 +1,4 @@
-<template>
+<template data-maximized.bind="maximized & empty">
     <require from="./schema-form"></require>
     <require from="./validity-indicator"></require>
     <!-- TODO translations -->
@@ -136,10 +136,12 @@
         <h1 t="loading">Loading</h1>
     </div>
     <template else>
-        <network-graph class="graph" style="contain: strict;" classes="taxonomy-item deleted" mode="layout" zoom="both"
+        <network-graph class="graph bg-white" classes="taxonomy-item deleted" mode="layout" zoom="both"
             svg-template="#taxonomyGraphTemplate">
         </network-graph>
         <div class="buttons card mx-2 my-3 bg-white px-3 py-2 flex flex-row items-center" style="contain: strict;">
+            <button class="button-flat px-2" click.delegate="toggleMaximize()">${ (maximized ? 'graph.minimize' :
+                'graph.maximize') | t}</button>
             <button class="button-flat px-2" click.delegate="resetLayout()">reset layout</button>
             <div class="flex flex-row items-center justify-center" style="flex-basis: 3rem; flex-shrink: 1;">
                 <div class="border-l h-6"></div>

@@ -109,6 +109,10 @@
         "true": "True",
         "false": "False"
     },
+    "graph": {
+        "minimize": "minimize graph",
+        "maximize": "maximize graph"
+    },
     "namespace": "Namespace",
     "type": "Type",
     "object": "Object",

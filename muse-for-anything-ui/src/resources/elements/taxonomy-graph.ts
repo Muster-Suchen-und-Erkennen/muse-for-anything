@@ -195,6 +195,8 @@ export class TaxonomyGraph {
     @observable() apiObject: TaxonomyApiObject;
     @observable() createItemAction: ApiLink;
 
+    maximized: boolean = false;
+
     showForm: boolean = false;
     formProperties: PropertyDescription[];
     formData: { name: string, description: string, sortKey: number } = { name: "", description: "", sortKey: 0 };
@@ -308,6 +310,10 @@ export class TaxonomyGraph {
                 sortKey: newSelected.data.data.sortKey,
             };
         }
+    }
+
+    toggleMaximize() {
+        this.maximized = !this.maximized;
     }
 
     addItem() {
