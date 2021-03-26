@@ -78,7 +78,7 @@ class TypesView(MethodView):
         found_namespace = self._get_namespace(namespace=namespace)
 
         cursor: Optional[str] = kwargs.get("cursor", None)
-        item_count: int = cast(int, kwargs.get("item_count", 50))
+        item_count: int = cast(int, kwargs.get("item_count", 25))
         sort: str = cast(str, kwargs.get("sort", "name").lstrip("+"))
         sort_function: Callable[..., Any] = (
             desc if sort is not None and sort.startswith("-") else asc
@@ -100,22 +100,7 @@ class TypesView(MethodView):
             filter_criteria=ontology_type_filter,
         )
 
-        query: Query = OntologyObjectType.query.filter(*ontology_type_filter)
-
-        query = query.order_by(asc(OntologyObjectType.id))
-
-        if sort_key == "name":
-            query = query.order_by(
-                sort_function(OntologyObjectType.name.collate("NOCASE"))
-            )
-
-        if cursor is not None and cursor.isdigit():
-            # hope that cursor row has not jumped compared to last query in get_page_info
-            query = query.offset(pagination_info.cursor_row)
-
-        query = query.limit(item_count)
-
-        object_types: List[OntologyObjectType] = query.all()
+        object_types: List[OntologyObjectType] = pagination_info.page_items_query.all()
 
         embedded_items: List[ApiResponse] = [
             type_to_api_response(object_type) for object_type in object_types

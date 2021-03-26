@@ -86,7 +86,7 @@ class TaxonomiesView(MethodView):
         found_namespace = self._get_namespace(namespace=namespace)
 
         cursor: Optional[str] = kwargs.get("cursor", None)
-        item_count: int = cast(int, kwargs.get("item_count", 50))
+        item_count: int = cast(int, kwargs.get("item_count", 25))
         sort: str = cast(str, kwargs.get("sort", "name").lstrip("+"))
         sort_function: Callable[..., Any] = (
             desc if sort is not None and sort.startswith("-") else asc
@@ -108,20 +108,7 @@ class TaxonomiesView(MethodView):
             filter_criteria=taxonomy_filter,
         )
 
-        query: Query = Taxonomy.get_eager_query().filter(*taxonomy_filter)
-
-        query = query.order_by(asc(Taxonomy.id))
-
-        if sort_key == "name":
-            query = query.order_by(sort_function(Taxonomy.name.collate("NOCASE")))
-
-        if cursor is not None and cursor.isdigit():
-            # hope that cursor row has not jumped compared to last query in get_page_info
-            query = query.offset(pagination_info.cursor_row)
-
-        query = query.limit(item_count)
-
-        taxonomies: List[Taxonomy] = query.all()
+        taxonomies: List[Taxonomy] = pagination_info.page_items_query.all()
 
         embedded_items: List[ApiResponse] = [
             taxonomy_to_api_response(taxonomy) for taxonomy in taxonomies
@@ -625,7 +612,7 @@ class TaxonomyItemsView(MethodView):
         )
 
         cursor: Optional[str] = kwargs.get("cursor", None)
-        item_count: int = cast(int, kwargs.get("item_count", 50))
+        item_count: int = cast(int, kwargs.get("item_count", 25))
         sort: str = cast(str, kwargs.get("sort", "-updated_on").lstrip("+"))
         sort_function: Callable[..., Any] = (
             desc if sort is not None and sort.startswith("-") else asc
@@ -647,20 +634,7 @@ class TaxonomyItemsView(MethodView):
             filter_criteria=taxonomy_item_filter,
         )
 
-        query: Query = TaxonomyItem.query.filter(*taxonomy_item_filter)
-
-        query = query.order_by(asc(TaxonomyItem.id))
-
-        if sort_key == "updated_on":
-            query = query.order_by(sort_function(TaxonomyItem.updated_on))
-
-        if cursor is not None and cursor.isdigit():
-            # hope that cursor row has not jumped compared to last query in get_page_info
-            query = query.offset(pagination_info.cursor_row)
-
-        query = query.limit(item_count)
-
-        taxonomy_items: List[TaxonomyItem] = query.all()
+        taxonomy_items: List[TaxonomyItem] = pagination_info.page_items_query.all()
 
         embedded_items: List[ApiResponse] = [
             taxonomy_item_to_api_response(item) for item in taxonomy_items

@@ -48,7 +48,7 @@ class NamespacesView(MethodView):
     def get(self, **kwargs: Any):
         """Get the page of namespaces."""
         cursor: Optional[str] = kwargs.get("cursor", None)
-        item_count: int = cast(int, kwargs.get("item_count", 50))
+        item_count: int = cast(int, kwargs.get("item_count", 25))
         sort: str = cast(str, kwargs.get("sort", "name").lstrip("+"))
         sort_function: Callable[..., Any] = (
             desc if sort is not None and sort.startswith("-") else asc
@@ -67,18 +67,7 @@ class NamespacesView(MethodView):
             filter_criteria=namespace_filter,
         )
 
-        query: Query = Namespace.query.filter(*namespace_filter)
-
-        if sort_key == "name":
-            query = query.order_by(sort_function(Namespace.name.collate("NOCASE")))
-
-        if cursor is not None and cursor.isdigit():
-            # hope that cursor row has not jumped compared to last query in get_page_info
-            query = query.offset(pagination_info.cursor_row)
-
-        query = query.limit(item_count)
-
-        namespaces: List[Namespace] = query.all()
+        namespaces: List[Namespace] = pagination_info.page_items_query.all()
 
         embedded_items: List[ApiResponse] = [
             namespace_to_api_response(namespace) for namespace in namespaces

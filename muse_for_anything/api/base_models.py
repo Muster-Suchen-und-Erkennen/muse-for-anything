@@ -171,7 +171,7 @@ class CursorPageArgumentsSchema(MaBaseSchema):
         data_key="item-count",
         allow_none=True,
         load_only=True,
-        missing=5,
+        missing=25,
         validate=Range(1, MAX_PAGE_ITEM_COUNT, min_inclusive=True, max_inclusive=True),
     )
     sort = ma.fields.String(allow_none=True, load_only=True)

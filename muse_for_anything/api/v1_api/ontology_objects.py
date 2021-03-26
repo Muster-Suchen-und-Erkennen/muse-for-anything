@@ -117,7 +117,7 @@ class ObjectsView(MethodView):
         found_namespace = self._get_namespace(namespace=namespace)
 
         cursor: Optional[str] = kwargs.get("cursor", None)
-        item_count: int = cast(int, kwargs.get("item_count", 50))
+        item_count: int = cast(int, kwargs.get("item_count", 25))
         sort: str = cast(str, kwargs.get("sort", "name").lstrip("+"))
         sort_function: Callable[..., Any] = (
             desc if sort is not None and sort.startswith("-") else asc
@@ -149,20 +149,7 @@ class ObjectsView(MethodView):
             filter_criteria=ontology_object_filter,
         )
 
-        query: Query = OntologyObject.query.filter(*ontology_object_filter)
-
-        query = query.order_by(asc(OntologyObject.id))
-
-        if sort_key == "name":
-            query = query.order_by(sort_function(OntologyObject.name.collate("NOCASE")))
-
-        if cursor is not None and cursor.isdigit():
-            # hope that cursor row has not jumped compared to last query in get_page_info
-            query = query.offset(pagination_info.cursor_row)
-
-        query = query.limit(item_count)
-
-        objects: List[OntologyObject] = query.all()
+        objects: List[OntologyObject] = pagination_info.page_items_query.all()
 
         embedded_items: List[ApiResponse] = [
             object_to_api_response(object) for object in objects
@@ -607,6 +594,7 @@ class ObjectView(MethodView):
                 changed=object_link,
             ),
         )
+
 
 # FIXME implement endpoints
 @API_V1.route("/namespaces/<string:namespace>/objects/<string:object_id>/versions/")
