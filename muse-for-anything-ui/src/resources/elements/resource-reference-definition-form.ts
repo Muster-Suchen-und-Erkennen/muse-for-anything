@@ -194,9 +194,19 @@ export class ResourceReferenceDefinitionForm {
     checkReferenceType() {
         // TODO change resource type?
         if (this.currentReferenceType !== this.value?.referenceType) {
-            if (this.currentReferenceType != null) {
+            if (this.currentReferenceType != null && this.value != null) {
                 // delete current key as it is for a different ref type
-                this.value.referenceKey = null; // TODO save for reuse?
+                const valuematchesValueIn = this.valueIn?.referenceKey === this.value.referenceKey && this.valueIn?.referenceType === this.value.referenceType;
+                const referenceTypeMatchesInitialData = this.initialData?.referenceType === this.value.referenceType;
+                const valueMatchesInitialData = this.initialData?.referenceKey === this.value.referenceKey && referenceTypeMatchesInitialData;
+                if (!(valuematchesValueIn || valueMatchesInitialData)) {
+                    // but only if it does not match valueIn or initialData
+                    this.value.referenceKey = null; // TODO save for reuse?
+                }
+                if (referenceTypeMatchesInitialData && this.value.referenceKey == null) {
+                    // restore initial data reference key if switching to a reference type matching initial data
+                    this.value.referenceKey = this.initialData?.referenceKey;
+                }
             }
             this.currentReferenceType = this.value?.referenceType;
         }
