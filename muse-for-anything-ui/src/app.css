@@ -319,3 +319,102 @@ details summary::-webkit-details-marker {
 .link-hover {
     @apply hover:underline hover:text-primary;
 }
+
+/* dialog styles */
+
+.ux-dialog-open .main {
+    filter: blur(0.6px);
+}
+
+ux-dialog-overlay {
+    position:fixed;
+    bottom:0;
+    left:0;
+    top:0;
+    right:0;
+    opacity:0;
+    @apply bg-black;
+}
+
+ux-dialog-overlay.active{
+    opacity: 0.4;
+}
+
+ux-dialog-container{
+    display:flex;
+    justify-content: center;
+    padding-block: 4rem;
+    transition:opacity .2s linear;
+    opacity:0;
+    overflow-x:hidden;
+    overflow-y:auto;
+    position:fixed;
+    top:0;
+    bottom: 0;
+    right:0;
+    left:0;
+}
+
+ux-dialog-container.active{
+    opacity:1;
+}
+
+ux-dialog-container>div{
+    display: flex;
+    align-items: center;
+    min-height: calc(100vh - 8rem);
+    height:-moz-fit-content;
+    height:-webkit-fit-content;
+    height:fit-content;
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
+}
+
+ux-dialog-container>div>div{
+    width:100%;
+    display:block;
+    min-width: 20rem;
+    width:-moz-fit-content;
+    width:-webkit-fit-content;
+    width:fit-content;
+    height:-moz-fit-content;
+    height:-webkit-fit-content;
+    height:fit-content;
+}
+
+ux-dialog-container,ux-dialog-container>div,ux-dialog-container>div>div{
+    /*outline:0*/
+}
+
+ux-dialog{
+    width:100%;
+    display:block;
+    min-width: 20rem;
+    width:-moz-fit-content;
+    width:-webkit-fit-content;
+    width:fit-content;
+    height:-moz-fit-content;
+    height:-webkit-fit-content;
+    height:fit-content;
+    @apply bg-white rounded-md;
+}
+
+ux-dialog>ux-dialog-header{
+    @apply flex w-full justify-between items-baseline py-1.5 px-2.5 border-b border-gray-300; 
+}
+
+ux-dialog>ux-dialog-header>button{
+    @apply order-last justify-self-end; 
+}
+
+ux-dialog>ux-dialog-body{
+    display:block;
+}
+
+ux-dialog>ux-dialog-footer{
+    @apply flex justify-end items-baseline p-1 border-t border-gray-300; 
+}
+
+.ux-dialog-open{
+    overflow:hidden
+}

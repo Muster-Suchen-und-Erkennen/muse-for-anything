@@ -45,7 +45,10 @@ export function configure(aurelia: Aurelia): void {
                 });
             });
         })
-        .plugin(PLATFORM.moduleName("aurelia-dialog"))
+        .plugin(PLATFORM.moduleName("aurelia-dialog"), config => {
+            config.useDefaults();
+            config.useCSS("");
+        })
         .feature(PLATFORM.moduleName("resources/index"));
 
     aurelia.use.developmentLogging(environment.debug ? "debug" : "warn");

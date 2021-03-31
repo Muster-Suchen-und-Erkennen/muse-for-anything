@@ -39,7 +39,7 @@ export class ApiObjectChooserDialog {
             return;
         }
         this.api.getByApiLink(model.baseApiLink).then(response => {
-            this.baseApiLink = response.links.find(link => {
+            const baseApiLink = response.links.find(link => {
                 if (link.resourceType !== model.referenceType) {
                     return false;
                 }
@@ -48,7 +48,20 @@ export class ApiObjectChooserDialog {
                 }
                 return false;
             });
-            this.currentApiLink = this.baseApiLink;
+            if (baseApiLink?.resourceKey?.["?item-count"] == null && !baseApiLink.rel.some(rel => rel === "page")) {
+                this.baseApiLink = baseApiLink;
+                this.currentApiLink = baseApiLink;
+            } else {
+                const overwriteKey = {
+                    ...(baseApiLink.resourceKey ?? {}),
+                    "?item-count": "10",
+                };
+                this.api.resolveLinkKey(overwriteKey, baseApiLink?.resourceType).then(links => {
+                    const overwriteLink = links.find(link => ["collection", "page"].every(rel => link.rel.some(r => r === rel)));
+                    this.baseApiLink = overwriteLink;
+                    this.currentApiLink = overwriteLink;
+                });
+            }
         });
     }
 
@@ -61,7 +74,17 @@ export class ApiObjectChooserDialog {
                 return;
             }
             this.api.resolveClientUrl(clientUrl.substring(9)).then(newApiLink => {
-                this.currentApiLink = newApiLink;
+                if (newApiLink?.resourceKey?.["?item-count"] == null && !newApiLink.rel.some(rel => rel === "page")) {
+                    this.currentApiLink = newApiLink;
+                } else {
+                    const overwriteKey = {
+                        ...(newApiLink.resourceKey ?? {}),
+                        "?item-count": "10",
+                    };
+                    this.api.resolveLinkKey(overwriteKey, newApiLink?.resourceType).then(links => {
+                        this.currentApiLink = links.find(link => ["collection", "page"].every(rel => link.rel.some(r => r === rel)));
+                    });
+                }
             });
             return false;
         }
