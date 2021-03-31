@@ -18,10 +18,14 @@ export class ExploreContent implements RoutableComponentDetermineActivationStrat
     }
 
     activate(routeParams: { path: string, [prop: string]: string }) {
-        this.path = routeParams.path;
+        const basePath = routeParams.path;
         const queryParams = { ...routeParams };
         delete queryParams.path;
-        this.api.resolveClientUrl(this.path, queryParams).then(result => {
+        const queryString = Object.keys(queryParams)
+            .map(key => `${key}=${queryParams[key]}`)
+            .join("&");
+        this.path = `${basePath}?${queryString}`;
+        this.api.resolveClientUrl(this.path).then(result => {
             this.apiLink = result;
         });
     }

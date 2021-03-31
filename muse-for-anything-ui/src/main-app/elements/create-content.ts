@@ -59,12 +59,16 @@ export class CreateContent {
 
     activate(routeParams: { path: string, resourceType: string, [prop: string]: string }) {
         this.createApiLink = null;
-        this.path = routeParams.path;
+        const basePath = routeParams.path;
         this.createResourceType = routeParams.resourceType;
         const queryParams = { ...routeParams };
         delete queryParams.path;
         delete queryParams.resourceType;
-        this.api.resolveClientUrl(this.path, queryParams)
+        const queryString = Object.keys(queryParams)
+            .map(key => `${key}=${queryParams[key]}`)
+            .join("&");
+        this.path = `${basePath}?${queryString}`;
+        this.api.resolveClientUrl(this.path)
             .then(link => {
                 return this.api.getByApiLink(link);
             })

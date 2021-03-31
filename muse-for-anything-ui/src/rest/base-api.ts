@@ -465,11 +465,12 @@ export class BaseApiService {
         return foundLinks;
     }
 
-    public async resolveClientUrl(clientUrl: string, queryParams?: ApiLinkKey): Promise<ApiLink> { // FIXME remove query params
+    public async resolveClientUrl(clientUrl: string): Promise<ApiLink> { // FIXME remove query params
         await this.resolveApiRoot(); // must be connected to api for this!
         if (this.clientUrlToApiLink.has(clientUrl)) {
             return this.clientUrlToApiLink.get(clientUrl);
         }
+        const queryParams: ApiLinkKey = {};
         let includesKey = false;
         let resourceType: string = null;
         const [path, search] = clientUrl.split("?");
@@ -485,21 +486,17 @@ export class BaseApiService {
                 return { type: "rel", value: step };
             });
         if (search) {
-            const searchKey: ApiLinkKey = {};
             search.split("&").forEach(entry => {
                 const [key, value] = entry.split("=");
-                searchKey[key] = value;
-                queryParams = {
-                    ...queryParams,
-                    ...searchKey,
-                };
+                queryParams[key] = value;
             });
         }
+
         if (!includesKey) {
             const rels = steps.map(step => step.value);
             const resolvedLink = await this.searchResolveRels(rels);
 
-            if (Object.keys(queryParams).length > 0) {
+            if (queryParams != null && Object.keys(queryParams).length > 0) {
                 const query = Object.keys(queryParams)
                     .map(k => `${k}=${queryParams[k]}`)
                     .join("&");
