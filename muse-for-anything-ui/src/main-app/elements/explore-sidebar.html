@@ -19,14 +19,14 @@
 
             <!-- Actions -->
             <template if.bind="navLinks.actions != null && navLinks.actions.length > 0">
-                <h4 class="sidebar-item mt-0 mb-1" t="nav.actions"></h4>
+                <h4 class="sidebar-item font-light mt-0 mb-1" t="nav.actions"></h4>
                 <action-link class="contents" repeat.for="action of navLinks.actions" action.bind="action">
                 </action-link>
             </template>
 
             <!-- Navigations -->
             <template if.bind="navLinks.nav != null && navLinks.nav.length > 0">
-                <h4 class="sidebar-item mt-9 mb-1" t="nav.navigations"></h4>
+                <h4 class="sidebar-item font-light mt-9 mb-1" t="nav.navigations"></h4>
                 <a class="sidebar-link" repeat.for="nav of navLinks.nav" href.bind="nav.clientUrl">
                     ${nav.title | t}
                 </a>
