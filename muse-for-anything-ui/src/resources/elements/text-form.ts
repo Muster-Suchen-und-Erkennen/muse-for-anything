@@ -115,8 +115,8 @@ export class TextForm {
 
     formInputChanged() {
         if (this.formInput != null) {
-            this.formIsValid = (this.formInput as HTMLInputElement).validity.valid;
-            this.updateValid();
+            // update valid again after value settles
+            window.setTimeout(() => this.updateValid(), 3);
         }
     }
 
