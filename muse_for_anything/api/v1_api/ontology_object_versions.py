@@ -1,17 +1,12 @@
-"""Module containing the type versions API endpoints of the v1 API."""
+"""Module containing the object API endpoints of the v1 API."""
 
-from flask import request, Response, jsonify
-from flask.helpers import url_for
+from datetime import datetime
+
 from marshmallow.utils import INCLUDE
-from muse_for_anything.api.v1_api.ontology_type_versions_helpers import (
-    nav_links_for_type_version,
-    nav_links_for_type_versions_page,
-    type_version_page_params_to_key,
-    type_version_to_api_response,
-    type_version_to_type_data,
-)
 from flask_babel import gettext
+from muse_for_anything.api.util import template_url_for
 from typing import Any, Callable, Dict, List, Optional, Union, cast
+from flask.helpers import url_for
 from flask.views import MethodView
 from sqlalchemy.sql.expression import asc, desc, literal
 from sqlalchemy.orm.query import Query
@@ -19,92 +14,117 @@ from flask_smorest import abort
 from http import HTTPStatus
 
 from .root import API_V1
-from ..util import JSON_MIMETYPE, JSON_SCHEMA_MIMETYPE
 from ..base_models import (
     ApiLink,
     ApiResponse,
+    ChangedApiObject,
+    ChangedApiObjectSchema,
     CursorPage,
     CursorPageArgumentsSchema,
     CursorPageSchema,
     DynamicApiResponseSchema,
+    NewApiObject,
+    NewApiObjectSchema,
 )
-from .models.ontology import ObjectTypeSchema
+from .models.ontology import (
+    ObjectSchema,
+    ObjectTypeSchema,
+    ObjectsCursorPageArgumentsSchema,
+)
 from ...db.db import DB
 from ...db.pagination import get_page_info
 from ...db.models.namespace import Namespace
-from ...db.models.ontology_objects import OntologyObjectType, OntologyObjectTypeVersion
+from ...db.models.ontology_objects import (
+    OntologyObject,
+    OntologyObjectType,
+    OntologyObjectTypeVersion,
+    OntologyObjectVersion,
+)
 
 from .namespace_helpers import (
     query_params_to_api_key,
 )
 
+from muse_for_anything.api.v1_api.ontology_object_helpers import (
+    action_links_for_object,
+    action_links_for_object_page,
+    nav_links_for_object,
+    nav_links_for_object_version,
+    nav_links_for_object_versions_page,
+    object_page_params_to_key,
+    object_to_api_response,
+    nav_links_for_object_page,
+    object_to_object_data,
+    object_version_page_params_to_key,
+    object_version_to_api_response,
+    validate_object_schema,
+)
 
-@API_V1.route("/namespaces/<string:namespace>/types/<string:object_type>/versions/")
-class TypeVersionsView(MethodView):
+
+# FIXME implement endpoints
+@API_V1.route("/namespaces/<string:namespace>/objects/<string:object_id>/versions/")
+class ObjectVersionsView(MethodView):
     """Endpoint for all versions of a type."""
 
-    def _check_path_params(self, namespace: str, object_type: str):
+    def _check_path_params(self, namespace: str, object_id: str):
         if not namespace or not namespace.isdigit():
             abort(
                 HTTPStatus.BAD_REQUEST,
                 message=gettext("The requested namespace id has the wrong format!"),
             )
-        if not object_type or not object_type.isdigit():
+        if not object_id or not object_id.isdigit():
             abort(
                 HTTPStatus.BAD_REQUEST,
-                message=gettext("The requested type id has the wrong format!"),
+                message=gettext("The requested object id has the wrong format!"),
             )
 
-    def _get_object_type(self, namespace: str, object_type: str) -> OntologyObjectType:
+    def _get_object(self, namespace: str, object_id: str) -> OntologyObject:
         namespace_id = int(namespace)
-        object_type_id = int(object_type)
-        found_object_type: Optional[OntologyObjectType] = OntologyObjectType.query.filter(
-            OntologyObjectType.id == object_type_id,
-            OntologyObjectType.namespace_id == namespace_id,
+        ontology_object_id = int(object_id)
+        found_object: Optional[OntologyObject] = OntologyObject.query.filter(
+            OntologyObject.id == ontology_object_id,
+            OntologyObject.namespace_id == namespace_id,
         ).first()
 
-        if found_object_type is None:
-            abort(HTTPStatus.NOT_FOUND, message=gettext("Object Type not found."))
-        return found_object_type  # is not None because abort raises exception
+        if found_object is None:
+            abort(HTTPStatus.NOT_FOUND, message=gettext("Object not found."))
+        return found_object  # is not None because abort raises exception
 
     @API_V1.arguments(CursorPageArgumentsSchema, location="query", as_kwargs=True)
     @API_V1.response(DynamicApiResponseSchema(CursorPageSchema()))
-    def get(self, namespace: str, object_type: str, **kwargs: Any):
-        """Get all versions of a type."""
-        self._check_path_params(namespace=namespace, object_type=object_type)
-        found_object_type: OntologyObjectType = self._get_object_type(
-            namespace=namespace, object_type=object_type
+    def get(self, namespace: str, object_id: str, **kwargs: Any):
+        """Get all versions of an object."""
+        self._check_path_params(namespace=namespace, object_id=object_id)
+        found_object: OntologyObject = self._get_object(
+            namespace=namespace, object_id=object_id
         )
 
         cursor: Optional[str] = kwargs.get("cursor", None)
         item_count: int = cast(int, kwargs.get("item_count", 25))
         sort: str = cast(str, kwargs.get("sort", "-version").lstrip("+"))
-        sort_function: Callable[..., Any] = (
-            desc if sort is not None and sort.startswith("-") else asc
-        )
-        sort_key: str = sort.lstrip("+-") if sort is not None else "version"
 
-        ontology_type_version_filter = (
-            OntologyObjectTypeVersion.deleted_on == None,
-            OntologyObjectTypeVersion.ontology_type == found_object_type,
+        object_version_filter = (
+            OntologyObjectVersion.deleted_on == None,
+            OntologyObjectVersion.ontology_object == found_object,
         )
 
         pagination_info = get_page_info(
-            OntologyObjectTypeVersion,
-            OntologyObjectTypeVersion.id,
-            [OntologyObjectTypeVersion.version],
+            OntologyObjectVersion,
+            OntologyObjectVersion.id,
+            [OntologyObjectVersion.version],
             cursor,
             sort,
             item_count,
-            filter_criteria=ontology_type_version_filter,
+            filter_criteria=object_version_filter,
         )
 
-        type_versions: List[
-            OntologyObjectTypeVersion
+        object_versions: List[
+            OntologyObjectVersion
         ] = pagination_info.page_items_query.all()
 
         embedded_items: List[ApiResponse] = [
-            type_version_to_api_response(type_version) for type_version in type_versions
+            object_version_to_api_response(object_version)
+            for object_version in object_versions
         ]
         items: List[ApiLink] = [item.data.get("self") for item in embedded_items]
 
@@ -118,7 +138,7 @@ class TypeVersionsView(MethodView):
         if cursor:
             self_query_params["cursor"] = cursor
 
-        self_rels = []
+        self_rels: List[str] = []
         if pagination_info.cursor_page == 1:
             self_rels.append("first")
         if (
@@ -129,9 +149,9 @@ class TypeVersionsView(MethodView):
 
         self_link = ApiLink(
             href=url_for(
-                "api-v1.TypeVersionsView",
+                "api-v1.ObjectVersionsView",
                 namespace=namespace,
-                object_type=object_type,
+                object_id=object_id,
                 _external=True,
                 **self_query_params,
             ),
@@ -140,14 +160,10 @@ class TypeVersionsView(MethodView):
                 "page",
                 f"page-{pagination_info.cursor_page}",
                 "collection",
-                "schema",
             ),
-            resource_type="ont-type-version",
-            resource_key=type_version_page_params_to_key(
-                found_object_type, self_query_params
-            ),
-            schema=url_for(
-                "api-v1.ApiSchemaView", schema_id="OntologyType", _external=True
+            resource_type="ont-object-version",
+            resource_key=object_version_page_params_to_key(
+                found_object, self_query_params
             ),
         )
 
@@ -162,9 +178,9 @@ class TypeVersionsView(MethodView):
                 extra_links.append(
                     ApiLink(
                         href=url_for(
-                            "api-v1.TypeVersionsView",
+                            "api-v1.ObjectVersionsView",
                             namespace=namespace,
-                            object_type=object_type,
+                            object_id=object_id,
                             _external=True,
                             **last_query_params,
                         ),
@@ -173,16 +189,10 @@ class TypeVersionsView(MethodView):
                             "page",
                             f"page-{pagination_info.last_page.page}",
                             "collection",
-                            "schema",
                         ),
-                        resource_type="ont-type-version",
-                        resource_key=type_version_page_params_to_key(
-                            found_object_type, last_query_params
-                        ),
-                        schema=url_for(
-                            "api-v1.ApiSchemaView",
-                            schema_id="OntologyType",
-                            _external=True,
+                        resource_type="ont-object-version",
+                        resource_key=object_version_page_params_to_key(
+                            found_object, last_query_params
                         ),
                     )
                 )
@@ -193,7 +203,7 @@ class TypeVersionsView(MethodView):
             page_query_params = dict(query_params)
             page_query_params["cursor"] = str(page.cursor)
 
-            extra_rels = []
+            extra_rels: List[str] = []
             if page.page + 1 == pagination_info.cursor_page:
                 extra_rels.append("prev")
             if page.page - 1 == pagination_info.cursor_page:
@@ -202,9 +212,9 @@ class TypeVersionsView(MethodView):
             extra_links.append(
                 ApiLink(
                     href=url_for(
-                        "api-v1.TypeVersionsView",
+                        "api-v1.ObjectVersionsView",
                         namespace=namespace,
-                        object_type=object_type,
+                        object_id=object_id,
                         _external=True,
                         **page_query_params,
                     ),
@@ -213,19 +223,15 @@ class TypeVersionsView(MethodView):
                         "page",
                         f"page-{page.page}",
                         "collection",
-                        "schema",
                     ),
-                    resource_type="ont-type-version",
-                    resource_key=type_version_page_params_to_key(
-                        found_object_type, page_query_params
-                    ),
-                    schema=url_for(
-                        "api-v1.ApiSchemaView", schema_id="OntologyType", _external=True
+                    resource_type="ont-object-version",
+                    resource_key=object_version_page_params_to_key(
+                        found_object, page_query_params
                     ),
                 )
             )
 
-        extra_links.extend(nav_links_for_type_versions_page(found_object_type))
+        extra_links.extend(nav_links_for_object_versions_page(found_object))
 
         return ApiResponse(
             links=[
@@ -240,19 +246,16 @@ class TypeVersionsView(MethodView):
                 ),
                 ApiLink(
                     href=url_for(
-                        "api-v1.TypeVersionsView",
+                        "api-v1.ObjectVersionsView",
                         namespace=namespace,
-                        object_type=object_type,
+                        object_id=object_id,
                         _external=True,
                         **query_params,
                     ),
-                    rel=("first", "page", "page-1", "collection", "schema"),
-                    resource_type="ont-type-version",
-                    resource_key=type_version_page_params_to_key(
-                        found_object_type, query_params
-                    ),
-                    schema=url_for(
-                        "api-v1.ApiSchemaView", schema_id="OntologyType", _external=True
+                    rel=("first", "page", "page-1", "collection"),
+                    resource_type="ont-object-version",
+                    resource_key=object_version_page_params_to_key(
+                        found_object, query_params
                     ),
                 ),
                 *extra_links,
@@ -269,21 +272,21 @@ class TypeVersionsView(MethodView):
 
 
 @API_V1.route(
-    "/namespaces/<string:namespace>/types/<string:object_type>/versions/<string:version>/"
+    "/namespaces/<string:namespace>/objects/<string:object_id>/versions/<string:version>/"
 )
-class TypeVersionView(MethodView):
-    """Endpoint a single object type resource."""
+class ObjectVersionView(MethodView):
+    """Endpoint for all versions of a type."""
 
-    def _check_path_params(self, namespace: str, object_type: str, version: str):
+    def _check_path_params(self, namespace: str, object_id: str, version: str):
         if not namespace or not namespace.isdigit():
             abort(
                 HTTPStatus.BAD_REQUEST,
                 message=gettext("The requested namespace id has the wrong format!"),
             )
-        if not object_type or not object_type.isdigit():
+        if not object_id or not object_id.isdigit():
             abort(
                 HTTPStatus.BAD_REQUEST,
-                message=gettext("The requested type id has the wrong format!"),
+                message=gettext("The requested object id has the wrong format!"),
             )
         if not version or not version.isdigit():
             abort(
@@ -291,48 +294,33 @@ class TypeVersionView(MethodView):
                 message=gettext("The requested version has the wrong format!"),
             )
 
-    def _get_object_type_version(
-        self, namespace: str, object_type: str, version: str
-    ) -> OntologyObjectTypeVersion:
+    def _get_object_version(
+        self, namespace: str, object_id: str, version: str
+    ) -> OntologyObjectVersion:
         namespace_id = int(namespace)
-        object_type_id = int(object_type)
+        ontology_object_id = int(object_id)
         version_number = int(version)
-        found_object_type_version: Optional[
-            OntologyObjectTypeVersion
-        ] = OntologyObjectTypeVersion.query.filter(
-            OntologyObjectTypeVersion.version == version_number,
-            OntologyObjectTypeVersion.object_type_id == object_type_id,
+        found_object_version: Optional[
+            OntologyObjectVersion
+        ] = OntologyObjectVersion.query.filter(
+            OntologyObjectVersion.version == version_number,
+            OntologyObjectVersion.object_id == ontology_object_id,
         ).first()
 
         if (
-            found_object_type_version is None
-            or found_object_type_version.ontology_type.namespace_id != namespace_id
+            found_object_version is None
+            or found_object_version.ontology_object.namespace_id != namespace_id
         ):
-            abort(HTTPStatus.NOT_FOUND, message=gettext("Object Type version not found."))
-        return found_object_type_version  # is not None because abort raises exception
+            abort(HTTPStatus.NOT_FOUND, message=gettext("Object version not found."))
+        return found_object_version  # is not None because abort raises exception
 
-    @API_V1.response(DynamicApiResponseSchema(ObjectTypeSchema()))
-    def get(self, namespace: str, object_type: str, version: str, **kwargs: Any):
-        """Get a specific version of a type."""
-        self._check_path_params(
-            namespace=namespace, object_type=object_type, version=version
+    @API_V1.response(DynamicApiResponseSchema(ObjectSchema()))
+    def get(self, namespace: str, object_id: str, version: str, **kwargs: Any):
+        """Get a specific version of an object."""
+        self._check_path_params(namespace=namespace, object_id=object_id, version=version)
+        found_object_version: OntologyObjectVersion = self._get_object_version(
+            namespace=namespace, object_id=object_id, version=version
         )
-        found_object_type_version: OntologyObjectTypeVersion = (
-            self._get_object_type_version(
-                namespace=namespace, object_type=object_type, version=version
-            )
-        )
-
-        match = request.accept_mimetypes.best_match(
-            (JSON_MIMETYPE, JSON_SCHEMA_MIMETYPE),
-            default=JSON_MIMETYPE,
-        )
-
-        if match == JSON_SCHEMA_MIMETYPE:
-            # only return jsonschema if schema mimetype is requested
-            response: Response = jsonify(found_object_type_version.data)
-            response.mimetype = JSON_SCHEMA_MIMETYPE
-            return response
 
         return ApiResponse(
             links=[
@@ -340,7 +328,7 @@ class TypeVersionView(MethodView):
                     href=url_for(
                         "api-v1.NamespacesView",
                         _external=True,
-                        **{"item-count": 50},
+                        **{"item-count": 25},
                         sort="name",
                     ),
                     rel=("first", "page", "collection", "ont-namespace"),
@@ -349,7 +337,7 @@ class TypeVersionView(MethodView):
                         "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
                     ),
                 ),
-                *nav_links_for_type_version(found_object_type_version),
+                *nav_links_for_object_version(found_object_version),
             ],
-            data=type_version_to_type_data(found_object_type_version),
+            data=object_to_object_data(found_object_version),
         )

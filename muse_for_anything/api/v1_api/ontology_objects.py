@@ -594,22 +594,3 @@ class ObjectView(MethodView):
                 changed=object_link,
             ),
         )
-
-
-# FIXME implement endpoints
-@API_V1.route("/namespaces/<string:namespace>/objects/<string:object_id>/versions/")
-class ObjectVersionsView(MethodView):
-    """Endpoint for all versions of a type."""
-
-    def get(self, namespace: str, object_id: str):
-        abort(HTTPStatus.NOT_IMPLEMENTED, "Not Implemented")
-
-
-@API_V1.route(
-    "/namespaces/<string:namespace>/objects/<string:object_id>/versions/version/"
-)
-class ObjectVersionView(MethodView):
-    """Endpoint for all versions of a type."""
-
-    def get(self, namespace: str, object_id: str, version: str):
-        abort(HTTPStatus.NOT_IMPLEMENTED, "Not Implemented")

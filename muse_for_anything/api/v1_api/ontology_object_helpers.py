@@ -20,6 +20,7 @@ from muse_for_anything.db.models.ontology_objects import (
 )
 
 from .ontology_types_helpers import type_to_key
+from .ontology_type_versions_helpers import type_version_to_key
 
 
 def object_page_params_to_key(
@@ -292,6 +293,158 @@ def object_to_api_response(object: OntologyObject) -> ApiResponse:
         ),
         data=raw_object,
     )
+
+
+def nav_links_for_object_version(version: OntologyObjectVersion) -> List[ApiLink]:
+    object = version.ontology_object
+    nav_links: List[ApiLink] = [
+        ApiLink(
+            href=url_for(
+                "api-v1.ObjectVersionsView",
+                namespace=str(object.namespace_id),
+                object_id=str(object.id),
+                _external=True,
+            ),
+            rel=("up", "page", "first", "collection"),
+            resource_type="ont-object-version",
+            resource_key=object_to_key(object),
+        ),
+        ApiLink(
+            href=url_for(
+                "api-v1.ObjectView",
+                namespace=str(object.namespace_id),
+                object_id=str(object.id),
+                _external=True,
+            ),
+            rel=("nav",),
+            resource_type="ont-object",
+            resource_key=object_to_key(object),
+        ),
+        ApiLink(
+            href=url_for(
+                "api-v1.ObjectsView",
+                namespace=str(object.namespace_id),
+                _external=True,
+            ),
+            rel=("nav", "page", "first", "collection"),
+            resource_type="ont-object",
+            resource_key={"namespaceId": str(object.namespace_id)},
+        ),
+        ApiLink(
+            href=url_for(
+                "api-v1.NamespaceView",
+                namespace=str(object.namespace_id),
+                _external=True,
+            ),
+            rel=("nav",),
+            resource_type="ont-namespace",
+            resource_key={"namespaceId": str(object.namespace_id)},
+            schema=url_for("api-v1.ApiSchemaView", schema_id="Namespace", _external=True),
+        ),
+    ]
+
+    if isinstance(version, OntologyObjectVersion):
+        nav_links.append(
+            ApiLink(
+                href=url_for(
+                    "api-v1.TypeVersionView",
+                    namespace=str(object.namespace_id),
+                    object_type=str(object.object_type_id),
+                    version=str(version.object_type_version_id),
+                    _external=True,
+                ),
+                rel=("nav",),
+                resource_type="ont-type-version",
+                resource_key=type_version_to_key(version.ontology_type_version),
+                schema=url_for(
+                    "api-v1.ApiSchemaView", schema_id="TypeSchema", _external=True
+                ),
+            )
+        )
+
+    # TODO add more nav links to type and to current version…
+    return nav_links
+
+
+def object_version_to_api_response(version: OntologyObjectVersion) -> ApiResponse:
+    object_data = object_to_object_data(version)
+    raw_object: Dict[str, Any] = ObjectSchema().dump(object_data)
+    return ApiResponse(
+        links=(
+            *nav_links_for_object_version(version),
+            # TODO *action_links_for_object_version(version),
+        ),
+        data=raw_object,
+    )
+
+
+def object_version_page_params_to_key(
+    object: OntologyObject, query_params: Optional[Dict[str, Union[str, int]]] = None
+) -> Dict[str, str]:
+    if query_params is None:
+        query_params = {}
+    start_key = query_params_to_api_key(query_params)
+    start_key["namespaceId"] = str(object.namespace_id)
+    start_key["objectId"] = str(object.id)
+    return start_key
+
+
+def nav_links_for_object_versions_page(object: OntologyObject) -> List[ApiLink]:
+    nav_links: List[ApiLink] = [
+        ApiLink(
+            href=url_for(
+                "api-v1.ObjectView",
+                namespace=str(object.namespace_id),
+                object_id=str(object.id),
+                _external=True,
+            ),
+            rel=("up",),
+            resource_type="ont-object",
+            resource_key=object_to_key(object),
+        ),
+        ApiLink(
+            href=url_for(
+                "api-v1.ObjectsView",
+                namespace=str(object.namespace_id),
+                _external=True,
+            ),
+            rel=("nav", "page", "first", "collection"),
+            resource_type="ont-object",
+            resource_key={"namespaceId": str(object.namespace_id)},
+        ),
+        ApiLink(
+            href=url_for(
+                "api-v1.NamespaceView",
+                namespace=str(object.namespace_id),
+                _external=True,
+            ),
+            rel=("nav",),
+            resource_type="ont-namespace",
+            resource_key={"namespaceId": str(object.namespace_id)},
+            schema=url_for("api-v1.ApiSchemaView", schema_id="Namespace", _external=True),
+        ),
+    ]
+
+    if isinstance(object, OntologyObject):
+        nav_links.append(
+            ApiLink(
+                href=url_for(
+                    "api-v1.TypeView",
+                    namespace=str(object.namespace_id),
+                    object_type=str(object.object_type_id),
+                    _external=True,
+                ),
+                rel=("nav",),
+                resource_type="ont-type",
+                resource_key=type_to_key(object.ontology_type),
+                schema=url_for(
+                    "api-v1.ApiSchemaView", schema_id="TypeSchema", _external=True
+                ),
+            )
+        )
+
+    # TODO add more nav links to type and to current version…
+    return nav_links
 
 
 def validate_object_schema(object_data: Any, type: OntologyObjectType):
