@@ -16,8 +16,9 @@
         <template if.bind="schema != null">
             <input
                 class="input-valid-check border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1 ${dirty ? 'dirty' : ''} ${valid ? '' : 'error'}"
-                name.bind="key+slug" type="number" value.bind="value & throttle" min.bind="minimum & optional"
-                max.bind="maximum & optional" required.bind="required && !isNullable && minLength != null & empty">
+                id.bind="key+slug" name.bind="key+slug" type="number" value.bind="value & throttle"
+                min.bind="minimum & optional" max.bind="maximum & optional"
+                required.bind="required && !isNullable && minLength != null & empty">
         </template>
     </div>
 </template>

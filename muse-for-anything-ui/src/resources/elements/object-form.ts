@@ -96,9 +96,11 @@ export class ObjectForm {
         const properties = this.schema.getPropertyList(Object.keys(currentData));
         const propertiesByKey = new Map<string, PropertyDescription>();
         const propertyState: { [prop: string]: "readonly" | "editable" | "missing" } = {};
+        const requiredProperties: Set<string> = this.schema.normalized.required ?? new Set();
+
         properties.forEach(prop => {
             propertiesByKey.set(prop.propertyName, prop);
-            propertyState[prop.propertyName] = this.getPropertyState(prop);
+            propertyState[prop.propertyName] = this.getPropertyState(prop, requiredProperties);
             if (prop.propertySchema.normalized.const !== undefined) {
                 // TODO remove workaround issues
                 // pre set all const properties to be valid (workaround for update problems)
@@ -110,7 +112,7 @@ export class ObjectForm {
         this.propertyState = propertyState;
         this.properties = properties;
         this.propertiesByKey = propertiesByKey;
-        this.requiredProperties = this.schema.normalized.required ?? new Set();
+        this.requiredProperties = requiredProperties;
 
         if (this.hasExtraProperties) { // recheck valid status
             this.extraPropertyNameChanged(this.extraPropertyName);
@@ -209,28 +211,29 @@ export class ObjectForm {
         this.extraPropertyNameValid = true;
     }
 
-    showAddPropertyButton(prop: PropertyDescription): boolean {
+    private showAddPropertyButton(prop: PropertyDescription, requiredProperties: Set<string>): boolean {
         const hasNoInitialValue = this.initialData?.[prop.propertyName] === undefined;
         const hasNoValue = this.value?.[prop.propertyName] === undefined && !(prop.propertySchema.normalized.readOnly);
-        const isNotRequired = this.requiredProperties == null || !this.requiredProperties.has(prop.propertyName);
+        const isNotRequired = !requiredProperties.has(prop.propertyName);
         return hasNoValue && hasNoInitialValue && isNotRequired;
     }
 
-    showReadOnlyProp(prop: PropertyDescription): boolean {
+    private showReadOnlyProp(prop: PropertyDescription): boolean {
         const isReadOnly = prop.propertySchema.normalized.readOnly;
         const hasInitialValue = this.initialData?.[prop.propertyName] !== undefined;
-        return isReadOnly && hasInitialValue && !this.showAddPropertyButton(prop);
+        return isReadOnly && hasInitialValue;
     }
 
-    showPropertyForm(prop: PropertyDescription): boolean {
+    private showPropertyForm(prop: PropertyDescription): boolean {
         const isReadOnly = prop.propertySchema.normalized.readOnly;
         const hasInitialValue = this.initialData?.[prop.propertyName] !== undefined;
         const hasValue = this.value?.[prop.propertyName] !== undefined;
-        return !isReadOnly && (hasInitialValue || hasValue) && !this.showAddPropertyButton(prop);
+        return !isReadOnly && (hasInitialValue || hasValue);
     }
 
-    getPropertyState(prop: PropertyDescription): "readonly" | "editable" | "missing" {
-        if (this.showAddPropertyButton(prop)) {
+    getPropertyState(prop: PropertyDescription, requiredProperties?: Set<string>): "readonly" | "editable" | "missing" {
+        const requiredProps = requiredProperties ?? this.requiredProperties ?? new Set<string>();
+        if (this.showAddPropertyButton(prop, requiredProps)) {
             return "missing";
         }
         if (this.showReadOnlyProp(prop)) {

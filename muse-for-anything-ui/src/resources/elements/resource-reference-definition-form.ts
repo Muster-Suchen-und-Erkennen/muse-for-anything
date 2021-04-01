@@ -117,13 +117,13 @@ export class ResourceReferenceDefinitionForm {
             excludeReadOnly: true,
             blockList: propertyBlockList,
         });
-        const propertyState: { [prop: string]: "readonly" | "editable" | "missing" } = {};
-        this.extraProperties.forEach(prop => {
-            propertyState[prop.propertyName] = this.getPropertyState(prop);
-        });
-        this.propertyState = propertyState;
         const normalized = this.schema.normalized;
         const requiredProperties = new Set(normalized.required);
+        const propertyState: { [prop: string]: "readonly" | "editable" | "missing" } = {};
+        this.extraProperties.forEach(prop => {
+            propertyState[prop.propertyName] = this.getPropertyState(prop, requiredProperties);
+        });
+        this.propertyState = propertyState;
         propertyBlockList.forEach(propKey => requiredProperties.delete(propKey));
         this.requiredProperties = requiredProperties;
 
@@ -225,28 +225,29 @@ export class ResourceReferenceDefinitionForm {
         }
     }
 
-    showAddPropertyButton(prop: PropertyDescription): boolean {
+    private showAddPropertyButton(prop: PropertyDescription, requiredProperties: Set<string>): boolean {
         const hasNoInitialValue = this.initialData?.[prop.propertyName] === undefined;
         const hasNoValue = this.value?.[prop.propertyName] === undefined && !(prop.propertySchema.normalized.readOnly);
-        const isNotRequired = this.requiredProperties == null || !this.requiredProperties.has(prop.propertyName);
+        const isNotRequired = !requiredProperties.has(prop.propertyName);
         return hasNoValue && hasNoInitialValue && isNotRequired;
     }
 
-    showReadOnlyProp(prop: PropertyDescription): boolean {
+    private showReadOnlyProp(prop: PropertyDescription): boolean {
         const isReadOnly = prop.propertySchema.normalized.readOnly;
         const hasInitialValue = this.initialData?.[prop.propertyName] !== undefined;
-        return isReadOnly && hasInitialValue && !this.showAddPropertyButton(prop);
+        return isReadOnly && hasInitialValue;
     }
 
-    showPropertyForm(prop: PropertyDescription): boolean {
+    private showPropertyForm(prop: PropertyDescription): boolean {
         const isReadOnly = prop.propertySchema.normalized.readOnly;
         const hasInitialValue = this.initialData?.[prop.propertyName] !== undefined;
         const hasValue = this.value?.[prop.propertyName] !== undefined;
-        return !isReadOnly && (hasInitialValue || hasValue) && !this.showAddPropertyButton(prop);
+        return !isReadOnly && (hasInitialValue || hasValue);
     }
 
-    getPropertyState(prop: PropertyDescription): "readonly" | "editable" | "missing" {
-        if (this.showAddPropertyButton(prop)) {
+    getPropertyState(prop: PropertyDescription, requiredProperties?: Set<string>): "readonly" | "editable" | "missing" {
+        const requiredProps = requiredProperties ?? this.requiredProperties ?? new Set<string>();
+        if (this.showAddPropertyButton(prop, requiredProps)) {
             return "missing";
         }
         if (this.showReadOnlyProp(prop)) {

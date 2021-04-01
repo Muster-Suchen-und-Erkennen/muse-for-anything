@@ -16,7 +16,8 @@
         </div>
         <!-- FIXME add translations -->
         <div class="flex flex-wrap" repeat.for="prop of extraProperties">
-            <div class="w-full flex items-center" if.bind="propertyState[prop.propertyName] === 'missing'">
+            <div class="w-full flex items-center opacity-70 hover:opacity-100 focus-within:opacity-100"
+                if.bind="propertyState[prop.propertyName] === 'missing'">
                 <p class="font-semibold form-container-title">${prop.propertyTitle}</p>
                 <button class="button-flat" click.delegate="addGhostProperty(prop.propertyName)">
                     Add Property

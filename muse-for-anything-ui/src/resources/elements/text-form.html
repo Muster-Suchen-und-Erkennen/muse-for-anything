@@ -15,14 +15,15 @@
         <template if.bind="isSingelLine">
             <input
                 class="input-valid-check border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1 ${dirty ? 'dirty' : ''} ${valid ? '' : 'error'}"
-                name.bind="key+slug" type="text" value.bind="value & throttle" maxlength.bind="maxLength & optional"
-                minlength.bind="minLength & optional" pattern.bind="pattern & optional"
-                required.bind="required && !isNullable && minLength != null & empty">
+                id.bind="key+slug" name.bind="key+slug" type="text" value.bind="value & throttle"
+                maxlength.bind="maxLength & optional" minlength.bind="minLength & optional"
+                pattern.bind="pattern & optional" required.bind="required && !isNullable && minLength != null & empty">
         </template>
         <template if.bind="!isSingelLine">
             <textarea class="input-valid-check border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1 resize"
-                name.bind="key+slug" id="" value.bind="value & throttle" maxlength.bind="maxLength & optional"
-                minlength.bind="minLength & optional" pattern.bind="pattern & optional"
+                id.bind="key+slug" name.bind="key+slug" id="" value.bind="value & throttle"
+                maxlength.bind="maxLength & optional" minlength.bind="minLength & optional"
+                pattern.bind="pattern & optional"
                 required.bind="required && !isNullable && minLength != null & empty"></textarea>
         </template>
     </div>

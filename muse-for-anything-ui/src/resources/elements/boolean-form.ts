@@ -42,6 +42,7 @@ export class BooleanForm {
     }
 
     cycle(event?: Event) {
+        event?.preventDefault();
         if (this.isNullable) {
             if (this.value) {
                 this.value = null;
@@ -56,9 +57,6 @@ export class BooleanForm {
             this.value = false;
         } else {
             this.value = true;
-        }
-        if (event) {
-            // TODO clicking on checkbox cannot change its state...
         }
     }
 
@@ -86,7 +84,13 @@ export class BooleanForm {
     }
 
     updateValid() {
-        this.valid = this.isNullable || this.value != null;
+        if (this.schema == null) {
+            this.valid = false;
+            return;
+        }
+        window.setTimeout(() => { // this prevents updates getting lost
+            this.valid = this.isNullable || this.value != null;
+        }, 1);
     }
 
     formInputChanged() {

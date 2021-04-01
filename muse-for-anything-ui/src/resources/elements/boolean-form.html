@@ -9,7 +9,7 @@
             <template if.bind="schema != null">
                 <input
                     class="input-valid-check rounded-sm focus:ring-4 m-1.5 px-2 py-1 ${dirty ? 'dirty' : ''} ${valid ? '' : 'error'}"
-                    name.bind="key+slug" type="checkbox" click.trigger="cycle($event)"
+                    id.bind="key+slug" name.bind="key+slug" type="checkbox" change.trigger="cycle($event)"
                     required.bind="required && !isNullable && minLength != null & empty">
             </template>
             <validity-indicator class="ml-1" valid.bind="valid"></validity-indicator>

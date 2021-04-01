@@ -18,11 +18,12 @@ export class TypeRootForm {
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
 
-    @observable value: any = {};
+    @observable() value: any = {};
 
     typeSchema: NormalizedApiSchema;
 
     extraProperties: PropertyDescription[] = [];
+    propertyState: { [prop: string]: "readonly" | "editable" | "missing" } = {};
     requiredProperties: Set<string> = new Set();
 
     @observable() propertiesValid = {};
@@ -61,14 +62,27 @@ export class TypeRootForm {
             return;
         }
         const propertyBlockList = ["$schema", "$ref", "definitions", "$comment", "deprecated", "allOf"];
-        this.extraProperties = this.schema.getPropertyList([], { // FIXME proper object keys...
+        const properties = this.schema.getPropertyList([], { // FIXME proper object keys...
             excludeReadOnly: true,
             blockList: propertyBlockList,
         });
-        const normalized = this.schema.normalized;
-        const requiredProperties = new Set(normalized.required);
+        const requiredProperties: Set<string> = new Set(this.schema.normalized.required ?? []);
         propertyBlockList.forEach(propKey => requiredProperties.delete(propKey));
+
+        const propertyState: { [prop: string]: "readonly" | "editable" | "missing" } = {};
+
+        properties.forEach(prop => {
+            propertyState[prop.propertyName] = this.getPropertyState(prop, requiredProperties);
+            if (prop.propertySchema.normalized.const !== undefined) {
+                // TODO remove workaround issues
+                // pre set all const properties to be valid (workaround for update problems)
+                this.propertiesValid[prop.propertyName] = true;
+            }
+        });
+
+        this.extraProperties = properties;
         this.requiredProperties = requiredProperties;
+        this.propertyState = propertyState;
 
         // calculate and apply default values
         this.valueChanged(this.value, null);
@@ -147,11 +161,46 @@ export class TypeRootForm {
         this.updateDirty();
     }
 
+    private showAddPropertyButton(prop: PropertyDescription, requiredProperties: Set<string>): boolean {
+        const hasNoInitialValue = this.initialData?.[prop.propertyName] === undefined;
+        const hasNoValue = this.value?.[prop.propertyName] === undefined && !(prop.propertySchema.normalized.readOnly);
+        const isNotRequired = !requiredProperties.has(prop.propertyName);
+        return hasNoValue && hasNoInitialValue && isNotRequired;
+    }
+
+    private showReadOnlyProp(prop: PropertyDescription): boolean {
+        const isReadOnly = prop.propertySchema.normalized.readOnly;
+        const hasInitialValue = this.initialData?.[prop.propertyName] !== undefined;
+        return isReadOnly && hasInitialValue;
+    }
+
+    private showPropertyForm(prop: PropertyDescription): boolean {
+        const isReadOnly = prop.propertySchema.normalized.readOnly;
+        const hasInitialValue = this.initialData?.[prop.propertyName] !== undefined;
+        const hasValue = this.value?.[prop.propertyName] !== undefined;
+        return !isReadOnly && (hasInitialValue || hasValue);
+    }
+
+    getPropertyState(prop: PropertyDescription, requiredProperties?: Set<string>): "readonly" | "editable" | "missing" {
+        const requiredProps = requiredProperties ?? this.requiredProperties ?? new Set<string>();
+        if (this.showAddPropertyButton(prop, requiredProps)) {
+            return "missing";
+        }
+        if (this.showReadOnlyProp(prop)) {
+            return "readonly";
+        }
+        if (this.showPropertyForm(prop)) {
+            return "editable";
+        }
+        return "editable";
+    }
+
     propertyActionSignal(action: { actionType: string, key: string }) {
         if (action.actionType === "remove" && this.value[action.key] !== undefined) {
             const newValue = { ...this.value };
             delete newValue[action.key];
             this.value = newValue;
+            this.propertyState[action.key] = "missing";
         }
     }
 
@@ -172,6 +221,10 @@ export class TypeRootForm {
                 ...(this.value ?? {}),
                 [propName]: null,
             };
+            const prop = this.extraProperties.find(prop => prop.propertyName === propName);
+            if (prop != null) {
+                this.propertyState[propName] = this.getPropertyState(prop);
+            }
         }
     }
 
