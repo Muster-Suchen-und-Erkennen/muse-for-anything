@@ -10,6 +10,7 @@ muse_for_anything/static/locales
 muse_for_anything/static/favicon.ico
 muse_for_anything/static/index.html
 muse_for_anything/static/*.js
+muse_for_anything/static/*.map
 
 
 # Ignores from Template:
