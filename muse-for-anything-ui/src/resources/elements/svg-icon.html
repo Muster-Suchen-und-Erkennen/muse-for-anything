@@ -1,0 +1,150 @@
+<template bindable="icon,size">
+    <let icon-size="${size === 'big' ? 28 : (size != null ? size : 21)}"></let>
+
+    <!-- icons from https://systemuicons.com -->
+
+    <svg if.bind="icon === 'home'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21"
+        xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+            transform="translate(1 1)">
+            <path d="m.5 9.5 9-9 9 9" />
+            <path
+                d="m2.5 7.5v8c0 .5522847.44771525 1 1 1h3c.55228475 0 1-.4477153 1-1v-4c0-.5522847.44771525-1 1-1h2c.5522847 0 1 .4477153 1 1v4c0 .5522847.4477153 1 1 1h3c.5522847 0 1-.4477153 1-1v-8" />
+        </g>
+    </svg>
+    <svg if.bind="icon === 'document-stack'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21"
+        xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+            transform="translate(1 2)">
+            <path
+                d="m16.5 12.5v-10c0-1.1045695-.8954305-2-2-2h-8c-1.1045695 0-2 .8954305-2 2v10c0 1.1045695.8954305 2 2 2h8c1.1045695 0 2-.8954305 2-2z" />
+            <path
+                d="m4.30542777 2.93478874-2.00419132.72946598c-1.03795581.37778502-1.57312998 1.52546972-1.19534496 2.56342553l3.42020143 9.39692625c.37778502 1.0379558 1.52546972 1.5731299 2.56342553 1.1953449l5.56843115-2.1980811" />
+            <path d="m7.5 5.5h5" />
+            <path d="m7.5 7.5h6" />
+            <path d="m7.5 9.5h3" />
+        </g>
+    </svg>
+    <svg if.bind="icon === 'add-button'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21"
+        xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+            transform="translate(4 4)">
+            <path
+                d="m12.5 10.5v-8c0-1.1045695-.8954305-2-2-2h-8c-1.1045695 0-2 .8954305-2 2v8c0 1.1045695.8954305 2 2 2h8c1.1045695 0 2-.8954305 2-2z" />
+            <path d="m6.5 3.5v6.056" />
+            <path d="m6.5 3.5v6" transform="matrix(0 1 -1 0 13 0)" />
+        </g>
+    </svg>
+    <svg if.bind="icon === 'plus'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21"
+        xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m5.5 10.5h10" />
+            <path d="m10.5 5.5v10" />
+        </g>
+    </svg>
+    <svg if.bind="icon === 'minus'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21"
+        xmlns="http://www.w3.org/2000/svg">
+        <path d="m5.5 10.5h10" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+    <svg if.bind="icon === 'edit'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21"
+        xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+            transform="translate(3 3)">
+            <path
+                d="m14 1c.8284271.82842712.8284271 2.17157288 0 3l-9.5 9.5-4 1 1-3.9436508 9.5038371-9.55252193c.7829896-.78700064 2.0312313-.82943964 2.864366-.12506788z" />
+            <path d="m6.5 14.5h8" />
+            <path d="m12.5 3.5 1 1" />
+        </g>
+    </svg>
+    <svg if.bind="icon === 'cross'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21"
+        xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+            transform="translate(5 5)">
+            <path d="m10.5 10.5-10-10z" />
+            <path d="m10.5.5-10 10" />
+        </g>
+    </svg>
+    <svg if.bind="icon === 'checkmark'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21"
+        xmlns="http://www.w3.org/2000/svg">
+        <path d="m.5 5.5 3 3 8.028-8" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+            transform="translate(5 6)" />
+    </svg>
+    <svg if.bind="icon === 'trash'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21"
+        xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+            transform="translate(3 2)">
+            <path
+                d="m2.5 2.5h10v12c0 1.1045695-.8954305 2-2 2h-6c-1.1045695 0-2-.8954305-2-2zm5-2c1.0543618 0 1.91816512.81587779 1.99451426 1.85073766l.00548574.14926234h-4c0-1.1045695.8954305-2 2-2z" />
+            <path d="m.5 2.5h14" />
+            <path d="m5.5 5.5v8" />
+            <path d="m9.5 5.5v8" />
+        </g>
+    </svg>
+    <svg if.bind="icon === 'reset'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21"
+        xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+            transform="matrix(0 1 1 0 2.5 2.5)">
+            <path
+                d="m3.98652376 1.07807068c-2.38377179 1.38514556-3.98652376 3.96636605-3.98652376 6.92192932 0 4.418278 3.581722 8 8 8s8-3.581722 8-8-3.581722-8-8-8" />
+            <path d="m4 1v4h-4" transform="matrix(1 0 0 -1 0 6)" />
+        </g>
+    </svg>
+
+    <svg if.bind="icon === 'info'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21"
+        xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" fill-rule="evenodd" transform="translate(2 2)">
+            <g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="8.5" cy="8.5" r="8" />
+                <path d="m8.5 12.5v-4h-1" />
+                <path d="m7.5 12.5h2" />
+            </g>
+            <circle cx="8.5" cy="5.5" fill="currentColor" r="1" />
+        </g>
+    </svg>
+    <svg if.bind="icon === 'help'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21"
+        xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" fill-rule="evenodd" transform="translate(2 2)">
+            <circle cx="8.5" cy="8.5" r="8" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+            <path
+                d="m8.5 9.5v-1l1.41421356-1.41421356c.37507274-.37507276.58578644-.88378059.58578644-1.41421356v-.17157288c0-.61286606-.3462631-1.17313156-.89442719-1.4472136l-.21114562-.1055728c-.56305498-.2815275-1.2257994-.2815275-1.78885438 0l-.10557281.0527864c-.61286606.30643303-1 .9328289-1 1.61803399v.88196601"
+                stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+            <circle cx="8.5" cy="12.5" fill="currentColor" r="1" />
+        </g>
+    </svg>
+    <svg if.bind="icon === 'support'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21"
+        xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="10.5" cy="10.5" r="8" />
+            <circle cx="10.5" cy="10.5" r="4" />
+            <path d="m13.5 7.5 2.5-2.5" />
+            <path d="m13.5 13.5 2.5 2.5" />
+            <path d="m7.5 13.5-2.5 2.5" />
+            <path d="m7.5 7.5-2.5-2.5" />
+        </g>
+    </svg>
+
+    <svg if.bind="icon === 'maximize'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21"
+        xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+            transform="translate(2 2)">
+            <path d="m16.5 5.5v-4.978l-5.5.014" />
+            <path d="m16.5.522-6 5.907" />
+            <path d="m11 16.521 5.5.002-.013-5.5" />
+            <path d="m16.5 16.429-6-5.907" />
+            <path d="m.5 5.5v-5h5.5" />
+            <path d="m6.5 6.429-6-5.907" />
+            <path d="m6 16.516-5.5.007v-5.023" />
+            <path d="m6.5 10.5-6 6" />
+        </g>
+    </svg>
+    <svg if.bind="icon === 'minimize'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21"
+        xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+            transform="translate(3 3)">
+            <path d="m5.5 14.5v-5h-5" />
+            <path d="m14.5 9.5h-5v5" />
+            <path d="m.5 5.5h5v-5" />
+            <path d="m9.5.5v5h5" />
+        </g>
+    </svg>
+</template>

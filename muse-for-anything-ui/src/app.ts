@@ -26,6 +26,9 @@ export class App {
             {
                 route: ["", "home"],
                 name: "home",
+                settings: {
+                    icon: "home",
+                },
                 viewPorts: {
                     sidebar: { moduleId: PLATFORM.moduleName("main-app/elements/home-sidebar") },
                     content: { moduleId: PLATFORM.moduleName("main-app/elements/home-content") },
@@ -37,6 +40,9 @@ export class App {
                 route: ["explore", "explore/*path"],
                 href: "explore/ont-namespace",
                 name: "explore",
+                settings: {
+                    icon: "document-stack",
+                },
                 viewPorts: {
                     sidebar: { moduleId: PLATFORM.moduleName("main-app/elements/explore-sidebar") },
                     content: { moduleId: PLATFORM.moduleName("main-app/elements/explore-content") },
@@ -64,5 +70,6 @@ export class App {
             },
         ]);
         config.mapUnknownRoutes({ redirect: "home" });
+        console.log(router.navigation)
     }
 }

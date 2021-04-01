@@ -1,6 +1,7 @@
 <template>
     <require from="./app.css"></require>
     <require from="./main-app/elements/main-header.html"></require>
+    <require from="./resources/elements/svg-icon.html"></require>
 
     <div class="main">
 
@@ -10,9 +11,12 @@
         <nav class="bg-gray-800 text-center flex flex-col items-center">
             <div class="sticky top-0">
                 <div class="w-full p-2" repeat.for="nav of router.navigation">
-                    <a class="text-white hover:text-primary-light ${nav.isActive ? 'font-bold' : ''}"
-                        href.bind="nav.href">${nav.title
-                        | t}</a>
+                    <a class="text-white hover:text-primary-light ${nav.isActive ? 'font-bold' : ''} flex flex-col items-center"
+                        href.bind="nav.href">
+                        <svg-icon icon.bind="nav.settings.icon" size.bind="'big'" if.bind="nav.settings.icon">
+                        </svg-icon>
+                        ${nav.title | t}
+                    </a>
                 </div>
             </div>
         </nav>

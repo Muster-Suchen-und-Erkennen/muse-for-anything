@@ -1,6 +1,8 @@
 <template data-maximized.bind="maximized & empty">
     <require from="./schema-form"></require>
     <require from="./validity-indicator"></require>
+    <require from="./svg-icon.html"></require>
+
     <!-- TODO translations -->
     <template id="taxonomyGraphTemplate">
         <svg>
@@ -140,25 +142,35 @@
             svg-template="#taxonomyGraphTemplate">
         </network-graph>
         <div class="buttons card mx-2 my-3 bg-white px-3 py-2 flex flex-row items-center" style="contain: strict;">
-            <button class="button-flat px-2" click.delegate="toggleMaximize()">${ (maximized ? 'graph.minimize' :
-                'graph.maximize') | t}</button>
-            <button class="button-flat px-2" click.delegate="resetLayout()">reset layout</button>
+            <button class="button-flat px-2 flex items-center" click.delegate="toggleMaximize()">
+                <svg-icon class="mr-1" icon.bind="maximized ? 'minimize' : 'maximize'" size.bind="18"></svg-icon>
+                ${ (maximized ? 'graph.minimize' : 'graph.maximize') | t}
+            </button>
+            <button class="button-flat px-2 flex items-center" click.delegate="resetLayout()">
+                <svg-icon class="mr-1" icon.bind="'reset'" size.bind="18"></svg-icon>
+                reset layout
+            </button>
             <div class="flex flex-row items-center justify-center" style="flex-basis: 3rem; flex-shrink: 1;">
                 <div class="border-l h-6"></div>
             </div>
-            <button class="button-flat px-2" click.delegate="addItem()" show.bind="selectedNode == null">
+            <button class="button-flat px-2 flex items-center" click.delegate="addItem()"
+                show.bind="selectedNode == null">
+                <svg-icon class="mr-1" icon.bind="'add-button'" size.bind="18"></svg-icon>
                 add item
             </button>
-            <button class="button-flat px-2" click.delegate="editSelectedItem()"
+            <button class="button-flat px-2 flex items-center" click.delegate="editSelectedItem()"
                 show.bind="selectedNode.updateItemAction != null">
+                <svg-icon class="mr-1" icon.bind="'edit'" size.bind="18"></svg-icon>
                 edit item
             </button>
-            <button class="button-flat px-2" click.delegate="deleteSelectedItem()"
+            <button class="button-flat px-2 flex items-center" click.delegate="deleteSelectedItem()"
                 show.bind="selectedNode.deleteItemAction != null">
+                <svg-icon class="mr-1" icon.bind="'trash'" size.bind="18"></svg-icon>
                 delete item
             </button>
-            <button class="button-flat px-2" click.delegate="restoreSelectedItem()"
+            <button class="button-flat px-2 flex items-center" click.delegate="restoreSelectedItem()"
                 show.bind="selectedNode.restoreItemAction != null">
+                <svg-icon class="mr-1" icon.bind="'reset'" size.bind="18"></svg-icon>
                 restore item
             </button>
         </div>

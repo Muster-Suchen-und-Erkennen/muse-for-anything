@@ -1,19 +1,16 @@
 <template>
+    <require from="./svg-icon.html"></require>
     <template if.bind="action.actionType === 'create' || action.actionType === 'update'">
-        <a class="sidebar-action" href.bind="action.clientUrl">
-            <span style="min-width: 1.2rem; text-align: center; display: inline-block;"
-                if.bind="action.actionType === 'create'">🞤</span>
-            <span style="min-width: 1.2rem; text-align: center; display: inline-block;"
-                if.bind="action.actionType === 'update'">🖉</span>
+        <a class="sidebar-action flex items-center" href.bind="action.clientUrl">
+            <svg-icon class="mr-1" icon.bind="'add-button'" if.bind="action.actionType === 'create'"></svg-icon>
+            <svg-icon class="mr-1" icon.bind="'edit'" if.bind="action.actionType === 'update'"></svg-icon>
             ${action.title | t}
         </a>
     </template>
     <template if.bind="action.actionType === 'delete' || action.actionType === 'restore'">
-        <button class="sidebar-action text-left" click.delegate="performAction()">
-            <span style="min-width: 1.2rem; text-align: center; display: inline-block;"
-                if.bind="action.actionType === 'delete'">🗑</span>
-            <span style="min-width: 1.2rem; text-align: center; display: inline-block;"
-                if.bind="action.actionType === 'restore'">♲</span>
+        <button class="sidebar-action text-left flex items-center" click.delegate="performAction()">
+            <svg-icon class="mr-1" icon.bind="'trash'" if.bind="action.actionType === 'delete'"></svg-icon>
+            <svg-icon class="mr-1" icon.bind="'reset'" if.bind="action.actionType === 'restore'"></svg-icon>
             ${action.title | t}
         </button>
     </template>
