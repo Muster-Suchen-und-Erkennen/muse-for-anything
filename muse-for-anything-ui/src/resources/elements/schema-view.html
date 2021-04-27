@@ -1,11 +1,15 @@
 <template>
     <require from="./object-view"></require>
+    <require from="./resource-reference-definition-view"></require>
     <require from="./resource-reference-view"></require>
     <require from="./type-definition-view"></require>
     <require from="./array-view"></require>
 
     <template if.bind="schemaType === 'object'">
         <object-view data.bind="data" schema.bind="schema"></object-view>
+    </template>
+    <template if.bind="schemaType === 'resourceReferenceDefinition'">
+        <resource-reference-definition-view data.bind="data" schema.bind="schema"></resource-reference-definition-view>
     </template>
     <template if.bind="schemaType === 'resourceReference'">
         <resource-reference-view data.bind="data" schema.bind="schema"></resource-reference-view>
