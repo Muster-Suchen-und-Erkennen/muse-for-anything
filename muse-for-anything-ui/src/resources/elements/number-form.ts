@@ -44,9 +44,8 @@ export class NumberForm {
             } else {
                 this.value = newValue?.toString() ?? "0";
             }
-        }
-        if (this.formInput != null) {
-            this.updateValid();
+            // schedule update for later to give input element time to catch up
+            window.setTimeout(() => this.updateValid(), 3);
         }
     }
 
