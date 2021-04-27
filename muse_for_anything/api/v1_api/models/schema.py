@@ -567,7 +567,7 @@ JSON_RESOURCE_REFERENCE_SCHEMA = {
     "$id": JSON_RESOURCE_REFERENCE_SCHEMA_REF["$ref"],
     "title": "Resource Reference",
     "type": "object",
-    # "default": {"type": ["object"], "required": ["key", "referenceType"]},
+    "default": {"type": ["object"], "required": ["referenceKey", "referenceType"]},
     "required": ["type", "customType", "referenceType", "required", "properties"],
     "customType": "resourceReferenceDefinition",
     "allOf": [JSON_MINIMAL_META_PROPERTIES_SCHEMA_REF],

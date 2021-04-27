@@ -35,6 +35,8 @@ export class ResourceReferenceDefinitionForm {
     @observable() propertiesAreValid: boolean = false;
     @observable() propertiesAreDirty: boolean = false;
 
+    currentReferenceValid = false;
+
     invalidProps: string[];
 
     currentReferenceType: string;
@@ -134,11 +136,14 @@ export class ResourceReferenceDefinitionForm {
         if (newValue == null) {
             this.value = {}; // is never nullable!
         } else {
-            this.currentReferenceType = newValue.referenceType;
+            this.currentReferenceType = newValue.referenceType ?? 'ont-taxonomy';
             this.value = { ...newValue };
             // TODO calc reference link…
         }
         this.reloadProperties();
+
+        // defer a update valid until after value settles
+        window.setTimeout(() => this.updateValid(), 3);
     }
 
     onPropertyValueUpdate = (value, binding) => {
@@ -189,6 +194,7 @@ export class ResourceReferenceDefinitionForm {
     valueOutChanged() {
         this.propertiesValidChanged(this.propertiesValid);
         this.propertiesDirtyChanged(this.propertiesDirty);
+        this.updateValid();
     }
 
     checkReferenceType() {
@@ -344,6 +350,7 @@ export class ResourceReferenceDefinitionForm {
         if (this.currentReferenceType === "ont-taxonomy") {
             referenceKeyValid = this.valueOut.referenceKey != null;
         }
+        this.currentReferenceValid = referenceKeyValid;
         this.valid = this.propertiesAreValid && referenceKeyValid;
     }
 
