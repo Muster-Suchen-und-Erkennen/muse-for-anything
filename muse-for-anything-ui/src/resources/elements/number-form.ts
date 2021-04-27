@@ -21,10 +21,6 @@ export class NumberForm {
 
     slug = nanoid(8);
 
-    formIsValid: boolean = false;
-    boundsValid: boolean = true;
-    stepValid: boolean = true;
-
     isNullable: boolean = true;
 
     isInteger: boolean = true;
@@ -50,7 +46,6 @@ export class NumberForm {
             }
         }
         if (this.formInput != null) {
-            this.formIsValid = (this.formInput as HTMLInputElement).validity.valid;
             this.updateValid();
         }
     }
@@ -86,7 +81,6 @@ export class NumberForm {
         }
 
         if (this.formInput != null) {
-            this.formIsValid = (this.formInput as HTMLInputElement).validity.valid;
             this.updateValid();
         }
     }
@@ -103,7 +97,7 @@ export class NumberForm {
     valueChanged(newValue: string, oldValue) { // TODO value does not change for float input with integer
         let newValueOut: number = null;
         if (newValue === "" || newValue == null) {
-            this.valueOut = newValueOut;
+            this.valueOut = null;
             return;
         }
         if (this.isInteger) {
@@ -122,21 +116,11 @@ export class NumberForm {
         }
 
         // update validity
-        if (this.exclusiveMinimum != null || this.exclusiveMaximum != null) {
-            this.boundsValid = (this.exclusiveMinimum == null || this.exclusiveMinimum < newValue) && (this.exclusiveMaximum == null || this.exclusiveMaximum > newValue);
-        }
-        if (this.extraMultiples) {
-            // TODO
-        }
-        if (this.formInput != null) {
-            this.formIsValid = (this.formInput as HTMLInputElement).validity.valid;
-        }
         this.updateValid();
     }
 
     formInputChanged() {
         if (this.formInput != null) {
-            this.formIsValid = (this.formInput as HTMLInputElement).validity.valid;
             this.updateValid();
         }
     }
@@ -146,8 +130,29 @@ export class NumberForm {
             this.valid = this.isNullable;
             return;
         }
-        const isNaN = Number.isNaN(this.valueOut);
-        const isFinite = Number.isFinite(this.valueOut);
-        this.valid = this.formIsValid && this.boundsValid && !isNaN && isFinite;
+        const value = this.valueOut;
+        let formIsValid = (this.formInput as HTMLInputElement)?.validity?.valid ?? false;
+
+        let boundsValid = true;
+        if (this.exclusiveMinimum != null) {
+            boundsValid &&= this.exclusiveMinimum < value;
+        } else if (this.minimum != null) {
+            boundsValid &&= this.minimum <= value;
+        } 
+        if (this.exclusiveMaximum != null) {
+            boundsValid &&= this.exclusiveMaximum > value;
+        } else if (this.maximum != null) {
+            boundsValid &&= this.maximum >= value;
+        } 
+
+        let stepValid = true;
+        if (this.extraMultiples) {
+            // TODO
+            stepValid = this.extraMultiples.every(step => (value % step) === 0);
+        }
+
+        const isNaN = Number.isNaN(value);
+        const isFinite = Number.isFinite(value);
+        this.valid = formIsValid && boundsValid && stepValid && !isNaN && isFinite;
     }
 }
