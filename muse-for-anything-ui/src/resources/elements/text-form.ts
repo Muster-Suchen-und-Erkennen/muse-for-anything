@@ -21,9 +21,6 @@ export class TextForm {
 
     slug = nanoid(8);
 
-    formIsValid: boolean = false;
-    extraIsValid: boolean = true;
-
     isSingelLine: boolean = false;
     isNullable: boolean = true;
 
@@ -38,18 +35,14 @@ export class TextForm {
     @child(".input-valid-check") formInput: Element;
 
     initialDataChanged(newValue, oldValue) {
-        if (newValue !== undefined && !this.dirty) {
+        if (newValue !== undefined) {
             if (this.isNullable) {
                 this.value = newValue;
             } else {
                 this.value = newValue ?? "";
             }
-            this.dirty = false;
-        }
-        if (this.formInput != null) {
-            this.formIsValid = (this.formInput as HTMLInputElement).validity.valid;
-
-            this.updateValid();
+            // schedule update for later to give input element time to catch up
+            window.setTimeout(() => this.updateValid(), 3);
         }
     }
 
@@ -64,11 +57,9 @@ export class TextForm {
         this.maxLength = normalized.maxLength;
         if (normalized.pattern != null && normalized.pattern.length === 1) {
             this.pattern = normalized.pattern[0].source;
-            this.extraIsValid = true;
         } else {
             this.pattern = null;
             this.extraPatterns = normalized.pattern ?? [];
-            this.extraIsValid = normalized.pattern == null;
         }
         if (normalized.format != null) {
             this.format = normalized.format;
@@ -94,24 +85,17 @@ export class TextForm {
     }
 
     valueChanged(newValue, oldValue) {
+        this.valueOut = newValue;
+    }
+
+    valueOutChanged(newValue){
         if (this.initialData === undefined) {
             this.dirty = !(newValue == null || (!this.isNullable && newValue === ""));
         } else {
             this.dirty = this.initialData !== newValue;
         }
-        let updatedValidStatus = false;
-        if (this.formInput != null) {
-            updatedValidStatus = true;
-        }
-        if (this.extraPatterns) {
-            this.extraIsValid = this.extraPatterns.every(pattern => pattern.test(newValue));
-            updatedValidStatus = true;
-        }
-        this.valueOut = newValue;
-        if (updatedValidStatus) {
-            this.updateValid();
-        }
-    }
+        this.updateValid();
+    } 
 
     formInputChanged() {
         if (this.formInput != null) {
@@ -125,11 +109,16 @@ export class TextForm {
             this.valid = this.isNullable;
             return;
         }
-        if (this.formInput != null) {
-            this.formIsValid = (this.formInput as HTMLInputElement).validity.valid;
-        } else {
-            // console.log("no form input")
+
+        const value = this.valueOut;
+
+        const formIsValid = (this.formInput as HTMLInputElement)?.validity?.valid ?? false;
+        
+        let extraIsValid = true;
+        if (this.extraPatterns) {
+            extraIsValid = this.extraPatterns.every(pattern => pattern.test(value));
         }
-        this.valid = this.formIsValid && this.extraIsValid;
+        
+        this.valid = formIsValid && extraIsValid;
     }
 }
