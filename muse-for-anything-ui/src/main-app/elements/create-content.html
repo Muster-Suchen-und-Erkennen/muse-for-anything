@@ -1,7 +1,7 @@
 <template>
     <require from="../../resources/elements/api-schema-form"></require>
 
-    <div class="px-1 py-1" if.bind="createApiLink != null">
+    <div class="px-2 py-5" if.bind="createApiLink != null">
         <h1 class="content-title" t="titles.create.${createResourceType}"></h1>
         <api-schema-form api-link.bind="createApiLink" context.bind="context"></api-schema-form>
     </div>

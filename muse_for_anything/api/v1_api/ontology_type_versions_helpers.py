@@ -6,8 +6,6 @@ from flask import url_for
 
 from muse_for_anything.api.base_models import ApiLink, ApiResponse
 from muse_for_anything.api.v1_api.models.ontology import (
-    NamespaceData,
-    NamespaceSchema,
     ObjectTypeSchema,
     ObjectTypeData,
 )
@@ -46,6 +44,7 @@ def nav_links_for_type_versions_page(object_type: OntologyObjectType) -> List[Ap
             schema=url_for(
                 "api-v1.ApiSchemaView", schema_id="OntologyType", _external=True
             ),
+            name=object_type.name,
         ),
         ApiLink(
             href=url_for(
@@ -70,6 +69,7 @@ def nav_links_for_type_versions_page(object_type: OntologyObjectType) -> List[Ap
             resource_type="ont-namespace",
             resource_key={"namespaceId": str(object_type.namespace_id)},
             schema=url_for("api-v1.ApiSchemaView", schema_id="Namespace", _external=True),
+            name=object_type.namespace.name,
         ),
     ]
     return nav_links
@@ -115,6 +115,7 @@ def nav_links_for_type_version(
             schema=url_for(
                 "api-v1.ApiSchemaView", schema_id="OntologyType", _external=True
             ),
+            name=object_type_version.ontology_type.name,
         ),
         ApiLink(
             href=url_for(
@@ -139,6 +140,7 @@ def nav_links_for_type_version(
             resource_type="ont-namespace",
             resource_key={"namespaceId": namespace_id},
             schema=url_for("api-v1.ApiSchemaView", schema_id="Namespace", _external=True),
+            name=object_type_version.ontology_type.namespace.name,
         ),
     ]
     return nav_links
@@ -162,6 +164,7 @@ def type_version_to_type_data(
             schema=url_for(
                 "api-v1.ApiSchemaView", schema_id="OntologyType", _external=True
             ),
+            name=object_type_version.name,
         ),
         name=object_type_version.name,
         description=object_type_version.description,

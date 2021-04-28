@@ -1,17 +1,36 @@
 <template>
     <require from="../elements/api-schema-view"></require>
+    <require from="../elements/svg-icon.html"></require>
+    <require from="../elements/card-nav-icons"></require>
 
     <div if.bind="!isRoot">
-        <a class="link-hover" href="/explore/${clientUrl}" data-router-ignore.bind="skipNavigation & empty"
-            aria-disabled.bind="clientUrl == null ? true : null">
-            <p class="my-1 font-bold"><span class="mr-2 uppercase" if.bind="apiObject.deletedOn != null"
-                    t="deleted"></span>${apiObject.name}</p>
-        </a>
+        <div class="w-full flex justify-between items-baseline">
+            <a class="link-hover flex items-center" href="/explore/${clientUrl}"
+                data-router-ignore.bind="skipNavigation & empty" aria-disabled.bind="clientUrl == null ? true : null">
+                <svg-icon class="mr-1" icon.bind="'ont-type'"></svg-icon>
+                <p class="my-1 font-bold">
+                    <span class="mr-2 uppercase" if.bind="apiObject.deletedOn != null" t="deleted">
+                    </span>
+                    ${apiObject.name}
+                </p>
+                <svg-icon class="ml-1" icon.bind="'link'" size.bind="19"></svg-icon>
+            </a>
+            <card-nav-icons api-object.bind="apiObject" main.one-time="'ont-namespace'"></card-nav-icons>
+        </div>
         <p class="my-1">${apiObject.description}</p>
     </div>
+
+
     <div class="px-3 py-2 card" if.bind="isRoot">
-        <h3 class="mt-1 mb-2 font-bold text-lg"><span class="mr-2 uppercase" if.bind="apiObject.deletedOn != null"
-                t="deleted"></span>${"type" | t}: ${apiObject.name}</h3>
+        <div class="w-full flex justify-between items-baseline">
+            <h3 class="mt-1 mb-2 font-bold text-lg flex items-center">
+                <svg-icon class="mr-1" icon.bind="'ont-type'"></svg-icon>
+                <span class="mr-2 uppercase" if.bind="apiObject.deletedOn != null" t="deleted">
+                </span>
+                ${"type" | t}: ${apiObject.name}
+            </h3>
+            <card-nav-icons api-object.bind="apiObject" main.one-time="'ont-namespace'"></card-nav-icons>
+        </div>
         <api-schema-view data.bind="apiObject" schema-url.bind="apiObject.self.schema"></api-schema-view>
     </div>
 </template>

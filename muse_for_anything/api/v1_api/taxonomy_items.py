@@ -54,9 +54,9 @@ from .namespace_helpers import (
 from .taxonomy_helpers import (
     action_links_for_taxonomy_item,
     action_links_for_taxonomy_item_relation,
-    create_action_link_for_taxonomy_item_page,
     create_action_link_for_taxonomy_item_relation_page,
     nav_links_for_taxonomy_item,
+    nav_links_for_taxonomy_item_relation,
     taxonomy_item_relation_to_api_link,
     taxonomy_item_relation_to_api_response,
     taxonomy_item_relation_to_taxonomy_item_relation_data,
@@ -706,7 +706,10 @@ class TaxonomyItemRelationView(MethodView):
             relation=relation,
         )
         return ApiResponse(
-            links=(*action_links_for_taxonomy_item_relation(found_relation),),
+            links=(
+                *nav_links_for_taxonomy_item_relation(found_relation),
+                *action_links_for_taxonomy_item_relation(found_relation),
+            ),
             data=taxonomy_item_relation_to_taxonomy_item_relation_data(found_relation),
         )
 

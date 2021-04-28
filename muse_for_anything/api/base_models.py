@@ -37,13 +37,14 @@ class ApiLinkBaseSchema(MaBaseSchema):
     resource_type = ma.fields.String(reqired=True, allow_none=False, dump_only=True)
     doc = ma.fields.Url(allow_none=True, dump_only=True)
     schema = ma.fields.Url(allow_none=True, dump_only=True)
+    name = ma.fields.String(allow_none=True, dump_only=True)
 
     @ma.post_dump()
     def remove_empty_attributes(
         self, data: Dict[str, Optional[Union[str, List[str]]]], **kwargs
     ):
         """Remove empty attributes from serialized links for a smaller and more readable output."""
-        for key in ("doc", "schema", "resourceKey"):
+        for key in ("doc", "schema", "resourceKey", "name"):
             if data.get(key, False) is None:
                 del data[key]
         if not data.get("queryKey", True):  # return True if not in dict
@@ -184,6 +185,7 @@ class ApiLinkBase:
     resource_type: str
     doc: Optional[str] = None
     schema: Optional[str] = None
+    name: Optional[str] = None
 
 
 @dataclass

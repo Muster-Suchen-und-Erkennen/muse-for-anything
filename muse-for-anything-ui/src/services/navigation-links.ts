@@ -7,6 +7,7 @@ import { NAV_LINKS_CHANNEL } from "resources/events";
 export interface NavigationLink {
     clientUrl: string;
     title: string;
+    name?: string;
     sortKey: number;
     icon?: string;
     actionType?: "create" | "update" | "delete" | "restore";
@@ -21,6 +22,19 @@ export interface NavLinks {
 }
 
 const ACTION_RELS: Set<string> = new Set<string>(["create", "update", "delete", "restore"]);
+
+export const RESOURCE_TYPE_ICONS: Map<string, string> = new Map([
+    ["ont-namespace", "ont-namespace"],
+    ["ont-object", "ont-object"],
+    ["ont-object-version", "ont-object"],
+    ["ont-type", "ont-type"],
+    ["ont-type-version", "ont-type"],
+    ["ont-taxonomy", "ont-taxonomy"],
+    ["ont-taxonomy-item", "ont-taxonomy-item"],
+    ["ont-taxonomy-item-version", "ont-taxonomy-item"],
+    ["ont-taxonomy-item-relation", "ont-taxonomy-item-relation"],
+]);
+
 
 @autoinject
 export class NavigationLinksService {
@@ -97,6 +111,12 @@ export class NavigationLinksService {
                     apiLink: selfLink,
                     sortKey: 0,
                 };
+                if (RESOURCE_TYPE_ICONS.has(selfLink.resourceType)) {
+                    navLinks.self.icon = RESOURCE_TYPE_ICONS.get(selfLink.resourceType);
+                }
+                if (selfLink.name != null) {
+                    navLinks.self.name = selfLink.name;
+                }
             }));
         }
 
@@ -110,6 +130,12 @@ export class NavigationLinksService {
                         apiLink: link,
                         sortKey: 10,
                     };
+                    if (RESOURCE_TYPE_ICONS.has(link.resourceType)) {
+                        navLinks.up.icon = RESOURCE_TYPE_ICONS.get(link.resourceType);
+                    }
+                    if (link.name != null) {
+                        navLinks.up.name = link.name;
+                    }
                 }));
             }
 
@@ -121,9 +147,13 @@ export class NavigationLinksService {
                     baseSortKey += 100;
                 }
                 promises.push(this.api.buildClientUrl(link).then(clientUrl => {
-                    const navLinkBase = {
+                    const navLinkBase: { apiLink: ApiLink, name?: string } = {
                         apiLink: link,
                     };
+
+                    if (link.name != null) {
+                        navLinkBase.name = link.name;
+                    }
 
                     if (link.rel.some(rel => rel === "create")) {
                         actions.push({
@@ -166,12 +196,19 @@ export class NavigationLinksService {
             // action links
             if (link.rel.some(rel => rel === "nav")) {
                 promises.push(this.api.buildClientUrl(link).then(clientUrl => {
-                    navigations.push({
+                    const navLink: NavigationLink = {
                         apiLink: link,
                         clientUrl: `/explore/${clientUrl}`,
                         title: `nav.${this.getTranslationKeyForLink(link)}`,
                         sortKey: 10, // TODO better sort keys
-                    });
+                    };
+                    if (RESOURCE_TYPE_ICONS.has(link.resourceType)) {
+                        navLink.icon = RESOURCE_TYPE_ICONS.get(link.resourceType);
+                    }
+                    if (link.name != null) {
+                        navLink.name = link.name;
+                    }
+                    navigations.push(navLink);
                 }));
             }
         });

@@ -50,7 +50,8 @@ Example of the custom format:
                         "resourceType": "namespace",
                         "key": {"namespaceId": "nsExample"},
                         "schema": "url-to-json-schema",
-                        "doc": "url-to-human-documentation"
+                        "doc": "url-to-human-documentation",
+                        "name": "Example Namespace"
                     }
                 }
             }
@@ -151,6 +152,9 @@ The ``resourceType`` is also one of the entries in ``rel``.
 The ``schema`` attribute should contain a valid (and stable) url to a json schema describing the returned (or expected) object (only the data part of an API response).
 The ``doc`` attribute should contain a valid (and stable) url to the documentation for this resource.
 This attribute is intended for humans exploring the api.
+The ``name`` attribute is the display name of the link.
+A client can show this name to the a human user.
+
 
 
 Rationale Behind the Format

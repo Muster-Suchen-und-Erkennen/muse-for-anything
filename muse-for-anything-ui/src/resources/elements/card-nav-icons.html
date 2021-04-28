@@ -1,0 +1,21 @@
+<template>
+    <require from="./svg-icon.html"></require>
+
+    <div class="flex items-center" show.bind="!loading">
+        <template if.bind="main != null">
+            <a class="link-hover flex items-center" style="max-width: 12rem;"
+                href.bind="navOptions.get(main).clientUrl">
+                <svg-icon class="mr-1" icon.bind="navOptions.get(main).icon""></svg-icon>
+                <span class=" whitespace-nowrap overflow-hidden overflow-ellipsis">
+                    ${navOptions.get(main).title}
+                    </span>
+            </a>
+        </template>
+        <template repeat.for="nav of extra">
+            <a class="link-hover ml-1.5 flex items-center" href.bind="navOptions.get(nav).clientUrl"
+                title.bind="navOptions.get(nav).title">
+                <svg-icon icon.bind="navOptions.get(nav).icon""></svg-icon>
+            </a>
+        </template>
+    </div>
+</template>

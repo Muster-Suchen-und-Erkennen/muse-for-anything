@@ -28,16 +28,12 @@ from ..base_models import (
 )
 from .models.ontology import (
     ObjectSchema,
-    ObjectTypeSchema,
-    ObjectsCursorPageArgumentsSchema,
 )
 from ...db.db import DB
 from ...db.pagination import get_page_info
 from ...db.models.namespace import Namespace
 from ...db.models.ontology_objects import (
     OntologyObject,
-    OntologyObjectType,
-    OntologyObjectTypeVersion,
     OntologyObjectVersion,
 )
 
@@ -46,22 +42,14 @@ from .namespace_helpers import (
 )
 
 from muse_for_anything.api.v1_api.ontology_object_helpers import (
-    action_links_for_object,
-    action_links_for_object_page,
-    nav_links_for_object,
     nav_links_for_object_version,
     nav_links_for_object_versions_page,
-    object_page_params_to_key,
-    object_to_api_response,
-    nav_links_for_object_page,
     object_to_object_data,
     object_version_page_params_to_key,
     object_version_to_api_response,
-    validate_object_schema,
 )
 
 
-# FIXME implement endpoints
 @API_V1.route("/namespaces/<string:namespace>/objects/<string:object_id>/versions/")
 class ObjectVersionsView(MethodView):
     """Endpoint for all versions of a type."""

@@ -224,7 +224,7 @@ class TaxonomiesView(MethodView):
                 )
             )
 
-        extra_links.extend(nav_links_for_taxonomy_page(namespace))
+        extra_links.extend(nav_links_for_taxonomy_page(found_namespace))
 
         extra_links.extend(action_links_for_taxonomy_page(found_namespace))
 
@@ -308,7 +308,7 @@ class TaxonomiesView(MethodView):
         taxonomy_link = taxonomy_to_taxonomy_data(taxonomy).self
         taxonomy_data = taxonomy_to_api_response(taxonomy)
 
-        self_link = create_action_link_for_taxonomy_page(namespace=namespace)
+        self_link = create_action_link_for_taxonomy_page(namespace=found_namespace)
         self_link.rel = (*self_link.rel, "ont-taxonomy")
         self_link.resource_type = "new"
 
@@ -759,7 +759,7 @@ class TaxonomyItemsView(MethodView):
                 )
             )
 
-        extra_links.extend(nav_links_for_taxonomy_item_page(namespace, taxonomy))
+        extra_links.extend(nav_links_for_taxonomy_item_page(found_taxonomy))
 
         extra_links.extend(action_links_for_taxonomy_item_page(found_taxonomy))
 
@@ -853,9 +853,7 @@ class TaxonomyItemsView(MethodView):
         taxonomy_link = taxonomy_to_taxonomy_data(taxonomy_item.taxonomy).self
         taxonomy_data = taxonomy_to_api_response(taxonomy_item.taxonomy)
 
-        self_link = create_action_link_for_taxonomy_item_page(
-            namespace=namespace, taxonomy=taxonomy
-        )
+        self_link = create_action_link_for_taxonomy_item_page(taxonomy=found_taxonomy)
         self_link.rel = (*self_link.rel, "ont-taxonomy-item")
         self_link.resource_type = "new"
 

@@ -44,6 +44,7 @@ export interface ApiLinkBase {
     resourceType: string;
     doc?: string;
     schema?: string;
+    name?: string;
 }
 
 export function isApiLinkBase(obj: any): obj is ApiLinkBase {

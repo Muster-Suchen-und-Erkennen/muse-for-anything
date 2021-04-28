@@ -214,7 +214,7 @@ class TypesView(MethodView):
                 )
             )
 
-        extra_links.extend(nav_links_for_type_page(namespace))
+        extra_links.extend(nav_links_for_type_page(found_namespace))
 
         extra_links.extend(action_links_for_type_page(found_namespace))
 
@@ -295,7 +295,7 @@ class TypesView(MethodView):
         object_type_link = type_to_type_data(object_type).self
         object_type_data = type_to_api_response(object_type)
 
-        self_link = create_action_link_for_type_page(namespace=namespace)
+        self_link = create_action_link_for_type_page(namespace=found_namespace)
         self_link.rel = (*self_link.rel, "ont-type")
         self_link.resource_type = "new"
 

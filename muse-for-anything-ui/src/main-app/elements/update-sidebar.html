@@ -1,9 +1,19 @@
 <template>
+    <require from="resources/elements/svg-icon.html"></require>
+
     <div class="sticky top-0">
         <p if.bind="isEmpty">Create Sidebar!</p>
         <div else class="flex flex-col">
-            <a class="sidebar-head" if.bind="navLinks.self != null" href.bind="navLinks.self.clientUrl">
-                &lt; ${navLinks.self.title | t}
+            <a class="sidebar-head flex items-center" if.bind="navLinks.self != null"
+                href.bind="navLinks.self.clientUrl">
+                <svg-icon class="mr-1" icon.bind="'chevron-left'"></svg-icon>
+                <svg-icon class="mr-1" icon.bind="navLinks.self.icon" if.bind="navLinks.self.icon"></svg-icon>
+                ${navLinks.self.title | t} ${navLinks.self.name ? '"' + navLinks.self.name + '"' : ""}
+            </a>
+            <a class="sidebar-head" if.bind="navLinks.self == null && navLinks.up != null"
+                href.bind="navLinks.up.clientUrl">
+                <svg-icon class="mr-1" icon.bind="'chevron-left'"></svg-icon>
+                ${navLinks.up.title | t}
             </a>
 
         </div>

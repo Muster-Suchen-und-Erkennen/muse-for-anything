@@ -7,14 +7,11 @@ from jsonschema import validate, Draft7Validator
 
 from muse_for_anything.api.base_models import ApiLink, ApiResponse
 from muse_for_anything.api.v1_api.models.ontology import (
-    NamespaceData,
-    NamespaceSchema,
     ObjectTypeSchema,
     ObjectTypeData,
 )
 from muse_for_anything.db.models.ontology_objects import (
     OntologyObjectType,
-    OntologyObjectTypeVersion,
 )
 
 
@@ -28,33 +25,34 @@ def type_page_params_to_key(
     return start_key
 
 
-def nav_links_for_type_page(namespace: str) -> List[ApiLink]:
+def nav_links_for_type_page(namespace: Namespace) -> List[ApiLink]:
     nav_links: List[ApiLink] = [
         ApiLink(
             href=url_for(
                 "api-v1.NamespaceView",
-                namespace=namespace,
+                namespace=str(namespace.id),
                 _external=True,
             ),
             rel=("up",),
             resource_type="ont-namespace",
-            resource_key={"namespaceId": namespace},
+            resource_key={"namespaceId": str(namespace.id)},
             schema=url_for("api-v1.ApiSchemaView", schema_id="Namespace", _external=True),
+            name=namespace.name,
         ),
     ]
     return nav_links
 
 
-def create_action_link_for_type_page(namespace: str) -> ApiLink:
+def create_action_link_for_type_page(namespace: Namespace) -> ApiLink:
     return ApiLink(
         href=url_for(
             "api-v1.TypesView",
-            namespace=namespace,
+            namespace=str(namespace.id),
             _external=True,
         ),
         rel=("create", "post"),
         resource_type="ont-type",
-        resource_key={"namespaceId": namespace},
+        resource_key={"namespaceId": str(namespace.id)},
         schema=url_for("api-v1.ApiSchemaView", schema_id="TypeSchema", _external=True),
     )
 
@@ -63,7 +61,7 @@ def action_links_for_type_page(namespace: Namespace) -> List[ApiLink]:
     actions: List[ApiLink] = []
     if namespace.deleted_on is None:
         # namespace is not deleted
-        actions.append(create_action_link_for_type_page(namespace=str(namespace.id)))
+        actions.append(create_action_link_for_type_page(namespace=namespace))
     return actions
 
 
@@ -124,6 +122,7 @@ def nav_links_for_type(object_type: OntologyObjectType) -> List[ApiLink]:
             resource_type="ont-namespace",
             resource_key={"namespaceId": str(object_type.namespace_id)},
             schema=url_for("api-v1.ApiSchemaView", schema_id="Namespace", _external=True),
+            name=object_type.namespace.name,
         ),
     ]
     return nav_links
@@ -144,6 +143,7 @@ def type_to_type_data(object_type: OntologyObjectType) -> ObjectTypeData:
             schema=url_for(
                 "api-v1.ApiSchemaView", schema_id="OntologyType", _external=True
             ),
+            name=object_type.name,
         ),
         name=object_type.name,
         description=object_type.description,
@@ -193,6 +193,7 @@ def action_links_for_type(object_type: OntologyObjectType) -> List[ApiLink]:
                     schema=url_for(
                         "api-v1.ApiSchemaView", schema_id="TypeSchema", _external=True
                     ),
+                    name=object_type.name,
                 )
             )
             actions.append(
@@ -206,6 +207,7 @@ def action_links_for_type(object_type: OntologyObjectType) -> List[ApiLink]:
                     rel=("delete",),
                     resource_type="ont-type",
                     resource_key=resource_key,
+                    name=object_type.name,
                 )
             )
             actions.append(
@@ -241,6 +243,7 @@ def action_links_for_type(object_type: OntologyObjectType) -> List[ApiLink]:
                     rel=("restore", "post"),
                     resource_type="ont-type",
                     resource_key=resource_key,
+                    name=object_type.name,
                 )
             )
 

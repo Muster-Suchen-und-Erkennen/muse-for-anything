@@ -147,4 +147,86 @@
             <path d="m9.5.5v5h5" />
         </g>
     </svg>
+
+    <svg if.bind="icon === 'chevron-left'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21"
+        xmlns="http://www.w3.org/2000/svg">
+        <path d="m4.5 8.5-4-4 4-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+            transform="translate(7 6)" />
+    </svg>
+    <svg if.bind="icon === 'link'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21"
+        xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+            transform="translate(4 4)">
+            <path
+                d="m5.5 7.5c.96940983 1.36718798 3.01111566 1.12727011 4.01111565 0l1.98888435-2c1.1243486-1.22807966 1.1641276-2.81388365 0-4-1.135619-1.15706921-2.86438099-1.15706947-4 0l-2 2" />
+            <path
+                d="m7.5 6.56977319c-.96940983-1.36718798-3-1.1970433-4-.06977319l-2 1.97487373c-1.12434863 1.22807966-1.16412758 2.83900987 0 4.02512627 1.13561901 1.1570692 2.86438099 1.1570695 4 0l2-2" />
+        </g>
+    </svg>
+
+    <!-- specific resource items -->
+    <svg if.bind="icon === 'ont-namespace'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21"
+        xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+            transform="translate(3 4)">
+            <path
+                d="m.5 1.5v9c0 1.1045695.8954305 2 2 2h10c1.1045695 0 2-.8954305 2-2v-6.00280762c.0007656-1.05436179-.8150774-1.91816512-1.8499357-1.99451426l-.1500643-.00468356-5 .00200544-2-2h-4c-.55228475 0-1 .44771525-1 1z" />
+            <path d="m.5 2.5h7" />
+        </g>
+    </svg>
+    <svg if.bind="icon === 'ont-object'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21"
+        xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+            transform="translate(4 3)">
+            <path
+                d="m12.5 12.5v-7l-5-5h-5c-1.1045695 0-2 .8954305-2 2v10c0 1.1045695.8954305 2 2 2h8c1.1045695 0 2-.8954305 2-2z" />
+            <path d="m7.5.5v3c0 1.1045695.8954305 2 2 2h3" />
+        </g>
+    </svg>
+    <svg if.bind="icon === 'ont-taxonomy'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21"
+        xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+            transform="translate(2 2)">
+            <path d="m5.5.5h6v5h-6z" />
+            <path d="m10.5 11.5h6v5h-6z" />
+            <path d="m.5 11.5h6v5h-6z" />
+            <path d="m3.498 11.5v-3h10v3" />
+            <path d="m8.5 8.5v-3" />
+        </g>
+    </svg>
+    <svg if.bind="icon === 'ont-taxonomy-item'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21"
+        xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+            transform="translate(2 2)">
+            <g class="opacity-40">
+                <path d="m5.5.5h6v5h-6z" />
+                <path d="m.5 11.5h6v5h-6z" />
+                <path d="m3.498 11.5v-3h10v3" />
+                <path d="m8.5 8.5v-3" />
+            </g>
+            <path d="m10.5 11.5h6v5h-6z" />
+        </g>
+    </svg>
+    <svg if.bind="icon === 'ont-taxonomy-item-relation'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21"
+        xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+            transform="translate(2 2)">
+            <g class="opacity-40">
+                <path d="m5.5.5h6v5h-6z" />
+                <path d="m10.5 11.5h6v5h-6z" />
+                <path d="m.5 11.5h6v5h-6z" />
+            </g>
+            <path d="m3.498 11.5v-3h10v3" />
+            <path d="m8.5 8.5v-3" />
+        </g>
+    </svg>
+    <svg if.bind="icon === 'ont-type'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21"
+        xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+            transform="translate(2 3)">
+            <line x1="10.5" x2="6.5" y1=".5" y2="14.5" />
+            <polyline points="7.328 2.672 7.328 8.328 1.672 8.328" transform="rotate(135 4.5 5.5)" />
+            <polyline points="15.328 6.672 15.328 12.328 9.672 12.328" transform="scale(1 -1) rotate(-45 -10.435 0)" />
+        </g>
+    </svg>
 </template>

@@ -5,15 +5,7 @@ from datetime import datetime
 from marshmallow.utils import INCLUDE
 from muse_for_anything.api.v1_api.models.schema import JSONSchemaSchema
 from muse_for_anything.api.v1_api.ontology_types_helpers import (
-    action_links_for_type,
-    action_links_for_type_page,
     create_action_link_for_type_page,
-    nav_links_for_type,
-    nav_links_for_type_page,
-    type_page_params_to_key,
-    type_to_api_response,
-    type_to_type_data,
-    validate_type_schema,
 )
 from flask_babel import gettext
 from muse_for_anything.api.util import template_url_for
@@ -119,10 +111,6 @@ class ObjectsView(MethodView):
         cursor: Optional[str] = kwargs.get("cursor", None)
         item_count: int = cast(int, kwargs.get("item_count", 25))
         sort: str = cast(str, kwargs.get("sort", "name").lstrip("+"))
-        sort_function: Callable[..., Any] = (
-            desc if sort is not None and sort.startswith("-") else asc
-        )
-        sort_key: str = sort.lstrip("+-") if sort is not None else "name"
 
         ontology_object_filter = (
             OntologyObject.deleted_on == None,
@@ -255,7 +243,7 @@ class ObjectsView(MethodView):
                 )
             )
 
-        extra_links.extend(nav_links_for_object_page(namespace))
+        extra_links.extend(nav_links_for_object_page(found_namespace))
 
         extra_links.extend(action_links_for_object_page(found_namespace, type=found_type))
 
@@ -352,7 +340,7 @@ class ObjectsView(MethodView):
         object_link = object_to_object_data(object).self
         object_data = object_to_api_response(object)
 
-        self_link = create_action_link_for_type_page(namespace=namespace)
+        self_link = create_action_link_for_type_page(namespace=found_namespace)
         self_link.rel = (*self_link.rel, "ont-object")
         self_link.resource_type = "new"
 

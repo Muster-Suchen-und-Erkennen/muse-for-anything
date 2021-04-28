@@ -1,5 +1,4 @@
 from muse_for_anything.db.models.namespace import Namespace
-from muse_for_anything.api.v1_api.models.schema import TYPE_SCHEMA
 from muse_for_anything.api.v1_api.namespace_helpers import query_params_to_api_key
 from typing import Any, Dict, List, Optional, Union
 from flask import url_for
@@ -8,8 +7,6 @@ from jsonschema import validate, Draft7Validator
 from muse_for_anything.api.base_models import ApiLink, ApiResponse
 from muse_for_anything.api.v1_api.models.ontology import (
     ObjectSchema,
-    ObjectTypeSchema,
-    ObjectTypeData,
     ObjectData,
 )
 from muse_for_anything.db.models.ontology_objects import (
@@ -33,18 +30,19 @@ def object_page_params_to_key(
     return start_key
 
 
-def nav_links_for_object_page(namespace: str) -> List[ApiLink]:
+def nav_links_for_object_page(namespace: Namespace) -> List[ApiLink]:
     nav_links: List[ApiLink] = [
         ApiLink(
             href=url_for(
                 "api-v1.NamespaceView",
-                namespace=namespace,
+                namespace=str(namespace.id),
                 _external=True,
             ),
             rel=("up",),
             resource_type="ont-namespace",
-            resource_key={"namespaceId": namespace},
+            resource_key={"namespaceId": str(namespace.id)},
             schema=url_for("api-v1.ApiSchemaView", schema_id="Namespace", _external=True),
+            name=namespace.name,
         ),
     ]
     return nav_links
@@ -123,6 +121,7 @@ def nav_links_for_object(object: OntologyObject) -> List[ApiLink]:
             resource_type="ont-namespace",
             resource_key={"namespaceId": str(object.namespace_id)},
             schema=url_for("api-v1.ApiSchemaView", schema_id="Namespace", _external=True),
+            name=object.namespace.name,
         ),
     ]
 
@@ -141,10 +140,11 @@ def nav_links_for_object(object: OntologyObject) -> List[ApiLink]:
                 schema=url_for(
                     "api-v1.ApiSchemaView", schema_id="TypeSchema", _external=True
                 ),
+                name=object.ontology_type.name,
             )
         )
 
-    # TODO add more nav links to type and to current version…
+    # TODO add more nav links to type and to current version… ?
     return nav_links
 
 
@@ -160,6 +160,7 @@ def object_to_self_link(object: OntologyObject) -> ApiLink:
         resource_type="ont-object",
         resource_key=object_to_key(object),
         schema=type_version_to_schema_url(object.ontology_type_version),
+        name=object.name,
     )
 
 
@@ -176,6 +177,7 @@ def object_version_to_self_link(version: OntologyObjectVersion) -> ApiLink:
         resource_type="ont-object-version",
         resource_key=object_version_to_key(version),
         schema=type_version_to_schema_url(version.ontology_type_version),
+        name=version.name,
     )
 
 
@@ -250,6 +252,7 @@ def action_links_for_object(object: OntologyObject) -> List[ApiLink]:
                     resource_type="ont-object",
                     resource_key=resource_key,
                     schema=current_type_schema_url,
+                    name=object.name,
                 )
             )
             actions.append(
@@ -263,6 +266,7 @@ def action_links_for_object(object: OntologyObject) -> List[ApiLink]:
                     rel=("delete",),
                     resource_type="ont-object",
                     resource_key=resource_key,
+                    name=object.name,
                 )
             )
         else:
@@ -277,6 +281,7 @@ def action_links_for_object(object: OntologyObject) -> List[ApiLink]:
                     rel=("restore", "post"),
                     resource_type="ont-object",
                     resource_key=resource_key,
+                    name=object.name,
                 )
             )
 
@@ -319,6 +324,7 @@ def nav_links_for_object_version(version: OntologyObjectVersion) -> List[ApiLink
             rel=("nav",),
             resource_type="ont-object",
             resource_key=object_to_key(object),
+            name=object.name,
         ),
         ApiLink(
             href=url_for(
@@ -340,6 +346,7 @@ def nav_links_for_object_version(version: OntologyObjectVersion) -> List[ApiLink
             resource_type="ont-namespace",
             resource_key={"namespaceId": str(object.namespace_id)},
             schema=url_for("api-v1.ApiSchemaView", schema_id="Namespace", _external=True),
+            name=object.namespace.name,
         ),
     ]
 
@@ -359,10 +366,11 @@ def nav_links_for_object_version(version: OntologyObjectVersion) -> List[ApiLink
                 schema=url_for(
                     "api-v1.ApiSchemaView", schema_id="TypeSchema", _external=True
                 ),
+                name=version.ontology_type_version.name,
             )
         )
 
-    # TODO add more nav links to type and to current version…
+    # TODO add more nav links to type and to current version… ?
     return nav_links
 
 
@@ -401,6 +409,7 @@ def nav_links_for_object_versions_page(object: OntologyObject) -> List[ApiLink]:
             rel=("up",),
             resource_type="ont-object",
             resource_key=object_to_key(object),
+            name=object.name,
         ),
         ApiLink(
             href=url_for(
@@ -422,6 +431,7 @@ def nav_links_for_object_versions_page(object: OntologyObject) -> List[ApiLink]:
             resource_type="ont-namespace",
             resource_key={"namespaceId": str(object.namespace_id)},
             schema=url_for("api-v1.ApiSchemaView", schema_id="Namespace", _external=True),
+            name=object.namespace.name,
         ),
     ]
 
@@ -440,6 +450,7 @@ def nav_links_for_object_versions_page(object: OntologyObject) -> List[ApiLink]:
                 schema=url_for(
                     "api-v1.ApiSchemaView", schema_id="TypeSchema", _external=True
                 ),
+                name=object.ontology_type.name,
             )
         )
 

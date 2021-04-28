@@ -1,5 +1,4 @@
 from typing import Any, Dict, List, Optional, Union
-from enum import Enum
 from flask import url_for
 
 from muse_for_anything.db.models.namespace import Namespace
@@ -7,9 +6,7 @@ from muse_for_anything.api.v1_api.namespace_helpers import query_params_to_api_k
 
 from muse_for_anything.api.base_models import (
     ApiLink,
-    ApiObjectSchema,
     ApiResponse,
-    BaseApiObject,
 )
 from muse_for_anything.api.v1_api.models.ontology import (
     TaxonomyData,
@@ -37,33 +34,34 @@ def taxonomy_page_params_to_key(
     return start_key
 
 
-def nav_links_for_taxonomy_page(namespace: str) -> List[ApiLink]:
+def nav_links_for_taxonomy_page(namespace: Namespace) -> List[ApiLink]:
     nav_links: List[ApiLink] = [
         ApiLink(
             href=url_for(
                 "api-v1.NamespaceView",
-                namespace=namespace,
+                namespace=str(namespace.id),
                 _external=True,
             ),
             rel=("up",),
             resource_type="ont-namespace",
-            resource_key={"namespaceId": namespace},
+            resource_key={"namespaceId": str(namespace.id)},
             schema=url_for("api-v1.ApiSchemaView", schema_id="Namespace", _external=True),
+            name=namespace.name,
         ),
     ]
     return nav_links
 
 
-def create_action_link_for_taxonomy_page(namespace: str) -> ApiLink:
+def create_action_link_for_taxonomy_page(namespace: Namespace) -> ApiLink:
     return ApiLink(
         href=url_for(
             "api-v1.TaxonomiesView",
-            namespace=namespace,
+            namespace=str(namespace.id),
             _external=True,
         ),
         rel=("create", "post"),
         resource_type="ont-taxonomy",
-        resource_key={"namespaceId": namespace},
+        resource_key={"namespaceId": str(namespace.id)},
         schema=url_for(
             "api-v1.ApiSchemaView", schema_id="TaxonomySchema", _external=True
         ),
@@ -74,7 +72,7 @@ def action_links_for_taxonomy_page(namespace: Namespace) -> List[ApiLink]:
     actions: List[ApiLink] = []
     if namespace.deleted_on is None:
         # namespace is not deleted
-        actions.append(create_action_link_for_taxonomy_page(namespace=str(namespace.id)))
+        actions.append(create_action_link_for_taxonomy_page(namespace=namespace))
     return actions
 
 
@@ -124,6 +122,7 @@ def nav_links_for_taxonomy(taxonomy: Taxonomy) -> List[ApiLink]:
             resource_type="ont-namespace",
             resource_key={"namespaceId": str(taxonomy.namespace_id)},
             schema=url_for("api-v1.ApiSchemaView", schema_id="Namespace", _external=True),
+            name=taxonomy.namespace.name,
         ),
     ]
     return nav_links
@@ -152,6 +151,7 @@ def taxonomy_item_to_api_link(item: TaxonomyItem) -> ApiLink:
         schema=url_for(
             "api-v1.ApiSchemaView", schema_id="TaxonomyItemSchema", _external=True
         ),
+        name=item.name,
     )
 
 
@@ -174,6 +174,7 @@ def taxonomy_to_taxonomy_data(taxonomy: Taxonomy) -> TaxonomyData:
             schema=url_for(
                 "api-v1.ApiSchemaView", schema_id="TaxonomySchema", _external=True
             ),
+            name=taxonomy.name,
         ),
         name=taxonomy.name,
         description=taxonomy.description,
@@ -221,6 +222,7 @@ def action_links_for_taxonomy(taxonomy: Taxonomy) -> List[ApiLink]:
                     schema=url_for(
                         "api-v1.ApiSchemaView", schema_id="TaxonomySchema", _external=True
                     ),
+                    name=taxonomy.name,
                 )
             )
             actions.append(
@@ -234,13 +236,10 @@ def action_links_for_taxonomy(taxonomy: Taxonomy) -> List[ApiLink]:
                     rel=("delete",),
                     resource_type="ont-taxonomy",
                     resource_key=resource_key,
+                    name=taxonomy.name,
                 )
             )
-            actions.append(
-                create_action_link_for_taxonomy_item_page(
-                    str(taxonomy.namespace_id), str(taxonomy.id)
-                )
-            )
+            actions.append(create_action_link_for_taxonomy_item_page(taxonomy))
         else:
             actions.append(
                 ApiLink(
@@ -253,6 +252,7 @@ def action_links_for_taxonomy(taxonomy: Taxonomy) -> List[ApiLink]:
                     rel=("restore", "post"),
                     resource_type="ont-taxonomy",
                     resource_key=resource_key,
+                    name=taxonomy.name,
                 )
             )
 
@@ -284,48 +284,50 @@ def taxonomy_item_page_params_to_key(
     return start_key
 
 
-def nav_links_for_taxonomy_item_page(namespace: str, taxonomy: str) -> List[ApiLink]:
+def nav_links_for_taxonomy_item_page(taxonomy: Taxonomy) -> List[ApiLink]:
     nav_links: List[ApiLink] = [
         ApiLink(
             href=url_for(
                 "api-v1.TaxonomyView",
-                namespace=namespace,
-                taxonomy=taxonomy,
+                namespace=str(taxonomy.namespace_id),
+                taxonomy=str(taxonomy.id),
                 _external=True,
             ),
             rel=("up",),
             resource_type="ont-taxonomy",
-            resource_key={"namespaceId": namespace, "taxonomyId": taxonomy},
+            resource_key=taxonomy_to_key(taxonomy),
             schema=url_for(
                 "api-v1.ApiSchemaView", schema_id="TaxonomySchema", _external=True
             ),
+            name=taxonomy.name,
         ),
         ApiLink(
             href=url_for(
                 "api-v1.NamespaceView",
-                namespace=namespace,
+                namespace=str(taxonomy.namespace_id),
                 _external=True,
             ),
             rel=("nav",),
             resource_type="ont-namespace",
-            resource_key={"namespaceId": namespace},
+            resource_key={"namespaceId": str(taxonomy.namespace_id)},
             schema=url_for("api-v1.ApiSchemaView", schema_id="Namespace", _external=True),
+            name=taxonomy.namespace.name,
         ),
     ]
     return nav_links
 
 
-def create_action_link_for_taxonomy_item_page(namespace: str, taxonomy: str) -> ApiLink:
+def create_action_link_for_taxonomy_item_page(taxonomy: Taxonomy) -> ApiLink:
     return ApiLink(
         href=url_for(
             "api-v1.TaxonomyItemsView",
-            namespace=namespace,
-            taxonomy=taxonomy,
+            namespace=str(taxonomy.namespace_id),
+            taxonomy=str(taxonomy.id),
             _external=True,
         ),
         rel=("create", "post"),
         resource_type="ont-taxonomy-item",
-        resource_key={"namespaceId": namespace, "taxonomyId": taxonomy},
+        resource_key=taxonomy_to_key(taxonomy),
         schema=url_for(
             "api-v1.ApiSchemaView", schema_id="TaxonomyItemSchema", _external=True
         ),
@@ -336,11 +338,7 @@ def action_links_for_taxonomy_item_page(taxonomy: Taxonomy) -> List[ApiLink]:
     actions: List[ApiLink] = []
     if taxonomy.deleted_on is None and taxonomy.namespace.deleted_on is None:
         # taxonomy and namespace are not deleted
-        actions.append(
-            create_action_link_for_taxonomy_item_page(
-                namespace=str(taxonomy.namespace_id), taxonomy=str(taxonomy.id)
-            )
-        )
+        actions.append(create_action_link_for_taxonomy_item_page(taxonomy=taxonomy))
     return actions
 
 
@@ -369,6 +367,7 @@ def taxonomy_item_version_to_api_link(item: TaxonomyItemVersion) -> ApiLink:
         schema=url_for(
             "api-v1.ApiSchemaView", schema_id="TaxonomyItemSchema", _external=True
         ),
+        name=item.name,
     )
 
 
@@ -444,6 +443,7 @@ def nav_links_for_taxonomy_item(item: TaxonomyItem) -> List[ApiLink]:
             schema=url_for(
                 "api-v1.ApiSchemaView", schema_id="TaxonomySchema", _external=True
             ),
+            name=item.taxonomy.name,
         ),
         ApiLink(
             href=url_for(
@@ -468,6 +468,7 @@ def nav_links_for_taxonomy_item(item: TaxonomyItem) -> List[ApiLink]:
             resource_type="ont-namespace",
             resource_key={"namespaceId": namespace_id},
             schema=url_for("api-v1.ApiSchemaView", schema_id="Namespace", _external=True),
+            name=item.taxonomy.namespace.name,
         ),
     ]
     return nav_links
@@ -517,6 +518,7 @@ def action_links_for_taxonomy_item(item: TaxonomyItem) -> List[ApiLink]:
                         schema_id="TaxonomyItemSchema",
                         _external=True,
                     ),
+                    name=item.name,
                 )
             )
             actions.append(
@@ -531,6 +533,7 @@ def action_links_for_taxonomy_item(item: TaxonomyItem) -> List[ApiLink]:
                     rel=("delete",),
                     resource_type="ont-taxonomy-item",
                     resource_key=resource_key,
+                    name=item.name,
                 )
             )
             actions.append(
@@ -565,6 +568,7 @@ def action_links_for_taxonomy_item(item: TaxonomyItem) -> List[ApiLink]:
                     rel=("restore", "post"),
                     resource_type="ont-taxonomy-item",
                     resource_key=resource_key,
+                    name=item.name,
                 )
             )
 
@@ -593,6 +597,7 @@ def nav_links_for_taxonomy_item_version(
             schema=url_for(
                 "api-v1.ApiSchemaView", schema_id="TaxonomyItemSchema", _external=True
             ),
+            name=item.name,
         ),
         ApiLink(
             href=url_for(
@@ -607,6 +612,7 @@ def nav_links_for_taxonomy_item_version(
             schema=url_for(
                 "api-v1.ApiSchemaView", schema_id="TaxonomySchema", _external=True
             ),
+            name=item.taxonomy.name,
         ),
         ApiLink(
             href=url_for(
@@ -631,6 +637,7 @@ def nav_links_for_taxonomy_item_version(
             resource_type="ont-namespace",
             resource_key={"namespaceId": namespace_id},
             schema=url_for("api-v1.ApiSchemaView", schema_id="Namespace", _external=True),
+            name=item.taxonomy.namespace.name,
         ),
     ]
     return nav_links
@@ -680,6 +687,57 @@ def create_action_link_for_taxonomy_item_relation_page(
             _external=True,
         ),
     )
+
+
+def nav_links_for_taxonomy_item_relation(
+    relation: TaxonomyItemRelation,
+) -> List[ApiLink]:
+    taxonomy = relation.taxonomy_item_source.taxonomy
+    namespace_id = str(taxonomy.namespace_id)
+
+    nav_links: List[ApiLink] = [
+        ApiLink(
+            href=url_for(
+                "api-v1.TaxonomyView",
+                namespace=namespace_id,
+                taxonomy=str(taxonomy.id),
+                _external=True,
+            ),
+            rel=("up",),
+            resource_type="ont-taxonomy",
+            resource_key=taxonomy_to_key(taxonomy),
+            schema=url_for(
+                "api-v1.ApiSchemaView", schema_id="TaxonomySchema", _external=True
+            ),
+            name=taxonomy.name,
+        ),
+        ApiLink(
+            href=url_for(
+                "api-v1.TaxonomiesView",
+                namespace=namespace_id,
+                _external=True,
+            ),
+            rel=("nav", "page", "first", "collection"),
+            resource_type="ont-taxonomy",
+            resource_key={"namespaceId": namespace_id},
+            schema=url_for(
+                "api-v1.ApiSchemaView", schema_id="TaxonomySchema", _external=True
+            ),
+        ),
+        ApiLink(
+            href=url_for(
+                "api-v1.NamespaceView",
+                namespace=namespace_id,
+                _external=True,
+            ),
+            rel=("nav",),
+            resource_type="ont-namespace",
+            resource_key={"namespaceId": namespace_id},
+            schema=url_for("api-v1.ApiSchemaView", schema_id="Namespace", _external=True),
+            name=taxonomy.namespace.name,
+        ),
+    ]
+    return nav_links
 
 
 def action_links_for_taxonomy_item_relation(
@@ -735,6 +793,9 @@ def taxonomy_item_relation_to_api_response(relation: TaxonomyItemRelation) -> Ap
     relation_data = taxonomy_item_relation_to_taxonomy_item_relation_data(relation)
     raw_relation: Dict[str, Any] = TaxonomyItemRelationSchema().dump(relation_data)
     return ApiResponse(
-        links=(*action_links_for_taxonomy_item_relation(relation),),
+        links=(
+            *nav_links_for_taxonomy_item_relation(relation),
+            *action_links_for_taxonomy_item_relation(relation),
+        ),
         data=raw_relation,
     )

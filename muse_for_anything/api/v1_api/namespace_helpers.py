@@ -20,6 +20,7 @@ def namespace_to_namespace_data(namespace: Namespace) -> NamespaceData:
             resource_type="ont-namespace",
             resource_key=namespace_to_key(namespace),
             schema=url_for("api-v1.ApiSchemaView", schema_id="Namespace", _external=True),
+            name=namespace.name,
         ),
         name=namespace.name,
         description=namespace.description,
@@ -97,6 +98,7 @@ def action_links_for_namespace(namespace: Namespace) -> List[ApiLink]:
                 schema=url_for(
                     "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
                 ),
+                name=namespace.name,
             )
         )
         actions.append(
@@ -109,6 +111,7 @@ def action_links_for_namespace(namespace: Namespace) -> List[ApiLink]:
                 rel=("delete",),
                 resource_type="ont-namespace",
                 resource_key=resource_key,
+                name=namespace.name,
             )
         )
     else:
@@ -122,6 +125,7 @@ def action_links_for_namespace(namespace: Namespace) -> List[ApiLink]:
                 rel=("restore", "post"),
                 resource_type="ont-namespace",
                 resource_key=resource_key,
+                name=namespace.name,
             )
         )
     return actions
