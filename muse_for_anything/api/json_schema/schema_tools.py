@@ -286,9 +286,9 @@ class SchemaWalker:
                     resolved_schema = self._resolve_single_ref(anchor, schema)
                     stack.appendleft(resolved_schema)
                     continue  # TODO title and description attributes?
-                if "$allOf" in schema:
+                if "allOf" in schema:
                     yield from schema_generator(
-                        (anchor, sub_schema) for sub_schema in schema["$allOf"]
+                        (anchor, sub_schema) for sub_schema in schema["allOf"]
                     )
                 yield (anchor, schema)
 
