@@ -187,6 +187,11 @@ export class ResourceReferenceDefinitionForm {
                 },
             };
         }
+
+        if (newValueOut.referenceKey == null) {
+            delete newValueOut.referenceKey;
+        }
+
         // todo: fix frequent updates?
         this.valueOut = newValueOut;
     }

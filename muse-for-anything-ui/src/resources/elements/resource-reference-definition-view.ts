@@ -26,9 +26,13 @@ export class ResourceReferenceDefinitionView {
             return;
         }
         this.referenceType = `resource-type.${newValue.referenceType}`;
-        this.apiService.resolveLinkKey(newValue.referenceKey, newValue.referenceType).then(links => {
-            this.resourceLink = links.find(link => !link.rel.some(rel => rel === "collection"));
-        });
+        if (newValue.referenceKey != null) {
+            this.apiService.resolveLinkKey(newValue.referenceKey, newValue.referenceType).then(links => {
+                this.resourceLink = links.find(link => !link.rel.some(rel => rel === "collection"));
+            });
+        } else {
+            this.resourceLink = null;
+        }
     }
 
     schemaChanged(newValue: NormalizedApiSchema, oldValue) {
@@ -39,6 +43,6 @@ export class ResourceReferenceDefinitionView {
         if (newValue.normalized.customType !== "resourceReferenceDefinition") {
             console.warn("Resource reference definition view used with wrong schema!", newValue);
         }
-        this.referenceTypeProp = newValue.getPropertyList(["referenceType"], {"allowList": ["referenceType"]})?.[0];
+        this.referenceTypeProp = newValue.getPropertyList(["referenceType"], { "allowList": ["referenceType"] })?.[0];
     }
 }
