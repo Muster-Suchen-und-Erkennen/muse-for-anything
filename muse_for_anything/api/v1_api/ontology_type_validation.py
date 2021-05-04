@@ -210,20 +210,26 @@ class RefVisitor(DataWalkerVisitor):
             namespace_id, object_type_id, version_number = self.check_params(
                 namespace=namespace, object_type=object_type, version=version
             )
-            found_object_type_version: Optional[
+
+            found_type_version: Optional[
                 OntologyObjectTypeVersion
             ] = OntologyObjectTypeVersion.query.filter(
                 OntologyObjectTypeVersion.version == version_number,
                 OntologyObjectTypeVersion.object_type_id == object_type_id,
             ).first()
+
             if (
-                found_object_type_version is None
-                or found_object_type_version.ontology_type.namespace_id != namespace_id
+                found_type_version is None
+                or found_type_version.ontology_type.namespace_id != namespace_id
+                or found_type_version.deleted_on is not None
+                or found_type_version.ontology_type.deleted_on is not None
+                or found_type_version.ontology_type.namespace.deleted_on is not None
             ):
                 raise DataVisitorException(
                     f"Invalid schema ref! Schema '{url}' not found!"
                 )
-            self.references.add(found_object_type_version)
+
+            self.references.add(found_type_version)
 
 
 TAXONOMY_ITEM_REFERENCE_TYPE = {"const": "ont-taxonomy-item"}
@@ -287,7 +293,11 @@ class ResourceReferenceVisitor(DataWalkerVisitor):
             Taxonomy.namespace_id == int(namespace),
         ).first()
 
-        if found_taxonomy is None:
+        if (
+            found_taxonomy is None
+            or found_taxonomy.deleted_on is not None
+            or found_taxonomy.namespace.deleted_on is not None
+        ):
             raise DataVisitorException(
                 f"Invalid taxonomy key! No taxonomy found for key {key}."
             )
@@ -308,7 +318,7 @@ class ResourceReferenceVisitor(DataWalkerVisitor):
         if self.restrict_to_namespace is not None:
             if namespace != str(self.restrict_to_namespace):
                 raise DataVisitorException(
-                    f"Invalid object type key! Only taxonomies in namespace {self.restrict_to_namespace} are allowed but got namespace {namespace}."
+                    f"Invalid object type key! Only object types in namespace {self.restrict_to_namespace} are allowed but got namespace {namespace}."
                 )
 
         found_object_type: Optional[OntologyObjectType] = OntologyObjectType.query.filter(
@@ -316,7 +326,11 @@ class ResourceReferenceVisitor(DataWalkerVisitor):
             OntologyObjectType.namespace_id == int(namespace),
         ).first()
 
-        if found_object_type is None:
+        if (
+            found_object_type is None
+            or found_object_type.deleted_on is not None
+            or found_object_type.namespace.deleted_on is not None
+        ):
             raise DataVisitorException(
                 f"Invalid object type key! No object type found for key {key}."
             )
