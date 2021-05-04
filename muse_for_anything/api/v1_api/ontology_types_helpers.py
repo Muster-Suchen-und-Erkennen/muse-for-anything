@@ -3,7 +3,6 @@ from muse_for_anything.api.v1_api.models.schema import TYPE_SCHEMA
 from muse_for_anything.api.v1_api.namespace_helpers import query_params_to_api_key
 from typing import Any, Dict, List, Optional, Union
 from flask import url_for
-from jsonschema import validate, Draft7Validator
 
 from muse_for_anything.api.base_models import ApiLink, ApiResponse
 from muse_for_anything.api.v1_api.models.ontology import (
@@ -98,7 +97,7 @@ def nav_links_for_type(object_type: OntologyObjectType) -> List[ApiLink]:
                 "api-v1.ApiSchemaView", schema_id="OntologyType", _external=True
             ),
         ),
-        ApiLink(
+        ApiLink(  # TODO decide whether to keep this for abstract types!
             href=url_for(
                 "api-v1.ObjectsView",
                 namespace=str(object_type.namespace_id),
@@ -210,27 +209,29 @@ def action_links_for_type(object_type: OntologyObjectType) -> List[ApiLink]:
                     name=object_type.name,
                 )
             )
-            actions.append(
-                ApiLink(
-                    href=url_for(
-                        "api-v1.ObjectsView",
-                        namespace=str(object_type.namespace_id),
-                        **{"type-id": str(object_type.id)},
-                        _external=True,
-                    ),
-                    rel=("create", "post"),
-                    resource_type="ont-object",
-                    resource_key={
-                        "namespaceId": str(object_type.namespace_id),
-                        "?type-id": str(object_type.id),
-                    },
-                    schema=url_for(
-                        "api-v1.TypeSchemaView",
-                        schema_id=str(object_type.current_version_id),
-                        _external=True,
-                    ),
+            if object_type.is_toplevel_type:
+                # only allow object creation for top level (non abstract) types
+                actions.append(
+                    ApiLink(
+                        href=url_for(
+                            "api-v1.ObjectsView",
+                            namespace=str(object_type.namespace_id),
+                            **{"type-id": str(object_type.id)},
+                            _external=True,
+                        ),
+                        rel=("create", "post"),
+                        resource_type="ont-object",
+                        resource_key={
+                            "namespaceId": str(object_type.namespace_id),
+                            "?type-id": str(object_type.id),
+                        },
+                        schema=url_for(
+                            "api-v1.TypeSchemaView",
+                            schema_id=str(object_type.current_version_id),
+                            _external=True,
+                        ),
+                    )
                 )
-            )
         else:
             actions.append(
                 ApiLink(
@@ -260,11 +261,3 @@ def type_to_api_response(object_type: OntologyObjectType) -> ApiResponse:
         ),
         data=raw_object_type,
     )
-
-
-def validate_type_schema(schema: Any):
-    # FIXME add proper error reporting for api client
-    validator = Draft7Validator(TYPE_SCHEMA)
-    for error in sorted(validator.iter_errors(schema), key=str):
-        print("VALIDATION ERROR", error.message)
-    validate(schema, TYPE_SCHEMA)
