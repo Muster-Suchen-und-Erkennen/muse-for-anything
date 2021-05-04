@@ -14,14 +14,13 @@ from muse_for_anything.api.v1_api.ontology_types_helpers import (
     type_page_params_to_key,
     type_to_api_response,
     type_to_type_data,
-    validate_type_schema,
 )
 from flask_babel import gettext
 from muse_for_anything.api.util import template_url_for
 from typing import Any, Callable, Dict, List, Optional, Union, cast
 from flask.helpers import url_for
 from flask.views import MethodView
-from sqlalchemy.sql.expression import asc, desc, literal
+from sqlalchemy.sql.expression import asc, desc
 from sqlalchemy.orm.query import Query
 from flask_smorest import abort
 from http import HTTPStatus
@@ -420,7 +419,6 @@ class TypeView(MethodView):
     @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
     def put(self, data, namespace: str, object_type: str):
         """Update type (creates a new version)."""
-        validate_type_schema(data)
         self._check_path_params(namespace=namespace, object_type=object_type)
         found_object_type: OntologyObjectType = self._get_object_type(
             namespace=namespace, object_type=object_type
