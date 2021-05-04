@@ -56,6 +56,9 @@ export class TypeDefinitionForm {
         }
         let schemaId: string;
         const initialType = data.type ?? [];
+        if (data.$ref != null) {
+            schemaId = "#/definitions/ref";
+        }
         if (initialType.some(t => t === "object")) {
             schemaId = "#/definitions/object";
             const customObjectType = data.customType;
@@ -63,9 +66,6 @@ export class TypeDefinitionForm {
                 schemaId = "#/definitions/resourceReference";
             }
             // add more custom types here
-            if (data.$ref != null) {
-                schemaId = "#/definitions/ref";
-            }
         }
         if (initialType.some(t => t === "array")) {
             schemaId = "#/definitions/array";

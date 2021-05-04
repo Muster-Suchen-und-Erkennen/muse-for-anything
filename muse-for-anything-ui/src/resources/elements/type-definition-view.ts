@@ -32,15 +32,15 @@ export class TypeDefinitionView {
 
         let schemaId: string;
         const initialType = this.data.type;
+        if (this.data.$ref != null) {
+            schemaId = "#/definitions/ref";
+        }
         if (initialType?.some(t => t === "object") ?? false) {
             schemaId = "#/definitions/object";
             const customObjectType = this.data.customType;
             // TODO use customObject type for object and taxonomy and type references!
             if (customObjectType === "resourceReference") {
                 schemaId = "#/definitions/resourceReference";
-            }
-            if (this.data.$ref != null) {
-                schemaId = "#/definitions/ref";
             }
         }
         if (initialType?.some(t => t === "array") ?? false) {
