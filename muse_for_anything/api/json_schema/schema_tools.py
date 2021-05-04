@@ -261,7 +261,10 @@ class SchemaWalker:
         ref = cast(str, schema["$ref"])
         if not ref.startswith("#"):
             # split anchor and ref from full url reference
-            anchor, ref_part = ref.split("#", maxsplit=1)
+            if "#" in ref:
+                anchor, ref_part = ref.split("#", maxsplit=1)
+            else:
+                anchor, ref_part = ref, ""
             ref = f"#{ref_part}"
 
         # resolve ref
@@ -271,10 +274,12 @@ class SchemaWalker:
                 return anchor, ref_schema["definitions"][ref[14:]]  # can raise KeyError
             except KeyError:
                 raise KeyError(f"No schema with ref '{ref}' found for anchor '{anchor}'")
+        elif ref == "#":
+            return anchor, self._fetch_schema(anchor)
         elif ref.startswith("#"):
             ref_schema = self._fetch_schema(anchor)
             defs = ref_schema["definitions"]
-            for candidate_schema in defs:
+            for candidate_schema in defs.values():
                 if candidate_schema.get("$id") == ref:
                     return anchor, candidate_schema
             else:
