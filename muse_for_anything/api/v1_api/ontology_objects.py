@@ -1,19 +1,20 @@
 """Module containing the object API endpoints of the v1 API."""
 
 from datetime import datetime
+from muse_for_anything.db.models.object_relation_tables import (
+    OntologyObjectVersionToObject,
+    OntologyObjectVersionToTaxonomyItem,
+)
+from muse_for_anything.api.v1_api.ontology_object_validation import validate_object
 
 from marshmallow.utils import INCLUDE
-from muse_for_anything.api.v1_api.models.schema import JSONSchemaSchema
 from muse_for_anything.api.v1_api.ontology_types_helpers import (
     create_action_link_for_type_page,
 )
 from flask_babel import gettext
-from muse_for_anything.api.util import template_url_for
 from typing import Any, Callable, Dict, List, Optional, Union, cast
 from flask.helpers import url_for
 from flask.views import MethodView
-from sqlalchemy.sql.expression import asc, desc, literal
-from sqlalchemy.orm.query import Query
 from flask_smorest import abort
 from http import HTTPStatus
 
@@ -24,7 +25,6 @@ from ..base_models import (
     ChangedApiObject,
     ChangedApiObjectSchema,
     CursorPage,
-    CursorPageArgumentsSchema,
     CursorPageSchema,
     DynamicApiResponseSchema,
     NewApiObject,
@@ -32,7 +32,6 @@ from ..base_models import (
 )
 from .models.ontology import (
     ObjectSchema,
-    ObjectTypeSchema,
     ObjectsCursorPageArgumentsSchema,
 )
 from ...db.db import DB
@@ -41,7 +40,6 @@ from ...db.models.namespace import Namespace
 from ...db.models.ontology_objects import (
     OntologyObject,
     OntologyObjectType,
-    OntologyObjectTypeVersion,
     OntologyObjectVersion,
 )
 
@@ -57,7 +55,6 @@ from muse_for_anything.api.v1_api.ontology_object_helpers import (
     object_to_api_response,
     nav_links_for_object_page,
     object_to_object_data,
-    validate_object_schema,
 )
 
 
@@ -310,8 +307,14 @@ class ObjectsView(MethodView):
                     "Object type is marked as deleted. No new Objects of this type can be created!"
                 ),
             )
-
-        validate_object_schema(object_data=data.get("data"), type=found_object_type)
+        if not found_object_type.is_toplevel_type:
+            # can only create objects for non abstract top level object type!
+            abort(
+                HTTPStatus.BAD_REQUEST,
+                message=gettext(
+                    "Object type is marked as abstract. No Objects of this type can be created!"
+                ),
+            )
 
         name = data.get("name")
         description = data.get("description", "")
@@ -322,8 +325,6 @@ class ObjectsView(MethodView):
             name=name,
             description=description,
         )
-        DB.session.add(object)
-        DB.session.flush()
         object_version = OntologyObjectVersion(
             object=object,
             type_version=found_object_type.current_version,
@@ -332,9 +333,33 @@ class ObjectsView(MethodView):
             description=description,
             data=data.get("data"),
         )
+
+        # validate against object type and validate and extract resource references
+        metadata = validate_object(
+            object_version=object_version, type_version=found_object_type.current_version
+        )
+
+        # add object to session and flush to prevent circular references
+        DB.session.add(object)
+        DB.session.flush()
+
         object.current_version = object_version
+
         DB.session.add(object)
         DB.session.add(object_version)
+
+        # add references
+        for object_ref in metadata.referenced_objects:
+            object_relation = OntologyObjectVersionToObject(
+                object_version_source=object_version, object_target=object_ref
+            )
+            DB.session.add(object_relation)
+        for taxonomy_item in metadata.referenced_taxonomy_items:
+            taxonomy_item_relation = OntologyObjectVersionToTaxonomyItem(
+                object_version_source=object_version, taxonomy_item_target=taxonomy_item
+            )
+            DB.session.add(taxonomy_item_relation)
+
         DB.session.commit()
 
         object_link = object_to_object_data(object).self
@@ -444,17 +469,11 @@ class ObjectView(MethodView):
     @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
     def put(self, data, namespace: str, object_id: str):
         """Update object (creates a new version)."""
-        # FIXME add validation… validate_type_schema(data)
-        # FIXME add proper introspection to get linked types out of the schema and type compatibility
         self._check_path_params(namespace=namespace, object_id=object_id)
         found_object: OntologyObject = self._get_object(
             namespace=namespace, object_id=object_id
         )
         self._check_if_modifiable(found_object)
-
-        validate_object_schema(
-            object_data=data.get("data"), type=found_object.ontology_type
-        )
 
         name = data.get("name")
         description = data.get("description", "")
@@ -467,6 +486,26 @@ class ObjectView(MethodView):
             description=description,
             data=data.get("data"),
         )
+
+        # validate against object type and validate and extract resource references
+        metadata = validate_object(
+            object_version=object_version,
+            type_version=found_object.ontology_type.current_version,
+        )
+
+        # add references
+        for object_ref in metadata.referenced_objects:
+            object_relation = OntologyObjectVersionToObject(
+                object_version_source=object_version, object_target=object_ref
+            )
+            DB.session.add(object_relation)
+        for taxonomy_item in metadata.referenced_taxonomy_items:
+            taxonomy_item_relation = OntologyObjectVersionToTaxonomyItem(
+                object_version_source=object_version, taxonomy_item_target=taxonomy_item
+            )
+            DB.session.add(taxonomy_item_relation)
+
+        # update existing object
         found_object.update(
             name=name,
             description=description,

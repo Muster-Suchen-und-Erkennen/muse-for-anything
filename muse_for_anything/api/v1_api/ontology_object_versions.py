@@ -1,6 +1,7 @@
 """Module containing the object API endpoints of the v1 API."""
 
 from datetime import datetime
+from muse_for_anything.api.v1_api.ontology_object_validation import validate_object
 
 from marshmallow.utils import INCLUDE
 from flask_babel import gettext

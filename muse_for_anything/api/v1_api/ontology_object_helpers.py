@@ -2,7 +2,6 @@ from muse_for_anything.db.models.namespace import Namespace
 from muse_for_anything.api.v1_api.namespace_helpers import query_params_to_api_key
 from typing import Any, Dict, List, Optional, Union
 from flask import url_for
-from jsonschema import validate, Draft7Validator
 
 from muse_for_anything.api.base_models import ApiLink, ApiResponse
 from muse_for_anything.api.v1_api.models.ontology import (
@@ -52,7 +51,12 @@ def action_links_for_object_page(
     namespace: Namespace, type: Optional[OntologyObjectType] = None
 ) -> List[ApiLink]:
     actions: List[ApiLink] = []
-    if type is not None and type.deleted_on is None and namespace.deleted_on is None:
+    if (
+        type is not None
+        and type.is_toplevel_type  # type is not abstract
+        and type.deleted_on is None
+        and namespace.deleted_on is None
+    ):
         actions.append(
             ApiLink(
                 href=url_for(
@@ -456,11 +460,3 @@ def nav_links_for_object_versions_page(object: OntologyObject) -> List[ApiLink]:
 
     # TODO add more nav links to type and to current version…
     return nav_links
-
-
-def validate_object_schema(object_data: Any, type: OntologyObjectType):
-    # FIXME implement better schema checking
-    validator = Draft7Validator(type.schema)
-    for error in sorted(validator.iter_errors(object_data), key=str):
-        print("VALIDATION ERROR", error.message)
-    validate(object_data, type.schema)
