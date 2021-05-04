@@ -1,6 +1,6 @@
 """Module containing ontology object table definitions."""
 
-from typing import Any, Dict, Optional, cast
+from typing import Any, Dict, List, Optional, cast
 from sqlalchemy.sql.schema import ForeignKey, Column, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declared_attr
@@ -48,6 +48,14 @@ class OntologyObjectType(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
         "OntologyObject",
         lazy="select",
         back_populates="ontology_type",
+    )
+
+    referenced_by_types: List["rel.OntologyTypeVersionToType"] = relationship(
+        "OntologyTypeVersionToType",
+        lazy="select",
+        order_by="OntologyTypeVersionToType.id",
+        back_populates="type_target",
+        primaryjoin="OntologyObjectType.id == OntologyTypeVersionToType.type_target_id",
     )
 
     @declared_attr
@@ -137,6 +145,37 @@ class OntologyObjectTypeVersion(MODEL, IdMixin, CreateDeleteMixin):
         back_populates="ontology_type_version",
     )
 
+    imported_types: List["rel.OntologyTypeVersionToTypeVersion"] = relationship(
+        "OntologyTypeVersionToTypeVersion",
+        lazy="select",
+        order_by="OntologyTypeVersionToTypeVersion.id",
+        back_populates="type_version_source",
+        primaryjoin="OntologyObjectTypeVersion.id == OntologyTypeVersionToTypeVersion.type_version_source_id",
+    )
+    imported_by_types: List["rel.OntologyTypeVersionToTypeVersion"] = relationship(
+        "OntologyTypeVersionToTypeVersion",
+        lazy="select",
+        order_by="OntologyTypeVersionToTypeVersion.id",
+        back_populates="type_version_target",
+        primaryjoin="OntologyObjectTypeVersion.id == OntologyTypeVersionToTypeVersion.type_version_target_id",
+    )
+
+    referenced_types: List["rel.OntologyTypeVersionToType"] = relationship(
+        "OntologyTypeVersionToType",
+        lazy="select",
+        order_by="OntologyTypeVersionToType.id",
+        back_populates="type_version_source",
+        primaryjoin="OntologyObjectTypeVersion.id == OntologyTypeVersionToType.type_version_source_id",
+    )
+
+    referenced_taxonomies: List["rel.OntologyTypeVersionToTaxonomy"] = relationship(
+        "OntologyTypeVersionToTaxonomy",
+        lazy="select",
+        order_by="OntologyTypeVersionToTaxonomy.id",
+        back_populates="type_version_source",
+        primaryjoin="OntologyObjectTypeVersion.id == OntologyTypeVersionToTaxonomy.type_version_source_id",
+    )
+
     @property
     def root_schema(self):
         root_schema: Dict[str, Any] = {}
@@ -208,6 +247,14 @@ class OntologyObject(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
         order_by="OntologyObjectVersion.version",
         back_populates="ontology_object",
         primaryjoin="OntologyObject.id == OntologyObjectVersion.object_id",
+    )
+
+    referenced_by_objects: List["rel.OntologyObjectVersionToObject"] = relationship(
+        "OntologyObjectVersionToObject",
+        lazy="select",
+        order_by="OntologyObjectVersionToObject.id",
+        back_populates="object_target",
+        primaryjoin="OntologyObject.id == OntologyObjectVersionToObject.object_target_id",
     )
 
     @property
@@ -289,6 +336,22 @@ class OntologyObjectVersion(MODEL, IdMixin, NameDescriptionMixin, CreateDeleteMi
         back_populates="ontology_object_versions",
     )
 
+    referenced_objects: List["rel.OntologyObjectVersionToObject"] = relationship(
+        "OntologyObjectVersionToObject",
+        lazy="select",
+        order_by="OntologyObjectVersionToObject.id",
+        back_populates="object_version_source",
+        primaryjoin="OntologyObjectVersion.id == OntologyObjectVersionToObject.object_version_source_id",
+    )
+
+    referenced_taxonomy_items: List["rel.OntologyObjectVersionToTaxonomyItem"] = relationship(
+        "OntologyObjectVersionToTaxonomyItem",
+        lazy="select",
+        order_by="OntologyObjectVersionToTaxonomyItem.id",
+        back_populates="object_version_source",
+        primaryjoin="OntologyObjectVersion.id == OntologyObjectVersionToTaxonomyItem.object_version_source_id",
+    )
+
     @property
     def updated_on(self):
         return self.created_on
@@ -314,3 +377,7 @@ class OntologyObjectVersion(MODEL, IdMixin, NameDescriptionMixin, CreateDeleteMi
         self.data = data
         self.name = name
         self.description = description
+
+
+# late imports for type checker. at the end to avoid circular imports!
+from . import object_relation_tables as rel

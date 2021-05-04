@@ -44,6 +44,14 @@ class Taxonomy(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
         primaryjoin="and_(Taxonomy.id == TaxonomyItem.taxonomy_id, TaxonomyItem.deleted_on == None)",
     )
 
+    referenced_by_types: List["rel.OntologyTypeVersionToTaxonomy"] = relationship(
+        "OntologyTypeVersionToTaxonomy",
+        lazy="select",
+        order_by="OntologyTypeVersionToTaxonomy.id",
+        back_populates="taxonomy_target",
+        primaryjoin="Taxonomy.id == OntologyTypeVersionToTaxonomy.taxonomy_target_id",
+    )
+
     def __init__(
         self,
         namespace: Namespace,
@@ -129,6 +137,14 @@ class TaxonomyItem(MODEL, IdMixin, ChangesMixin):
         lazy="selectin",  # deals better with multiple levels of hierarchy
         order_by="TaxonomyItemRelation.id",
         primaryjoin="and_(TaxonomyItem.id == TaxonomyItemRelation.taxonomy_item_target_id, TaxonomyItemRelation.deleted_on == None)",
+    )
+
+    referenced_by_objects: List["rel.OntologyObjectVersionToTaxonomyItem"] = relationship(
+        "OntologyObjectVersionToTaxonomyItem",
+        lazy="select",
+        order_by="OntologyObjectVersionToTaxonomyItem.id",
+        back_populates="taxonomy_item_target",
+        primaryjoin="TaxonomyItem.id == OntologyObjectVersionToTaxonomyItem.taxonomy_item_target_id",
     )
 
     @property
@@ -240,7 +256,6 @@ class TaxonomyItemRelation(MODEL, IdMixin, CreateDeleteMixin):
         primaryjoin=TaxonomyItem.id == taxonomy_item_source_id,
     )
 
-    # relationships
     taxonomy_item_target: TaxonomyItem = relationship(
         TaxonomyItem,
         lazy="select",  # is nearly always in cache anyway
@@ -256,3 +271,7 @@ class TaxonomyItemRelation(MODEL, IdMixin, CreateDeleteMixin):
     ) -> None:
         self.taxonomy_item_source = taxonomy_item_source
         self.taxonomy_item_target = taxonomy_item_target
+
+
+# late imports for type checker. at the end to avoid circular imports!
+from . import object_relation_tables as rel
