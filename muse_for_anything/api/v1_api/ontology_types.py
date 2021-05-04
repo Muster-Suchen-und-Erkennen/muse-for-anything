@@ -1,6 +1,7 @@
 """Module containing the type API endpoints of the v1 API."""
 
 from datetime import datetime
+from muse_for_anything.api.v1_api.ontology_type_validation import validate_object_type
 
 from marshmallow.utils import INCLUDE
 from muse_for_anything.api.v1_api.models.schema import JSONSchemaSchema
@@ -43,6 +44,11 @@ from ...db.db import DB
 from ...db.pagination import get_page_info
 from ...db.models.namespace import Namespace
 from ...db.models.ontology_objects import OntologyObjectType, OntologyObjectTypeVersion
+from ...db.models.object_relation_tables import (
+    OntologyTypeVersionToTaxonomy,
+    OntologyTypeVersionToType,
+    OntologyTypeVersionToTypeVersion,
+)
 
 from .namespace_helpers import (
     query_params_to_api_key,
@@ -260,8 +266,6 @@ class TypesView(MethodView):
     def post(self, data, namespace: str):
         """Create a new type."""
         self._check_path_params(namespace=namespace)
-        validate_type_schema(data)
-        # FIXME add proper introspection to get linked types out of the schema
         is_abstract: bool = data.get("abstract", False)
         title: str = data.get("title", "")
         description: str = data.get("description", "")
@@ -282,14 +286,39 @@ class TypesView(MethodView):
             description=description,
             is_top_level_type=(not is_abstract),
         )
-        DB.session.add(object_type)
-        DB.session.flush()
         object_type_version = OntologyObjectTypeVersion(
             ontology_type=object_type, version=1, data=data
         )
+
+        # validate and extract references
+        metadata = validate_object_type(object_type_version)
+
+        # flush object type to db to prevent circular references
+        DB.session.add(object_type)
+        DB.session.flush()
+
         object_type.current_version = object_type_version
+
         DB.session.add(object_type)
         DB.session.add(object_type_version)
+
+        # add references to session
+        for type_version in metadata.imported_types:
+            import_relation = OntologyTypeVersionToTypeVersion(
+                type_version_source=object_type_version, type_version_target=type_version
+            )
+            DB.session.add(import_relation)
+        for type_ref in metadata.referenced_types:
+            type_relation = OntologyTypeVersionToType(
+                type_version_source=object_type_version, type_target=type_ref
+            )
+            DB.session.add(type_relation)
+        for taxonomy in metadata.referenced_taxonomies:
+            taxonomy_relation = OntologyTypeVersionToTaxonomy(
+                type_version_source=object_type_version, taxonomy_target=taxonomy
+            )
+            DB.session.add(taxonomy_relation)
+
         DB.session.commit()
 
         object_type_link = type_to_type_data(object_type).self
@@ -392,7 +421,6 @@ class TypeView(MethodView):
     def put(self, data, namespace: str, object_type: str):
         """Update type (creates a new version)."""
         validate_type_schema(data)
-        # FIXME add proper introspection to get linked types out of the schema and type compatibility
         self._check_path_params(namespace=namespace, object_type=object_type)
         found_object_type: OntologyObjectType = self._get_object_type(
             namespace=namespace, object_type=object_type
@@ -404,6 +432,28 @@ class TypeView(MethodView):
             version=found_object_type.version + 1,
             data=data,
         )
+
+        # validate schema and references and extract references
+        metadata = validate_object_type(object_type_version)
+
+        # add references to session
+        for type_version in metadata.imported_types:
+            import_relation = OntologyTypeVersionToTypeVersion(
+                type_version_source=object_type_version, type_version_target=type_version
+            )
+            DB.session.add(import_relation)
+        for type_ref in metadata.referenced_types:
+            type_relation = OntologyTypeVersionToType(
+                type_version_source=object_type_version, type_target=type_ref
+            )
+            DB.session.add(type_relation)
+        for taxonomy in metadata.referenced_taxonomies:
+            taxonomy_relation = OntologyTypeVersionToTaxonomy(
+                type_version_source=object_type_version, taxonomy_target=taxonomy
+            )
+            DB.session.add(taxonomy_relation)
+
+        # update object type
         found_object_type.update(
             name=object_type_version.name,
             description=object_type_version.description,

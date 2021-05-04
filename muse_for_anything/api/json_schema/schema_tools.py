@@ -18,7 +18,13 @@ from typing import (
 from re import search
 from functools import reduce
 
-__all__ = ["SchemaWalker", "DataWalker", "DataWalkerVisitor", "DataWalkerException"]
+__all__ = [
+    "SchemaWalker",
+    "DataWalker",
+    "DataWalkerVisitor",
+    "DataWalkerException",
+    "DataVisitorException",
+]
 
 
 class SchemaWalker:
@@ -158,7 +164,7 @@ class SchemaWalker:
         main_type = self._get_main_type(resolved=resolved)
         schemas = self.resolved_schema if resolved else self.schema
         if main_type == "object":
-            for _, schema in schemas:
+            for _, schema in reversed(schemas):
                 if "customType" in schema:
                     return schema["customType"]
         elif main_type == "array":
@@ -345,23 +351,41 @@ class DataWalker:
                 self.errors.append((walker, err, data, "decend"))
             if not greedy and self.errors:
                 raise DataWalkerException(accumulated_errors=self.errors)
+        if self.errors:
+            raise DataWalkerException(accumulated_errors=self.errors)
 
     def decend(
-        self, data: Any, walker: SchemaWalker, stack: Deque[Tuple[Any, SchemaWalker]]
+        self,
+        data: Any,
+        walker: SchemaWalker,
+        stack: Deque[Tuple[Any, SchemaWalker]],
+        transform_step: Optional[
+            Callable[[Tuple[Any, SchemaWalker]], Tuple[Any, SchemaWalker]]
+        ] = None,
     ) -> None:
         main_type = walker.main_type_resolved
         if main_type == "object":
             for prop in data.keys():
                 try:
-                    stack.append((data[prop], walker[prop]))
+                    next_step = (data[prop], walker[prop])
+                    if transform_step is not None:
+                        next_step = transform_step(next_step)
+                    stack.append(next_step)
                 except Exception as err:
                     self.errors.append((walker, err, data, f"property-decend {prop}"))
         elif main_type == "array":
             for item in range(len(data)):
                 try:
-                    stack.append((data[item], walker[item]))
+                    next_step = (data[item], walker[item])
+                    if transform_step is not None:
+                        next_step = transform_step(next_step)
+                    stack.append(next_step)
                 except Exception as err:
                     self.errors.append((walker, err, data, f"item-decend {item}"))
+
+
+class DataVisitorException(Exception):
+    pass
 
 
 class DataWalkerVisitor:
