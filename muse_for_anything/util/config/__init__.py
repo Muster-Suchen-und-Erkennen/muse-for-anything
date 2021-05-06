@@ -4,10 +4,17 @@ from logging import WARNING, INFO
 
 from .sqlalchemy_config import SQLAchemyProductionConfig, SQLAchemyDebugConfig
 from .smorest_config import SmorestProductionConfig, SmorestDebugConfig
+from .oso_config import OsoProductionConfig, OsoDebugConfig
+from .passwords_config import PasswordsProductionConfig, PasswordsDebugConfig
 
 
-class ProductionConfig(SQLAchemyProductionConfig, SmorestProductionConfig):
-    SECRET_KEY = urandom(32)
+class ProductionConfig(
+    SQLAchemyProductionConfig,
+    SmorestProductionConfig,
+    OsoProductionConfig,
+    PasswordsProductionConfig,
+):
+    SECRET_KEY = urandom(32) # set this to a stable key to prevent tokens from expiring on server restart
 
     REVERSE_PROXY_COUNT = 0
 
@@ -25,7 +32,13 @@ class ProductionConfig(SQLAchemyProductionConfig, SmorestProductionConfig):
     DEFAULT_LOG_DATE_FORMAT = None
 
 
-class DebugConfig(ProductionConfig, SQLAchemyDebugConfig, SmorestDebugConfig):
+class DebugConfig(
+    ProductionConfig,
+    SQLAchemyDebugConfig,
+    SmorestDebugConfig,
+    OsoDebugConfig,
+    PasswordsDebugConfig,
+):
     DEBUG = True
     SECRET_KEY = "debug_secret"  # FIXME make sure this NEVER! gets used in production!!!
 

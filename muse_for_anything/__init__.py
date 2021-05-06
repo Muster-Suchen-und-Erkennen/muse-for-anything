@@ -1,8 +1,7 @@
 """Root module containing the flask app factory."""
 
-from os import environ, makedirs
+from os import makedirs
 from pathlib import Path
-from secrets import token_urlsafe
 from typing import Any, Dict, Optional
 from logging import Logger, Formatter, WARNING, getLogger
 from logging.config import dictConfig
@@ -19,6 +18,8 @@ from .util.config import ProductionConfig, DebugConfig
 from . import babel
 from . import db
 from . import api
+from . import oso_helpers
+from . import password_helpers
 from .api import jwt
 from .root_routes import register_root_routes
 
@@ -87,6 +88,9 @@ def create_app(test_config: Optional[Dict[str, Any]] = None):
         pass
 
     # Begin loading extensions and routes
+
+    password_helpers.register_password_helper(app)
+    oso_helpers.register_oso(app)
 
     babel.register_babel(app)
 
