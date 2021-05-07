@@ -153,7 +153,9 @@ def get_page_info(
                         <= ((cursor_row / item_count) + surrounding_pages)
                     )
                 )
-                | (page_rows.c.page >= (last_page.c.page - 1))  # also return last 1-2 pages
+                | (
+                    page_rows.c.page >= (last_page.c.page - 1)
+                )  # also return last 1-2 pages
             )
         )
         .all()
@@ -181,7 +183,7 @@ def digest_pages(
 ) -> Tuple[List[PageInfo], Optional[PageInfo], int, int]:
     """Parse the page list from sql and generate PageInfo objects with the correct numbering.
     Also seperate last page from the list if outside of max_surrounding pages bound."""
-    CURSOR, ROW, PAGE, MODULO = 0, 1, 2, 3 # row name mapping of tuples in pages
+    CURSOR, ROW, PAGE, MODULO = 0, 1, 2, 3  # row name mapping of tuples in pages
 
     surrounding_pages: List[PageInfo] = []
     last_page = None
@@ -193,7 +195,7 @@ def digest_pages(
     # offset page numbers from sql query to match correct pages
     # offset by 1 to start with page 1 (0 based in sql)
     # extra offset if first page contains < item_count items (then modulo col in sql is != 0)
-    page_offset = 1 if pages[1][MODULO] == 0 else 2
+    page_offset = 1 if pages and pages[0][MODULO] == 0 else 2
 
     # collect surrounding pages
     current_count = 0
@@ -206,7 +208,7 @@ def digest_pages(
             current_count = 0  # reset counter for pages on other side of cursor
             cursor_row = page[ROW]
             cursor_page = page[PAGE] + page_offset
-            continue # exclude the page of the cursor from surrounding pages
+            continue  # exclude the page of the cursor from surrounding pages
         current_count += 1
         if current_count <= max_surrounding:
             surrounding_pages.append(
