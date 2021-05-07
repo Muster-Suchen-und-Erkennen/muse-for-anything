@@ -80,7 +80,7 @@ module.exports = ({ production } = {}, { extractCss, analyze, tests, hmr, port, 
         chunkFilename: '[name].chunk.js'
     },
     optimization: {
-        runtimeChunk: true,  // separates the runtime chunk, required for long term cacheability
+        runtimeChunk: 'single',  // separates the runtime chunk, required for long term cacheability
         // moduleIds is the replacement for HashedModuleIdsPlugin and NamedModulesPlugin deprecated in https://github.com/webpack/webpack/releases/tag/v4.16.0
         // changes module id's to use hashes be based on the relative path of the module, required for long term cacheability
         moduleIds: 'named', // uses 'named' as cache busting/hashing is handled by flask...
@@ -92,7 +92,7 @@ module.exports = ({ production } = {}, { extractCss, analyze, tests, hmr, port, 
 
         splitChunks: {
             hidePathInfo: true, // prevents the path from being used in the filename when using maxSize
-            chunks: "initial",
+            chunks: 'all', //force optimization of all chunks to deduplicate all modules and fix problems with aurelia-dialog
             // sizes are compared against source before minification
 
 
@@ -130,6 +130,7 @@ module.exports = ({ production } = {}, { extractCss, analyze, tests, hmr, port, 
                     enforce: true, // causes maxInitialRequests to be ignored, minSize still respected if specified in cacheGroup
                     minSize: 30000 // use the default minSize
                 },
+                // try to disable async chunc if more problems with aurelia dialog surface
                 vendorsAsync: { // vendors async chunk, remaining asynchronously used node modules as single chunk file
                     test: /[\\/]node_modules[\\/]/,
                     name: 'vendors.async',
