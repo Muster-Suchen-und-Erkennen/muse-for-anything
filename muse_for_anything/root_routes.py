@@ -67,10 +67,18 @@ class SPA(MethodView):
     def get(self, path: str):
         if path and path.startswith("api/"):
             abort(404)
+        extra_script_sources = ""
         if current_app.config.get("DEBUG", False):
+            extra_script_sources = "'unsafe-eval' 'self'"
             # circumvent cached property in debug mode...
             vars(self)["skripts"] = self._get_skripts()
-        return render_template("index.html", title="muse4anything", skripts=self.skripts)
+        return render_template(
+            "index.html",
+            title="muse4anything",
+            skripts=self.skripts,
+            nonce=token_urlsafe(16),
+            extra_script_sources=extra_script_sources,
+        )
 
 
 SPA_VIEW: Any = SPA().as_view("SPA")
