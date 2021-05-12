@@ -19,6 +19,47 @@ from .ontology_types_helpers import type_to_key
 from .ontology_type_versions_helpers import type_version_to_key
 
 
+from .request_helpers import KeyGenerator, LinkGenerator, PageResource
+
+from ...oso_helpers import FLASK_OSO, OsoResource
+
+
+class ObjectPageKeyGenerator(KeyGenerator, resource_type=OntologyObject, page=True):
+    def update_key(self, key: Dict[str, str], resource: PageResource) -> Dict[str, str]:
+        assert isinstance(resource, PageResource)
+        assert resource.resource_type == OntologyObject
+        assert resource.resource is not None
+        key.update(KeyGenerator.generate_key(resource.resource))
+        return key
+
+
+class ObjectPageLinkGenerator(LinkGenerator, resource_type=OntologyObject, page=True):
+    def generate_link(
+        self,
+        resource: PageResource,
+        *,
+        query_params: Optional[Dict[str, Union[str, int, float]]]
+    ) -> Optional[ApiLink]:
+        if not FLASK_OSO.is_allowed(OsoResource("ont-object"), action="GET"):
+            return
+        namespace = resource.resource
+        assert namespace is not None
+        assert isinstance(namespace, Namespace)
+        if query_params is None:
+            query_params = {"item-count": 50}
+        return ApiLink(
+            href=url_for(
+                "api-v1.ObjectsView",
+                namespace=str(namespace.id),
+                **query_params,
+                _external=True,
+            ),
+            rel=("collection", "page"),
+            resource_type="ont-object",
+            resource_key=KeyGenerator.generate_key(resource, query_params=query_params),
+        )
+
+
 def object_page_params_to_key(
     namespace: str, query_params: Optional[Dict[str, Union[str, int]]] = None
 ) -> Dict[str, str]:

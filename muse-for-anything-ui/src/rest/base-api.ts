@@ -19,8 +19,18 @@ export class BaseApiService {
     private keyedLinksByKey: Map<string, KeyedApiLink> = new Map();
     private keyedLinkyByResourceType: Map<string, KeyedApiLink[]> = new Map();
 
+    private _defaultAuthorization: string;
+
     constructor(http: HttpClient) {
         this.http = http;
+    }
+
+    public set defaultAuthorization(authorization: string) {
+        this._defaultAuthorization = authorization;
+    }
+
+    public resetDefaultAuthorization() {
+        this._defaultAuthorization = null;
     }
 
     private resolveRel(links: ApiLink[], rel: string | string[]): ApiLink {
@@ -120,12 +130,30 @@ export class BaseApiService {
         }
     }
 
+    private applyDefaultAuthorization(init: RequestInit): RequestInit {
+        if (this._defaultAuthorization == null) {
+            return init;
+        }
+        if (init?.headers != null) {
+            if (Array.isArray(init.headers)) {
+                if (init.headers.every(header => header[0] !== "Authorization")) {
+                    init.headers.push(["Authorization", this._defaultAuthorization])
+                }
+            } else {
+                if (init.headers?.["Authorization"] == null) {
+                    init.headers["Authorization"] = this._defaultAuthorization;
+                }
+            }
+        }
+        return init;
+    }
+
     private async _fetch<T>(input: RequestInfo, ignoreCache = false, init: RequestInit = null): Promise<T> {
         if (init != null && Boolean(init)) {
-            input = new Request(input, init);
+            input = new Request(input, this.applyDefaultAuthorization(init));
         }
         if (typeof input === "string") {
-            input = new Request(input, { headers: { Accept: "application/json" } });
+            input = new Request(input, this.applyDefaultAuthorization({ headers: { Accept: "application/json" } }));
         }
         const isGet = typeof input === "string" || input.method === "GET";
         if (isGet && !ignoreCache && this.apiCache != null) {
@@ -544,12 +572,16 @@ export class BaseApiService {
         return await this._fetch<ApiResponse<T>>(link.href, ignoreCache);
     }
 
-    public async submitByApiLink<T>(link: ApiLink, data?: any, signal?: AbortSignal): Promise<ApiResponse<T>> {
+    public async submitByApiLink<T>(link: ApiLink, data?: any, signal?: AbortSignal, authentication?: string): Promise<ApiResponse<T>> {
         const method = link.rel.find(rel => rel === "post" || rel === "put" || rel === "patch" || rel === "delete").toUpperCase();
         const init: RequestInit = {
             headers: { Accept: "application/json", "Content-Type": "application/json" },
             method: method,
         };
+        if (authentication != null) {
+            // FIXME use more generic methods for injecting auth
+            init.headers["Authorization"] = authentication;
+        }
         if (data !== undefined) {
             init.body = JSON.stringify(data);
         }

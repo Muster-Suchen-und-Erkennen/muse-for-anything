@@ -1,3 +1,17 @@
 <template>
-    <h1 class="text-xl font-bold text-primary" t="titles.app">Hello</h1>
+    <require from="resources/elements/svg-icon.html"></require>
+
+    <div class="w-full flex justify-between items-center">
+        <h1 class="text-xl font-bold text-primary" t="titles.app">Hello</h1>
+        <div class="flex items-center">
+            <button class="button-flat flex items-center" click.delegate="showLoginDialog()" if.bind="!isLoggedIn">
+                <span t="titles.login"></span>
+                <svg-icon class="ml-1" icon.bind="'login'" size.bind="32"></svg-icon>
+            </button>
+            <button class="button-flat flex items-center" click.delegate="logout()" if.bind="isLoggedIn">
+                <span t="titles.logout"></span>
+                <svg-icon class="ml-1" icon.bind="'logout'" size.bind="32"></svg-icon>
+            </button>
+        </div>
+    </div>
 </template>

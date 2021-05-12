@@ -1,4 +1,10 @@
-from typing import Any, Dict, List, Union
+from flask_oso.flask_oso import FlaskOso
+from muse_for_anything.db.models.taxonomies import Taxonomy
+from muse_for_anything.db.models.ontology_objects import (
+    OntologyObject,
+    OntologyObjectType,
+)
+from typing import Any, Dict, List, Optional, Union
 from flask import url_for
 
 from muse_for_anything.api.base_models import ApiLink, ApiResponse
@@ -6,149 +12,228 @@ from muse_for_anything.api.v1_api.models.ontology import NamespaceData, Namespac
 from muse_for_anything.db.models.namespace import Namespace
 
 
-def namespace_to_key(namespace: Namespace) -> Dict[str, str]:
-    return {"namespaceId": str(namespace.id)}
+from .request_helpers import ApiObjectGenerator, KeyGenerator, LinkGenerator, PageResource
+
+from ...oso_helpers import FLASK_OSO, OsoResource
+
+NAMESPACE_EXTRA_LINK_RELATIONS = ("ont-object", "ont-type", "ont-taxonomy")
 
 
-def namespace_to_namespace_data(namespace: Namespace) -> NamespaceData:
-    return NamespaceData(
-        self=ApiLink(
-            href=url_for(
-                "api-v1.NamespaceView", namespace=str(namespace.id), _external=True
-            ),
-            rel=("ont-namespace",),
+class NamespacePageKeyGenerator(KeyGenerator, resource_type=Namespace, page=True):
+    def update_key(self, key: Dict[str, str], resource: PageResource) -> Dict[str, str]:
+        assert isinstance(resource, PageResource)
+        assert resource.resource_type == Namespace
+        return key
+
+
+class NamespacePageLinkGenerator(LinkGenerator, resource_type=Namespace, page=True):
+    def generate_link(
+        self, resource, *, query_params: Optional[Dict[str, Union[str, int, float]]]
+    ) -> Optional[ApiLink]:
+        if query_params is None:
+            query_params = {"item-count": 50}
+        return ApiLink(
+            href=url_for("api-v1.NamespacesView", **query_params, _external=True),
+            rel=("collection", "page"),
             resource_type="ont-namespace",
-            resource_key=namespace_to_key(namespace),
+            resource_key=KeyGenerator.generate_key(resource, query_params=query_params),
             schema=url_for("api-v1.ApiSchemaView", schema_id="Namespace", _external=True),
-            name=namespace.name,
-        ),
-        name=namespace.name,
-        description=namespace.description,
-        created_on=namespace.created_on,
-        updated_on=namespace.updated_on,
-        deleted_on=namespace.deleted_on,
-    )
+        )
 
 
-def nav_links_for_namespace(namespace: Namespace) -> List[ApiLink]:
-    nav_links: List[ApiLink] = [
-        ApiLink(
-            href=url_for(
-                "api-v1.ObjectsView",
-                namespace=str(namespace.id),
-                _external=True,
-            ),
-            rel=("nav", "collection", "page", "first"),
-            resource_type="ont-object",
-            resource_key=namespace_to_key(namespace),
-        ),
-        ApiLink(
-            href=url_for(
-                "api-v1.TypesView",
-                namespace=str(namespace.id),
-                _external=True,
-            ),
-            rel=("nav", "collection", "page", "first"),
-            resource_type="ont-type",
-            resource_key=namespace_to_key(namespace),
-            schema=url_for(
-                "api-v1.ApiSchemaView", schema_id="OntologyType", _external=True
-            ),
-        ),
-        ApiLink(
-            href=url_for(
-                "api-v1.TaxonomiesView",
-                namespace=str(namespace.id),
-                _external=True,
-            ),
-            rel=("nav", "collection", "page", "first"),
-            resource_type="ont-taxonomy",
-            resource_key=namespace_to_key(namespace),
-            schema=url_for(
-                "api-v1.ApiSchemaView", schema_id="TaxonomySchema", _external=True
-            ),
-        ),
-    ]
-    return nav_links
-
-
-def action_links_for_namespace(namespace: Namespace) -> List[ApiLink]:
-    actions: List[ApiLink] = [
-        ApiLink(
+class NamespacePageCreateNamespaceLinkGenerator(
+    LinkGenerator, resource_type=Namespace, page=True, relation="create"
+):
+    def generate_link(
+        self,
+        resource,
+        *,
+        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+    ) -> Optional[ApiLink]:
+        if not FLASK_OSO.is_allowed(OsoResource("ont-namespace"), action="CREATE"):
+            return
+        return ApiLink(
             href=url_for("api-v1.NamespacesView", _external=True),
-            rel=("create", "post"),
+            rel=("create", "post", "ont-namespace"),
             resource_type="ont-namespace",
             schema=url_for("api-v1.ApiSchemaView", schema_id="Namespace", _external=True),
-        ),
-    ]
-
-    resource_key = namespace_to_key(namespace)
-
-    if namespace.deleted_on is None:
-        actions.append(
-            ApiLink(
-                href=url_for(
-                    "api-v1.NamespaceView",
-                    namespace=str(namespace.id),
-                    _external=True,
-                ),
-                rel=("update", "put"),
-                resource_type="ont-namespace",
-                resource_key=resource_key,
-                schema=url_for(
-                    "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
-                ),
-                name=namespace.name,
-            )
         )
-        actions.append(
-            ApiLink(
-                href=url_for(
-                    "api-v1.NamespaceView",
-                    namespace=str(namespace.id),
-                    _external=True,
-                ),
-                rel=("delete",),
-                resource_type="ont-namespace",
-                resource_key=resource_key,
-                name=namespace.name,
-            )
-        )
-    else:
-        actions.append(
-            ApiLink(
-                href=url_for(
-                    "api-v1.NamespaceView",
-                    namespace=str(namespace.id),
-                    _external=True,
-                ),
-                rel=("restore", "post"),
-                resource_type="ont-namespace",
-                resource_key=resource_key,
-                name=namespace.name,
-            )
-        )
-    return actions
 
 
-def namespace_to_api_response(namespace: Namespace) -> ApiResponse:
-    namespace_data = namespace_to_namespace_data(namespace)
-    raw_namespace: Dict[str, Any] = NamespaceSchema().dump(namespace_data)
-    return ApiResponse(
-        links=(
-            ApiLink(
-                href=url_for("api-v1.NamespacesView", _external=True),
-                rel=("first", "page", "up", "collection", "ont-namespace"),
-                resource_type="ont-namespace",
-                schema=url_for(
-                    "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
-                ),
+class NamespaceKeyGenerator(KeyGenerator, resource_type=Namespace):
+    def update_key(self, key: Dict[str, str], resource: Namespace) -> Dict[str, str]:
+        assert isinstance(resource, Namespace)
+        key["namespaceId"] = str(resource.id)
+        return key
+
+
+class NamespaceSelfLinkGenerator(LinkGenerator, resource_type=Namespace):
+    def generate_link(
+        self,
+        resource,
+        *,
+        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+    ) -> Optional[ApiLink]:
+        return ApiLink(
+            href=url_for(
+                "api-v1.NamespaceView", namespace=str(resource.id), _external=True
             ),
-            *nav_links_for_namespace(namespace),
-            *action_links_for_namespace(namespace),
-        ),
-        data=raw_namespace,
-    )
+            rel=tuple(),
+            resource_type="ont-namespace",
+            resource_key=KeyGenerator.generate_key(resource),
+            schema=url_for("api-v1.ApiSchemaView", schema_id="Namespace", _external=True),
+            name=resource.name,
+        )
+
+
+class NamespaceApiObjectGenerator(ApiObjectGenerator, resource_type=Namespace):
+    def generate_api_object(
+        self,
+        resource: Namespace,
+        *,
+        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+    ) -> Optional[NamespaceData]:
+        assert isinstance(resource, Namespace)
+
+        if not FLASK_OSO.is_allowed(resource, action="GET"):
+            return
+
+        return NamespaceData(
+            self=LinkGenerator.get_link_of(resource, query_params=query_params),
+            name=resource.name,
+            description=resource.description,
+            created_on=resource.created_on,
+            updated_on=resource.updated_on,
+            deleted_on=resource.deleted_on,
+        )
+
+
+class NamespaceUpLinkGenerator(LinkGenerator, resource_type=Namespace, relation="up"):
+    def generate_link(
+        self,
+        resource,
+        *,
+        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+    ) -> Optional[ApiLink]:
+        return LinkGenerator.get_link_of(
+            PageResource(Namespace, page_number=1),
+            query_params={"item-count": 50},
+            extra_relations=("up",),
+        )
+
+
+class NamespaceObjectsNavLinkGenerator(
+    LinkGenerator, resource_type=Namespace, relation="ont-object"
+):
+    def generate_link(
+        self,
+        resource: Namespace,
+        *,
+        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+    ) -> Optional[ApiLink]:
+        return LinkGenerator.get_link_of(
+            PageResource(OntologyObject, resource=resource, page_number=1),
+            extra_relations=("nav",),
+        )
+
+
+class NamespaceTypesNavLinkGenerator(
+    LinkGenerator, resource_type=Namespace, relation="ont-type"
+):
+    def generate_link(
+        self,
+        resource: Namespace,
+        *,
+        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+    ) -> Optional[ApiLink]:
+        return LinkGenerator.get_link_of(
+            PageResource(OntologyObjectType, resource=resource, page_number=1),
+            extra_relations=("nav",),
+        )
+
+
+class NamespaceTaxonomiesNavLinkGenerator(
+    LinkGenerator, resource_type=Namespace, relation="ont-taxonomy"
+):
+    def generate_link(
+        self,
+        resource: Namespace,
+        *,
+        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+    ) -> Optional[ApiLink]:
+        return LinkGenerator.get_link_of(
+            PageResource(Taxonomy, resource=resource, page_number=1),
+            extra_relations=("nav",),
+        )
+
+
+class CreateNamespaceLinkGenerator(
+    LinkGenerator, resource_type=Namespace, relation="create"
+):
+    def generate_link(
+        self,
+        resource: Namespace,
+        *,
+        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+    ) -> Optional[ApiLink]:
+        if not FLASK_OSO.is_allowed(OsoResource("ont-namespace"), action="CREATE"):
+            return
+        link = LinkGenerator.get_link_of(
+            PageResource(Namespace, resource=resource, page_number=1),
+            query_params={},
+        )
+        link.rel = ("create", "post")
+        return link
+
+
+class UpdateNamespaceLinkGenerator(
+    LinkGenerator, resource_type=Namespace, relation="update"
+):
+    def generate_link(
+        self,
+        resource: Namespace,
+        *,
+        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+    ) -> Optional[ApiLink]:
+        if resource.is_deleted or not FLASK_OSO.is_allowed(resource, action="EDIT"):
+            return  # deleted or not allowed
+        link = LinkGenerator.get_link_of(resource)
+        link.rel = ("update", "put")
+        return link
+
+
+class DeleteNamespaceLinkGenerator(
+    LinkGenerator, resource_type=Namespace, relation="delete"
+):
+    def generate_link(
+        self,
+        resource: Namespace,
+        *,
+        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+    ) -> Optional[ApiLink]:
+        if resource.is_deleted or not FLASK_OSO.is_allowed(resource, action="DELETE"):
+            return  # deleted or not allowed
+        link = LinkGenerator.get_link_of(resource)
+        link.rel = ("delete",)
+        return link
+
+
+class RestoreNamespaceLinkGenerator(
+    LinkGenerator, resource_type=Namespace, relation="restore"
+):
+    def generate_link(
+        self,
+        resource: Namespace,
+        *,
+        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+    ) -> Optional[ApiLink]:
+        if not resource.is_deleted or not FLASK_OSO.is_allowed(
+            resource, action="RESTORE"
+        ):
+            return  # not deleted or not allowed
+        link = LinkGenerator.get_link_of(resource)
+        link.rel = ("restore", "post")
+        return link
 
 
 def query_params_to_api_key(query_params: Dict[str, Union[str, int]]) -> Dict[str, str]:

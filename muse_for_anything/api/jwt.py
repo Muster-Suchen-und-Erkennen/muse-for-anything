@@ -6,18 +6,25 @@ from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
 from apispec.core import APISpec
 from apispec.utils import deepupdate
 from flask.app import Flask
-from flask.globals import current_app
-from flask_jwt_extended import JWTManager
-from flask_jwt_extended.exceptions import JWTExtendedException
+from flask.globals import current_app, g
+from flask_jwt_extended import JWTManager, current_user
+from flask_jwt_extended.exceptions import (
+    InvalidHeaderError,
+    JWTExtendedException,
+    NoAuthorizationError,
+)
 from flask_jwt_extended.view_decorators import (
     verify_jwt_in_request,
     verify_fresh_jwt_in_request,
     verify_jwt_refresh_token_in_request,
+    jwt_optional,
 )
 from flask_smorest import abort
 from flask_babel import gettext
 from warnings import warn
 from functools import wraps
+
+from ..db.models.users import User, Guest
 
 JWT = JWTManager()
 
@@ -54,6 +61,7 @@ class JWTMixin:
         self,
         security_scheme: Union[str, Dict[str, List[Any]]],
         *,
+        optional: bool = False,
         fresh: bool = False,
         refresh_token: bool = False,
     ) -> Callable[[Callable[..., RT]], Callable[..., RT]]:
@@ -71,16 +79,31 @@ class JWTMixin:
                     verify = verify_fresh_jwt_in_request
                 else:
                     verify = verify_jwt_in_request
+            is_optional = optional
+
+            def handle_exception(exc: JWTExtendedException):
+                """Emulate flask exception handling manually for jwt exceptions.
+
+                Flask only handles one exception per request. This method emulates
+                Flask exception handling.
+
+                Args:
+                    exc (JWTExtendedException): The exception to be handled
+                """
+                current_app.handle_user_exception(exc)
 
             @wraps(func)
             def wrapper(*args: Any, **kwargs) -> RT:
                 try:
                     verify()
+                    g.current_user = current_user._get_current_object()
+                except (NoAuthorizationError, InvalidHeaderError) as exc:
+                    if is_optional:
+                        g.current_user = Guest()
+                    else:
+                        handle_exception(exc)
                 except JWTExtendedException as exc:
-                    # trap exception and emulate flask exception handling
-                    # as flask only handles one exception per request
-                    # but we want to raise a custom exception for jwt exceptions
-                    current_app.handle_user_exception(exc)
+                    handle_exception(exc)
                 return func(*args, **kwargs)
 
             # Store doc in wrapper function
@@ -114,23 +137,16 @@ class JWTMixin:
 # JWT identity and claims
 
 
-@dataclass
-class DemoUser:
-    """This class **should** be replaced by the actual user class!"""
-
-    username: str
-
-
 @JWT.user_identity_loader
-def load_user_identity(user: DemoUser):
+def load_user_identity(user: User):
     # load the user identity (primary key) fromthe user object here
-    return user.username
+    return user.id
 
 
 @JWT.user_loader_callback_loader
-def loadUserObject(identity: str):
+def loadUserObject(identity: int):
     # load the actual user object from the user identity here
-    return DemoUser(identity)
+    return User.query.filter(User.id == identity).first()
 
 
 # JWT errors

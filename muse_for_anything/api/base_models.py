@@ -45,7 +45,8 @@ class ApiLinkBaseSchema(MaBaseSchema):
     ):
         """Remove empty attributes from serialized links for a smaller and more readable output."""
         for key in ("doc", "schema", "resourceKey", "name"):
-            if data.get(key, False) is None:
+            value = data.get(key, False)
+            if value is None or key == "resourceKey" and not value and value is not False:
                 del data[key]
         if not data.get("queryKey", True):  # return True if not in dict
             del data["queryKey"]
@@ -160,7 +161,6 @@ class DynamicApiResponseSchema(ApiResponseSchema):
 class CursorPageSchema(ApiObjectSchema):
     collection_size = ma.fields.Integer(required=True, allow_none=False, dump_only=True)
     page = ma.fields.Integer(required=True, allow_none=False, dump_only=True)
-    first_row = ma.fields.Integer(required=True, allow_none=False, dump_only=True)
     items = ma.fields.List(
         ma.fields.Nested(ApiLinkSchema), default=tuple(), required=True, dump_only=True
     )
@@ -223,12 +223,11 @@ class ApiResponse:
 
 
 @dataclass
-class CursorPage:
-    self: ApiLink
+class CursorPage(BaseApiObject):
     collection_size: int
     page: int
-    first_row: int
-    items: List[ApiLink]
+    items: Sequence[ApiLink]
+    first_row: Optional[int]=None # TODO remove later, kept for compatibility
 
 
 __all__ = list(get_all_classes_of_module(__name__, MaBaseSchema))

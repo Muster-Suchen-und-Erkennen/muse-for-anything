@@ -1,6 +1,7 @@
 from datetime import datetime
+from typing import Any, Sequence
+from sqlalchemy.sql.elements import literal
 from sqlalchemy.sql.schema import Column
-from sqlalchemy.sql import func
 
 from ...util.import_helpers import get_all_classes_of_module
 
@@ -8,6 +9,16 @@ from ..db import DB, MODEL
 
 
 FULLTEXT_INDEX_PARAMS = {"mysql_prefix": "FULLTEXT", "postgresql_using": "gin"}
+
+
+class ExistsMixin:
+    @classmethod
+    def exists(cls, query_filter: Sequence[Any] = tuple()):
+        return (
+            DB.session.query(literal(True))
+            .filter(cls.query.filter(*query_filter).exists())
+            .scalar()
+        )
 
 
 class IdMixin:
@@ -39,6 +50,10 @@ class CreateDeleteMixin:
 
     created_on: Column = DB.Column(DB.DateTime, default=datetime.utcnow, nullable=False)
     deleted_on: Column = DB.Column(DB.DateTime, nullable=True)
+
+    @property
+    def is_deleted(self) -> bool:
+        return self.deleted_on is not None
 
 
 class ChangesMixin(CreateDeleteMixin):

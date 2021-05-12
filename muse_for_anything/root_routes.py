@@ -2,12 +2,15 @@ from pathlib import Path
 import re
 from secrets import token_urlsafe
 from typing import Any, List
-from flask import Flask, render_template, redirect, Blueprint, g, abort
+from flask import Flask, render_template, redirect, Blueprint, g, abort, request
 from flask.globals import current_app
 from flask.views import MethodView
 from flask_static_digest import FlaskStaticDigest
 from werkzeug.utils import cached_property
 from warnings import warn
+from http import HTTPStatus
+
+from .db.models.users import User, DB, UserRole
 
 ROOT_BLP = Blueprint("Root Routes", __name__)
 
@@ -36,6 +39,18 @@ class SPA(MethodView):
     _SKRIPT_REGEX = re.compile(
         r'<script[^>]*src="/static/(?P<source>[^"]*)"[^>]*>\s*</script>'
     )
+
+    def _is_first_run(self) -> bool:
+        """Return true if no user exists in the database."""
+        return not User.exists()
+
+    @property
+    def is_first_run(self) -> bool:
+        first_run = self._is_first_run()
+        if not first_run:
+            # only cache False as this is the more likely case and will never change
+            self.__dict__["is_first_run"] = False
+        return first_run
 
     def _get_skripts(self) -> List[str]:
         static_folder = current_app.static_folder
@@ -67,6 +82,8 @@ class SPA(MethodView):
     def get(self, path: str):
         if path and path.startswith("api/"):
             abort(404)
+        if self.is_first_run:
+            return redirect("/first-run/", code=HTTPStatus.SEE_OTHER)
         extra_script_sources = ""
         if current_app.config.get("DEBUG", False):
             extra_script_sources = "'unsafe-eval' 'self'"
@@ -79,6 +96,61 @@ class SPA(MethodView):
             nonce=token_urlsafe(16),
             extra_script_sources=extra_script_sources,
         )
+
+
+class FirstRunView(MethodView):
+    @property
+    def is_first_run(self) -> bool:
+        """Return true if no user exists in the database."""
+        return not User.exists()
+
+    def get(self):
+        if not self.is_first_run:
+            abort(404)
+
+        return render_template(
+            "first-run.html",
+            title="muse4anything",
+            nonce=token_urlsafe(16),
+        )
+
+    def post(self):
+        if not self.is_first_run:
+            abort(404)
+        username: str = request.form.get("username", "")
+        password: str = request.form.get("password", "")
+        password_retype: str = request.form.get("password-retype", "")
+
+        if not username or not password or not password_retype:
+            abort(HTTPStatus.BAD_REQUEST)
+
+        if len(username) < 3:
+            abort(HTTPStatus.BAD_REQUEST)
+
+        if len(password) < 3:
+            abort(HTTPStatus.BAD_REQUEST)
+
+        if password != password_retype:
+            abort(HTTPStatus.BAD_REQUEST)
+
+        user = User(username=username, password=password)
+        user_role = UserRole(user=user, role="admin")
+        DB.session.add(user)
+        DB.session.add(user_role)
+        DB.session.commit()
+        return redirect("/", code=HTTPStatus.MOVED_PERMANENTLY)
+
+
+FIRST_RUN_VIEW: Any = FirstRunView().as_view("FirstRunView")
+
+ROOT_BLP.add_url_rule(
+    "/first-run/",
+    view_func=FIRST_RUN_VIEW,
+    methods=[
+        "GET",
+        "POST",
+    ],
+)
 
 
 SPA_VIEW: Any = SPA().as_view("SPA")

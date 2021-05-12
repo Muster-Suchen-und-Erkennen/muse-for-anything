@@ -4,6 +4,8 @@
         "app": "MUSE4Anything",
         "home": "Home",
         "explore": "Explore",
+        "login": "Log-In",
+        "logout": "Log-Out",
         "create": {
             "ont-namespace": "Create New Namespace",
             "ont-type": "Create New Type",
@@ -26,6 +28,12 @@
         "ont-object": "No Objects, create one!",
         "ont-taxonomy": "No Taxonomies, create one!",
         "ont-taxonomy-item": "No Taxonomy-Items create one!"
+    },
+    "login": {
+        "username": "Username or E-Mail",
+        "password": "Password",
+        "keepLogin": "Keep me logged in",
+        "confirm-login": "log-in"
     },
     "loading": "loading…",
     "deleted": "Deleted",

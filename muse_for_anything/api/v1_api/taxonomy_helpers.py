@@ -24,6 +24,50 @@ from muse_for_anything.db.models.taxonomies import (
 )
 
 
+from .request_helpers import KeyGenerator, LinkGenerator, PageResource
+
+from ...oso_helpers import FLASK_OSO, OsoResource
+
+
+class TaxonomyPageKeyGenerator(KeyGenerator, resource_type=Taxonomy, page=True):
+    def update_key(self, key: Dict[str, str], resource: PageResource) -> Dict[str, str]:
+        assert isinstance(resource, PageResource)
+        assert resource.resource_type == Taxonomy
+        assert resource.resource is not None
+        key.update(KeyGenerator.generate_key(resource.resource))
+        return key
+
+
+class TaxonomyPageLinkGenerator(LinkGenerator, resource_type=Taxonomy, page=True):
+    def generate_link(
+        self,
+        resource: PageResource,
+        *,
+        query_params: Optional[Dict[str, Union[str, int, float]]]
+    ) -> Optional[ApiLink]:
+        if not FLASK_OSO.is_allowed(OsoResource("ont-taxonomy"), action="GET"):
+            return
+        namespace = resource.resource
+        assert namespace is not None
+        assert isinstance(namespace, Namespace)
+        if query_params is None:
+            query_params = {"item-count": 50}
+        return ApiLink(
+            href=url_for(
+                "api-v1.TaxonomiesView",
+                namespace=str(namespace.id),
+                **query_params,
+                _external=True,
+            ),
+            rel=("collection", "page"),
+            resource_type="ont-taxonomy",
+            resource_key=KeyGenerator.generate_key(resource, query_params=query_params),
+            schema=url_for(
+                "api-v1.ApiSchemaView", schema_id="TaxonomySchema", _external=True
+            ),
+        )
+
+
 def taxonomy_page_params_to_key(
     namespace: str, query_params: Optional[Dict[str, Union[str, int]]] = None
 ) -> Dict[str, str]:
