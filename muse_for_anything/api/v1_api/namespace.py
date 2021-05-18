@@ -89,15 +89,6 @@ class NamespacesView(MethodView):
         if cursor:
             self_query_params["cursor"] = cursor
 
-        self_rels = []
-        if pagination_info.cursor_page == 1:
-            self_rels.append("first")
-        if (
-            pagination_info.last_page
-            and pagination_info.cursor_page == pagination_info.last_page.page
-        ):
-            self_rels.append("last")
-
         page_resource = PageResource(
             Namespace,
             active_page=pagination_info.cursor_page,
@@ -184,19 +175,19 @@ class NamespacesView(MethodView):
         namespace_link = namespace_response.data.self
         namespace_response.data = NamespaceSchema().dump(namespace_response.data)
 
+        self_link = LinkGenerator.get_link_of(
+            PageResource(Namespace),
+            for_relation="create",
+            extra_relations=("ont-namespace",),
+            ignore_deleted=True,
+        )
+        self_link.resource_type = "new"
+
         return ApiResponse(
             links=[namespace_link],
             embedded=[namespace_response],
             data=NewApiObject(
-                self=ApiLink(
-                    href=url_for("api-v1.NamespacesView", _external=True),
-                    rel=(
-                        "create",
-                        "post",
-                        "ont-namespace",
-                    ),
-                    resource_type="new",
-                ),
+                self=self_link,
                 new=namespace_link,
             ),
         )
@@ -282,19 +273,19 @@ class NamespaceView(MethodView):
         namespace_link = namespace_response.data.self
         namespace_response.data = NamespaceSchema().dump(namespace_response.data)
 
+        self_link = LinkGenerator.get_link_of(
+            found_namespace,
+            for_relation="update",
+            extra_relations=("ont-namespace",),
+            ignore_deleted=True,
+        )
+        self_link.resource_type = "changed"
+
         return ApiResponse(
             links=[namespace_link],
             embedded=[namespace_response],
             data=ChangedApiObject(
-                self=ApiLink(
-                    href=url_for("api-v1.NamespacesView", _external=True),
-                    rel=(
-                        "create",
-                        "post",
-                        "ont-namespace",
-                    ),
-                    resource_type="changed",
-                ),
+                self=self_link,
                 changed=namespace_link,
             ),
         )
@@ -330,21 +321,19 @@ class NamespaceView(MethodView):
         namespace_link = namespace_response.data.self
         namespace_response.data = NamespaceSchema().dump(namespace_response.data)
 
+        self_link = LinkGenerator.get_link_of(
+            found_namespace,
+            for_relation="restore",
+            extra_relations=("ont-namespace",),
+            ignore_deleted=True,
+        )
+        self_link.resource_type = "changed"
+
         return ApiResponse(
             links=[namespace_link],
             embedded=[namespace_response],
             data=ChangedApiObject(
-                self=ApiLink(
-                    href=url_for(
-                        "api-v1.NamespaceView", namespace=namespace, _external=True
-                    ),
-                    rel=(
-                        "restore",
-                        "post",
-                        "ont-namespace",
-                    ),
-                    resource_type="changed",
-                ),
+                self=self_link,
                 changed=namespace_link,
             ),
         )
@@ -380,20 +369,19 @@ class NamespaceView(MethodView):
         namespace_link = namespace_response.data.self
         namespace_response.data = NamespaceSchema().dump(namespace_response.data)
 
+        self_link = LinkGenerator.get_link_of(
+            found_namespace,
+            for_relation="delete",
+            extra_relations=("ont-namespace",),
+            ignore_deleted=True,
+        )
+        self_link.resource_type = "changed"
+
         return ApiResponse(
             links=[namespace_link],
             embedded=[namespace_response],
             data=ChangedApiObject(
-                self=ApiLink(
-                    href=url_for(
-                        "api-v1.NamespaceView", namespace=namespace, _external=True
-                    ),
-                    rel=(
-                        "delete",
-                        "ont-namespace",
-                    ),
-                    resource_type="changed",
-                ),
+                self=self_link,
                 changed=namespace_link,
             ),
         )

@@ -79,6 +79,7 @@ class KeyGenerator:
         if resource_type in generators:
             raise ArgumentError(
                 f"The resource type '{resource_type}' already has a key generator!"
+                f"\t(registered: {generators[resource_type]}, offending class: {cls})"
             )
         generators[resource_type] = cls()
 
@@ -129,6 +130,7 @@ class LinkGenerator:
         if key in generators:
             raise ArgumentError(
                 f"The resource type '{resource_type}' with action '{relation}' already has a link generator!"
+                f"\t(registered: {generators[key]}, offending class: {cls})"
             )
         generators[key] = cls()
 
@@ -173,19 +175,27 @@ class LinkGenerator:
         *,
         query_params: Optional[Dict[str, Union[str, int, float]]] = None,
         extra_relations: Optional[Sequence[str]] = None,
+        for_relation: Optional[str] = None,
+        ignore_deleted: bool = False,
     ) -> ApiLink:
         is_page = isinstance(resource, PageResource)
 
         generators, resource_type = LinkGenerator._get_generators_and_resource_type(
             resource
         )
-        generator = generators.get(resource_type)
+        generator = (
+            generators.get(resource_type)
+            if for_relation is None
+            else generators.get((resource_type, for_relation))
+        )
         if generator is not None:
-            link = generator.generate_link(resource, query_params=query_params)
+            link = generator.generate_link(
+                resource, query_params=query_params, ignore_deleted=ignore_deleted
+            )
             if link is None:
                 return None
             extra_rels: List[str] = []
-            if is_page:
+            if is_page and for_relation is None:
                 if resource.is_first:
                     extra_rels.append("first")
                 if resource.is_last:
@@ -200,13 +210,16 @@ class LinkGenerator:
             else:
                 link.rel = (*link.rel, *extra_rels)
             return link
-        raise KeyError(f"No link generator found for resource type '{type(resource)}'.")
+        raise KeyError(
+            f"No link generator found for resource type '{resource_type}' (for rel '{'self' if for_relation is None else for_relation}')."
+        )
 
     def generate_link(
         self,
         resource,
         *,
         query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         raise NotImplementedError()
 
@@ -222,6 +235,7 @@ class ApiObjectGenerator:
         if resource_type in generators:
             raise ArgumentError(
                 f"The resource type '{resource_type}' already has an api object dataclass generator!"
+                f"\t(registered: {generators[resource_type]}, offending class: {cls})"
             )
         generators[resource_type] = cls()
 
@@ -299,6 +313,7 @@ class ApiResponseGenerator:
         if resource_type in generators:
             raise ArgumentError(
                 f"The resource type '{resource_type}' already has an api response dataclass generator!"
+                f"\t(registered: {generators[resource_type]}, offending class: {cls})"
             )
         generators[resource_type] = cls()
 

@@ -28,7 +28,11 @@ class NamespacePageKeyGenerator(KeyGenerator, resource_type=Namespace, page=True
 
 class NamespacePageLinkGenerator(LinkGenerator, resource_type=Namespace, page=True):
     def generate_link(
-        self, resource, *, query_params: Optional[Dict[str, Union[str, int, float]]]
+        self,
+        resource,
+        *,
+        query_params: Optional[Dict[str, Union[str, int, float]]],
+        ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         if query_params is None:
             query_params = {"item-count": 50}
@@ -49,15 +53,13 @@ class NamespacePageCreateNamespaceLinkGenerator(
         resource,
         *,
         query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         if not FLASK_OSO.is_allowed(OsoResource("ont-namespace"), action="CREATE"):
             return
-        return ApiLink(
-            href=url_for("api-v1.NamespacesView", _external=True),
-            rel=("create", "post", "ont-namespace"),
-            resource_type="ont-namespace",
-            schema=url_for("api-v1.ApiSchemaView", schema_id="Namespace", _external=True),
-        )
+        link = LinkGenerator.get_link_of(resource, query_params=query_params)
+        link.rel = ("create", "post")
+        return link
 
 
 class NamespaceKeyGenerator(KeyGenerator, resource_type=Namespace):
@@ -73,6 +75,7 @@ class NamespaceSelfLinkGenerator(LinkGenerator, resource_type=Namespace):
         resource,
         *,
         query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         return ApiLink(
             href=url_for(
@@ -114,10 +117,10 @@ class NamespaceUpLinkGenerator(LinkGenerator, resource_type=Namespace, relation=
         resource,
         *,
         query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         return LinkGenerator.get_link_of(
             PageResource(Namespace, page_number=1),
-            query_params={"item-count": 50},
             extra_relations=("up",),
         )
 
@@ -130,6 +133,7 @@ class NamespaceObjectsNavLinkGenerator(
         resource: Namespace,
         *,
         query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         return LinkGenerator.get_link_of(
             PageResource(OntologyObject, resource=resource, page_number=1),
@@ -145,6 +149,7 @@ class NamespaceTypesNavLinkGenerator(
         resource: Namespace,
         *,
         query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         return LinkGenerator.get_link_of(
             PageResource(OntologyObjectType, resource=resource, page_number=1),
@@ -160,6 +165,7 @@ class NamespaceTaxonomiesNavLinkGenerator(
         resource: Namespace,
         *,
         query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         return LinkGenerator.get_link_of(
             PageResource(Taxonomy, resource=resource, page_number=1),
@@ -175,12 +181,15 @@ class CreateNamespaceLinkGenerator(
         resource: Namespace,
         *,
         query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
+        assert isinstance(resource, Namespace)
         if not FLASK_OSO.is_allowed(OsoResource("ont-namespace"), action="CREATE"):
             return
         link = LinkGenerator.get_link_of(
-            PageResource(Namespace, resource=resource, page_number=1),
+            PageResource(Namespace, page_number=1),
             query_params={},
+            ignore_deleted=ignore_deleted,
         )
         link.rel = ("create", "post")
         return link
@@ -194,10 +203,15 @@ class UpdateNamespaceLinkGenerator(
         resource: Namespace,
         *,
         query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
-        if resource.is_deleted or not FLASK_OSO.is_allowed(resource, action="EDIT"):
-            return  # deleted or not allowed
-        link = LinkGenerator.get_link_of(resource)
+        assert isinstance(resource, Namespace)
+        if not FLASK_OSO.is_allowed(resource, action="EDIT"):
+            return  # not allowed
+        if not ignore_deleted:
+            if resource.is_deleted:
+                return  # deleted
+        link = LinkGenerator.get_link_of(resource, ignore_deleted=ignore_deleted)
         link.rel = ("update", "put")
         return link
 
@@ -210,10 +224,14 @@ class DeleteNamespaceLinkGenerator(
         resource: Namespace,
         *,
         query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
-        if resource.is_deleted or not FLASK_OSO.is_allowed(resource, action="DELETE"):
-            return  # deleted or not allowed
-        link = LinkGenerator.get_link_of(resource)
+        if not FLASK_OSO.is_allowed(resource, action="DELETE"):
+            return  # not allowed
+        if not ignore_deleted:
+            if resource.is_deleted:
+                return  # deleted
+        link = LinkGenerator.get_link_of(resource, ignore_deleted=ignore_deleted)
         link.rel = ("delete",)
         return link
 
@@ -226,12 +244,14 @@ class RestoreNamespaceLinkGenerator(
         resource: Namespace,
         *,
         query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
-        if not resource.is_deleted or not FLASK_OSO.is_allowed(
-            resource, action="RESTORE"
-        ):
-            return  # not deleted or not allowed
-        link = LinkGenerator.get_link_of(resource)
+        if not FLASK_OSO.is_allowed(resource, action="RESTORE"):
+            return  # not allowed
+        if not ignore_deleted:
+            if not resource.is_deleted:
+                return  # not deleted
+        link = LinkGenerator.get_link_of(resource, ignore_deleted=ignore_deleted)
         link.rel = ("restore", "post")
         return link
 

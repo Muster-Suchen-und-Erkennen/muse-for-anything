@@ -19,7 +19,9 @@ from .request_helpers import KeyGenerator, LinkGenerator, PageResource
 from ...oso_helpers import FLASK_OSO, OsoResource
 
 
-class ObjectTypePageKeyGenerator(KeyGenerator, resource_type=OntologyObjectType, page=True):
+class ObjectTypePageKeyGenerator(
+    KeyGenerator, resource_type=OntologyObjectType, page=True
+):
     def update_key(self, key: Dict[str, str], resource: PageResource) -> Dict[str, str]:
         assert isinstance(resource, PageResource)
         assert resource.resource_type == OntologyObjectType
@@ -28,12 +30,15 @@ class ObjectTypePageKeyGenerator(KeyGenerator, resource_type=OntologyObjectType,
         return key
 
 
-class ObjectTypePageLinkGenerator(LinkGenerator, resource_type=OntologyObjectType, page=True):
+class ObjectTypePageLinkGenerator(
+    LinkGenerator, resource_type=OntologyObjectType, page=True
+):
     def generate_link(
         self,
         resource: PageResource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]]
+        query_params: Optional[Dict[str, Union[str, int, float]]],
+        ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         if not FLASK_OSO.is_allowed(OsoResource("ont-type"), action="GET"):
             return
@@ -52,7 +57,9 @@ class ObjectTypePageLinkGenerator(LinkGenerator, resource_type=OntologyObjectTyp
             rel=("collection", "page"),
             resource_type="ont-type",
             resource_key=KeyGenerator.generate_key(resource, query_params=query_params),
-            schema=url_for("api-v1.ApiSchemaView", schema_id="TypeSchema", _external=True),
+            schema=url_for(
+                "api-v1.ApiSchemaView", schema_id="TypeSchema", _external=True
+            ),
         )
 
 

@@ -38,7 +38,8 @@ class ObjectPageLinkGenerator(LinkGenerator, resource_type=OntologyObject, page=
         self,
         resource: PageResource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]]
+        query_params: Optional[Dict[str, Union[str, int, float]]],
+        ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         if not FLASK_OSO.is_allowed(OsoResource("ont-object"), action="GET"):
             return

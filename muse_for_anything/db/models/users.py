@@ -177,7 +177,7 @@ class UserRole(MODEL, IdMixin):
         self.role = role
 
 
-class AssociatedNamespaces(MODEL, IdMixin):
+class AssociatedNamespaces(MODEL, IdMixin):  # TODO remove
     """Maping from Users to associated Namespaces."""
 
     __tablename__ = "UserNamespace"
@@ -221,9 +221,9 @@ class UserGrant(MODEL, IdMixin):
     __tablename__ = "UserGrant"
 
     user_id: Column = DB.Column(DB.Integer, ForeignKey(User.id), nullable=True)
-    role: Column = DB.Column(DB.String(64))
-    resource_type: Column = DB.Column(DB.String(64))
-    resource_id: Column = DB.Column(DB.Integer())
+    role: Column = DB.Column(DB.String(64), index=True)
+    resource_type: Column = DB.Column(DB.String(64), index=True)
+    resource_id: Column = DB.Column(DB.Integer(), index=True)
 
     user: User = relationship(
         User,
