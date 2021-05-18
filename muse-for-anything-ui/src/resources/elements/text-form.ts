@@ -88,14 +88,14 @@ export class TextForm {
         this.valueOut = newValue;
     }
 
-    valueOutChanged(newValue){
+    valueOutChanged(newValue) {
         if (this.initialData === undefined) {
             this.dirty = !(newValue == null || (!this.isNullable && newValue === ""));
         } else {
             this.dirty = this.initialData !== newValue;
         }
         this.updateValid();
-    } 
+    }
 
     formInputChanged() {
         if (this.formInput != null) {
@@ -105,6 +105,9 @@ export class TextForm {
     }
 
     updateValid() {
+        if (this.formInput == null) {
+            return; // delays actually setting the value
+        }
         if (this.value == null) {
             this.valid = this.isNullable;
             return;
@@ -113,12 +116,12 @@ export class TextForm {
         const value = this.valueOut;
 
         const formIsValid = (this.formInput as HTMLInputElement)?.validity?.valid ?? false;
-        
+
         let extraIsValid = true;
         if (this.extraPatterns) {
             extraIsValid = this.extraPatterns.every(pattern => pattern.test(value));
         }
-        
+
         this.valid = formIsValid && extraIsValid;
     }
 }

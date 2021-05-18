@@ -120,11 +120,15 @@ export class NumberForm {
 
     formInputChanged() {
         if (this.formInput != null) {
-            this.updateValid();
+            // update valid again after value settles
+            window.setTimeout(() => this.updateValid(), 3);
         }
     }
 
     updateValid() {
+        if (this.formInput == null) {
+            return; // delays actually setting the value
+        }
         if (this.valueOut == null) {
             this.valid = this.isNullable;
             return;
@@ -137,12 +141,12 @@ export class NumberForm {
             boundsValid &&= this.exclusiveMinimum < value;
         } else if (this.minimum != null) {
             boundsValid &&= this.minimum <= value;
-        } 
+        }
         if (this.exclusiveMaximum != null) {
             boundsValid &&= this.exclusiveMaximum > value;
         } else if (this.maximum != null) {
             boundsValid &&= this.maximum >= value;
-        } 
+        }
 
         let stepValid = true;
         if (this.extraMultiples) {
