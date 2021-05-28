@@ -13,7 +13,7 @@ This package builds on the flask template https://github.com/buehlefs/flask-temp
 
 ## VSCode
 
-For vscode install the python extension and add the poetry venv path to the folders the python extension searches vor venvs.
+For vscode install the python extension and add the poetry venv path to the folders the python extension searches for venvs.
 
 On linux:
 
@@ -33,7 +33,7 @@ Add `.env` file with the following content into the repository root.
 
 ```bash
 FLASK_APP=muse_for_anything
-FLASK_ENV=development # set to production of in production!
+FLASK_ENV=development # set to production if in production!
 ```
 
 Run the development server with
