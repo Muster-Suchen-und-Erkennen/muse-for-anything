@@ -6,6 +6,7 @@ from muse_for_anything.api.v1_api.request_helpers import (
     ApiResponseGenerator,
     LinkGenerator,
     PageResource,
+    skip_slow_policy_checks_for_links_in_embedded_responses,
 )
 from muse_for_anything.oso_helpers import FLASK_OSO, OsoResource
 
@@ -126,14 +127,15 @@ class TaxonomiesView(MethodView):
         items: List[ApiLink] = []
 
         dump = TaxonomySchema().dump
-        for taxonomy in taxonomies:
-            response = ApiResponseGenerator.get_api_response(
-                taxonomy, linkt_to_relations=TAXONOMY_EXTRA_LINK_RELATIONS
-            )
-            if response:
-                items.append(response.data.self)
-                response.data = dump(response.data)
-                embedded_items.append(response)
+        with skip_slow_policy_checks_for_links_in_embedded_responses():
+            for taxonomy in taxonomies:
+                response = ApiResponseGenerator.get_api_response(
+                    taxonomy, linkt_to_relations=TAXONOMY_EXTRA_LINK_RELATIONS
+                )
+                if response:
+                    items.append(response.data.self)
+                    response.data = dump(response.data)
+                    embedded_items.append(response)
 
         query_params = {
             "item-count": item_count,
@@ -339,16 +341,19 @@ class TaxonomyView(MethodView):
 
         item_schema = TaxonomyItemSchema()
 
-        for item in found_taxonomy.current_items:
-            item_response = ApiResponseGenerator.get_api_response(
-                item, linkt_to_relations=tuple()
-            )
-            if item_response:
-                item_response.data = item_schema.dump(item_response.data)
-                embedded_items.append(item_response)
-            for relation in item.current_related:
-                # TODO replace this
-                embedded_items.append(taxonomy_item_relation_to_api_response(relation))
+        with skip_slow_policy_checks_for_links_in_embedded_responses():
+            for item in found_taxonomy.current_items:
+                item_response = ApiResponseGenerator.get_api_response(
+                    item, linkt_to_relations=tuple()
+                )
+                if item_response:
+                    item_response.data = item_schema.dump(item_response.data)
+                    embedded_items.append(item_response)
+                for relation in item.current_related:
+                    # TODO replace this
+                    embedded_items.append(
+                        taxonomy_item_relation_to_api_response(relation)
+                    )
 
         return ApiResponseGenerator.get_api_response(
             found_taxonomy,

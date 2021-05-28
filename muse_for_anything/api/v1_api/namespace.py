@@ -31,7 +31,12 @@ from ...db.models.namespace import Namespace
 
 from ...oso_helpers import FLASK_OSO, OsoResource
 
-from .request_helpers import ApiResponseGenerator, LinkGenerator, PageResource
+from .request_helpers import (
+    ApiResponseGenerator,
+    LinkGenerator,
+    PageResource,
+    skip_slow_policy_checks_for_links_in_embedded_responses,
+)
 from .namespace_helpers import NAMESPACE_EXTRA_LINK_RELATIONS
 
 
@@ -70,14 +75,15 @@ class NamespacesView(MethodView):
         items: List[ApiLink] = []
 
         dump = NamespaceSchema().dump
-        for namespace in namespaces:
-            response = ApiResponseGenerator.get_api_response(
-                namespace, linkt_to_relations=NAMESPACE_EXTRA_LINK_RELATIONS
-            )
-            if response:
-                items.append(response.data.self)
-                response.data = dump(response.data)
-                embedded_items.append(response)
+        with skip_slow_policy_checks_for_links_in_embedded_responses():
+            for namespace in namespaces:
+                response = ApiResponseGenerator.get_api_response(
+                    namespace, linkt_to_relations=NAMESPACE_EXTRA_LINK_RELATIONS
+                )
+                if response:
+                    items.append(response.data.self)
+                    response.data = dump(response.data)
+                    embedded_items.append(response)
 
         query_params = {
             "item-count": item_count,

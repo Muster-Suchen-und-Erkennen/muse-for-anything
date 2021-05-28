@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from muse_for_anything.oso_helpers import FLASK_OSO, OsoResource, get_oso_resource_type
 from typing import Any, Dict, Iterable, List, Optional, Type, Union, Tuple, Sequence
 from itertools import chain
+from contextlib import contextmanager
 
 from sqlalchemy.exc import ArgumentError
 from muse_for_anything.api.base_models import (
@@ -109,6 +110,19 @@ class KeyGenerator:
 LINK_ACTIONS = {"create", "update", "delete", "restore"}
 
 
+@contextmanager
+def skip_slow_policy_checks_for_links_in_embedded_responses():
+    """Context generator to temporarily disable slow policy checks for links in embedded resources.
+
+    USE SPARINGLY and ONLY for EMBEDDED resources! NEVER use this for the main resource!
+    """
+    LinkGenerator.skip_slow_policy_checks = True
+    try:
+        yield
+    finally:
+        LinkGenerator.skip_slow_policy_checks = False
+
+
 class LinkGenerator:
 
     __generators: Dict[Union[None, Type, Tuple[Type, str]], "LinkGenerator"] = {}
@@ -116,6 +130,9 @@ class LinkGenerator:
     __generators_for_page_resources: Dict[
         Union[None, Type, Tuple[Type, str]], "LinkGenerator"
     ] = {}
+
+    # only ever change this to True with the contextmanager above!!!!!!!
+    skip_slow_policy_checks: bool = False
 
     def __init_subclass__(cls, **kwargs) -> None:
         resource_type: Type = kwargs.pop("resource_type", None)

@@ -184,8 +184,10 @@ class CreateNamespaceLinkGenerator(
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, Namespace)
-        if not FLASK_OSO.is_allowed(OsoResource("ont-namespace"), action="CREATE"):
-            return
+        if not LinkGenerator.skip_slow_policy_checks:
+            # skip policy check for embedded resources
+            if not FLASK_OSO.is_allowed(OsoResource("ont-namespace"), action="CREATE"):
+                return
         link = LinkGenerator.get_link_of(
             PageResource(Namespace, page_number=1),
             query_params={},
@@ -206,8 +208,10 @@ class UpdateNamespaceLinkGenerator(
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, Namespace)
-        if not FLASK_OSO.is_allowed(resource, action="EDIT"):
-            return  # not allowed
+        if not LinkGenerator.skip_slow_policy_checks:
+            # skip policy check for embedded resources
+            if not FLASK_OSO.is_allowed(resource, action="EDIT"):
+                return  # not allowed
         if not ignore_deleted:
             if resource.is_deleted:
                 return  # deleted
@@ -226,8 +230,10 @@ class DeleteNamespaceLinkGenerator(
         query_params: Optional[Dict[str, Union[str, int, float]]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
-        if not FLASK_OSO.is_allowed(resource, action="DELETE"):
-            return  # not allowed
+        if not LinkGenerator.skip_slow_policy_checks:
+            # skip policy check for embedded resources
+            if not FLASK_OSO.is_allowed(resource, action="DELETE"):
+                return  # not allowed
         if not ignore_deleted:
             if resource.is_deleted:
                 return  # deleted
@@ -246,8 +252,10 @@ class RestoreNamespaceLinkGenerator(
         query_params: Optional[Dict[str, Union[str, int, float]]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
-        if not FLASK_OSO.is_allowed(resource, action="RESTORE"):
-            return  # not allowed
+        if not LinkGenerator.skip_slow_policy_checks:
+            # skip policy check for embedded resources
+            if not FLASK_OSO.is_allowed(resource, action="RESTORE"):
+                return  # not allowed
         if not ignore_deleted:
             if not resource.is_deleted:
                 return  # not deleted

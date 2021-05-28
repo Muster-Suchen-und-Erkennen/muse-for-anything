@@ -88,11 +88,13 @@ class TaxonomyPageCreateLinkGenerator(
         query_params: Optional[Dict[str, Union[str, int, float]]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
-        if not FLASK_OSO.is_allowed(
-            OsoResource("ont-taxonomy", parent_resource=resource.resource),
-            action="CREATE",
-        ):
-            return
+        if not LinkGenerator.skip_slow_policy_checks:
+            # skip policy check for embedded resources
+            if not FLASK_OSO.is_allowed(
+                OsoResource("ont-taxonomy", parent_resource=resource.resource),
+                action="CREATE",
+            ):
+                return
         if not ignore_deleted:
             if resource.resource.is_deleted:
                 return  # not deleted
@@ -250,12 +252,13 @@ class CreateTaxonomyLinkGenerator(
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, Taxonomy)
-        if not FLASK_OSO.is_allowed(
-            OsoResource("ont-taxonomy", parent_resource=resource.namespace),
-            action="CREATE",
-        ):
-            print("No create taxonomy")
-            return  # not allowed
+        if not LinkGenerator.skip_slow_policy_checks:
+            # skip policy check for embedded resources
+            if not FLASK_OSO.is_allowed(
+                OsoResource("ont-taxonomy", parent_resource=resource.namespace),
+                action="CREATE",
+            ):
+                return  # not allowed
         if not ignore_deleted:
             if resource.namespace.is_deleted:
                 return  # deleted
@@ -279,12 +282,13 @@ class TaxonomyCreateTaxonomyItemLinkGenerator(
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, Taxonomy)
-        if not FLASK_OSO.is_allowed(
-            OsoResource("ont-taxonomy-item", parent_resource=resource),
-            action="CREATE",
-        ):
-            print("No create item")
-            return  # not allowed
+        if not LinkGenerator.skip_slow_policy_checks:
+            # skip policy check for embedded resources
+            if not FLASK_OSO.is_allowed(
+                OsoResource("ont-taxonomy-item", parent_resource=resource),
+                action="CREATE",
+            ):
+                return  # not allowed
         if not ignore_deleted:
             if resource.is_deleted or resource.namespace.is_deleted:
                 return  # deleted
@@ -308,8 +312,10 @@ class UpdateTaxonomyLinkGenerator(
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, Taxonomy)
-        if not FLASK_OSO.is_allowed(resource, action="EDIT"):
-            return  # not allowed
+        if not LinkGenerator.skip_slow_policy_checks:
+            # skip policy check for embedded resources
+            if not FLASK_OSO.is_allowed(resource, action="EDIT"):
+                return  # not allowed
         if not ignore_deleted:
             if resource.is_deleted or resource.namespace.is_deleted:
                 return  # deleted
@@ -329,8 +335,10 @@ class DeleteTaxonomyLinkGenerator(
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, Taxonomy)
-        if not FLASK_OSO.is_allowed(resource, action="DELETE"):
-            return  # not allowed
+        if not LinkGenerator.skip_slow_policy_checks:
+            # skip policy check for embedded resources
+            if not FLASK_OSO.is_allowed(resource, action="DELETE"):
+                return  # not allowed
         if not ignore_deleted:
             if resource.is_deleted or resource.namespace.is_deleted:
                 return  # deleted
@@ -350,8 +358,10 @@ class RestoreTaxonomyLinkGenerator(
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, Taxonomy)
-        if not FLASK_OSO.is_allowed(resource, action="RESTORE"):
-            return  # not allowed
+        if not LinkGenerator.skip_slow_policy_checks:
+            # skip policy check for embedded resources
+            if not FLASK_OSO.is_allowed(resource, action="RESTORE"):
+                return  # not allowed
         if not ignore_deleted:
             if (not resource.is_deleted) or resource.namespace.is_deleted:
                 return  # not deleted
@@ -415,11 +425,13 @@ class TaxonomyItemPageCreateLinkGenerator(
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource.resource, Taxonomy)
-        if not FLASK_OSO.is_allowed(
-            OsoResource("ont-taxonomy-item", parent_resource=resource.resource),
-            action="CREATE",
-        ):
-            return  # not allowed
+        if not LinkGenerator.skip_slow_policy_checks:
+            # skip policy check for embedded resources
+            if not FLASK_OSO.is_allowed(
+                OsoResource("ont-taxonomy-item", parent_resource=resource.resource),
+                action="CREATE",
+            ):
+                return  # not allowed
         if not ignore_deleted:
             if resource.resource.is_deleted or resource.resource.namespace.is_deleted:
                 return  # deleted
