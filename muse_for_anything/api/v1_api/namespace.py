@@ -78,7 +78,7 @@ class NamespacesView(MethodView):
         with skip_slow_policy_checks_for_links_in_embedded_responses():
             for namespace in namespaces:
                 response = ApiResponseGenerator.get_api_response(
-                    namespace, linkt_to_relations=NAMESPACE_EXTRA_LINK_RELATIONS
+                    namespace, link_to_relations=NAMESPACE_EXTRA_LINK_RELATIONS
                 )
                 if response:
                     items.append(response.data.self)
@@ -176,7 +176,7 @@ class NamespacesView(MethodView):
         DB.session.commit()
 
         namespace_response = ApiResponseGenerator.get_api_response(
-            namespace, linkt_to_relations=NAMESPACE_EXTRA_LINK_RELATIONS
+            namespace, link_to_relations=NAMESPACE_EXTRA_LINK_RELATIONS
         )
         namespace_link = namespace_response.data.self
         namespace_response.data = NamespaceSchema().dump(namespace_response.data)
@@ -223,7 +223,7 @@ class NamespaceView(MethodView):
         FLASK_OSO.authorize()
 
         return ApiResponseGenerator.get_api_response(
-            found_namespace, linkt_to_relations=NAMESPACE_EXTRA_LINK_RELATIONS
+            found_namespace, link_to_relations=NAMESPACE_EXTRA_LINK_RELATIONS
         )
 
     @API_V1.arguments(NamespaceSchema(only=("name", "description")))
@@ -274,7 +274,7 @@ class NamespaceView(MethodView):
         DB.session.commit()
 
         namespace_response = ApiResponseGenerator.get_api_response(
-            found_namespace, linkt_to_relations=NAMESPACE_EXTRA_LINK_RELATIONS
+            found_namespace, link_to_relations=NAMESPACE_EXTRA_LINK_RELATIONS
         )
         namespace_link = namespace_response.data.self
         namespace_response.data = NamespaceSchema().dump(namespace_response.data)
@@ -322,7 +322,7 @@ class NamespaceView(MethodView):
             DB.session.commit()
 
         namespace_response = ApiResponseGenerator.get_api_response(
-            found_namespace, linkt_to_relations=NAMESPACE_EXTRA_LINK_RELATIONS
+            found_namespace, link_to_relations=NAMESPACE_EXTRA_LINK_RELATIONS
         )
         namespace_link = namespace_response.data.self
         namespace_response.data = NamespaceSchema().dump(namespace_response.data)
@@ -370,7 +370,7 @@ class NamespaceView(MethodView):
             DB.session.commit()
 
         namespace_response = ApiResponseGenerator.get_api_response(
-            found_namespace, linkt_to_relations=NAMESPACE_EXTRA_LINK_RELATIONS
+            found_namespace, link_to_relations=NAMESPACE_EXTRA_LINK_RELATIONS
         )
         namespace_link = namespace_response.data.self
         namespace_response.data = NamespaceSchema().dump(namespace_response.data)

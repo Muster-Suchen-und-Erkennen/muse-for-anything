@@ -339,7 +339,7 @@ class ApiResponseGenerator:
         resource,
         *,
         query_params: Optional[Dict[str, Union[str, int, float]]] = None,
-        linkt_to_relations: Optional[Iterable[str]] = None,
+        link_to_relations: Optional[Iterable[str]] = None,
         include_default_relations: bool = True,
         extra_links: Optional[Sequence[ApiLink]] = None,
         extra_embedded: Optional[Sequence[ApiResponse]] = None,
@@ -355,14 +355,14 @@ class ApiResponseGenerator:
             response = ApiResponseGenerator.default_generate_api_response(
                 resource,
                 query_params=query_params,
-                linkt_to_relations=linkt_to_relations,
+                link_to_relations=link_to_relations,
                 include_default_relations=include_default_relations,
             )
         else:
             response = generator.generate_api_response(
                 resource,
                 query_params=query_params,
-                linkt_to_relations=linkt_to_relations,
+                link_to_relations=link_to_relations,
                 include_default_relations=include_default_relations,
             )
 
@@ -383,13 +383,13 @@ class ApiResponseGenerator:
         resource,
         *,
         query_params: Optional[Dict[str, Union[str, int, float]]] = None,
-        linkt_to_relations: Optional[Iterable[str]] = None,
+        link_to_relations: Optional[Iterable[str]] = None,
         include_default_relations: bool = True,
     ) -> Optional[ApiResponse]:
         return ApiResponse(
             links=LinkGenerator.get_links_for(
                 resource,
-                relations=linkt_to_relations,
+                relations=link_to_relations,
                 include_default_relations=include_default_relations,
             ),
             data=ApiObjectGenerator.get_api_object(resource, query_params=query_params),
@@ -400,7 +400,7 @@ class ApiResponseGenerator:
         resource,
         *,
         query_params: Optional[Dict[str, Union[str, int, float]]] = None,
-        linkt_to_relations: Optional[Iterable[str]] = None,
+        link_to_relations: Optional[Iterable[str]] = None,
         include_default_relations: bool = True,
     ) -> Optional[ApiResponse]:
         raise NotImplementedError()
