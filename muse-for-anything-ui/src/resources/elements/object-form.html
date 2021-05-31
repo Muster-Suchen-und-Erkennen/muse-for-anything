@@ -30,7 +30,10 @@
                 </button>
             </div>
             <!-- TODO do show readonly properties -->
-            <p if.bind="propertyState[prop.propertyName] === 'readonly'">${initialData[prop.propertyName]}</p>
+            <p if.bind="propertyState[prop.propertyName] === 'readonly'">
+                <span class="font-semibold form-container-title">${prop.propertyTitle}</span>
+                ${initialData[prop.propertyName]}
+            </p>
             <schema-form if.bind="propertyState[prop.propertyName] === 'editable'" class="w-full properties"
                 key.bind="prop.propertyName" label.bind="prop.propertyTitle"
                 initial-data.bind="initialData[prop.propertyName]"
