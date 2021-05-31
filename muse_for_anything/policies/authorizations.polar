@@ -47,6 +47,17 @@ allow(user: User, "RESTORE", resource: TaxonomyItem)
 allow(user: User, "DELETE", resource: TaxonomyItem)
     if can_delete(user) or can_delete(user, "ont-taxonomy") or can_delete(user, resource);
 
+# taxonomy item relations
+allow(user: User, "CREATE", resource: OsoResource{resource_type: "ont-taxonomy-item-relation", is_collection: false, arguments: nil})
+    if is_taxonomy(resource.parent_resource.taxonomy) and (
+        can_create(user) or can_create(user, resource)
+    );
+
+allow(user: User, "RESTORE", resource: TaxonomyItemRelation)
+    if can_restore(user) or can_restore(user, "ont-taxonomy") or can_restore(user, resource);
+
+allow(user: User, "DELETE", resource: TaxonomyItemRelation)
+    if can_delete(user) or can_delete(user, "ont-taxonomy") or can_delete(user, resource);
 
 
 # create rules #################################################################
@@ -84,6 +95,18 @@ can_create(user: User, resource: OsoResource{resource_type: "ont-taxonomy-item",
         can_create(user, resource.resource_type) or can_create(user, resource.resource_type, resource.parent_resource)
     );
 
+# taxonomy item relation specific
+can_create(user: User, _resource: "ont-taxonomy-item-relation")
+    if can_create(user, "ont-taxonomy");
+
+can_create(user: User, resource_type: String, parent_resource: TaxonomyItem)
+    if is_admin(user, resource_type, parent_resource.taxonomy) or is_creator(user, resource_type, parent_resource.taxonomy);
+
+can_create(user: User, resource: OsoResource{resource_type: "ont-taxonomy-item-relation", is_collection: false})
+    if is_taxonomy(resource.parent_resource.taxonomy) and (
+        can_create(user, resource.resource_type) or can_create(user, resource.resource_type, resource.parent_resource.taxonomy)
+    );
+
 
 # edit rules
 can_edit(user: User)
@@ -104,6 +127,13 @@ can_delete(user: User, _resource: "ont-namespace")
 
 can_delete(user: User, resource)
     if is_owner(user, resource);
+
+# special cases for taxonomy sub-resources
+can_delete(user: User, resource: TaxonomyItem)
+    if can_edit(user, resource.taxonomy);
+
+can_delete(user: User, resource: TaxonomyItemRelation)
+    if can_delete(user, resource.taxonomy_item_source.taxonomy);
 
 # restore rules
 can_restore(user: User)
