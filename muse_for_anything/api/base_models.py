@@ -178,25 +178,99 @@ class CursorPageArgumentsSchema(MaBaseSchema):
     sort = ma.fields.String(allow_none=True, load_only=True)
 
 
-@dataclass
+@dataclass(init=False)
 class ApiLinkBase:
+    # manual slots (and init) for smaller instances (links are used a lot)
+    __slots__ = ("href", "rel", "resource_type", "doc", "schema", "name")
+
     href: str
     rel: Sequence[str]
     resource_type: str
-    doc: Optional[str] = None
-    schema: Optional[str] = None
-    name: Optional[str] = None
+    doc: Optional[str]
+    schema: Optional[str]
+    name: Optional[str]
+
+    def __init__(
+        self,
+        href: str,
+        rel: Sequence[str],
+        resource_type: str,
+        doc: Optional[str] = None,
+        schema: Optional[str] = None,
+        name: Optional[str] = None,
+    ) -> None:
+        self.href = href
+        self.rel = rel
+        self.resource_type = resource_type
+        self.doc = doc
+        self.schema = schema
+        self.name = name
 
 
-@dataclass
+@dataclass(init=False)
 class ApiLink(ApiLinkBase):
-    resource_key: Optional[Dict[str, str]] = None
+    # manual slots (and init) for smaller instances (links are used a lot)
+    __slots__ = ("resource_key",)
+
+    resource_key: Optional[Dict[str, str]]
+
+    def __init__(
+        self,
+        href: str,
+        rel: Sequence[str],
+        resource_type: str,
+        doc: Optional[str] = None,
+        schema: Optional[str] = None,
+        name: Optional[str] = None,
+        resource_key: Optional[Dict[str, str]] = None,
+    ) -> None:
+        super().__init__(
+            href=href,
+            rel=rel,
+            resource_type=resource_type,
+            doc=doc,
+            schema=schema,
+            name=name,
+        )
+        self.resource_key = resource_key
+
+    def copy_with(self, **kwargs):
+        new_kwargs = {
+            k: (kwargs[k] if k in kwargs else getattr(self, k))
+            for k in self.__dataclass_fields__.keys()
+        }
+        return ApiLink(**new_kwargs)
 
 
-@dataclass
+@dataclass(init=False)
 class KeyedApiLink(ApiLinkBase):
-    key: Sequence[str] = tuple()
-    query_key: Sequence[str] = tuple()
+    # manual slots (and init) for smaller instances (links are used a lot)
+    __slots__ = ("key", "query_key")
+
+    key: Sequence[str]
+    query_key: Sequence[str]
+
+    def __init__(
+        self,
+        href: str,
+        rel: Sequence[str],
+        resource_type: str,
+        doc: Optional[str] = None,
+        schema: Optional[str] = None,
+        name: Optional[str] = None,
+        key: Sequence[str] = tuple(),
+        query_key: Sequence[str] = tuple(),
+    ) -> None:
+        super().__init__(
+            href=href,
+            rel=rel,
+            resource_type=resource_type,
+            doc=doc,
+            schema=schema,
+            name=name,
+        )
+        self.key = key
+        self.query_key = query_key
 
 
 @dataclass
@@ -227,7 +301,7 @@ class CursorPage(BaseApiObject):
     collection_size: int
     page: int
     items: Sequence[ApiLink]
-    first_row: Optional[int]=None # TODO remove later, kept for compatibility
+    first_row: Optional[int] = None  # TODO remove later, kept for compatibility
 
 
 __all__ = list(get_all_classes_of_module(__name__, MaBaseSchema))
