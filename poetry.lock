@@ -474,14 +474,18 @@ tests = ["pytest", "pytz", "simplejson"]
 
 [[package]]
 name = "marshmallow-jsonschema"
-version = "0.10.0"
-description = "JSON Schema Draft v4 (http://json-schema.org/) formatting with marshmallow"
+version = "0.12.0"
+description = "JSON Schema Draft v7 (http://json-schema.org/) formatting with marshmallow"
 category = "main"
 optional = false
-python-versions = "*"
+python-versions = ">=3.6"
 
 [package.dependencies]
-marshmallow = ">=2.9.0"
+marshmallow = ">=3"
+
+[package.extras]
+enum = ["marshmallow-enum"]
+union = ["marshmallow-union"]
 
 [[package]]
 name = "mccabe"
@@ -997,7 +1001,7 @@ testing = ["pytest (>=3.5,!=3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "d044d136cd2e0c7aa1a09d2c6ec38001740fd70f2fd1cff30e0a01bb1472638a"
+content-hash = "80a3335879b5bcc902de3ce1f57ea8be255e748d9b9ba0f4e346ada1b17f2a99"
 
 [metadata.files]
 alabaster = [
@@ -1244,7 +1248,8 @@ marshmallow = [
     {file = "marshmallow-3.10.0.tar.gz", hash = "sha256:4ab2fdb7f36eb61c3665da67a7ce281c8900db08d72ba6bf0e695828253581f7"},
 ]
 marshmallow-jsonschema = [
-    {file = "marshmallow-jsonschema-0.10.0.tar.gz", hash = "sha256:97b4720b719195007bb73550f4a68a6a4fa30ff160057b33997b8c76996259f0"},
+    {file = "marshmallow-jsonschema-0.12.0.tar.gz", hash = "sha256:f11a9d20ba838d890fc624438bdb1a6f85cc7e07dc5476b84c349af0593e376b"},
+    {file = "marshmallow_jsonschema-0.12.0-py3-none-any.whl", hash = "sha256:ac5d7049e6c547732992247d689486a2bcada69477476f74c3594d986b3e1b67"},
 ]
 mccabe = [
     {file = "mccabe-0.6.1-py2.py3-none-any.whl", hash = "sha256:ab8a6258860da4b6677da4bd2fe5dc2c659cff31b3ee4f7f5d64e79735b80d42"},
