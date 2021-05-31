@@ -35,7 +35,7 @@ class NamespacePageLinkGenerator(LinkGenerator, resource_type=Namespace, page=Tr
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         if query_params is None:
-            query_params = {"item-count": 50}
+            query_params = {"item-count": 25}
         return ApiLink(
             href=url_for("api-v1.NamespacesView", **query_params, _external=True),
             rel=("collection", "page"),

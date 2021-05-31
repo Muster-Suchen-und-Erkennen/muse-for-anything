@@ -46,7 +46,7 @@ class ObjectTypePageLinkGenerator(
         assert namespace is not None
         assert isinstance(namespace, Namespace)
         if query_params is None:
-            query_params = {"item-count": 50}
+            query_params = {"item-count": 25}
         return ApiLink(
             href=url_for(
                 "api-v1.TypesView",
