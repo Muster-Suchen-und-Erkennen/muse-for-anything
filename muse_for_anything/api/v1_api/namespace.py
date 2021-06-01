@@ -19,9 +19,22 @@ from muse_for_anything.api.pagination_util import (
 )
 from muse_for_anything.db.models.users import User
 
-from ...db.db import DB
-from ...db.models.namespace import Namespace
-from ...oso_helpers import FLASK_OSO, OsoResource
+from .constants import (
+    CHANGED_REL,
+    CREATE,
+    CREATE_REL,
+    DELETE_REL,
+    NAMESPACE_EXTRA_LINK_RELATIONS,
+    NAMESPACE_REL_TYPE,
+    NEW_REL,
+    RESTORE,
+    RESTORE_REL,
+    UPDATE,
+    UPDATE_REL,
+)
+from .models.ontology import NamespaceSchema
+from .request_helpers import ApiResponseGenerator, LinkGenerator, PageResource
+from .root import API_V1
 from ..base_models import (
     ApiResponse,
     ChangedApiObject,
@@ -32,10 +45,12 @@ from ..base_models import (
     NewApiObject,
     NewApiObjectSchema,
 )
-from .models.ontology import NamespaceSchema
-from .namespace_helpers import NAMESPACE_EXTRA_LINK_RELATIONS
-from .request_helpers import ApiResponseGenerator, LinkGenerator, PageResource
-from .root import API_V1
+from ...db.db import DB
+from ...db.models.namespace import Namespace
+from ...oso_helpers import FLASK_OSO, OsoResource
+
+# import namespace specific generators to load them
+from .generators import namespace  # noqa
 
 
 @API_V1.route("/namespaces/")
@@ -48,7 +63,7 @@ class NamespacesView(MethodView):
     def get(self, **kwargs: Any):
         """Get the page of namespaces."""
         FLASK_OSO.authorize_and_set_resource(
-            OsoResource("ont-namespace", is_collection=True)
+            OsoResource(NAMESPACE_REL_TYPE, is_collection=True)
         )
 
         pagination_options: PaginationOptions = prepare_pagination_query_args(
@@ -102,7 +117,7 @@ class NamespacesView(MethodView):
     @API_V1.require_jwt("jwt")
     def post(self, namespace_data):
         FLASK_OSO.authorize_and_set_resource(
-            OsoResource("ont-namespace"), action="CREATE"
+            OsoResource(NAMESPACE_REL_TYPE), action=CREATE
         )
 
         existing: bool = (
@@ -132,11 +147,11 @@ class NamespacesView(MethodView):
 
         self_link = LinkGenerator.get_link_of(
             PageResource(Namespace),
-            for_relation="create",
-            extra_relations=("ont-namespace",),
+            for_relation=CREATE_REL,
+            extra_relations=(NAMESPACE_REL_TYPE,),
             ignore_deleted=True,
         )
-        self_link.resource_type = "new"
+        self_link.resource_type = NEW_REL
 
         return ApiResponse(
             links=[namespace_link],
@@ -200,7 +215,7 @@ class NamespaceView(MethodView):
                 ),
             )
 
-        FLASK_OSO.authorize_and_set_resource(found_namespace, action="EDIT")
+        FLASK_OSO.authorize_and_set_resource(found_namespace, action=UPDATE)
 
         if found_namespace.name != namespace_data.get("name"):
             existing: bool = (
@@ -230,11 +245,11 @@ class NamespaceView(MethodView):
 
         self_link = LinkGenerator.get_link_of(
             found_namespace,
-            for_relation="update",
-            extra_relations=("ont-namespace",),
+            for_relation=UPDATE_REL,
+            extra_relations=(NAMESPACE_REL_TYPE,),
             ignore_deleted=True,
         )
-        self_link.resource_type = "changed"
+        self_link.resource_type = CHANGED_REL
 
         return ApiResponse(
             links=[namespace_link],
@@ -261,7 +276,7 @@ class NamespaceView(MethodView):
         if found_namespace is None:
             abort(HTTPStatus.NOT_FOUND, message=gettext("Namespace not found."))
 
-        FLASK_OSO.authorize_and_set_resource(found_namespace, action="RESTORE")
+        FLASK_OSO.authorize_and_set_resource(found_namespace, action=RESTORE)
 
         # only actually restore when not already restored
         if found_namespace.deleted_on is not None:
@@ -278,11 +293,11 @@ class NamespaceView(MethodView):
 
         self_link = LinkGenerator.get_link_of(
             found_namespace,
-            for_relation="restore",
-            extra_relations=("ont-namespace",),
+            for_relation=RESTORE_REL,
+            extra_relations=(NAMESPACE_REL_TYPE,),
             ignore_deleted=True,
         )
-        self_link.resource_type = "changed"
+        self_link.resource_type = CHANGED_REL
 
         return ApiResponse(
             links=[namespace_link],
@@ -326,11 +341,11 @@ class NamespaceView(MethodView):
 
         self_link = LinkGenerator.get_link_of(
             found_namespace,
-            for_relation="delete",
-            extra_relations=("ont-namespace",),
+            for_relation=DELETE_REL,
+            extra_relations=(NAMESPACE_REL_TYPE,),
             ignore_deleted=True,
         )
-        self_link.resource_type = "changed"
+        self_link.resource_type = CHANGED_REL
 
         return ApiResponse(
             links=[namespace_link],

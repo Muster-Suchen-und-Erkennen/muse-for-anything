@@ -31,6 +31,30 @@ from muse_for_anything.db.models.taxonomies import (
 )
 from muse_for_anything.oso_helpers import FLASK_OSO, OsoResource
 
+from .constants import (
+    CHANGED_REL,
+    CHILD_REL,
+    CREATE,
+    CREATE_REL,
+    DELETE_REL,
+    NEW_REL,
+    PARENT_REL,
+    RESTORE,
+    RESTORE_REL,
+    SOURCE_REL,
+    TARGET_REL,
+    TAXONOMY_EXTRA_LINK_RELATIONS,
+    TAXONOMY_ITEM_EXTRA_LINK_RELATIONS,
+    TAXONOMY_ITEM_RELATION_EXTRA_LINK_RELATIONS,
+    TAXONOMY_ITEM_RELATION_PAGE_EXTRA_LINK_RELATIONS,
+    TAXONOMY_ITEM_RELATION_REL_TYPE,
+    TAXONOMY_ITEM_REL_TYPE,
+    TAXONOMY_ITEM_VERSION_EXTRA_LINK_RELATIONS,
+    TAXONOMY_ITEM_VERSION_PAGE_EXTRA_LINK_RELATIONS,
+    TAXONOMY_ITEM_VERSION_REL_TYPE,
+    UPDATE,
+    UPDATE_REL,
+)
 from .models.ontology import (
     TaxonomyItemRelationPostSchema,
     TaxonomyItemRelationSchema,
@@ -38,14 +62,6 @@ from .models.ontology import (
     TaxonomySchema,
 )
 from .root import API_V1
-from .taxonomy_helpers import (
-    TAXONOMY_EXTRA_LINK_RELATIONS,
-    TAXONOMY_ITEM_EXTRA_LINK_RELATIONS,
-    TAXONOMY_ITEM_RELATION_EXTRA_LINK_RELATIONS,
-    TAXONOMY_ITEM_RELATION_PAGE_EXTRA_LINK_RELATIONS,
-    TAXONOMY_ITEM_VERSION_EXTRA_LINK_RELATIONS,
-    TAXONOMY_ITEM_VERSION_PAGE_EXTRA_LINK_RELATIONS,
-)
 from ..base_models import (
     ApiLink,
     ApiResponse,
@@ -58,6 +74,13 @@ from ..base_models import (
     NewApiObjectSchema,
 )
 from ...db.db import DB
+
+# import taxonomy items specific generators to load them
+from .generators import (
+    taxonomy_item,
+    taxonomy_item_version,
+    taxonomy_item_relation,
+)  # noqa
 
 
 @API_V1.route(
@@ -159,7 +182,7 @@ class TaxonomyItemView(MethodView):
                 )
                 if parent_response:
                     link: ApiLink = parent_response.data.self
-                    extra_links.append(link.copy_with(rel=("parent", *link.rel)))
+                    extra_links.append(link.copy_with(rel=(PARENT_REL, *link.rel)))
                     parent_response.data = item_dump(parent_response.data)
                     embedded.append(parent_response)
             for relation in found_taxonomy_item.current_related:
@@ -175,7 +198,7 @@ class TaxonomyItemView(MethodView):
                 )
                 if child_response:
                     link: ApiLink = child_response.data.self
-                    extra_links.append(link.copy_with(rel=("child", *link.rel)))
+                    extra_links.append(link.copy_with(rel=(CHILD_REL, *link.rel)))
                     child_response.data = item_dump(child_response.data)
                     embedded.append(child_response)
 
@@ -199,7 +222,7 @@ class TaxonomyItemView(MethodView):
         )
         self._check_if_modifiable(found_taxonomy_item)
 
-        FLASK_OSO.authorize_and_set_resource(found_taxonomy_item, action="EDIT")
+        FLASK_OSO.authorize_and_set_resource(found_taxonomy_item, action=UPDATE)
 
         taxonomy_item_version = TaxonomyItemVersion(
             taxonomy_item=found_taxonomy_item,
@@ -223,11 +246,11 @@ class TaxonomyItemView(MethodView):
 
         self_link = LinkGenerator.get_link_of(
             found_taxonomy_item,
-            for_relation="update",
-            extra_relations=("ont-taxonomy-item",),
+            for_relation=UPDATE_REL,
+            extra_relations=(TAXONOMY_ITEM_REL_TYPE,),
             ignore_deleted=True,
         )
-        self_link.resource_type = "changed"
+        self_link.resource_type = CHANGED_REL
 
         return ApiResponse(
             links=[taxonomy_item_link],
@@ -261,7 +284,7 @@ class TaxonomyItemView(MethodView):
                 )
                 if parent_response:
                     link: ApiLink = parent_response.data.self
-                    links.append(link.copy_with(rel=("child", *link.rel)))
+                    links.append(link.copy_with(rel=(PARENT_REL, *link.rel)))
                     parent_response.data = item_dump(parent_response.data)
                     embedded.append(parent_response)
             for relation in related:
@@ -277,7 +300,7 @@ class TaxonomyItemView(MethodView):
                 )
                 if child_response:
                     link: ApiLink = child_response.data.self
-                    links.append(link.copy_with(rel=("child", *link.rel)))
+                    links.append(link.copy_with(rel=(CHILD_REL, *link.rel)))
                     child_response.data = item_dump(child_response.data)
                     embedded.append(child_response)
         return embedded, links
@@ -294,7 +317,7 @@ class TaxonomyItemView(MethodView):
         )
         self._check_if_taxonomy_modifiable(found_taxonomy_item.taxonomy)
 
-        FLASK_OSO.authorize_and_set_resource(found_taxonomy_item, action="RESTORE")
+        FLASK_OSO.authorize_and_set_resource(found_taxonomy_item, action=RESTORE)
 
         changed_links: List[ApiLink] = []
         embedded: List[ApiResponse] = []
@@ -362,11 +385,11 @@ class TaxonomyItemView(MethodView):
 
         self_link = LinkGenerator.get_link_of(
             found_taxonomy_item,
-            for_relation="restore",
-            extra_relations=("ont-taxonomy-item",),
+            for_relation=RESTORE_REL,
+            extra_relations=(TAXONOMY_ITEM_REL_TYPE,),
             ignore_deleted=True,
         )
-        self_link.resource_type = "changed"
+        self_link.resource_type = CHANGED_REL
 
         return ApiResponse(
             links=[taxonomy_item_link, taxonomy_link, *changed_links],
@@ -433,11 +456,11 @@ class TaxonomyItemView(MethodView):
 
         self_link = LinkGenerator.get_link_of(
             found_taxonomy_item,
-            for_relation="restore",
-            extra_relations=("ont-taxonomy-item",),
+            for_relation=DELETE_REL,
+            extra_relations=(TAXONOMY_ITEM_REL_TYPE,),
             ignore_deleted=True,
         )
-        self_link.resource_type = "changed"
+        self_link.resource_type = CHANGED_REL
 
         return ApiResponse(
             links=[taxonomy_item_link, taxonomy_link, *changed_links],
@@ -565,7 +588,7 @@ class TaxonomyItemRelationsView(MethodView):
         )
         FLASK_OSO.authorize_and_set_resource(
             OsoResource(
-                "ont-taxonomy-item-relation",
+                TAXONOMY_ITEM_RELATION_REL_TYPE,
                 is_collection=True,
                 parent_resource=found_taxonomy_item,
             )
@@ -663,9 +686,9 @@ class TaxonomyItemRelationsView(MethodView):
 
         FLASK_OSO.authorize_and_set_resource(
             OsoResource(
-                "ont-taxonomy-item-relation", parent_resource=found_taxonomy_item
+                TAXONOMY_ITEM_RELATION_REL_TYPE, parent_resource=found_taxonomy_item
             ),
-            action="CREATE",
+            action=CREATE,
         )
 
         self._check_item_circle(found_taxonomy_item_target, found_taxonomy_item)
@@ -683,8 +706,8 @@ class TaxonomyItemRelationsView(MethodView):
         with skip_slow_policy_checks_for_links_in_embedded_responses():
             dump = TaxonomyItemSchema().dump
             for extra_rel, resource in (
-                ("source", found_taxonomy_item),
-                ("target", found_taxonomy_item_target),
+                (SOURCE_REL, found_taxonomy_item),
+                (TARGET_REL, found_taxonomy_item_target),
             ):
                 response = ApiResponseGenerator.get_api_response(resource=resource)
                 if response:
@@ -702,11 +725,11 @@ class TaxonomyItemRelationsView(MethodView):
 
         self_link = LinkGenerator.get_link_of(
             PageResource(TaxonomyItemRelation, resource=found_taxonomy_item),
-            for_relation="create",
-            extra_relations=("ont-taxonomy-item-relation",),
+            for_relation=CREATE_REL,
+            extra_relations=(TAXONOMY_ITEM_RELATION_REL_TYPE,),
             ignore_deleted=True,
         )
-        self_link.resource_type = "new"
+        self_link.resource_type = NEW_REL
 
         return ApiResponse(
             links=extra_links,
@@ -813,8 +836,8 @@ class TaxonomyItemRelationView(MethodView):
         with skip_slow_policy_checks_for_links_in_embedded_responses():
             dump = TaxonomyItemSchema().dump
             for extra_rel, resource in (
-                ("source", relation.taxonomy_item_source),
-                ("target", relation.taxonomy_item_target),
+                (SOURCE_REL, relation.taxonomy_item_source),
+                (TARGET_REL, relation.taxonomy_item_target),
             ):
                 response = ApiResponseGenerator.get_api_response(resource=resource)
                 if response:
@@ -902,11 +925,11 @@ class TaxonomyItemRelationView(MethodView):
 
         self_link = LinkGenerator.get_link_of(
             found_relation,
-            for_relation="delete",
-            extra_relations=("ont-taxonomy-item-relation",),
+            for_relation=DELETE_REL,
+            extra_relations=(TAXONOMY_ITEM_RELATION_REL_TYPE,),
             ignore_deleted=True,
         )
-        self_link.resource_type = "changed"
+        self_link.resource_type = CHANGED_REL
 
         return ApiResponse(
             links=extra_links,
@@ -972,7 +995,7 @@ class TaxonomyItemVersionsView(MethodView):
         )
         FLASK_OSO.authorize_and_set_resource(
             OsoResource(
-                "ont-taxonomy-item-version",
+                TAXONOMY_ITEM_VERSION_REL_TYPE,
                 is_collection=True,
                 parent_resource=found_taxonomy_item,
             )

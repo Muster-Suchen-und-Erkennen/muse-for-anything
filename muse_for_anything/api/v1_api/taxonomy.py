@@ -27,18 +27,29 @@ from muse_for_anything.api.v1_api.request_helpers import (
 from muse_for_anything.db.models.users import User
 from muse_for_anything.oso_helpers import FLASK_OSO, OsoResource
 
+from .constants import (
+    CHANGED_REL,
+    CREATE,
+    CREATE_REL,
+    DELETE_REL,
+    NEW_REL,
+    RESTORE,
+    RESTORE_REL,
+    TAXONOMY_EXTRA_LINK_RELATIONS,
+    TAXONOMY_ITEM_EXTRA_LINK_RELATIONS,
+    TAXONOMY_ITEM_PAGE_EXTRA_LINK_RELATIONS,
+    TAXONOMY_ITEM_REL_TYPE,
+    TAXONOMY_PAGE_EXTRA_LINK_RELATIONS,
+    TAXONOMY_REL_TYPE,
+    UPDATE,
+    UPDATE_REL,
+)
 from .models.ontology import (
     TaxonomyItemRelationSchema,
     TaxonomyItemSchema,
     TaxonomySchema,
 )
 from .root import API_V1
-from .taxonomy_helpers import (
-    TAXONOMY_EXTRA_LINK_RELATIONS,
-    TAXONOMY_ITEM_EXTRA_LINK_RELATIONS,
-    TAXONOMY_ITEM_PAGE_EXTRA_LINK_RELATIONS,
-    TAXONOMY_PAGE_EXTRA_LINK_RELATIONS,
-)
 from ..base_models import (
     ApiResponse,
     ChangedApiObject,
@@ -52,6 +63,9 @@ from ..base_models import (
 from ...db.db import DB
 from ...db.models.namespace import Namespace
 from ...db.models.taxonomies import Taxonomy, TaxonomyItem, TaxonomyItemVersion
+
+# import taxonomy specific generators to load them
+from .generators import taxonomy, taxonomy_item  # noqa
 
 
 @API_V1.route("/namespaces/<string:namespace>/taxonomies/")
@@ -85,7 +99,7 @@ class TaxonomiesView(MethodView):
         found_namespace = self._get_namespace(namespace=namespace)
         FLASK_OSO.authorize_and_set_resource(
             OsoResource(
-                "ont-taxonomy", is_collection=True, parent_resource=found_namespace
+                TAXONOMY_REL_TYPE, is_collection=True, parent_resource=found_namespace
             )
         )
 
@@ -158,7 +172,7 @@ class TaxonomiesView(MethodView):
             )
 
         FLASK_OSO.authorize_and_set_resource(
-            OsoResource("ont-taxonomy", parent_resource=found_namespace), action="CREATE"
+            OsoResource(TAXONOMY_REL_TYPE, parent_resource=found_namespace), action=CREATE
         )
 
         existing: bool = (
@@ -196,11 +210,11 @@ class TaxonomiesView(MethodView):
 
         self_link = LinkGenerator.get_link_of(
             PageResource(Taxonomy, resource=found_namespace),
-            for_relation="create",
-            extra_relations=("ont-taxonomy",),
+            for_relation=CREATE_REL,
+            extra_relations=(TAXONOMY_REL_TYPE,),
             ignore_deleted=True,
         )
-        self_link.resource_type = "new"
+        self_link.resource_type = NEW_REL
 
         return ApiResponse(
             links=[taxonomy_link],
@@ -312,7 +326,7 @@ class TaxonomyView(MethodView):
 
         self._check_if_modifiable(found_taxonomy)
 
-        FLASK_OSO.authorize_and_set_resource(found_taxonomy, action="EDIT")
+        FLASK_OSO.authorize_and_set_resource(found_taxonomy, action=UPDATE)
 
         if found_taxonomy.name != data.get("name"):
             existing: bool = (
@@ -346,11 +360,11 @@ class TaxonomyView(MethodView):
 
         self_link = LinkGenerator.get_link_of(
             found_taxonomy,
-            for_relation="update",
-            extra_relations=("ont-taxonomy",),
+            for_relation=UPDATE_REL,
+            extra_relations=(TAXONOMY_REL_TYPE,),
             ignore_deleted=True,
         )
-        self_link.resource_type = "changed"
+        self_link.resource_type = CHANGED_REL
 
         return ApiResponse(
             links=[taxonomy_link],
@@ -371,7 +385,7 @@ class TaxonomyView(MethodView):
         )
         self._check_if_namespace_modifiable(found_taxonomy.namespace)
 
-        FLASK_OSO.authorize_and_set_resource(found_taxonomy, action="RESTORE")
+        FLASK_OSO.authorize_and_set_resource(found_taxonomy, action=RESTORE)
 
         # only actually restore when not already restored
         if found_taxonomy.deleted_on is not None:
@@ -388,11 +402,11 @@ class TaxonomyView(MethodView):
 
         self_link = LinkGenerator.get_link_of(
             found_taxonomy,
-            for_relation="restore",
-            extra_relations=("ont-taxonomy",),
+            for_relation=RESTORE_REL,
+            extra_relations=(TAXONOMY_REL_TYPE,),
             ignore_deleted=True,
         )
-        self_link.resource_type = "changed"
+        self_link.resource_type = CHANGED_REL
 
         return ApiResponse(
             links=[taxonomy_link],
@@ -430,11 +444,11 @@ class TaxonomyView(MethodView):
 
         self_link = LinkGenerator.get_link_of(
             found_taxonomy,
-            for_relation="delete",
-            extra_relations=("ont-taxonomy",),
+            for_relation=DELETE_REL,
+            extra_relations=(TAXONOMY_REL_TYPE,),
             ignore_deleted=True,
         )
-        self_link.resource_type = "changed"
+        self_link.resource_type = CHANGED_REL
 
         return ApiResponse(
             links=[taxonomy_link],
@@ -506,17 +520,13 @@ class TaxonomyItemsView(MethodView):
         )
         FLASK_OSO.authorize_and_set_resource(
             OsoResource(
-                "ont-taxonomy-item", is_collection=True, parent_resource=found_taxonomy
+                TAXONOMY_ITEM_REL_TYPE, is_collection=True, parent_resource=found_taxonomy
             )
         )
 
         pagination_options: PaginationOptions = prepare_pagination_query_args(
             **kwargs, _sort_default="-updated_on"
         )
-
-        cursor: Optional[str] = kwargs.get("cursor", None)
-        item_count: int = cast(int, kwargs.get("item_count", 25))
-        sort: str = cast(str, kwargs.get("sort", "-updated_on").lstrip("+"))
 
         taxonomy_item_filter = (
             TaxonomyItem.deleted_on == None,
@@ -596,8 +606,8 @@ class TaxonomyItemsView(MethodView):
             )
 
         FLASK_OSO.authorize_and_set_resource(
-            OsoResource("ont-taxonomy-item", parent_resource=found_taxonomy),
-            action="CREATE",
+            OsoResource(TAXONOMY_ITEM_REL_TYPE, parent_resource=found_taxonomy),
+            action=CREATE,
         )
 
         taxonomy_item = TaxonomyItem(
@@ -633,11 +643,11 @@ class TaxonomyItemsView(MethodView):
 
         self_link = LinkGenerator.get_link_of(
             PageResource(TaxonomyItem, resource=found_taxonomy),
-            for_relation="create",
-            extra_relations=("ont-taxonomy-item",),
+            for_relation=CREATE_REL,
+            extra_relations=(TAXONOMY_ITEM_REL_TYPE,),
             ignore_deleted=True,
         )
-        self_link.resource_type = "new"
+        self_link.resource_type = NEW_REL
 
         return ApiResponse(
             links=[taxonomy_item_link, taxonomy_link],
