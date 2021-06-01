@@ -41,6 +41,14 @@ sphinx-click = "^2.5.0"
 line-length = 90
 include = '\.pyi?$'
 
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+reverse_relative = true
+group_by_package = true
+honor_noqa = true
+atomic = true
+
 [tool.sphinx]
 copyright-year = 2020
 enable-autodoc = true
