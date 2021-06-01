@@ -31,11 +31,11 @@ class NamespacePageLinkGenerator(LinkGenerator, resource_type=Namespace, page=Tr
         self,
         resource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]],
+        query_params: Optional[Dict[str, str]],
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         if query_params is None:
-            query_params = {"item-count": 25}
+            query_params = {"item-count": "25"}
         return ApiLink(
             href=url_for("api-v1.NamespacesView", **query_params, _external=True),
             rel=("collection", "page"),
@@ -52,7 +52,7 @@ class NamespacePageCreateNamespaceLinkGenerator(
         self,
         resource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         if not FLASK_OSO.is_allowed(OsoResource("ont-namespace"), action="CREATE"):
@@ -74,7 +74,7 @@ class NamespaceSelfLinkGenerator(LinkGenerator, resource_type=Namespace):
         self,
         resource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         return ApiLink(
@@ -94,7 +94,7 @@ class NamespaceApiObjectGenerator(ApiObjectGenerator, resource_type=Namespace):
         self,
         resource: Namespace,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
     ) -> Optional[NamespaceData]:
         assert isinstance(resource, Namespace)
 
@@ -116,7 +116,7 @@ class NamespaceUpLinkGenerator(LinkGenerator, resource_type=Namespace, relation=
         self,
         resource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         return LinkGenerator.get_link_of(
@@ -132,7 +132,7 @@ class NamespaceObjectsNavLinkGenerator(
         self,
         resource: Namespace,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         return LinkGenerator.get_link_of(
@@ -148,7 +148,7 @@ class NamespaceTypesNavLinkGenerator(
         self,
         resource: Namespace,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         return LinkGenerator.get_link_of(
@@ -164,7 +164,7 @@ class NamespaceTaxonomiesNavLinkGenerator(
         self,
         resource: Namespace,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         return LinkGenerator.get_link_of(
@@ -180,7 +180,7 @@ class CreateNamespaceLinkGenerator(
         self,
         resource: Namespace,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, Namespace)
@@ -204,7 +204,7 @@ class UpdateNamespaceLinkGenerator(
         self,
         resource: Namespace,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, Namespace)
@@ -227,7 +227,7 @@ class DeleteNamespaceLinkGenerator(
         self,
         resource: Namespace,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         if not LinkGenerator.skip_slow_policy_checks:
@@ -249,7 +249,7 @@ class RestoreNamespaceLinkGenerator(
         self,
         resource: Namespace,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         if not LinkGenerator.skip_slow_policy_checks:

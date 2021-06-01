@@ -1,21 +1,18 @@
-from muse_for_anything.db.models.namespace import Namespace
-from muse_for_anything.api.v1_api.models.schema import TYPE_SCHEMA
-from muse_for_anything.api.v1_api.namespace_helpers import query_params_to_api_key
 from typing import Any, Dict, List, Optional, Union
+
 from flask import url_for
 
 from muse_for_anything.api.base_models import ApiLink, ApiResponse
 from muse_for_anything.api.v1_api.models.ontology import (
-    ObjectTypeSchema,
     ObjectTypeData,
+    ObjectTypeSchema,
 )
-from muse_for_anything.db.models.ontology_objects import (
-    OntologyObjectType,
-)
-
+from muse_for_anything.api.v1_api.models.schema import TYPE_SCHEMA
+from muse_for_anything.api.v1_api.namespace_helpers import query_params_to_api_key
+from muse_for_anything.db.models.namespace import Namespace
+from muse_for_anything.db.models.ontology_objects import OntologyObjectType
 
 from .request_helpers import KeyGenerator, LinkGenerator, PageResource
-
 from ...oso_helpers import FLASK_OSO, OsoResource
 
 
@@ -37,7 +34,7 @@ class ObjectTypePageLinkGenerator(
         self,
         resource: PageResource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]],
+        query_params: Optional[Dict[str, str]],
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         if not FLASK_OSO.is_allowed(OsoResource("ont-type"), action="GET"):
@@ -46,7 +43,7 @@ class ObjectTypePageLinkGenerator(
         assert namespace is not None
         assert isinstance(namespace, Namespace)
         if query_params is None:
-            query_params = {"item-count": 25}
+            query_params = {"item-count": "25"}
         return ApiLink(
             href=url_for(
                 "api-v1.TypesView",

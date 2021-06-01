@@ -1,26 +1,22 @@
 """Module containing resource and link generators for taxonomies and related resources."""
 
 from typing import Any, Dict, Iterable, List, Optional, Union
+
 from flask import url_for
 
-from muse_for_anything.db.models.namespace import Namespace
-
-from muse_for_anything.api.base_models import (
-    ApiLink,
-    ApiResponse,
-)
+from muse_for_anything.api.base_models import ApiLink, ApiResponse
 from muse_for_anything.api.v1_api.models.ontology import (
     TaxonomyData,
     TaxonomyItemData,
     TaxonomyItemRelationData,
 )
+from muse_for_anything.db.models.namespace import Namespace
 from muse_for_anything.db.models.taxonomies import (
     Taxonomy,
     TaxonomyItem,
     TaxonomyItemRelation,
     TaxonomyItemVersion,
 )
-
 
 from .request_helpers import (
     ApiObjectGenerator,
@@ -29,9 +25,7 @@ from .request_helpers import (
     LinkGenerator,
     PageResource,
 )
-
 from ...oso_helpers import FLASK_OSO, OsoResource
-
 
 TAXONOMY_PAGE_EXTRA_LINK_RELATIONS = ("ont-namespace",)
 TAXONOMY_EXTRA_LINK_RELATIONS = (
@@ -83,7 +77,7 @@ class TaxonomyPageLinkGenerator(LinkGenerator, resource_type=Taxonomy, page=True
         self,
         resource: PageResource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]],
+        query_params: Optional[Dict[str, str]],
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         if not FLASK_OSO.is_allowed(
@@ -97,7 +91,7 @@ class TaxonomyPageLinkGenerator(LinkGenerator, resource_type=Taxonomy, page=True
         assert namespace is not None
         assert isinstance(namespace, Namespace)
         if query_params is None:
-            query_params = {"item-count": 25}
+            query_params = {"item-count": "25"}
         return ApiLink(
             href=url_for(
                 "api-v1.TaxonomiesView",
@@ -121,7 +115,7 @@ class TaxonomyPageCreateLinkGenerator(
         self,
         resource: PageResource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, PageResource)
@@ -148,7 +142,7 @@ class TaxonomyPageUpLinkGenerator(
         self,
         resource: PageResource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         return LinkGenerator.get_link_of(
@@ -164,7 +158,7 @@ class TaxonomyPageNamespacesNavLinkGenerator(
         self,
         resource: PageResource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         return LinkGenerator.get_link_of(
@@ -187,7 +181,7 @@ class TaxonomySelfLinkGenerator(LinkGenerator, resource_type=Taxonomy):
         self,
         resource: Taxonomy,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         return ApiLink(
@@ -212,7 +206,7 @@ class TaxonomyApiObjectGenerator(ApiObjectGenerator, resource_type=Taxonomy):
         self,
         resource: Taxonomy,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
     ) -> Optional[TaxonomyData]:
         assert isinstance(resource, Taxonomy)
 
@@ -249,7 +243,7 @@ class TaxonomyUpLinkGenerator(LinkGenerator, resource_type=Taxonomy, relation="u
         self,
         resource: Taxonomy,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, Taxonomy)
@@ -266,7 +260,7 @@ class TaxonomyNamespaceNavLinkGenerator(
         self,
         resource: Taxonomy,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, Taxonomy)
@@ -283,7 +277,7 @@ class TaxonomyTaxonomyItemsNavLinkGenerator(
         self,
         resource: Taxonomy,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, Taxonomy)
@@ -300,7 +294,7 @@ class CreateTaxonomyLinkGenerator(
         self,
         resource: Taxonomy,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, Taxonomy)
@@ -319,7 +313,7 @@ class TaxonomyCreateTaxonomyItemLinkGenerator(
         self,
         resource: Taxonomy,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, Taxonomy)
@@ -349,7 +343,7 @@ class UpdateTaxonomyLinkGenerator(
         self,
         resource: Taxonomy,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, Taxonomy)
@@ -372,7 +366,7 @@ class DeleteTaxonomyLinkGenerator(
         self,
         resource: Taxonomy,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, Taxonomy)
@@ -395,7 +389,7 @@ class RestoreTaxonomyLinkGenerator(
         self,
         resource: Taxonomy,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, Taxonomy)
@@ -428,7 +422,7 @@ class TaxonomyItemsPageLinkGenerator(
         self,
         resource: PageResource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]],
+        query_params: Optional[Dict[str, str]],
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         if not FLASK_OSO.is_allowed(
@@ -442,7 +436,7 @@ class TaxonomyItemsPageLinkGenerator(
         assert taxonomy is not None
         assert isinstance(taxonomy, Taxonomy)
         if query_params is None:
-            query_params = {"item-count": 25}
+            query_params = {"item-count": "25"}
         return ApiLink(
             href=url_for(
                 "api-v1.TaxonomyItemsView",
@@ -467,7 +461,7 @@ class TaxonomyItemPageCreateLinkGenerator(
         self,
         resource: PageResource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, PageResource)
@@ -496,7 +490,7 @@ class TaxonomyItemPageUpLinkGenerator(
         self,
         resource: PageResource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource.resource, Taxonomy)
@@ -513,7 +507,7 @@ class TaxonomyItemPageTaxonomiesNavLinkGenerator(
         self,
         resource: PageResource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource.resource, Taxonomy)
@@ -530,7 +524,7 @@ class TaxonomyItemPageNamespaceNavLinkGenerator(
         self,
         resource: PageResource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource.resource, Taxonomy)
@@ -554,7 +548,7 @@ class TaxonomyItemSelfLinkGenerator(LinkGenerator, resource_type=TaxonomyItem):
         self,
         resource: TaxonomyItem,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         return ApiLink(
@@ -582,7 +576,7 @@ class TaxonomyItemCreateLinkGenerator(
         self,
         resource: TaxonomyItem,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, TaxonomyItem)
@@ -601,7 +595,7 @@ class UpdateTaxonomyItemLinkGenerator(
         self,
         resource: TaxonomyItem,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, TaxonomyItem)
@@ -628,7 +622,7 @@ class DeleteTaxonomyItemLinkGenerator(
         self,
         resource: TaxonomyItem,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, TaxonomyItem)
@@ -655,7 +649,7 @@ class RestoreTaxonomyItemLinkGenerator(
         self,
         resource: TaxonomyItem,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, TaxonomyItem)
@@ -684,7 +678,7 @@ class TaxonomyItemCreateItemRelationLinkGenerator(
         self,
         resource: TaxonomyItem,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, TaxonomyItem)
@@ -703,7 +697,7 @@ class TaxonomyItemUpLinkGenerator(
         self,
         resource: TaxonomyItem,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, TaxonomyItem)
@@ -720,7 +714,7 @@ class TaxonomyItemNamespaceLinkGenerator(
         self,
         resource: TaxonomyItem,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, TaxonomyItem)
@@ -737,7 +731,7 @@ class TaxonomyItemTaxonomiesLinkGenerator(
         self,
         resource: TaxonomyItem,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, TaxonomyItem)
@@ -754,7 +748,7 @@ class TaxonomyItemItemRelationsLinkGenerator(
         self,
         resource: TaxonomyItem,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, TaxonomyItem)
@@ -771,7 +765,7 @@ class TaxonomyItemItemVersionsLinkGenerator(
         self,
         resource: TaxonomyItem,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, TaxonomyItem)
@@ -786,7 +780,7 @@ class TaxonomyItemApiObjectGenerator(ApiObjectGenerator, resource_type=TaxonomyI
         self,
         resource: TaxonomyItem,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
     ) -> Optional[TaxonomyItemData]:
         assert isinstance(resource, TaxonomyItem)
 
@@ -848,7 +842,7 @@ class TaxonomyItemVersionsPageSelfLinkGenerator(
         self,
         resource: PageResource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         if not FLASK_OSO.is_allowed(
@@ -864,18 +858,19 @@ class TaxonomyItemVersionsPageSelfLinkGenerator(
         assert taxonomy_item is not None
         assert isinstance(taxonomy_item, TaxonomyItem)
         if query_params is None:
-            query_params = {"item-count": 25}
+            query_params = {"item-count": "25"}
         return ApiLink(
             href=url_for(
                 "api-v1.TaxonomyItemVersionsView",
                 namespace=str(taxonomy_item.taxonomy.namespace_id),
                 taxonomy=str(taxonomy_item.taxonomy_id),
                 taxonomy_item=str(taxonomy_item.id),
+                **query_params,
                 _external=True,
             ),
             rel=("collection", "page"),
             resource_type="ont-taxonomy-item-version",
-            resource_key=KeyGenerator.generate_key(resource),
+            resource_key=KeyGenerator.generate_key(resource, query_params=query_params),
             schema=url_for(
                 "api-v1.ApiSchemaView", schema_id="TaxonomyItemSchema", _external=True
             ),
@@ -889,7 +884,7 @@ class TaxonomyItemVersionsPageUpLinkGenerator(
         self,
         resource: PageResource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, PageResource)
@@ -904,7 +899,7 @@ class TaxonomyItemVersionsPageTaxonomyLinkGenerator(
         self,
         resource: PageResource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, PageResource)
@@ -921,7 +916,7 @@ class TaxonomyItemVersionsPageNamespaceLinkGenerator(
         self,
         resource: PageResource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, PageResource)
@@ -949,7 +944,7 @@ class TaxonomyItemVersionSelfLinkGenerator(
         self,
         resource: TaxonomyItemVersion,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         return ApiLink(
@@ -978,7 +973,7 @@ class TaxonomyItemVersionUpLinkGenerator(
         self,
         resource: TaxonomyItemVersion,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, TaxonomyItemVersion)
@@ -994,7 +989,7 @@ class TaxonomyItemVersionTaxonomyItemRelationsLinkGenerator(
         self,
         resource: TaxonomyItemVersion,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, TaxonomyItemVersion)
@@ -1013,7 +1008,7 @@ class TaxonomyItemVersionTaxonomyLinkGenerator(
         self,
         resource: TaxonomyItemVersion,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, TaxonomyItemVersion)
@@ -1029,7 +1024,7 @@ class TaxonomyItemVersionNamespaceLinkGenerator(
         self,
         resource: TaxonomyItemVersion,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, TaxonomyItemVersion)
@@ -1045,7 +1040,7 @@ class TaxonomyItemVersionApiObjectGenerator(
         self,
         resource: TaxonomyItemVersion,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
     ) -> Optional[TaxonomyItemData]:
         assert isinstance(resource, TaxonomyItemVersion)
 
@@ -1110,7 +1105,7 @@ class TaxonomyItemRelationsPageLinkGenerator(
         self,
         resource: PageResource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]],
+        query_params: Optional[Dict[str, str]],
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         if not FLASK_OSO.is_allowed(
@@ -1126,7 +1121,7 @@ class TaxonomyItemRelationsPageLinkGenerator(
         assert taxonomy_item is not None
         assert isinstance(taxonomy_item, TaxonomyItem)
         if query_params is None:
-            query_params = {"item-count": 25}
+            query_params = {"item-count": "25"}
         return ApiLink(
             href=url_for(
                 "api-v1.TaxonomyItemRelationsView",
@@ -1154,7 +1149,7 @@ class TaxonomyItemRelationsPageCreateLinkGenerator(
         self,
         resource: PageResource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, PageResource)
@@ -1167,7 +1162,6 @@ class TaxonomyItemRelationsPageCreateLinkGenerator(
                 ),
                 action="CREATE",
             ):
-                print("NOT ALLOWED CREATE_RELATION after checks", resource.resource)
                 return  # not allowed
         if not ignore_deleted:
             if (
@@ -1190,7 +1184,7 @@ class TaxonomyItemRelationsPageUpLinkGenerator(
         self,
         resource: PageResource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, PageResource)
@@ -1205,7 +1199,7 @@ class TaxonomyItemRelationsPageTaxonomyLinkGenerator(
         self,
         resource: PageResource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, PageResource)
@@ -1222,7 +1216,7 @@ class TaxonomyItemRelationsPageNamespaceLinkGenerator(
         self,
         resource: PageResource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, PageResource)
@@ -1250,7 +1244,7 @@ class TaxonomyItemRelationSelfLinkGenerator(
         self,
         resource: TaxonomyItemRelation,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         return ApiLink(
@@ -1278,7 +1272,7 @@ class DeleteTaxonomyItemRelationLinkGenerator(
         self,
         resource: TaxonomyItemRelation,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, TaxonomyItemRelation)
@@ -1306,7 +1300,7 @@ class TaxonomyItemRelationUpLinkGenerator(
         self,
         resource: TaxonomyItemRelation,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, TaxonomyItemRelation)
@@ -1322,7 +1316,7 @@ class TaxonomyItemRelationTaxonomyLinkGenerator(
         self,
         resource: TaxonomyItemRelation,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, TaxonomyItemRelation)
@@ -1338,7 +1332,7 @@ class TaxonomyItemRelationNamespaceLinkGenerator(
         self,
         resource: TaxonomyItemRelation,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         assert isinstance(resource, TaxonomyItemRelation)
@@ -1354,7 +1348,7 @@ class TaxonomyItemRelationApiObjectGenerator(
         self,
         resource: TaxonomyItemRelation,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
     ) -> Optional[TaxonomyItemRelationData]:
         assert isinstance(resource, TaxonomyItemRelation)
 

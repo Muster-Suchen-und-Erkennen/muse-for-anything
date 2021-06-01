@@ -50,9 +50,7 @@ class PageResource:
         )
 
 
-def query_params_to_api_key(
-    query_params: Dict[str, Union[str, int, float]]
-) -> Dict[str, str]:
+def query_params_to_api_key(query_params: Dict[str, str]) -> Dict[str, str]:
     key = {}
     for k, v in query_params.items():
         key[f"?{k}"] = str(v)
@@ -85,9 +83,7 @@ class KeyGenerator:
         generators[resource_type] = cls()
 
     @staticmethod
-    def generate_key(
-        resource, query_params: Optional[Dict[str, Union[str, int, float]]] = None
-    ):
+    def generate_key(resource, query_params: Optional[Dict[str, str]] = None):
         key: Dict[str, str]
         if query_params:
             key = query_params_to_api_key(query_params=query_params)
@@ -190,7 +186,7 @@ class LinkGenerator:
     def get_link_of(
         resource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         extra_relations: Optional[Sequence[str]] = None,
         for_relation: Optional[str] = None,
         ignore_deleted: bool = False,
@@ -235,7 +231,7 @@ class LinkGenerator:
         self,
         resource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         raise NotImplementedError()
@@ -260,7 +256,7 @@ class ApiObjectGenerator:
     def get_api_object(
         resource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
     ) -> Optional[BaseApiObject]:
         resource_type = type(resource)
 
@@ -278,7 +274,7 @@ class ApiObjectGenerator:
     def default_generate_api_object(
         resource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
     ) -> Optional[BaseApiObject]:
         return BaseApiObject(
             self=LinkGenerator.get_link_of(resource, query_params=query_params)
@@ -288,7 +284,7 @@ class ApiObjectGenerator:
         self,
         resource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
     ) -> Optional[BaseApiObject]:
         raise NotImplementedError()
 
@@ -298,7 +294,7 @@ class CursorPageApiObjectGenerator(ApiObjectGenerator, resource_type=PageResourc
         self,
         resource: PageResource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
     ) -> Optional[BaseApiObject]:
         assert isinstance(resource, PageResource)
 
@@ -338,7 +334,7 @@ class ApiResponseGenerator:
     def get_api_response(
         resource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         link_to_relations: Optional[Iterable[str]] = None,
         include_default_relations: bool = True,
         extra_links: Optional[Sequence[ApiLink]] = None,
@@ -382,7 +378,7 @@ class ApiResponseGenerator:
     def default_generate_api_response(
         resource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         link_to_relations: Optional[Iterable[str]] = None,
         include_default_relations: bool = True,
     ) -> Optional[ApiResponse]:
@@ -399,7 +395,7 @@ class ApiResponseGenerator:
         self,
         resource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]] = None,
+        query_params: Optional[Dict[str, str]] = None,
         link_to_relations: Optional[Iterable[str]] = None,
         include_default_relations: bool = True,
     ) -> Optional[ApiResponse]:

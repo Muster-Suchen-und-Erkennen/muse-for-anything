@@ -42,7 +42,7 @@ class PaginationInfo:
 def get_page_info(
     model: Type[M],
     cursor_column: Column,
-    sortables: List[Column],
+    sortables: Sequence[Column],
     cursor: Optional[Union[str, int]],
     sort: str,
     item_count: int = 25,

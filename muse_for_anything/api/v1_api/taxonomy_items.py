@@ -1,30 +1,51 @@
 """Module containing the taxonomy items API endpoints of the v1 API."""
 
 from datetime import datetime
+from http import HTTPStatus
+from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
+
+from flask.views import MethodView
+from flask_babel import gettext
+from flask_smorest import abort
+from marshmallow.utils import INCLUDE
+from sqlalchemy.orm import selectinload
+
+from muse_for_anything.api.pagination_util import (
+    PaginationOptions,
+    default_get_page_info,
+    dump_embedded_page_items,
+    generate_page_links,
+    prepare_pagination_query_args,
+)
 from muse_for_anything.api.v1_api.request_helpers import (
     ApiResponseGenerator,
     LinkGenerator,
     PageResource,
     skip_slow_policy_checks_for_links_in_embedded_responses,
 )
-from muse_for_anything.oso_helpers import FLASK_OSO, OsoResource
-
 from muse_for_anything.db.models.taxonomies import (
     Taxonomy,
     TaxonomyItem,
     TaxonomyItemRelation,
     TaxonomyItemVersion,
 )
+from muse_for_anything.oso_helpers import FLASK_OSO, OsoResource
 
-from marshmallow.utils import INCLUDE
-from flask_babel import gettext
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union, cast
-from flask.views import MethodView
-from sqlalchemy.orm import selectinload
-from flask_smorest import abort
-from http import HTTPStatus
-
+from .models.ontology import (
+    TaxonomyItemRelationPostSchema,
+    TaxonomyItemRelationSchema,
+    TaxonomyItemSchema,
+    TaxonomySchema,
+)
 from .root import API_V1
+from .taxonomy_helpers import (
+    TAXONOMY_EXTRA_LINK_RELATIONS,
+    TAXONOMY_ITEM_EXTRA_LINK_RELATIONS,
+    TAXONOMY_ITEM_RELATION_EXTRA_LINK_RELATIONS,
+    TAXONOMY_ITEM_RELATION_PAGE_EXTRA_LINK_RELATIONS,
+    TAXONOMY_ITEM_VERSION_EXTRA_LINK_RELATIONS,
+    TAXONOMY_ITEM_VERSION_PAGE_EXTRA_LINK_RELATIONS,
+)
 from ..base_models import (
     ApiLink,
     ApiResponse,
@@ -37,24 +58,6 @@ from ..base_models import (
     NewApiObjectSchema,
 )
 from ...db.db import DB
-from ...db.pagination import get_page_info
-
-from .models.ontology import (
-    TaxonomyItemRelationPostSchema,
-    TaxonomyItemRelationSchema,
-    TaxonomyItemSchema,
-    TaxonomySchema,
-)
-
-
-from .taxonomy_helpers import (
-    TAXONOMY_EXTRA_LINK_RELATIONS,
-    TAXONOMY_ITEM_EXTRA_LINK_RELATIONS,
-    TAXONOMY_ITEM_RELATION_EXTRA_LINK_RELATIONS,
-    TAXONOMY_ITEM_RELATION_PAGE_EXTRA_LINK_RELATIONS,
-    TAXONOMY_ITEM_VERSION_EXTRA_LINK_RELATIONS,
-    TAXONOMY_ITEM_VERSION_PAGE_EXTRA_LINK_RELATIONS,
-)
 
 
 @API_V1.route(
@@ -568,103 +571,58 @@ class TaxonomyItemRelationsView(MethodView):
             )
         )
 
-        cursor: Optional[str] = kwargs.get("cursor", None)
-        item_count: int = cast(int, kwargs.get("item_count", 25))
-        sort: str = cast(str, kwargs.get("sort", "-created_on").lstrip("+"))
+        pagination_options: PaginationOptions = prepare_pagination_query_args(
+            **kwargs, _sort_default="-created_on"
+        )
 
         taxonomy_item_relation_filter = (
             TaxonomyItemRelation.deleted_on == None,
             TaxonomyItemRelation.taxonomy_item_source_id == int(taxonomy_item),
         )
 
-        pagination_info = get_page_info(
+        pagination_info = default_get_page_info(
             TaxonomyItemRelation,
-            TaxonomyItemRelation.id,
+            taxonomy_item_relation_filter,
+            pagination_options,
             [TaxonomyItemRelation.created_on],
-            cursor,
-            sort,
-            item_count,
-            filter_criteria=taxonomy_item_relation_filter,
         )
 
         taxonomy_item_relations: List[
             TaxonomyItemRelation
         ] = pagination_info.page_items_query.all()
 
-        embedded_items: List[ApiResponse] = []
-        items: List[ApiLink] = []
-
-        dump = TaxonomyItemRelationSchema().dump
-        with skip_slow_policy_checks_for_links_in_embedded_responses():
-            for taxonomy_item_relation in taxonomy_item_relations:
-                response = ApiResponseGenerator.get_api_response(
-                    taxonomy_item_relation,
-                    link_to_relations=TAXONOMY_ITEM_RELATION_EXTRA_LINK_RELATIONS,
-                )
-                if response:
-                    items.append(response.data.self)
-                    response.data = dump(response.data)
-                    embedded_items.append(response)
-
-        query_params = {
-            "item-count": item_count,
-            "sort": sort,
-        }
-
-        self_query_params = dict(query_params)
-
-        if cursor:
-            self_query_params["cursor"] = cursor
+        embedded_items, items = dump_embedded_page_items(
+            taxonomy_item_relations,
+            TaxonomyItemRelationSchema(),
+            TAXONOMY_ITEM_RELATION_EXTRA_LINK_RELATIONS,
+        )
 
         page_resource = PageResource(
             TaxonomyItemRelation,
             resource=found_taxonomy_item,
+            page_number=pagination_info.cursor_page,
             active_page=pagination_info.cursor_page,
             last_page=pagination_info.last_page.page,
             collection_size=pagination_info.collection_size,
             item_links=items,
         )
         self_link = LinkGenerator.get_link_of(
-            page_resource.get_page(pagination_info.cursor_page),
-            query_params=self_query_params,
+            page_resource, query_params=pagination_options.to_query_params()
         )
 
-        extra_links: List[ApiLink] = [self_link]
-
-        if pagination_info.last_page is not None:
-            if pagination_info.cursor_page != pagination_info.last_page.page:
-                # only if current page is not last page
-                last_query_params = dict(query_params)
-                last_query_params["cursor"] = str(pagination_info.last_page.cursor)
-
-                extra_links.append(
-                    LinkGenerator.get_link_of(
-                        page_resource.get_page(pagination_info.last_page.page),
-                        query_params=last_query_params,
-                    )
-                )
-
-        for page in pagination_info.surrounding_pages:
-            if page == pagination_info.last_page:
-                continue  # link already included
-            page_query_params = dict(query_params)
-            page_query_params["cursor"] = str(page.cursor)
-
-            extra_links.append(
-                LinkGenerator.get_link_of(
-                    page_resource.get_page(page.page),
-                    query_params=page_query_params,
-                )
-            )
+        extra_links = generate_page_links(
+            page_resource, pagination_info, pagination_options
+        )
 
         return ApiResponseGenerator.get_api_response(
             page_resource,
-            query_params=self_query_params,
+            query_params=pagination_options.to_query_params(),
             extra_links=[
                 LinkGenerator.get_link_of(
                     page_resource.get_page(1),
-                    query_params=query_params,
+                    query_params=pagination_options.to_query_params(cursor=None),
                 ),
+                self_link,
                 *extra_links,
             ],
             extra_embedded=embedded_items,
@@ -1020,103 +978,58 @@ class TaxonomyItemVersionsView(MethodView):
             )
         )
 
-        cursor: Optional[str] = kwargs.get("cursor", None)
-        item_count: int = cast(int, kwargs.get("item_count", 25))
-        sort: str = cast(str, kwargs.get("sort", "-created_on").lstrip("+"))
+        pagination_options: PaginationOptions = prepare_pagination_query_args(
+            **kwargs, _sort_default="-created_on"
+        )
 
         taxonomy_item_version_filter = (
             TaxonomyItemVersion.deleted_on == None,
             TaxonomyItemVersion.taxonomy_item == found_taxonomy_item,
         )
 
-        pagination_info = get_page_info(
+        pagination_info = default_get_page_info(
             TaxonomyItemVersion,
-            TaxonomyItemVersion.id,
+            taxonomy_item_version_filter,
+            pagination_options,
             [TaxonomyItemVersion.created_on],
-            cursor,
-            sort,
-            item_count,
-            filter_criteria=taxonomy_item_version_filter,
         )
 
         taxonomy_item_versions: List[
             TaxonomyItemVersion
         ] = pagination_info.page_items_query.all()
 
-        embedded_items: List[ApiResponse] = []
-        items: List[ApiLink] = []
-
-        dump = TaxonomyItemSchema().dump
-        with skip_slow_policy_checks_for_links_in_embedded_responses():
-            for taxonomy_item_version in taxonomy_item_versions:
-                response = ApiResponseGenerator.get_api_response(
-                    taxonomy_item_version,
-                    link_to_relations=TAXONOMY_ITEM_VERSION_EXTRA_LINK_RELATIONS,
-                )
-                if response:
-                    items.append(response.data.self)
-                    response.data = dump(response.data)
-                    embedded_items.append(response)
-
-        query_params = {
-            "item-count": item_count,
-            "sort": sort,
-        }
-
-        self_query_params = dict(query_params)
-
-        if cursor:
-            self_query_params["cursor"] = cursor
+        embedded_items, items = dump_embedded_page_items(
+            taxonomy_item_versions,
+            TaxonomyItemSchema(),
+            TAXONOMY_ITEM_VERSION_EXTRA_LINK_RELATIONS,
+        )
 
         page_resource = PageResource(
             TaxonomyItemVersion,
             resource=found_taxonomy_item,
+            page_number=pagination_info.cursor_page,
             active_page=pagination_info.cursor_page,
             last_page=pagination_info.last_page.page,
             collection_size=pagination_info.collection_size,
             item_links=items,
         )
         self_link = LinkGenerator.get_link_of(
-            page_resource.get_page(pagination_info.cursor_page),
-            query_params=self_query_params,
+            page_resource, query_params=pagination_options.to_query_params()
         )
 
-        extra_links: List[ApiLink] = [self_link]
-
-        if pagination_info.last_page is not None:
-            if pagination_info.cursor_page != pagination_info.last_page.page:
-                # only if current page is not last page
-                last_query_params = dict(query_params)
-                last_query_params["cursor"] = str(pagination_info.last_page.cursor)
-
-                extra_links.append(
-                    LinkGenerator.get_link_of(
-                        page_resource.get_page(pagination_info.last_page.page),
-                        query_params=last_query_params,
-                    )
-                )
-
-        for page in pagination_info.surrounding_pages:
-            if page == pagination_info.last_page:
-                continue  # link already included
-            page_query_params = dict(query_params)
-            page_query_params["cursor"] = str(page.cursor)
-
-            extra_links.append(
-                LinkGenerator.get_link_of(
-                    page_resource.get_page(page.page),
-                    query_params=page_query_params,
-                )
-            )
+        extra_links = generate_page_links(
+            page_resource, pagination_info, pagination_options
+        )
 
         return ApiResponseGenerator.get_api_response(
             page_resource,
-            query_params=self_query_params,
+            query_params=pagination_options.to_query_params(),
             extra_links=[
                 LinkGenerator.get_link_of(
                     page_resource.get_page(1),
-                    query_params=query_params,
+                    query_params=pagination_options.to_query_params(cursor=None),
                 ),
+                self_link,
                 *extra_links,
             ],
             extra_embedded=embedded_items,

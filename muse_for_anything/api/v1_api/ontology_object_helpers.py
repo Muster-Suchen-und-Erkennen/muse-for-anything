@@ -38,7 +38,7 @@ class ObjectPageLinkGenerator(LinkGenerator, resource_type=OntologyObject, page=
         self,
         resource: PageResource,
         *,
-        query_params: Optional[Dict[str, Union[str, int, float]]],
+        query_params: Optional[Dict[str, str]],
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         if not FLASK_OSO.is_allowed(OsoResource("ont-object"), action="GET"):
@@ -47,7 +47,7 @@ class ObjectPageLinkGenerator(LinkGenerator, resource_type=OntologyObject, page=
         assert namespace is not None
         assert isinstance(namespace, Namespace)
         if query_params is None:
-            query_params = {"item-count": 25}
+            query_params = {"item-count": "25"}
         return ApiLink(
             href=url_for(
                 "api-v1.ObjectsView",
