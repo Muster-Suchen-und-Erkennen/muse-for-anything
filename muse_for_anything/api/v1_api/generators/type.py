@@ -1,6 +1,5 @@
 """Module containing resource and link generators for object types."""
 
-from muse_for_anything.api.v1_api import namespace
 from typing import Any, Dict, Iterable, List, Optional, Union
 
 from flask import url_for
@@ -32,6 +31,7 @@ from muse_for_anything.api.v1_api.constants import (
     TYPE_REL_TYPE,
     TYPE_RESOURCE,
     TYPE_SCHEMA,
+    TYPE_SCHEMA_POST,
     TYPE_VERSION_REL_TYPE,
     UP_REL,
     UPDATE,
@@ -76,7 +76,9 @@ class ObjectTypePageLinkGenerator(
         query_params: Optional[Dict[str, str]],
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
-        if not FLASK_OSO.is_allowed(OsoResource(TYPE_REL_TYPE, is_collection=True), action=GET):
+        if not FLASK_OSO.is_allowed(
+            OsoResource(TYPE_REL_TYPE, is_collection=True), action=GET
+        ):
             return
         namespace = resource.resource
         assert namespace is not None
@@ -121,6 +123,7 @@ class ObjectTypePageCreateLinkGenerator(
                 return  # deleted
         link = LinkGenerator.get_link_of(resource, query_params=query_params)
         link.rel = (CREATE_REL, POST_REL)
+        link.schema = url_for(SCHEMA_RESOURCE, schema_id=TYPE_SCHEMA_POST, _external=True)
         return link
 
 
@@ -271,6 +274,7 @@ class UpdateObjectTypeLinkGenerator(
                 return  # deleted
         link = LinkGenerator.get_link_of(resource, ignore_deleted=ignore_deleted)
         link.rel = (UPDATE_REL, PUT_REL)
+        link.schema = url_for(SCHEMA_RESOURCE, schema_id=TYPE_SCHEMA_POST, _external=True)
         return link
 
 
@@ -339,7 +343,12 @@ class ObjectTypeCreateObjectLinkGenerator(
         if not resource.is_toplevel_type:
             return  # type is abstract and should not be instantiated
         return LinkGenerator.get_link_of(
-            PageResource(OntologyObject, resource=resource, page_number=1, extra_arguments={TYPE_EXTRA_ARG: resource}),
+            PageResource(
+                OntologyObject,
+                resource=resource.namespace,
+                page_number=1,
+                extra_arguments={TYPE_EXTRA_ARG: resource},
+            ),
             query_params={TYPE_ID_QUERY_KEY: str(resource.id)},
             ignore_deleted=ignore_deleted,
             for_relation=CREATE_REL,
@@ -409,7 +418,7 @@ class ObjectTypeObjectsNavLinkGenerator(
     ) -> Optional[ApiLink]:
         assert isinstance(resource, OntologyObjectType)
         return LinkGenerator.get_link_of(
-            PageResource(OntologyObject, resource=namespace, page_number=1),
+            PageResource(OntologyObject, resource=resource.namespace, page_number=1),
             query_params={
                 ITEM_COUNT_QUERY_KEY: ITEM_COUNT_DEFAULT,
                 TYPE_ID_QUERY_KEY: str(resource.id),

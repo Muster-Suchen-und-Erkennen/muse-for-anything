@@ -140,6 +140,7 @@ NAMESPACE_ID_KEY = "namespaceId"
 OBJECT_ID_KEY = "objectId"
 
 TYPE_ID_KEY = "typeId"
+TYPE_VERSION_KEY = "typeVersion"
 
 TAXONOMY_ID_KEY = "taxonomyId"
 TAXONOMY_ITEM_ID_KEY = "taxonomyItemId"
@@ -161,7 +162,8 @@ ITEM_COUNT_DEFAULT = "25"
 
 NAMESPACE_SCHEMA = "Namespace"
 
-TYPE_SCHEMA = "TypeSchema"
+TYPE_SCHEMA = "OntologyType"
+TYPE_SCHEMA_POST = "TypeSchema"
 
 TAXONOMY_SCHEMA = "TaxonomySchema"
 TAXONOMY_ITEM_SCHEMA = "TaxonomyItemSchema"

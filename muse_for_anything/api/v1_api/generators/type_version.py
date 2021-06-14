@@ -17,11 +17,11 @@ from muse_for_anything.api.v1_api.constants import (
     TYPE_REL_TYPE,
     TYPE_SCHEMA,
     TYPE_VERSION_EXTRA_LINK_RELATIONS,
+    TYPE_VERSION_KEY,
     TYPE_VERSION_PAGE_RESOURCE,
     TYPE_VERSION_REL_TYPE,
     TYPE_VERSION_RESOURCE,
     UP_REL,
-    VERSION_KEY,
 )
 from muse_for_anything.api.v1_api.models.ontology import ObjectTypeData
 from muse_for_anything.api.v1_api.request_helpers import (
@@ -135,7 +135,7 @@ class ObjectTypeVersionKeyGenerator(
     ) -> Dict[str, str]:
         assert isinstance(resource, OntologyObjectTypeVersion)
         key.update(KeyGenerator.generate_key(resource.ontology_type))
-        key[VERSION_KEY] = str(resource.version)
+        key[TYPE_VERSION_KEY] = str(resource.version)
         return key
 
 
@@ -221,7 +221,7 @@ class ObjectTypeVersionUpLinkGenerator(
         assert isinstance(resource, OntologyObjectTypeVersion)
         return LinkGenerator.get_link_of(
             PageResource(
-                OntologyObjectType, resource=resource.ontology_type, page_number=1
+                OntologyObjectTypeVersion, resource=resource.ontology_type, page_number=1
             ),
             extra_relations=(UP_REL,),
         )

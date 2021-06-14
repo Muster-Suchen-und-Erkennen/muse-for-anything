@@ -16,6 +16,44 @@ allow(user: User, "RESTORE", resource: Namespace)
 allow(user: User, "DELETE", resource: Namespace)
     if can_delete(user) or can_delete(user, "ont-namespace") or can_delete(user, resource);
 
+
+
+# type
+allow(user: User, "CREATE", resource: OsoResource{resource_type: "ont-type", is_collection: false, arguments: nil})
+    if is_namespace(resource.parent_resource) and (
+        can_create(user) or can_create(user, resource)
+    );
+
+
+allow(user: User, "EDIT", resource: OntologyObjectType)
+    if can_edit(user) or can_edit(user, "ont-type") or can_edit(user, resource);
+
+allow(user: User, "RESTORE", resource: OntologyObjectType)
+    if can_restore(user) or can_restore(user, "ont-type") or can_restore(user, resource);
+
+allow(user: User, "DELETE", resource: OntologyObjectType)
+    if can_delete(user) or can_delete(user, "ont-type") or can_delete(user, resource);
+
+
+
+# object
+allow(user: User, "CREATE", resource: OsoResource{resource_type: "ont-object", is_collection: false, arguments: {type: object_type}})
+    if is_namespace(resource.parent_resource) and (
+        can_create(user) or can_create(user, resource) or can_create(user, resource.resource_type, resource.parent_resource, object_type)
+    );
+
+
+allow(user: User, "EDIT", resource: OntologyObject)
+    if can_edit(user) or can_edit(user, "ont-object") or can_edit(user, resource);
+
+allow(user: User, "RESTORE", resource: OntologyObject)
+    if can_restore(user) or can_restore(user, "ont-object") or can_restore(user, resource);
+
+allow(user: User, "DELETE", resource: OntologyObject)
+    if can_delete(user) or can_delete(user, "ont-object") or can_delete(user, resource);
+
+
+
 # taxonomy
 allow(user: User, "CREATE", resource: OsoResource{resource_type: "ont-taxonomy", is_collection: false, arguments: nil})
     if is_namespace(resource.parent_resource) and (
@@ -71,12 +109,41 @@ can_create(user: User, _resource: "ont-namespace")
 can_create(user: User, resource: OsoResource{resource_type: "ont-namespace", is_collection: false})
     if can_create(user, resource.resource_type);
 
+
+# generic
+can_create(user: User, resource_type: String, parent_resource: Namespace)
+    if is_admin(user, resource_type, parent_resource) or is_creator(user, resource_type, parent_resource);
+
+
+
+# type specific
+can_create(user: User, _resource: "ont-type")
+    if is_namespace_admin(user) or is_type_creator(user);
+
+can_create(user: User, resource: OsoResource{resource_type: "ont-type", is_collection: false})
+    if is_namespace(resource.parent_resource) and (
+        can_create(user, resource.resource_type) or can_create(user, resource.resource_type, resource.parent_resource)
+    );
+
+
+
+# object specific
+can_create(user: User, _resource: "ont-object")
+    if is_namespace_admin(user) or is_object_creator(user);
+
+can_create(user: User, resource: OsoResource{resource_type: "ont-object", is_collection: false})
+    if is_namespace(resource.parent_resource) and (
+        can_create(user, resource.resource_type) or can_create(user, resource.resource_type, resource.parent_resource)
+    );
+
+can_create(user: User, resource_type: String, parent_resource: Namespace, object_type: OntologyObjectType)
+    if is_creator(user, resource_type, parent_resource) or is_owner(user, object_type) or is_creator(user, resource_type, object_type);
+
+
+
 # taxonomy specific
 can_create(user: User, _resource: "ont-taxonomy")
     if is_namespace_admin(user) or is_taxonomy_creator(user);
-
-can_create(user: User, resource_type: String, parent_resource: Namespace)
-    if is_admin(user, resource_type, parent_resource) or is_creator(user, resource_type, parent_resource);
 
 can_create(user: User, resource: OsoResource{resource_type: "ont-taxonomy", is_collection: false})
     if is_namespace(resource.parent_resource) and (

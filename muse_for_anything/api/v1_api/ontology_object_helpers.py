@@ -1,13 +1,11 @@
-from muse_for_anything.db.models.namespace import Namespace
-from muse_for_anything.api.v1_api.namespace_helpers import query_params_to_api_key
 from typing import Any, Dict, List, Optional, Union
+
 from flask import url_for
 
 from muse_for_anything.api.base_models import ApiLink, ApiResponse
-from muse_for_anything.api.v1_api.models.ontology import (
-    ObjectSchema,
-    ObjectData,
-)
+from muse_for_anything.api.v1_api.models.ontology import ObjectData, ObjectSchema
+from muse_for_anything.api.v1_api.namespace_helpers import query_params_to_api_key
+from muse_for_anything.db.models.namespace import Namespace
 from muse_for_anything.db.models.ontology_objects import (
     OntologyObject,
     OntologyObjectType,
@@ -15,50 +13,31 @@ from muse_for_anything.db.models.ontology_objects import (
     OntologyObjectVersion,
 )
 
-from .ontology_types_helpers import type_to_key
-from .ontology_type_versions_helpers import type_version_to_key
+
+def create_action_link_for_type_page(namespace: Namespace) -> ApiLink:
+    return ApiLink(
+        href=url_for(
+            "api-v1.TypesView",
+            namespace=str(namespace.id),
+            _external=True,
+        ),
+        rel=("create", "post"),
+        resource_type="ont-type",
+        resource_key={"namespaceId": str(namespace.id)},
+        schema=url_for("api-v1.ApiSchemaView", schema_id="TypeSchema", _external=True),
+    )
 
 
-from .request_helpers import KeyGenerator, LinkGenerator, PageResource
-
-from ...oso_helpers import FLASK_OSO, OsoResource
-
-
-class ObjectPageKeyGenerator(KeyGenerator, resource_type=OntologyObject, page=True):
-    def update_key(self, key: Dict[str, str], resource: PageResource) -> Dict[str, str]:
-        assert isinstance(resource, PageResource)
-        assert resource.resource_type == OntologyObject
-        assert resource.resource is not None
-        key.update(KeyGenerator.generate_key(resource.resource))
-        return key
+def type_to_key(object_type: OntologyObjectType) -> Dict[str, str]:
+    return {"namespaceId": str(object_type.namespace_id), "typeId": str(object_type.id)}
 
 
-class ObjectPageLinkGenerator(LinkGenerator, resource_type=OntologyObject, page=True):
-    def generate_link(
-        self,
-        resource: PageResource,
-        *,
-        query_params: Optional[Dict[str, str]],
-        ignore_deleted: bool = False,
-    ) -> Optional[ApiLink]:
-        if not FLASK_OSO.is_allowed(OsoResource("ont-object"), action="GET"):
-            return
-        namespace = resource.resource
-        assert namespace is not None
-        assert isinstance(namespace, Namespace)
-        if query_params is None:
-            query_params = {"item-count": "25"}
-        return ApiLink(
-            href=url_for(
-                "api-v1.ObjectsView",
-                namespace=str(namespace.id),
-                **query_params,
-                _external=True,
-            ),
-            rel=("collection", "page"),
-            resource_type="ont-object",
-            resource_key=KeyGenerator.generate_key(resource, query_params=query_params),
-        )
+def type_version_to_key(object_type_version: OntologyObjectTypeVersion) -> Dict[str, str]:
+    return {
+        "namespaceId": str(object_type_version.ontology_type.namespace_id),
+        "typeId": str(object_type_version.object_type_id),
+        "typeVersion": str(object_type_version.version),
+    }
 
 
 def object_page_params_to_key(

@@ -1,8 +1,6 @@
 """Module containing the schema API of the v1 API."""
 
-from muse_for_anything.api.v1_api.ontology_type_versions_helpers import (
-    type_version_to_key,
-)
+from muse_for_anything.api.v1_api.request_helpers import LinkGenerator
 from typing import Any, Callable, Dict, List, Optional, cast
 from flask import request, jsonify, Response
 from flask.helpers import url_for
@@ -27,10 +25,7 @@ from .models.ontology import (
 from .models.schema import SchemaApiObject, SchemaApiObjectSchema, TYPE_SCHEMA
 
 from ...db.models.ontology_objects import (
-    OntologyObject,
-    OntologyObjectType,
     OntologyObjectTypeVersion,
-    OntologyObjectVersion,
 )
 
 
@@ -364,15 +359,7 @@ class TypeSchemaView(MethodView):
             return response
 
         related_schema_links = [
-            ApiLink(
-                href=type_version_schema_url,
-                rel=("schema",),
-                resource_type="ont-type-version",
-                resource_key=type_version_to_key(found_type_version),
-                schema=url_for(
-                    "api-v1.ApiSchemaView", schema_id="OntologyType", _external=True
-                ),
-            ),
+            LinkGenerator.get_link_of(found_type_version, extra_relations=("schema",)),
         ]
 
         # return full api response otherwise

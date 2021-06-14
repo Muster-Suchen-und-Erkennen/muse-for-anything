@@ -1,14 +1,14 @@
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, TypeVar, Union
 from dataclasses import dataclass
-from sqlalchemy.sql.expression import asc, desc, or_, and_
-from sqlalchemy.sql import func, column
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, TypeVar, Union
+
 from sqlalchemy.orm.query import Query
+from sqlalchemy.sql import column, func
+from sqlalchemy.sql.expression import and_, asc, desc, or_
 from sqlalchemy.sql.schema import Column
 from sqlalchemy.sql.selectable import CTE
 
 from .db import DB, MODEL
 from .models.model_helpers import IdMixin
-
 
 M = TypeVar("M", bound=MODEL)
 

@@ -1,23 +1,33 @@
 """Module containing the object API endpoints of the v1 API."""
 
 from datetime import datetime
+from http import HTTPStatus
+from typing import Any, Callable, Dict, List, Optional, Union, cast
+
+from flask.helpers import url_for
+from flask.views import MethodView
+from flask_babel import gettext
+from flask_smorest import abort
+from marshmallow.utils import INCLUDE
+
+from muse_for_anything.api.v1_api.ontology_object_helpers import (
+    action_links_for_object,
+    action_links_for_object_page,
+    create_action_link_for_type_page,
+    nav_links_for_object,
+    nav_links_for_object_page,
+    object_page_params_to_key,
+    object_to_api_response,
+    object_to_object_data,
+)
+from muse_for_anything.api.v1_api.ontology_object_validation import validate_object
 from muse_for_anything.db.models.object_relation_tables import (
     OntologyObjectVersionToObject,
     OntologyObjectVersionToTaxonomyItem,
 )
-from muse_for_anything.api.v1_api.ontology_object_validation import validate_object
 
-from marshmallow.utils import INCLUDE
-from muse_for_anything.api.v1_api.ontology_types_helpers import (
-    create_action_link_for_type_page,
-)
-from flask_babel import gettext
-from typing import Any, Callable, Dict, List, Optional, Union, cast
-from flask.helpers import url_for
-from flask.views import MethodView
-from flask_smorest import abort
-from http import HTTPStatus
-
+from .models.ontology import ObjectSchema, ObjectsCursorPageArgumentsSchema
+from .namespace_helpers import query_params_to_api_key
 from .root import API_V1
 from ..base_models import (
     ApiLink,
@@ -30,32 +40,17 @@ from ..base_models import (
     NewApiObject,
     NewApiObjectSchema,
 )
-from .models.ontology import (
-    ObjectSchema,
-    ObjectsCursorPageArgumentsSchema,
-)
 from ...db.db import DB
-from ...db.pagination import get_page_info
 from ...db.models.namespace import Namespace
 from ...db.models.ontology_objects import (
     OntologyObject,
     OntologyObjectType,
     OntologyObjectVersion,
 )
+from ...db.pagination import get_page_info
 
-from .namespace_helpers import (
-    query_params_to_api_key,
-)
-
-from muse_for_anything.api.v1_api.ontology_object_helpers import (
-    action_links_for_object,
-    action_links_for_object_page,
-    nav_links_for_object,
-    object_page_params_to_key,
-    object_to_api_response,
-    nav_links_for_object_page,
-    object_to_object_data,
-)
+# import object specific generators to load them
+from .generators import object as object_, object_version  # noqa
 
 
 @API_V1.route("/namespaces/<string:namespace>/objects/")

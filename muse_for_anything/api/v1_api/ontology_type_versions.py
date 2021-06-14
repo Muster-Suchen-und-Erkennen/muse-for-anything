@@ -1,42 +1,47 @@
 """Module containing the type versions API endpoints of the v1 API."""
 
-from flask import request, Response, jsonify
-from flask.helpers import url_for
-from marshmallow.utils import INCLUDE
-from muse_for_anything.api.v1_api.ontology_type_versions_helpers import (
-    nav_links_for_type_version,
-    nav_links_for_type_versions_page,
-    type_version_page_params_to_key,
-    type_version_to_api_response,
-    type_version_to_type_data,
-)
-from flask_babel import gettext
-from typing import Any, Callable, Dict, List, Optional, Union, cast
-from flask.views import MethodView
-from sqlalchemy.sql.expression import asc, desc, literal
-from sqlalchemy.orm.query import Query
-from flask_smorest import abort
 from http import HTTPStatus
+from typing import Any, List, Optional, cast
 
+from flask import Response, jsonify, request
+from flask.views import MethodView
+from flask_babel import gettext
+from flask_smorest import abort
+from marshmallow.utils import INCLUDE
+
+from muse_for_anything.api.pagination_util import (
+    PaginationOptions,
+    default_get_page_info,
+    dump_embedded_page_items,
+    generate_page_links,
+    prepare_pagination_query_args,
+)
+from muse_for_anything.api.v1_api.constants import (
+    TYPE_REL_TYPE,
+    TYPE_VERSION_EXTRA_LINK_RELATIONS,
+    TYPE_VERSION_PAGE_EXTRA_LINK_RELATIONS,
+    TYPE_VERSION_REL_TYPE,
+)
+from muse_for_anything.api.v1_api.request_helpers import (
+    ApiResponseGenerator,
+    LinkGenerator,
+    PageResource,
+)
+from muse_for_anything.oso_helpers import FLASK_OSO, OsoResource
+
+from .models.ontology import ObjectTypeSchema
 from .root import API_V1
-from ..util import JSON_MIMETYPE, JSON_SCHEMA_MIMETYPE
 from ..base_models import (
-    ApiLink,
-    ApiResponse,
-    CursorPage,
     CursorPageArgumentsSchema,
     CursorPageSchema,
     DynamicApiResponseSchema,
 )
-from .models.ontology import ObjectTypeSchema
+from ..util import JSON_MIMETYPE, JSON_SCHEMA_MIMETYPE
 from ...db.db import DB
-from ...db.pagination import get_page_info
-from ...db.models.namespace import Namespace
 from ...db.models.ontology_objects import OntologyObjectType, OntologyObjectTypeVersion
 
-from .namespace_helpers import (
-    query_params_to_api_key,
-)
+# import type specific generators to load them
+from .generators import type as type_, type_version  # noqa
 
 
 @API_V1.route("/namespaces/<string:namespace>/types/<string:object_type>/versions/")
@@ -69,202 +74,80 @@ class TypeVersionsView(MethodView):
 
     @API_V1.arguments(CursorPageArgumentsSchema, location="query", as_kwargs=True)
     @API_V1.response(DynamicApiResponseSchema(CursorPageSchema()))
+    @API_V1.require_jwt("jwt")
     def get(self, namespace: str, object_type: str, **kwargs: Any):
         """Get all versions of a type."""
         self._check_path_params(namespace=namespace, object_type=object_type)
         found_object_type: OntologyObjectType = self._get_object_type(
             namespace=namespace, object_type=object_type
         )
+        FLASK_OSO.authorize_and_set_resource(
+            OsoResource(
+                TYPE_VERSION_REL_TYPE,
+                is_collection=True,
+                parent_resource=found_object_type,
+            )
+        )
+
+        pagination_options: PaginationOptions = prepare_pagination_query_args(
+            **kwargs, _sort_default="-version"
+        )
 
         cursor: Optional[str] = kwargs.get("cursor", None)
         item_count: int = cast(int, kwargs.get("item_count", 25))
         sort: str = cast(str, kwargs.get("sort", "-version").lstrip("+"))
-        sort_function: Callable[..., Any] = (
-            desc if sort is not None and sort.startswith("-") else asc
-        )
-        sort_key: str = sort.lstrip("+-") if sort is not None else "version"
 
         ontology_type_version_filter = (
             OntologyObjectTypeVersion.deleted_on == None,
             OntologyObjectTypeVersion.ontology_type == found_object_type,
         )
 
-        pagination_info = get_page_info(
+        pagination_info = default_get_page_info(
             OntologyObjectTypeVersion,
-            OntologyObjectTypeVersion.id,
+            ontology_type_version_filter,
+            pagination_options,
             [OntologyObjectTypeVersion.version],
-            cursor,
-            sort,
-            item_count,
-            filter_criteria=ontology_type_version_filter,
         )
 
         type_versions: List[
             OntologyObjectTypeVersion
         ] = pagination_info.page_items_query.all()
 
-        embedded_items: List[ApiResponse] = [
-            type_version_to_api_response(type_version) for type_version in type_versions
-        ]
-        items: List[ApiLink] = [item.data.get("self") for item in embedded_items]
-
-        query_params = {
-            "item-count": item_count,
-            "sort": sort,
-        }
-
-        self_query_params = dict(query_params)
-
-        if cursor:
-            self_query_params["cursor"] = cursor
-
-        self_rels = []
-        if pagination_info.cursor_page == 1:
-            self_rels.append("first")
-        if (
-            pagination_info.last_page
-            and pagination_info.cursor_page == pagination_info.last_page.page
-        ):
-            self_rels.append("last")
-
-        self_link = ApiLink(
-            href=url_for(
-                "api-v1.TypeVersionsView",
-                namespace=namespace,
-                object_type=object_type,
-                _external=True,
-                **self_query_params,
-            ),
-            rel=(
-                *self_rels,
-                "page",
-                f"page-{pagination_info.cursor_page}",
-                "collection",
-                "schema",
-            ),
-            resource_type="ont-type-version",
-            resource_key=type_version_page_params_to_key(
-                found_object_type, self_query_params
-            ),
-            schema=url_for(
-                "api-v1.ApiSchemaView", schema_id="OntologyType", _external=True
-            ),
+        embedded_items, items = dump_embedded_page_items(
+            type_versions, ObjectTypeSchema(), TYPE_VERSION_EXTRA_LINK_RELATIONS
         )
 
-        extra_links: List[ApiLink] = [self_link]
+        page_resource = PageResource(
+            OntologyObjectTypeVersion,
+            resource=found_object_type,
+            page_number=pagination_info.cursor_page,
+            active_page=pagination_info.cursor_page,
+            last_page=pagination_info.last_page.page,
+            collection_size=pagination_info.collection_size,
+            item_links=items,
+        )
+        self_link = LinkGenerator.get_link_of(
+            page_resource,
+            query_params=pagination_options.to_query_params(),
+        )
 
-        if pagination_info.last_page is not None:
-            if pagination_info.cursor_page != pagination_info.last_page.page:
-                # only if current page is not last page
-                last_query_params = dict(query_params)
-                last_query_params["cursor"] = str(pagination_info.last_page.cursor)
+        extra_links = generate_page_links(
+            page_resource, pagination_info, pagination_options
+        )
 
-                extra_links.append(
-                    ApiLink(
-                        href=url_for(
-                            "api-v1.TypeVersionsView",
-                            namespace=namespace,
-                            object_type=object_type,
-                            _external=True,
-                            **last_query_params,
-                        ),
-                        rel=(
-                            "last",
-                            "page",
-                            f"page-{pagination_info.last_page.page}",
-                            "collection",
-                            "schema",
-                        ),
-                        resource_type="ont-type-version",
-                        resource_key=type_version_page_params_to_key(
-                            found_object_type, last_query_params
-                        ),
-                        schema=url_for(
-                            "api-v1.ApiSchemaView",
-                            schema_id="OntologyType",
-                            _external=True,
-                        ),
-                    )
-                )
-
-        for page in pagination_info.surrounding_pages:
-            if page == pagination_info.last_page:
-                continue  # link already included
-            page_query_params = dict(query_params)
-            page_query_params["cursor"] = str(page.cursor)
-
-            extra_rels = []
-            if page.page + 1 == pagination_info.cursor_page:
-                extra_rels.append("prev")
-            if page.page - 1 == pagination_info.cursor_page:
-                extra_rels.append("next")
-
-            extra_links.append(
-                ApiLink(
-                    href=url_for(
-                        "api-v1.TypeVersionsView",
-                        namespace=namespace,
-                        object_type=object_type,
-                        _external=True,
-                        **page_query_params,
-                    ),
-                    rel=(
-                        *extra_rels,
-                        "page",
-                        f"page-{page.page}",
-                        "collection",
-                        "schema",
-                    ),
-                    resource_type="ont-type-version",
-                    resource_key=type_version_page_params_to_key(
-                        found_object_type, page_query_params
-                    ),
-                    schema=url_for(
-                        "api-v1.ApiSchemaView", schema_id="OntologyType", _external=True
-                    ),
-                )
-            )
-
-        extra_links.extend(nav_links_for_type_versions_page(found_object_type))
-
-        return ApiResponse(
-            links=[
-                ApiLink(
-                    href=url_for("api-v1.NamespacesView", _external=True, **query_params),
-                    rel=("first", "page", "page-1", "collection", "nav"),
-                    resource_type="ont-namespace",
-                    resource_key=query_params_to_api_key({"item-count": item_count}),
-                    schema=url_for(
-                        "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
-                    ),
+        return ApiResponseGenerator.get_api_response(
+            page_resource,
+            query_params=pagination_options.to_query_params(),
+            extra_links=[
+                LinkGenerator.get_link_of(
+                    page_resource.get_page(1),
+                    query_params=pagination_options.to_query_params(cursor=None),
                 ),
-                ApiLink(
-                    href=url_for(
-                        "api-v1.TypeVersionsView",
-                        namespace=namespace,
-                        object_type=object_type,
-                        _external=True,
-                        **query_params,
-                    ),
-                    rel=("first", "page", "page-1", "collection", "schema"),
-                    resource_type="ont-type-version",
-                    resource_key=type_version_page_params_to_key(
-                        found_object_type, query_params
-                    ),
-                    schema=url_for(
-                        "api-v1.ApiSchemaView", schema_id="OntologyType", _external=True
-                    ),
-                ),
+                self_link,
                 *extra_links,
             ],
-            embedded=embedded_items,
-            data=CursorPage(
-                self=self_link,
-                collection_size=pagination_info.collection_size,
-                page=pagination_info.cursor_page,
-                first_row=pagination_info.cursor_row + 1,
-                items=items,
-            ),
+            extra_embedded=embedded_items,
+            link_to_relations=TYPE_VERSION_PAGE_EXTRA_LINK_RELATIONS,
         )
 
 
@@ -312,6 +195,7 @@ class TypeVersionView(MethodView):
         return found_object_type_version  # is not None because abort raises exception
 
     @API_V1.response(DynamicApiResponseSchema(ObjectTypeSchema()))
+    @API_V1.require_jwt("jwt")
     def get(self, namespace: str, object_type: str, version: str, **kwargs: Any):
         """Get a specific version of a type."""
         self._check_path_params(
@@ -322,6 +206,8 @@ class TypeVersionView(MethodView):
                 namespace=namespace, object_type=object_type, version=version
             )
         )
+
+        FLASK_OSO.authorize_and_set_resource(found_object_type_version)
 
         match = request.accept_mimetypes.best_match(
             (JSON_MIMETYPE, JSON_SCHEMA_MIMETYPE),
@@ -334,22 +220,6 @@ class TypeVersionView(MethodView):
             response.mimetype = JSON_SCHEMA_MIMETYPE
             return response
 
-        return ApiResponse(
-            links=[
-                ApiLink(
-                    href=url_for(
-                        "api-v1.NamespacesView",
-                        _external=True,
-                        **{"item-count": 50},
-                        sort="name",
-                    ),
-                    rel=("first", "page", "collection", "ont-namespace"),
-                    resource_type="ont-namespace",
-                    schema=url_for(
-                        "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
-                    ),
-                ),
-                *nav_links_for_type_version(found_object_type_version),
-            ],
-            data=type_version_to_type_data(found_object_type_version),
+        return ApiResponseGenerator.get_api_response(
+            found_object_type_version, link_to_relations=TYPE_VERSION_EXTRA_LINK_RELATIONS
         )
