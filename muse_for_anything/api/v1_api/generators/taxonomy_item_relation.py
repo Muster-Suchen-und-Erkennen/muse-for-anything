@@ -12,6 +12,8 @@ from muse_for_anything.api.v1_api.constants import (
     DELETE,
     DELETE_REL,
     GET,
+    ITEM_COUNT_DEFAULT,
+    ITEM_COUNT_QUERY_KEY,
     NAMESPACE_REL_TYPE,
     NAV_REL,
     PAGE_REL,
@@ -74,7 +76,7 @@ class TaxonomyItemRelationsPageLinkGenerator(
         assert taxonomy_item is not None
         assert isinstance(taxonomy_item, TaxonomyItem)
         if query_params is None:
-            query_params = {"item-count": "25"}
+            query_params = {ITEM_COUNT_QUERY_KEY: ITEM_COUNT_DEFAULT}
         return ApiLink(
             href=url_for(
                 TAXONOMY_ITEM_RELATION_PAGE_RESOURCE,

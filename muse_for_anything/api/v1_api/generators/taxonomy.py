@@ -12,6 +12,8 @@ from muse_for_anything.api.v1_api.constants import (
     DELETE,
     DELETE_REL,
     GET,
+    ITEM_COUNT_DEFAULT,
+    ITEM_COUNT_QUERY_KEY,
     NAMESPACE_REL_TYPE,
     NAV_REL,
     PAGE_REL,
@@ -31,7 +33,7 @@ from muse_for_anything.api.v1_api.constants import (
     UPDATE,
     UPDATE_REL,
 )
-from muse_for_anything.api.v1_api.models.ontology import TaxonomyData, TaxonomySchema
+from muse_for_anything.api.v1_api.models.ontology import TaxonomyData
 from muse_for_anything.api.v1_api.request_helpers import (
     ApiObjectGenerator,
     ApiResponseGenerator,
@@ -73,7 +75,7 @@ class TaxonomyPageLinkGenerator(LinkGenerator, resource_type=Taxonomy, page=True
         assert namespace is not None
         assert isinstance(namespace, Namespace)
         if query_params is None:
-            query_params = {"item-count": "25"}
+            query_params = {ITEM_COUNT_QUERY_KEY: ITEM_COUNT_DEFAULT}
         return ApiLink(
             href=url_for(
                 TAXONOMY_PAGE_RESOURCE,
@@ -109,7 +111,7 @@ class TaxonomyPageCreateLinkGenerator(
                 return
         if not ignore_deleted:
             if resource.resource.is_deleted:
-                return  # not deleted
+                return  # deleted
         link = LinkGenerator.get_link_of(resource, query_params=query_params)
         link.rel = (CREATE_REL, POST_REL)
         return link

@@ -1,4 +1,6 @@
-from dataclasses import dataclass
+"""Utilities for creating resource keys, links, data and full api responses."""
+
+from dataclasses import dataclass, field
 from muse_for_anything.oso_helpers import FLASK_OSO, OsoResource, get_oso_resource_type
 from typing import Any, Dict, Iterable, List, Optional, Type, Union, Tuple, Sequence
 from itertools import chain
@@ -22,6 +24,7 @@ class PageResource:
     last_page: Optional[int] = None
     collection_size: int = 0
     item_links: Optional[Sequence[ApiLink]] = None
+    extra_arguments: Dict[str, Any] = field(default_factory=dict)
 
     @property
     def is_first(self) -> bool:
@@ -47,6 +50,7 @@ class PageResource:
             active_page=self.active_page,
             last_page=self.last_page,
             collection_size=self.collection_size,
+            extra_arguments=self.extra_arguments,
         )
 
 

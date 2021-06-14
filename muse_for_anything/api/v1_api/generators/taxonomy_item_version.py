@@ -8,6 +8,8 @@ from muse_for_anything.api.base_models import ApiLink, ApiResponse
 from muse_for_anything.api.v1_api.constants import (
     COLLECTION_REL,
     GET,
+    ITEM_COUNT_DEFAULT,
+    ITEM_COUNT_QUERY_KEY,
     NAMESPACE_REL_TYPE,
     NAV_REL,
     PAGE_REL,
@@ -73,7 +75,7 @@ class TaxonomyItemVersionsPageSelfLinkGenerator(
         assert taxonomy_item is not None
         assert isinstance(taxonomy_item, TaxonomyItem)
         if query_params is None:
-            query_params = {"item-count": "25"}
+            query_params = {ITEM_COUNT_QUERY_KEY: ITEM_COUNT_DEFAULT}
         return ApiLink(
             href=url_for(
                 TAXONOMY_ITEM_VERSION_PAGE_RESOURCE,

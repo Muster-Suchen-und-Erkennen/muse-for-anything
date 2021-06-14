@@ -12,6 +12,8 @@ from muse_for_anything.api.v1_api.constants import (
     DELETE,
     DELETE_REL,
     GET,
+    ITEM_COUNT_DEFAULT,
+    ITEM_COUNT_QUERY_KEY,
     NAMESPACE_EXTRA_LINK_RELATIONS,
     NAMESPACE_ID_KEY,
     NAMESPACE_PAGE_RESOURCE,
@@ -69,7 +71,7 @@ class NamespacePageLinkGenerator(LinkGenerator, resource_type=Namespace, page=Tr
         if not FLASK_OSO.is_allowed(OsoResource(NAMESPACE_REL_TYPE, is_collection=True)):
             return
         if query_params is None:
-            query_params = {"item-count": "25"}
+            query_params = {ITEM_COUNT_QUERY_KEY: ITEM_COUNT_DEFAULT}
         return ApiLink(
             href=url_for(NAMESPACE_PAGE_RESOURCE, **query_params, _external=True),
             rel=(COLLECTION_REL, PAGE_REL),
