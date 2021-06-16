@@ -17,7 +17,6 @@ from muse_for_anything.api.pagination_util import (
     prepare_pagination_query_args,
 )
 from muse_for_anything.api.v1_api.constants import (
-    TYPE_REL_TYPE,
     TYPE_VERSION_EXTRA_LINK_RELATIONS,
     TYPE_VERSION_PAGE_EXTRA_LINK_RELATIONS,
     TYPE_VERSION_REL_TYPE,

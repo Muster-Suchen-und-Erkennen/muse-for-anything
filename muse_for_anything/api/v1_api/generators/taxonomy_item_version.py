@@ -185,7 +185,7 @@ class TaxonomyItemVersionSelfLinkGenerator(
             schema=url_for(
                 SCHEMA_RESOURCE, schema_id=TAXONOMY_ITEM_SCHEMA, _external=True
             ),
-            name=resource.name,
+            name=f"{resource.name} (v{resource.version})",
         )
 
 

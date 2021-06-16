@@ -197,6 +197,10 @@ class TypesView(MethodView):
 
         object_type.current_version = object_type_version
 
+        # object_type is flushed, safe to add user rights here
+        user: User = g.current_user
+        user.set_role_for_resource("owner", object_type)
+
         DB.session.add(object_type)
         DB.session.add(object_type_version)
 
@@ -217,9 +221,6 @@ class TypesView(MethodView):
             )
             DB.session.add(taxonomy_relation)
 
-        DB.session.flush()
-        user: User = g.current_user
-        user.set_role_for_resource("owner", object_type)
         DB.session.commit()
 
         object_type_response = ApiResponseGenerator.get_api_response(

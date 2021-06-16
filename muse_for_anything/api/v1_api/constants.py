@@ -138,6 +138,7 @@ VERSION_KEY = "version"
 NAMESPACE_ID_KEY = "namespaceId"
 
 OBJECT_ID_KEY = "objectId"
+OBJECT_VERSION_KEY = "objectVersion"
 
 TYPE_ID_KEY = "typeId"
 TYPE_VERSION_KEY = "typeVersion"

@@ -161,7 +161,7 @@ class TaxonomyItemVersionSelfLinkGenerator(
             resource_type=TYPE_VERSION_REL_TYPE,
             resource_key=KeyGenerator.generate_key(resource),
             schema=url_for(SCHEMA_RESOURCE, schema_id=TYPE_SCHEMA, _external=True),
-            name=resource.name,
+            name=f"{resource.name} (v{resource.version})",
         )
 
 

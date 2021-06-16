@@ -68,7 +68,9 @@ class NamespacePageLinkGenerator(LinkGenerator, resource_type=Namespace, page=Tr
         query_params: Optional[Dict[str, str]],
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
-        if not FLASK_OSO.is_allowed(OsoResource(NAMESPACE_REL_TYPE, is_collection=True)):
+        if not FLASK_OSO.is_allowed(
+            OsoResource(NAMESPACE_REL_TYPE, is_collection=True), action=GET
+        ):
             return
         if query_params is None:
             query_params = {ITEM_COUNT_QUERY_KEY: ITEM_COUNT_DEFAULT}

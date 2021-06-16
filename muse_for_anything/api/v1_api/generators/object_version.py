@@ -1,6 +1,5 @@
 """Module containing resource and link generators for object versions."""
 
-from muse_for_anything.api.v1_api.generators.object import object_type_schema_url
 from typing import Any, Dict, Iterable, List, Optional, Union
 
 from flask import url_for
@@ -13,15 +12,18 @@ from muse_for_anything.api.v1_api.constants import (
     ITEM_COUNT_QUERY_KEY,
     NAMESPACE_REL_TYPE,
     NAV_REL,
+    OBJECT_REL_TYPE,
     OBJECT_VERSION_EXTRA_LINK_RELATIONS,
+    OBJECT_VERSION_KEY,
     OBJECT_VERSION_PAGE_RESOURCE,
     OBJECT_VERSION_REL_TYPE,
     PAGE_REL,
+    TYPE_REL_TYPE,
     TYPE_VERSION_REL_TYPE,
     TYPE_VERSION_RESOURCE,
     UP_REL,
-    VERSION_KEY,
 )
+from muse_for_anything.api.v1_api.generators.object import object_type_schema_url
 from muse_for_anything.api.v1_api.models.ontology import ObjectData, ObjectTypeData
 from muse_for_anything.api.v1_api.request_helpers import (
     ApiObjectGenerator,
@@ -105,6 +107,26 @@ class ObjectVersionsPageUpLinkGenerator(
         return LinkGenerator.get_link_of(resource.resource, extra_relations=(UP_REL,))
 
 
+class ObjectVersionsPageTypeLinkGenerator(
+    LinkGenerator,
+    resource_type=OntologyObjectVersion,
+    page=True,
+    relation=TYPE_REL_TYPE,
+):
+    def generate_link(
+        self,
+        resource: PageResource,
+        *,
+        query_params: Optional[Dict[str, str]] = None,
+        ignore_deleted: bool = False,
+    ) -> Optional[ApiLink]:
+        assert isinstance(resource, PageResource)
+        assert isinstance(resource.resource, OntologyObject)
+        return LinkGenerator.get_link_of(
+            resource.resource.ontology_type, extra_relations=(NAV_REL,)
+        )
+
+
 class ObjectVersionsPageNamespaceLinkGenerator(
     LinkGenerator,
     resource_type=OntologyObjectVersion,
@@ -132,7 +154,7 @@ class ObjectVersionKeyGenerator(KeyGenerator, resource_type=OntologyObjectVersio
     ) -> Dict[str, str]:
         assert isinstance(resource, OntologyObjectVersion)
         key.update(KeyGenerator.generate_key(resource.ontology_object))
-        key[VERSION_KEY] = str(resource.version)
+        key[OBJECT_VERSION_KEY] = str(resource.version)
         return key
 
 
@@ -158,7 +180,7 @@ class TaxonomyItemVersionSelfLinkGenerator(
             resource_type=OBJECT_VERSION_REL_TYPE,
             resource_key=KeyGenerator.generate_key(resource),
             schema=object_type_schema_url(resource.ontology_type_version),
-            name=resource.name,
+            name=f"{resource.name} (v{resource.version})",
         )
 
 
@@ -217,9 +239,25 @@ class ObjectVersionUpLinkGenerator(
         assert isinstance(resource, OntologyObjectVersion)
         return LinkGenerator.get_link_of(
             PageResource(
-                OntologyObject, resource=resource.ontology_object, page_number=1
+                OntologyObjectVersion, resource=resource.ontology_object, page_number=1
             ),
             extra_relations=(UP_REL,),
+        )
+
+
+class ObjectVersionObjectLinkGenerator(
+    LinkGenerator, resource_type=OntologyObjectVersion, relation=OBJECT_REL_TYPE
+):
+    def generate_link(
+        self,
+        resource: OntologyObjectVersion,
+        *,
+        query_params: Optional[Dict[str, str]] = None,
+        ignore_deleted: bool = False,
+    ) -> Optional[ApiLink]:
+        assert isinstance(resource, OntologyObjectVersion)
+        return LinkGenerator.get_link_of(
+            resource.ontology_object, extra_relations=(NAV_REL,)
         )
 
 
