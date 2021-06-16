@@ -1,8 +1,9 @@
-import { bindable, observable, bindingMode, child } from "aurelia-framework";
-import { NormalizedApiSchema } from "rest/schema-objects";
+import { autoinject, bindable, bindingMode, child, observable, TaskQueue } from "aurelia-framework";
 import { nanoid } from "nanoid";
+import { NormalizedApiSchema } from "rest/schema-objects";
 
 
+@autoinject()
 export class TextForm {
     @bindable key: string;
     @bindable label: string;
@@ -34,6 +35,12 @@ export class TextForm {
 
     @child(".input-valid-check") formInput: Element;
 
+    private queue: TaskQueue;
+
+    constructor(queue: TaskQueue) {
+        this.queue = queue;
+    }
+
     initialDataChanged(newValue, oldValue) {
         if (newValue !== undefined) {
             if (this.isNullable) {
@@ -42,7 +49,7 @@ export class TextForm {
                 this.value = newValue ?? "";
             }
             // schedule update for later to give input element time to catch up
-            window.setTimeout(() => this.updateValid(), 3);
+            this.queue.queueMicroTask(() => this.updateValid());
         }
     }
 
@@ -100,14 +107,11 @@ export class TextForm {
     formInputChanged() {
         if (this.formInput != null) {
             // update valid again after value settles
-            window.setTimeout(() => this.updateValid(), 3);
+            this.queue.queueMicroTask(() => this.updateValid());
         }
     }
 
     updateValid() {
-        if (this.formInput == null) {
-            return; // delays actually setting the value
-        }
         if (this.value == null) {
             this.valid = this.isNullable;
             return;

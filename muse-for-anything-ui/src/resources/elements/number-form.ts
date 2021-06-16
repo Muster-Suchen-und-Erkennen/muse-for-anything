@@ -1,8 +1,9 @@
-import { bindable, observable, bindingMode, child } from "aurelia-framework";
+import { bindable, observable, bindingMode, child, TaskQueue, autoinject } from "aurelia-framework";
 import { NormalizedApiSchema } from "rest/schema-objects";
 import { nanoid } from "nanoid";
 
 
+@autoinject()
 export class NumberForm {
     @bindable key: string;
     @bindable label: string;
@@ -37,6 +38,12 @@ export class NumberForm {
 
     @child(".input-valid-check") formInput: Element;
 
+    private queue: TaskQueue;
+
+    constructor(queue: TaskQueue) {
+        this.queue = queue;
+    }
+
     initialDataChanged(newValue, oldValue) {
         if (newValue !== undefined) {
             if (this.isNullable) {
@@ -45,7 +52,7 @@ export class NumberForm {
                 this.value = newValue?.toString() ?? "0";
             }
             // schedule update for later to give input element time to catch up
-            window.setTimeout(() => this.updateValid(), 3);
+            this.queue.queueMicroTask(() => this.updateValid());
         }
     }
 
@@ -121,10 +128,11 @@ export class NumberForm {
     formInputChanged() {
         if (this.formInput != null) {
             // update valid again after value settles
-            window.setTimeout(() => this.updateValid(), 3);
+            this.queue.queueMicroTask(() => this.updateValid());
         }
     }
 
+    // eslint-disable-next-line complexity
     updateValid() {
         if (this.formInput == null) {
             return; // delays actually setting the value
@@ -134,7 +142,7 @@ export class NumberForm {
             return;
         }
         const value = this.valueOut;
-        let formIsValid = (this.formInput as HTMLInputElement)?.validity?.valid ?? false;
+        const formIsValid = (this.formInput as HTMLInputElement)?.validity?.valid ?? false;
 
         let boundsValid = true;
         if (this.exclusiveMinimum != null) {

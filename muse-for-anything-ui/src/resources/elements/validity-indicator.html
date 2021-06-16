@@ -1,6 +1,6 @@
 <template>
     <template if.bind="valid != null">
-        <p class="font-bold text-green-500 text-xl" style="line-height: 1rem;" show.bind="valid">✓</p>
-        <p class="font-bold text-red-500 text-xl" style="line-height: 1rem;" show.bind="!valid">！</p>
+        <p class="font-bold text-green-500 text-xl" style="line-height: 1rem;" show.bind="valid & debounce:30">✓</p>
+        <p class="font-bold text-red-500 text-xl" style="line-height: 1rem;" show.bind="!valid & debounce:30">！</p>
     </template>
 </template>

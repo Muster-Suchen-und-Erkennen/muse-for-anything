@@ -1,9 +1,9 @@
-import { bindable, observable, bindingMode, autoinject } from "aurelia-framework";
+import { bindable, observable, bindingMode, autoinject, TaskQueue } from "aurelia-framework";
 import { NormalizedApiSchema, NormalizedJsonSchema } from "rest/schema-objects";
 
 export type UpdateSignal = (type?: "value" | "valid" | "dirty") => void;
 
-@autoinject
+@autoinject()
 export class SchemaForm {
     @bindable key: string;
     @bindable label: string;
@@ -26,7 +26,11 @@ export class SchemaForm {
 
     private maxConstUpdateTries = 100; // FIXME remove workaround
 
-    constructor(private element: Element) { }
+    private queue: TaskQueue;
+
+    constructor(queue: TaskQueue) {
+        this.queue = queue;
+    }
 
     initialDataFix: any;
 
@@ -47,12 +51,14 @@ export class SchemaForm {
             this.schemaType = "const";
             this.constValue = normalized.const;
             this.value = normalized.const;
-            window.setTimeout(() => {
+            this.queue.queueMicroTask(() => {
                 this.valid = true;
                 if (this.updateSignal != null) {
-                    this.updateSignal();
+                    this.queue.queueMicroTask(() => {
+                        this.updateSignal();
+                    });
                 }
-            }, 0);
+            });
         } else if (normalized.customType != null) {
             this.extraType = normalized.customType;
             this.schemaType = "custom";
@@ -77,10 +83,10 @@ export class SchemaForm {
     }
 
     initialDataChanged(newValue, oldValue) {
-        window.setTimeout(() => {
+        this.queue.queueMicroTask(() => {
             // manually delay updates of initialData by a bit to get the right update order in form fields
             this.initialDataFix = newValue;
-        }, 1);
+        });
     }
 
     valueChanged(newValue, oldValue) {
