@@ -1,6 +1,17 @@
-import { autoinject } from "aurelia-framework";
 import { HttpClient } from "aurelia-fetch-client";
-import { ApiResponse, ApiLink, GenericApiObject, ApiObject, matchesLinkRel, ApiLinkKey, KeyedApiLink, applyKeyToLinkedKey, checkKeyMatchesKeyedLink, isApiResponse, checkKeyMatchesKeyedLinkExact, checkKeyCompatibleWithKeyedLink } from "./api-objects";
+import { autoinject } from "aurelia-framework";
+import { ApiLink, ApiLinkKey, ApiObject, ApiResponse, applyKeyToLinkedKey, checkKeyCompatibleWithKeyedLink, checkKeyMatchesKeyedLink, checkKeyMatchesKeyedLinkExact, GenericApiObject, isApiResponse, KeyedApiLink, matchesLinkRel } from "./api-objects";
+
+export class ResponseError extends Error {
+    readonly status: number;
+    readonly response: Response;
+
+    constructor(message: string, response: Response) {
+        super(message);
+        this.status = response.status;
+        this.response = response;
+    }
+}
 
 @autoinject
 export class BaseApiService {
@@ -104,7 +115,7 @@ export class BaseApiService {
     private async handleResponse<T>(response: Response, input: RequestInfo): Promise<T> {
         if (!response.ok) {
             console.warn(response);
-            throw Error("Something went wrong with the request!");
+            throw new ResponseError("Something went wrong with the request!", response);
         }
 
         if (response.status === 204) {
@@ -137,7 +148,7 @@ export class BaseApiService {
         if (init?.headers != null) {
             if (Array.isArray(init.headers)) {
                 if (init.headers.every(header => header[0] !== "Authorization")) {
-                    init.headers.push(["Authorization", this._defaultAuthorization])
+                    init.headers.push(["Authorization", this._defaultAuthorization]);
                 }
             } else {
                 if (init.headers?.["Authorization"] == null) {

@@ -1,9 +1,8 @@
-import { autoinject } from "aurelia-framework";
-import { ApiLink, ApiObject, ApiResponse, isApiObject, isApiResponse } from "./api-objects";
-import { BaseApiService } from "./base-api";
-import { ApiSchema, SchemaApiObject } from "./schema-objects";
 import { EventAggregator } from "aurelia-event-aggregator";
+import { autoinject } from "aurelia-framework";
 import { AUTH_EVENTS_CHANNEL } from "resources/events";
+import { ApiLink, ApiObject, isApiObject } from "./api-objects";
+import { BaseApiService } from "./base-api";
 
 interface ApiTokenApiObject extends ApiObject {
     accessToken: string;
@@ -14,6 +13,8 @@ interface ApiTokenApiObject extends ApiObject {
 export const LOGIN_EXPIRES_SOON = "Login expires soon";
 export const LOGIN_EXPIRED = "Login is expired";
 export const LOGIN = "User is logged in";
+export const LOGIN_RENEWED = "User logged in with password again";
+export const LOGIN_TOKEN_REFRESHED = "New login token aquired";
 export const LOGOUT = "User is logged out";
 
 export function isApiTokenApiObject(obj: ApiObject): obj is ApiTokenApiObject {
@@ -38,27 +39,30 @@ export class AuthenticationService {
         this.events = eventAggregator;
         this.recoverLogin();
         this.checkTokenExpiration();
-        window.setInterval(() => this.checkTokenExpiration(), 60000)
+        window.setInterval(() => this.checkTokenExpiration(), 60000);
     }
 
     public get currentStatus(): { isLoggedIn: boolean, user: any } {
         return {
             isLoggedIn: this.isLoggedInStatus,
             user: this.userStatus,
-        }
+        };
     }
 
     private apiTokenChanged(newToken: string, oldToken: string) {
         // TODO
         const wasLoggedIn = this.isLoggedInStatus;
         this.isLoggedInStatus = this.isLoggedIn();
-        if (!wasLoggedIn && this.isLoggedInStatus) {
-            this.events.publish(AUTH_EVENTS_CHANNEL, LOGIN);
-        }
         if (newToken != null) {
             this.api.defaultAuthorization = `Bearer ${newToken}`;
         } else {
             this.api.resetDefaultAuthorization();
+        }
+        if (!wasLoggedIn && this.isLoggedInStatus) {
+            this.events.publish(AUTH_EVENTS_CHANNEL, LOGIN);
+        } else {
+            this.events.publish(AUTH_EVENTS_CHANNEL, LOGIN_TOKEN_REFRESHED);
+            // TODO send distinct message for fresh login tokens
         }
     }
 
@@ -97,6 +101,7 @@ export class AuthenticationService {
         localStorage.removeItem(this.ACCESS_TOKEN_KEY);
         sessionStorage.removeItem(this.ACCESS_TOKEN_KEY);
         this.api.resetDefaultAuthorization();
+        this.isLoggedInStatus = false;
         this.api.clearCaches(true);
         this.events.publish(AUTH_EVENTS_CHANNEL, LOGOUT);
     }
