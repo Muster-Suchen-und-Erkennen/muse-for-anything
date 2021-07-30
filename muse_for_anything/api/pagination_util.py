@@ -37,6 +37,7 @@ class PaginationOptions:
     cursor: Optional[Union[str, int]] = None
     sort_order: str = "asc"
     sort_column: Optional[str] = None
+    extra_query_params: Optional[Dict[str, str]] = None
 
     @property
     def sort(self) -> Optional[str]:
@@ -47,7 +48,11 @@ class PaginationOptions:
             elif self.sort_order == "desc":
                 return f"-{self.sort_column}"
 
-    def to_query_params(self, cursor: Optional[Union[str, int]] = "") -> Dict[str, str]:
+    def to_query_params(
+        self,
+        cursor: Optional[Union[str, int]] = "",
+        extra_params: Optional[Dict[str, str]] = None,
+    ) -> Dict[str, str]:
         """Generate a dict containing the pagination options as query arguments.
 
         Args:
@@ -70,6 +75,12 @@ class PaginationOptions:
         sort = self.sort
         if sort:
             params["sort"] = sort
+
+        if self.extra_query_params:
+            params.update(self.extra_query_params)
+
+        if extra_params:
+            params.update(extra_params)
 
         return params
 

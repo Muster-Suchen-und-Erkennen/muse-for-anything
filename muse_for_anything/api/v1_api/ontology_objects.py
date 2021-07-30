@@ -29,6 +29,7 @@ from muse_for_anything.api.v1_api.constants import (
     RESTORE,
     RESTORE_REL,
     TYPE_EXTRA_ARG,
+    TYPE_ID_QUERY_KEY,
     UPDATE,
     UPDATE_REL,
 )
@@ -146,6 +147,9 @@ class ObjectsView(MethodView):
                 *ontology_object_filter,
                 OntologyObject.object_type_id == found_type.id,
             )
+            pagination_options.extra_query_params = {
+                TYPE_ID_QUERY_KEY: str(found_type.id),
+            }
 
         pagination_info = default_get_page_info(
             OntologyObject,

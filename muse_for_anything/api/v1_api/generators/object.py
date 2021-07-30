@@ -101,6 +101,13 @@ class ObjectPageLinkGenerator(LinkGenerator, resource_type=OntologyObject, page=
         assert isinstance(namespace, Namespace)
         if query_params is None:
             query_params = {ITEM_COUNT_QUERY_KEY: ITEM_COUNT_DEFAULT}
+
+        object_type: Optional[OntologyObjectType] = None
+        if resource.extra_arguments and TYPE_EXTRA_ARG in resource.extra_arguments:
+            object_type = resource.extra_arguments[TYPE_EXTRA_ARG]
+            assert isinstance(object_type, OntologyObjectType)
+            query_params[TYPE_ID_QUERY_KEY] = str(object_type.id)
+
         link = ApiLink(
             href=url_for(
                 OBJECT_PAGE_RESOURCE,
@@ -112,9 +119,7 @@ class ObjectPageLinkGenerator(LinkGenerator, resource_type=OntologyObject, page=
             resource_type=OBJECT_REL_TYPE,
             resource_key=KeyGenerator.generate_key(resource, query_params=query_params),
         )
-        if resource.extra_arguments and TYPE_EXTRA_ARG in resource.extra_arguments:
-            object_type = resource.extra_arguments[TYPE_EXTRA_ARG]
-            assert isinstance(object_type, OntologyObjectType)
+        if object_type:
             link.schema = object_type_schema_url(object_type)
         return link
 
