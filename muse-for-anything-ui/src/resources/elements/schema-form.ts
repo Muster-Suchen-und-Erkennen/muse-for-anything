@@ -50,8 +50,8 @@ export class SchemaForm {
         } else if (normalized.const !== undefined) {
             this.schemaType = "const";
             this.constValue = normalized.const;
-            this.value = normalized.const;
             this.queue.queueMicroTask(() => {
+                this.value = normalized.const;
                 this.valid = true;
                 if (this.updateSignal != null) {
                     this.queue.queueMicroTask(() => {
