@@ -136,6 +136,8 @@ poetry run pybabel update -i messages.pot -d translations
 ```bash
 # create dev db (this will NOT run migrations!)
 poetry run flask create-db
+# create an admin user
+poetry run flask create-admin-user
 # drop dev db
 poetry run flask drop-db
 ```
