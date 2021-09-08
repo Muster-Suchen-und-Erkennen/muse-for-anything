@@ -194,6 +194,18 @@ taxonomy-graph[data-maximized] {
     grid-template-columns: minmax(8rem, 1fr) 2.5fr minmax(12rem, 2fr); 
 }
 
+
+ontology-graph[data-maximized] {
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    border-radius: 0px;
+    margin-bottom: 0px;
+    grid-template-columns: minmax(8rem, 1fr) 2.5fr minmax(12rem, 2fr); 
+}
+
 taxonomy-graph .graph {
     grid-row-start: 1;
     grid-row-end: -1;
@@ -417,4 +429,40 @@ ux-dialog>ux-dialog-footer{
 
 .ux-dialog-open{
     overflow:hidden
+}
+
+.item-main {
+    grid-area: main;
+}
+.item-filtersection {
+    grid-area: filtersection;
+}
+.item-treesection {
+    grid-area: treesection;
+}
+.item-overview {
+    grid-area: overview;
+}
+
+.container {
+    height: 100%;
+    display: grid;
+    grid-template-columns: 20% 80%;
+    grid-template-rows: auto;
+    grid-template-areas: 
+    "filtersection main"
+    "treesection main"
+    "overview main"
+}
+
+.ontology-move{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ontology-moveBackground{
+    border-radius: 50px;
+    background: #cacaca;
+    width: 102px;
 }

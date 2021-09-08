@@ -254,4 +254,30 @@
             <polyline points="15.328 6.672 15.328 12.328 9.672 12.328" transform="scale(1 -1) rotate(-45 -10.435 0)" />
         </g>
     </svg>
+
+
+    <svg if.bind="icon === 'arrow-up'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21"
+        xmlns="http://www.w3.org/2000/svg">
+        <path d="m.5 4.5 4-4 4 4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+            transform="translate(6 8)" />
+    </svg>
+
+    <svg if.bind="icon === 'arrow-down'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21"
+        xmlns="http://www.w3.org/2000/svg">
+        <path d="m8.5.5-4 4-4-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+            transform="translate(6 8)" />
+    </svg>
+
+    <svg if.bind="icon === 'arrow-left'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21"
+        xmlns="http://www.w3.org/2000/svg">
+        <path d="m4.5 8.5-4-4 4-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+            transform="translate(7 6)" />
+    </svg>
+
+    <svg if.bind="icon === 'arrow-right'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21"
+        xmlns="http://www.w3.org/2000/svg">
+        <path d="m.5 8.5 4-4-4-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+            transform="translate(9 6)" />
+    </svg>
+
 </template>

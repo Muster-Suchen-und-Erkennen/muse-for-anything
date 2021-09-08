@@ -125,5 +125,20 @@
     "type": "Type",
     "object": "Object",
     "cancel": "cancel",
-    "back": "back"
+    "back": "back",
+    "ontology": {
+        "filter-area": "Filter and Search",
+        "tree-view": "Treeview",
+        "overview": "Overview",
+        "node-link-tree": "Node-Link Tree",
+        "resetLayout": "Reset Layout to Box",
+        "toggleMaximize":"Maximize or minimize graph",
+        "zoomIn":"Zoom in",
+        "zoomOut":"Zoom out",
+        "moveUp":"up",
+        "moveDown":"down",
+        "moveLeft":"left",
+        "moveRight":"right"
+
+    }
 }
