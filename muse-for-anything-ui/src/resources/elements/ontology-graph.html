@@ -29,6 +29,14 @@
                     opacity: 0.5 !important;
                 }
 
+                .taxonomy-group {
+                    fill: rgb(221, 221, 221) !important;
+                }
+
+                .type-group {
+                    fill: rgb(189, 189, 189) !important;
+                }
+
                 .type-title-background {
                     fill: brown !important;
                     border-style: none;
@@ -209,29 +217,15 @@
                 </div>
                 <div class="item-treesection px-2 py-1 border-gray-200 border-b">
                     ${"ontology.tree-view" | t}
-                    <ul class="ml-5" style="list-style-type:circle">
+                    <!--<ul class="ml-5" style="list-style-type:circle">
                         <li repeat.for="node of graph.nodeList" if.bind="node.title.startsWith(searchtext)">
                             ${node.title}!
                         </li>
-                    </ul>
-                    <mat-tree [dataSource]="graph.nodeList" [treeControl]="treeControl">
-                        <!-- This is the tree node template for leaf nodes -->
-                        <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding>
-                          <!-- use a disabled button to provide padding for tree leaf -->
-                          <button mat-icon-button disabled></button>
-                          {{node.name}}
-                        </mat-tree-node>
-                        <!-- This is the tree node template for expandable nodes -->
-                        <mat-tree-node *matTreeNodeDef="let node;when: hasChild" matTreeNodePadding>
-                          <button mat-icon-button matTreeNodeToggle
-                                  [attr.aria-label]="'Toggle ' + node.name">
-                            <mat-icon class="mat-icon-rtl-mirror">
-                              {{treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
-                            </mat-icon>
-                          </button>
-                          {{node.name}}
-                        </mat-tree-node>
-                      </mat-tree>
+                    </ul>-->
+                    <mdc-tree-view nodes.bind="graph.nodeList" view-model.ref="treeView">
+                        <mdc-tree-node>${$node.title}
+                        </mdc-tree-node>
+                      </mdc-tree-view>
                 </div>
                 <div class="item-overview">
                     <network-graph class="graphoverview" classes="taxonomy-item deleted" mode="display" zoom="automatic"
