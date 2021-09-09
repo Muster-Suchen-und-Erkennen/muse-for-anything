@@ -161,6 +161,10 @@
                     <path d="M -9 -4 L 0 0 L -9 4 z" />
                 </g>
             </defs>
+            <g class="zoom-group"> <!-- the zoom-groop is used for the pan and zoom transormations -->
+                <g class="nodes"></g> <!-- the first group will be rendered below the following groups-->
+                <g class="edges"></g>
+            </g>
         </svg>
     </template>
 
@@ -222,10 +226,6 @@
                             ${node.title}!
                         </li>
                     </ul>-->
-                    <mdc-tree-view nodes.bind="graph.nodeList" view-model.ref="treeView">
-                        <mdc-tree-node>${$node.title}
-                        </mdc-tree-node>
-                      </mdc-tree-view>
                 </div>
                 <div class="item-overview">
                     <network-graph class="graphoverview" classes="taxonomy-item deleted" mode="display" zoom="automatic"
