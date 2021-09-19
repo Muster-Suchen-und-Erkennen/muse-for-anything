@@ -32,20 +32,34 @@ def create_db_function(app: Flask):
 
 
 @DB_CLI.command("create-admin-user")
+@click.option("-f", "--force", is_flag=True, default=False)
 @with_appcontext
-def create_admin_user():
+def create_admin_user_cli(force: bool = False):
     """Create an admin user with username and password 'admin'."""
-    create_admin_user(current_app)
-    click.echo("User 'admin' created.")
+    result = create_admin_user(current_app, force)
+    if result:
+        click.echo("User 'admin' created.")
+    else:
+        click.echo(
+            "User 'admin' was not created. Use -f or --force to force the creation of an admin user."
+        )
 
 
-def create_admin_user(app: Flask):
+def create_admin_user(app: Flask, force: bool = False):
+    if not force:
+        # do not force create admin user when db contains users!
+        if User.exists():
+            get_logger(app, DB_COMMAND_LOGGER).debug(
+                "User 'admin' was not created because a user already exists."
+            )
+            return False
     admin_user = User(username="admin", password="admin")
     admin_role = UserRole(user=admin_user, role="admin")
     DB.session.add(admin_user)
     DB.session.add(admin_role)
     DB.session.commit()
     get_logger(app, DB_COMMAND_LOGGER).info("User 'admin' created.")
+    return True
 
 
 @DB_CLI.command("drop-db")

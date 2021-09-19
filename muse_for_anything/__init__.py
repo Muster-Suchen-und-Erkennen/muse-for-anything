@@ -1,6 +1,6 @@
 """Root module containing the flask app factory."""
 
-from os import makedirs
+from os import makedirs, environ
 from pathlib import Path
 from typing import Any, Dict, Optional
 from logging import Logger, Formatter, WARNING, getLogger
@@ -22,6 +22,10 @@ from . import oso_helpers
 from . import password_helpers
 from .api import jwt
 from .root_routes import register_root_routes
+
+
+ENV_PREFIX = "M4A"
+ENV_VAR_SETTINGS = ("SECRET_KEY", "REVERSE_PROXY_COUNT", "DEFAULT_LOG_SEVERITY")
 
 
 def create_app(test_config: Optional[Dict[str, Any]] = None):
@@ -49,6 +53,12 @@ def create_app(test_config: Optional[Dict[str, Any]] = None):
     else:
         # load the test config if passed in
         app.config.from_mapping(test_config)
+
+    # load settings from env vars
+    for setting in ENV_VAR_SETTINGS:
+        value = environ.get(f"{ENV_PREFIX}{setting}", None)
+        if value is not None:
+            app.config[setting] = value
 
     # End Loading config #################
 
