@@ -12,7 +12,7 @@ import { TaxonomyApiObject, TaxonomyItemApiObject, TaxonomyItemRelationApiObject
 import { GroupBehaviour } from "@ustutt/grapheditor-webcomponent/lib/grouping";
 import { DynamicNodeTemplate, DynamicTemplateContext } from "@ustutt/grapheditor-webcomponent/lib/dynamic-templates/dynamic-template";
 import { LinkHandle } from "@ustutt/grapheditor-webcomponent/lib/link-handle";
-import { Rect } from "@ustutt/grapheditor-webcomponent/lib/util";
+import { calculateBoundingRect, Rect } from "@ustutt/grapheditor-webcomponent/lib/util";
 
 interface TypeApiObject extends ApiObject {
     collectionSize: number;
@@ -73,23 +73,27 @@ class TypeItemNode implements DynamicNodeTemplate {
     private calculateRect(g: any, grapheditor: GraphEditor, context: DynamicTemplateContext<Node>, updated?:boolean) {
         let props = g._groups[0][0].__data__;
         const children = grapheditor.groupingManager.getAllChildrenOf(props.id);
+        if(children.size==0) {
+            return;
+        }
         const boxes: Rect[] = [];
         children.forEach(childId => {
             
             const node = grapheditor.getNode(childId);
             const bbox = grapheditor.getNodeBBox(childId);
+            console.log(node, bbox)
             
             if(childId.includes(boundingBoxTaxonomyMarker)) {
                 boxes.push({
-                    x: node.x+bbox.width/2,
-                    y: node.y+bbox.height/2,
+                    x: node.x+bbox.x,
+                    y: node.y+bbox.y,
                     width: bbox.width,
                     height: bbox.height,
                 });
             } else {
                 boxes.push({
-                    x: node.x,
-                    y: node.y,
+                    x: node.x+bbox.x,
+                    y: node.y+bbox.y,
                     width: bbox.width,
                     height: bbox.height,
                 });
@@ -98,6 +102,7 @@ class TypeItemNode implements DynamicNodeTemplate {
             
         });
 
+        console.log("bxos", boxes)
         const minBox = calculateBoundingRect(...boxes);
         minBox.width = Math.max(160,minBox.width);
         minBox.height = Math.max(80,minBox.height);
@@ -145,8 +150,8 @@ class TaxonomyGroupItemNode implements DynamicNodeTemplate {
             const bbox = grapheditor.getNodeBBox(childId);
             
             boxes.push({
-                x: node.x,
-                y: node.y,
+                x: node.x+bbox.x,
+                y: node.y+bbox.y,
                 width: bbox.width,
                 height: bbox.height,
             });
@@ -227,8 +232,8 @@ class TaxonomyGroupBehaviour implements GroupBehaviour {
             const node = graphEditor.getNode(childId);
             const bbox = graphEditor.getNodeBBox(childId);
             boxes.push({
-                x: node.x,
-                y: node.y,
+                x: node.x+bbox.x,
+                y: node.y+bbox.y,
                 width: bbox.width,
                 height: bbox.height,
             });
@@ -240,7 +245,7 @@ class TaxonomyGroupBehaviour implements GroupBehaviour {
         // set config moveChildrenAlongGoup to false, to position group node around children, and set config back
         const tempConfig = graphEditor.groupingManager.getGroupBehaviourOf(groupNode.id).moveChildrenAlongGoup;
         graphEditor.groupingManager.getGroupBehaviourOf(groupNode.id).moveChildrenAlongGoup = false;
-        graphEditor.moveNode(groupNode.id,minBox.x-boundingBoxBorder,minBox.y-minBox.height/2-boundingBoxBorder, false);
+        graphEditor.moveNode(groupNode.id,minBox.x-boundingBoxBorder,minBox.y-boundingBoxBorder, false);
         graphEditor.groupingManager.getGroupBehaviourOf(groupNode.id).moveChildrenAlongGoup = tempConfig;
 
         graphEditor.completeRender(); // FIXME remove if no longer needed
@@ -275,52 +280,31 @@ class TypeGroupBehaviour implements GroupBehaviour {
             const bbox = graphEditor.getNodeBBox(childId);
             if(childId.includes(boundingBoxTaxonomyMarker)) {
                 boxes.push({
-                    x: node.x+bbox.width/2,
-                    y: node.y+bbox.height/2,
+                    x: node.x+bbox.x,
+                    y: node.y+bbox.y,
                     width: bbox.width,
                     height: bbox.height,
                 });
             } else {
                 boxes.push({
-                    x: node.x,
-                    y: node.y,
+                    x: node.x+bbox.x,
+                    y: node.y+bbox.y,
                     width: bbox.width,
                     height: bbox.height,
                 });
             }
         });
 
-
         const minBox = calculateBoundingRect(...boxes);
 
         // set config moveChildrenAlongGoup to false, to position group node around children, and set config back
         const tempConfig = graphEditor.groupingManager.getGroupBehaviourOf(groupNode.id).moveChildrenAlongGoup;
         graphEditor.groupingManager.getGroupBehaviourOf(groupNode.id).moveChildrenAlongGoup = false;
-        graphEditor.moveNode(groupNode.id,minBox.x-boundingBoxBorder,minBox.y-minBox.height/2-boundingBoxBorder, false);
+        graphEditor.moveNode(groupNode.id,minBox.x-boundingBoxBorder,minBox.y-boundingBoxBorder, false);
         graphEditor.groupingManager.getGroupBehaviourOf(groupNode.id).moveChildrenAlongGoup = tempConfig;
 
         graphEditor.completeRender(); // FIXME remove if no longer needed
     }
-}
-
-function calculateBoundingRect(...rectangles: Rect[]): Rect {
-    const minBox={left:null, right:null, up:null,down:null}
-    rectangles.forEach(box => {
-        if(minBox.left == null || box.x - box.width/2 < minBox.left) {
-            minBox.left = box.x - box.width/2;
-        }
-        if(minBox.right == null || box.x + box.width/2 > minBox.right) {
-            minBox.right = box.x + box.width/2;
-        }
-        if(minBox.up == null || box.y - box.height/2 < minBox.up) {
-            minBox.up = box.y - box.height/2;
-        }
-        if(minBox.down == null || box.y + box.height/2 > minBox.down) {
-            minBox.down = box.y + box.height/2;
-        }
-    });
-
-    return {x: minBox.left, y: minBox.down-(minBox.down-minBox.up)/2,width: minBox.right-minBox.left, height: minBox.down-minBox.up};
 }
 
 @autoinject
@@ -540,8 +524,10 @@ export class OntologyGraph {
     }
 
     private addTypeItem(element: TypeItemApiObject, parentPosition: {x,y}):{id:string|number, bbox: Rect} {
+        parentPosition.x = parentPosition.x+20;
+        parentPosition.y = parentPosition.y+20;
         let groupManager = this.graph.groupingManager;
-        let parPos = {x:Math.random()*1000,y:Math.random()*1000};
+        let parPos = {x:parentPosition.x,y:parentPosition.y};
         let parentID =  this.addNodeToGraph({id: element.self.href, title: element.name, dynamicTemplate:"type-group-node-template", ...parPos});
         if(parentID.id!=null)
         {
@@ -551,14 +537,14 @@ export class OntologyGraph {
         if(element.schema.definitions?.root?.properties == null) {
             return;
         }
-        let nodeID: {id:string|number, bbox: Rect} = {id:null, bbox:{x:parPos.x,y:parPos.y,width:0,height:0}};
+        let nodeID: {id:string|number, bbox: Rect} = {id:null, bbox:{x:parentID.bbox.x,y:parentID.bbox.y,width:parentID.bbox.width,height:parentID.bbox.height}};
         for (let typeElement in element.schema.definitions?.root?.properties) {  
             let typeProps = element.schema.definitions?.root?.properties[typeElement];
             if(typeProps["type"]=="object") {
                 if(typeProps["referenceType"]=="ont-taxonomy") {
                     let taxonomoyHref = this.getTaxonomyHref(typeProps["referenceKey"]["namespaceId"],typeProps["referenceKey"]["taxonomyId"])
                     if(this.taxonomyItems.some(f => f.href == taxonomoyHref)){
-                        nodeID = this.addTaxonomyItem(this.taxonomyItems.find(f => f.href == taxonomoyHref),{x:nodeID.bbox.x,y:nodeID.bbox.y+nodeID.bbox.height+10});
+                        nodeID = this.addTaxonomyItem(this.taxonomyItems.find(f => f.href == taxonomoyHref),{x:nodeID.bbox.x,y:nodeID.bbox.y});
                     }else {
                         nodeID.id = null;
                     }
@@ -567,26 +553,26 @@ export class OntologyGraph {
                     console.log(typeHref, this.typeItems)
                     if(this.typeItems.some(f => f.self.href == typeHref)){
                         console.log("add type", this.typeItems.find(f => f.self.href == typeHref))
-                        nodeID = this.addTypeItem(this.typeItems.find(f => f.self.href == typeHref),{x:nodeID.bbox.x,y:nodeID.bbox.y+nodeID.bbox.height+10});
+                        nodeID = this.addTypeItem(this.typeItems.find(f => f.self.href == typeHref),{x:nodeID.bbox.x,y:nodeID.bbox.y});
                     } else {
                         nodeID.id = null;
                     }
                 } else {
                     console.log("Undefined Object found: " , typeProps["referenceType"])
-                    nodeID = this.addNodeToGraph({id: parentID.id+typeElement, title: typeElement, type: typeProps["referenceType"], x:nodeID.bbox.x,y:nodeID.bbox.y+nodeID.bbox.height+10});
+                    nodeID = this.addNodeToGraph({id: parentID.id+typeElement, title: typeElement, type: typeProps["referenceType"], x:nodeID.bbox.x,y:nodeID.bbox.y});
                 }
             } else if(typeProps["enum"] ) {
-                nodeID = this.addNodeToGraph({id: parentID.id+typeElement, title: "enum" + " " + typeElement, type: "taxonomy-item", x:nodeID.bbox.x,y:nodeID.bbox.y+nodeID.bbox.height+10});
+                nodeID = this.addNodeToGraph({id: parentID.id+typeElement, title: "enum" + " " + typeElement, type: "taxonomy-item", x:nodeID.bbox.x,y:nodeID.bbox.y});
             } else {
                 console.log("Type:" , typeProps)
                 if(typeProps["type"] == "string" || 
                     typeProps["type"] == "integer" || 
                     typeProps["type"] == "boolean" || 
                     typeProps["type"] == "number" ){
-                    nodeID = this.addNodeToGraph({id: parentID.id+typeElement, title: typeProps["type"] + " " + typeElement, type: "taxonomy-item", x:nodeID.bbox.x,y:nodeID.bbox.y+nodeID.bbox.height+10});
+                    nodeID = this.addNodeToGraph({id: parentID.id+typeElement, title: typeProps["type"] + " " + typeElement, type: "taxonomy-item", x:nodeID.bbox.x,y:nodeID.bbox.y});
                 }   
                 else {
-                    nodeID = this.addNodeToGraph({id: parentID.id+typeElement, title: typeElement, type: typeProps["type"], x:nodeID.bbox.x,y:nodeID.bbox.y+nodeID.bbox.height+10});
+                    nodeID = this.addNodeToGraph({id: parentID.id+typeElement, title: typeElement, type: typeProps["type"], x:nodeID.bbox.x,y:nodeID.bbox.y});
                 }
                 
             }
@@ -607,6 +593,8 @@ export class OntologyGraph {
     }
 
     private addTaxonomyItem(element: TaxonomyObject, parentPosition: {x,y}):{id:string|number, bbox: Rect} {
+        parentPosition.x = parentPosition.x+20;
+        parentPosition.y = parentPosition.y+20;
         let groupManager = this.graph.groupingManager;
         let firstItem = true;
         let parentID: {id:string|number, bbox: Rect};
@@ -654,6 +642,14 @@ export class OntologyGraph {
     private addNodeToGraph(node: Node): {id:string|number, bbox: Rect} {
         node.id = String(node.id).replace(RegExp(/\/\/|\/|:| /g),"")
         node.id = node.id + Math.floor(Math.random()*10000000000000);
+
+
+        if(node.type) {
+            //console.log("template",this.graph.staticTemplateRegistry.getNodeTemplate(node.type));
+            //120x60
+            node.x = node.x+60;
+            node.y = node.y+30;
+        }
         
         if(this.graph.nodeList.some(element => element.id == node.id)){
             throw new Error("Item already exists in graph: "+ node.id);
@@ -668,12 +664,15 @@ export class OntologyGraph {
         const bbox = this.graph.getNodeBBox(node.id);
         const boxes: Rect[] = [];
         boxes.push({
-            x: node.x+bbox.width/2,
-            y: node.y+bbox.height/2,
+            x: bbox.x+node.x,
+            y: bbox.y+node.y,
             width: bbox.width,
             height: bbox.height,
         });
-        return calculateBoundingRect(...boxes);
+        let tempRect = calculateBoundingRect(...boxes);
+
+        // TODO: settings 10 distance to other box
+        return {x:tempRect.x,y:tempRect.y+tempRect.height+10,height:tempRect.height,width:tempRect.width}
     }
 
     private onNodeClick(event: CustomEvent<{ eventSource: "API" | "USER_INTERACTION" | "INTERNAL", node: Node }>) {
