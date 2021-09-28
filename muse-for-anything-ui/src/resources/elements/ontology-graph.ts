@@ -512,15 +512,69 @@ export class OntologyGraph {
         }
 
         this.typeItems.forEach(element => {
-             this.addTypeItem(element,{x:null,y:null});
+            let pos = {x:null,y:null}
+            do {  
+                pos = {x:Math.floor(Math.random()*1000),y:Math.floor(Math.random()*1000)}; 
+            }  
+            while (!this.collisionDetection(pos));  
+            this.addTypeItem(element,pos);
         });
 
         this.taxonomyItems.forEach((element) => {
-            this.addTaxonomyItem(element,{x:0,y:0});
+            let pos = {x:null,y:null}
+            do {  
+                pos = {x:Math.floor(Math.random()*1000),y:Math.floor(Math.random()*1000)}; 
+            }  
+            while (!this.collisionDetection(pos));  
+            this.addTaxonomyItem(element,pos);
         });
+
+        // add links
+
+        this.graph.nodeList.forEach(node => {
+            if(node.id.toString().includes("childItem") && this.isNumber(node.id.toString().substr(node.id.toString().indexOf("childItem")+9))) {
+                console.log("typelink to add: ", node.id, " " , node.id.toString().substr(0,node.id.toString().indexOf("childItem")), " ", node.id.toString().substr(node.id.toString().indexOf("childItem")+9), this.isNumber(node.id.toString().substr(node.id.toString().indexOf("childItem")+9)));
+                let target = this.graph.nodeList.find(tar => !tar.id.toString().includes("childItem") && tar.id.toString().startsWith(node.id.toString().substr(0,node.id.toString().indexOf("childItem"))))
+                
+                let path = {source: node.id, target: target.id,markerEnd : {
+                    template: "arrow",
+                    scale: 0.8,
+                    relativeRotation: 0,
+                }}
+                this.graph.addEdge(path,true)
+
+            }
+        })
 
         this.graph.completeRender();
         this.graph?.zoomToBoundingBox();
+    }
+
+    private isNumber(value: string | number): boolean
+    {
+    return ((value != null) &&
+            (value !== '') &&
+            !isNaN(Number(value.toString())));
+    }
+
+    private collisionDetection(position: {x,y}): boolean {
+        return true;
+        let retVal = true;
+        this.graph.nodeList.forEach(node => {
+            const bbox = this.graph.getNodeBBox(node.id);
+            const boxes: Rect[] = [];
+            boxes.push({
+                x: node.x+bbox.x,
+                y: node.y+bbox.y,
+                width: bbox.width,
+                height: bbox.height,
+            });
+            let boundingRect = calculateBoundingRect(...boxes);
+            if(boundingRect.x<position.x&&boundingRect.x+boundingRect.width>position.x&&boundingRect.y<position.y&&boundingRect.y+boundingRect.height>position.y) {
+                retVal = false;
+            }
+        })
+        return retVal;
     }
 
     private addTypeItem(element: TypeItemApiObject, parentPosition: {x,y}):{id:string|number, bbox: Rect} {
@@ -552,8 +606,10 @@ export class OntologyGraph {
                     let typeHref = this.getTypeHref(typeProps["referenceKey"]["namespaceId"],typeProps["referenceKey"]["typeId"])
                     console.log(typeHref, this.typeItems)
                     if(this.typeItems.some(f => f.self.href == typeHref)){
-                        console.log("add type", this.typeItems.find(f => f.self.href == typeHref))
-                        nodeID = this.addTypeItem(this.typeItems.find(f => f.self.href == typeHref),{x:nodeID.bbox.x,y:nodeID.bbox.y});
+                        let foundTypeItem = this.typeItems.find(f => f.self.href == typeHref);
+                        console.log("add type", foundTypeItem)
+                        foundTypeItem.self.href = foundTypeItem.self.href + "childItem";
+                        nodeID = this.addTypeItem(foundTypeItem,{x:nodeID.bbox.x,y:nodeID.bbox.y});
                     } else {
                         nodeID.id = null;
                     }
@@ -625,7 +681,7 @@ export class OntologyGraph {
                     let source = childElements.find(e => e.href == apiResponse.data.sourceItem.href);
                     let target = childElements.find(e => e.href == apiResponse.data.targetItem.href);
                     let path = {source: source.id, target: target.id,markerEnd : {
-                        template: "default-marker",
+                        template: "arrow",
                         scale: 0.8,
                         relativeRotation: 0,
                     }}
