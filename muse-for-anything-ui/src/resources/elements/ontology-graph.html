@@ -2,6 +2,7 @@
     <require from="./schema-form"></require>
     <require from="./validity-indicator"></require>
     <require from="./svg-icon.html"></require>
+    <require from='./tree-node'></require>   
 
     <template id="taxonomyGraphTemplate">
         <svg>
@@ -207,7 +208,7 @@
     </template>
 
     <div class="container bg-white">
-        <div if.bind=" !isLoggedIn">
+        <div if.bind=" !isAllowedToShowGraph">
             <h1 t="loading">Loading</h1>
         </div>
         <template else>
@@ -221,11 +222,7 @@
                 </div>
                 <div class="item-treesection px-2 py-1 border-gray-200 border-b">
                     ${"ontology.tree-view" | t}
-                    <!--<ul class="ml-5" style="list-style-type:circle">
-                        <li repeat.for="node of graph.nodeList" if.bind="node.title.startsWith(searchtext)">
-                            ${node.title}!
-                        </li>
-                    </ul>-->
+                    <tree-node repeat.for="node of nodes" current.bind="node"></tree-node>  
                 </div>
                 <div class="item-overview">
                     <network-graph class="graphoverview" classes="taxonomy-item deleted" mode="display" zoom="automatic"
