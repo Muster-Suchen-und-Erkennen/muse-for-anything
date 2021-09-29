@@ -1,9 +1,11 @@
 <template>   
+    <require from="./svg-icon.html"></require>
     <div show.bind="current.visible" class="StartOfTreeNode">       
-        <div class="EachMiniQueueWithOutCollapse">
+        <div class="EachMiniQueueWithOutCollapse border-gray-200 border-b">
             <span if.bind="current.hasChildren()"
                 click.trigger="current.toggleNode(current)"
-                class="${current.icon} left eachMinQueueCheckSection">
+                class="left eachMinQueueCheckSection">
+                <svg-icon icon.bind="current.icon" size.bind="18"></svg-icon>
             </span>
             <div class="left eachMinQueueCheckSection" if.bind="!current.hasChildren()">
                 <label class="cb_control control--checkbox">
@@ -11,11 +13,9 @@
                     <span class="control__indicator"></span>
                 </label>
             </div>
-            <div class="left">
-                <div>
-                    <span>${current.name}</span>                           
-                </div>                       
-            </div>                   
+            <div>
+                <span>${current.name}</span>                           
+            </div>                                          
         </div>
          
         <tree-node

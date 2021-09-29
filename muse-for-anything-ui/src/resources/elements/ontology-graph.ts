@@ -133,7 +133,7 @@ export class ListNodeModel {
       this.children = children || [];
    
       if (this.hasChildren()) {
-        this.icon = "fa fa-minus";
+        this.icon = "arrow-right";
         this.expanded = false;
       }
     }
@@ -151,15 +151,15 @@ export class ListNodeModel {
       }
       this.expanded = !this.expanded;
       if (this.expanded === true) {
-        this.icon = "fa fa-minus";
+        this.icon = "arrow-down";
       } else {
-        this.icon = "fa fa-plus";
+        this.icon = "arrow-right";
       }
     }
 
     addChild(childName: string,id: string) {
         this.children.push(new ListNodeModel(id,childName,false,null))
-        this.icon = "fa fa-plus";
+        this.icon = "arrow-right";
         this.expanded = false;
     }
   }
@@ -314,8 +314,6 @@ export class OntologyGraph {
     @bindable apiLink;
     @bindable ignoreCache = false;
     @bindable maximizeMenu = false;
-    scrollTop = 0;
-    scrollLeft = 0;
     
 
     maximized: boolean = false;
