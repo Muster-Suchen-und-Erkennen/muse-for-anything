@@ -313,9 +313,12 @@ function repositionGroupNode(group: string, groupNode: Node, graphEditor: GraphE
 export class OntologyGraph {
     @bindable apiLink;
     @bindable ignoreCache = false;
-    @bindable maximizeMenu = true;
+    @bindable maximizeMenu = false;
+    scrollTop = 0;
+    scrollLeft = 0;
+    
 
-    maximized: boolean = true;
+    maximized: boolean = false;
     isAllowedToShowGraph: boolean = false;
     speed: number = 10; // pixels to move the nodes in the graph on interaction
 
@@ -488,7 +491,6 @@ export class OntologyGraph {
                             taxonomie.push(apiResponse.data);
                         });
                     });
-                    console.log("taxObj", apiResponse)
                     let taxItem : TaxonomyObject = {
                         description: apiResponse.data.description,
                         href: apiResponse.data.self.href,
@@ -587,7 +589,7 @@ export class OntologyGraph {
             if(typeProps["type"]=="object") {
                 if(typeProps["referenceType"]=="ont-taxonomy") {
                     nodeID = this.addNodeToGraph({id: this.getTaxonomyHref(typeProps["referenceKey"]["namespaceId"],typeProps["referenceKey"]["taxonomyId"])+"childItem", title: "Tax: " + this.taxonomyItems.find(f => f.namespaceId == typeProps["referenceKey"]["namespaceId"] && f.taxonomyId == typeProps["referenceKey"]["taxonomyId"]).name, type: "taxonomy-item", x:nodeID.bbox.x,y:nodeID.bbox.y});
-                    this.nodes.find(p=>p.id==parentID.id).addChild(typeProps["type"],nodeID.id.toString())
+                    this.nodes.find(p=>p.id==parentID.id).addChild(this.taxonomyItems.find(f => f.namespaceId == typeProps["referenceKey"]["namespaceId"] && f.taxonomyId == typeProps["referenceKey"]["taxonomyId"]).name,nodeID.id.toString())
                     /*if(this.taxonomyItems.some(f => f.namespaceId == typeProps["referenceKey"]["namespaceId"] && f.taxonomyId == typeProps["referenceKey"]["taxonomyId"])){
                         nodeID = this.addTaxonomyItem(this.taxonomyItems.find(f => f.namespaceId == typeProps["referenceKey"]["namespaceId"] && f.taxonomyId == typeProps["referenceKey"]["taxonomyId"]),{x:nodeID.bbox.x,y:nodeID.bbox.y});
                         this.nodes.find(p=>p.id==parentID.id).addChild(this.taxonomyItems.find(f => f.namespaceId == typeProps["referenceKey"]["namespaceId"] && f.taxonomyId == typeProps["referenceKey"]["taxonomyId"]).name,nodeID.id.toString())
@@ -597,7 +599,7 @@ export class OntologyGraph {
                 } else if(typeProps["referenceType"]=="ont-type") {
                     let typeHref = this.getTypeHref(typeProps["referenceKey"]["namespaceId"],typeProps["referenceKey"]["typeId"])
                     nodeID = this.addNodeToGraph({id: typeHref+"childItem", title: "Type: " + this.typeItems.find(f => f.self.href == typeHref).name, type: "taxonomy-item", x:nodeID.bbox.x,y:nodeID.bbox.y});
-                    this.nodes.find(p=>p.id==parentID.id).addChild(typeProps["type"],nodeID.id.toString())
+                    this.nodes.find(p=>p.id==parentID.id).addChild(this.typeItems.find(f => f.self.href == typeHref).name,nodeID.id.toString())
                     
                     /*if(this.typeItems.some(f => f.self.href == typeHref)){
                         let foundTypeItem = this.typeItems.find(f => f.self.href == typeHref);
@@ -610,17 +612,18 @@ export class OntologyGraph {
                 } else {
                     console.warn("Undefined Object found: " , typeProps["referenceType"])
                     nodeID = this.addNodeToGraph({id: parentID.id+typeElement, title: typeElement, type: typeProps["referenceType"], x:nodeID.bbox.x,y:nodeID.bbox.y});
+                    this.nodes.find(p=>p.id==parentID.id).addChild(typeProps["type"] + " " + typeElement,nodeID.id.toString())
                 }
             } else if(typeProps["enum"] ) {
                 nodeID = this.addNodeToGraph({id: parentID.id+typeElement, title: "enum" + " " + typeElement, type: "taxonomy-item", x:nodeID.bbox.x,y:nodeID.bbox.y});
-                this.nodes.find(p=>p.id==parentID.id).addChild(typeElement,nodeID.id.toString())
+                this.nodes.find(p=>p.id==parentID.id).addChild("enum" + " " + typeElement,nodeID.id.toString())
             } else {
                 if(typeProps["type"] == "string" || 
                     typeProps["type"] == "integer" || 
                     typeProps["type"] == "boolean" || 
                     typeProps["type"] == "number" ){
                     nodeID = this.addNodeToGraph({id: parentID.id+typeElement, title: typeProps["type"] + " " + typeElement, type: "taxonomy-item", x:nodeID.bbox.x,y:nodeID.bbox.y});
-                    this.nodes.find(p=>p.id==parentID.id).addChild(typeProps["type"],nodeID.id.toString())
+                    this.nodes.find(p=>p.id==parentID.id).addChild(typeProps["type"] + " " + typeElement,nodeID.id.toString())
                 }   
                 else {
                     console.warn("Unknown type property found: ", typeElement, typeProps)
