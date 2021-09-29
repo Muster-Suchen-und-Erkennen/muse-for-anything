@@ -410,6 +410,8 @@ export class OntologyGraph {
             return;
         }
         newGraph.dynamicTemplateRegistry.addDynamicTemplate('overview-node-template',new OverviewGraphNode);
+        newGraph.dynamicTemplateRegistry.addDynamicTemplate('type-group-node-template',new TypeNodeTemplate);
+        newGraph.dynamicTemplateRegistry.addDynamicTemplate('taxonomy-group-node-template',new TaxonomyNodeTemplate);
     }
 
     searchtextChanged(newText: String, old) {
@@ -536,6 +538,7 @@ export class OntologyGraph {
                     relativeRotation: 0,
                 }}
                 this.graph.addEdge(path,true)
+                this.graphoverview.addEdge(path,true)
 
             }
         })
@@ -786,7 +789,7 @@ export class OntologyGraph {
     private onNodeAdd(event: CustomEvent<{ eventSource: "API" | "USER_INTERACTION" | "INTERNAL", node: Node }>) {
         let currentView = this.graph.currentViewWindow;
         this.graphoverview.removeNode(42424242424242424242424242424242421,false);
-        this.graphoverview.addNode({id:42424242424242424242424242424242421,class:"", dynamicTemplate:'overview-node-template',x:currentView.x,y:currentView.y,width:currentView.width,height:currentView.height},true);
+        this.graphoverview.addNode({id:42424242424242424242424242424242421,class:"invisible-rect", dynamicTemplate:'overview-node-template',x:currentView.x,y:currentView.y,width:currentView.width,height:currentView.height},true);
     }
 
     private onZoomChange(event: CustomEvent<{ eventSource: "API" | "USER_INTERACTION" | "INTERNAL", node: Node }>) {

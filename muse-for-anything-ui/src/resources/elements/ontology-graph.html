@@ -4,7 +4,7 @@
     <require from="./svg-icon.html"></require>
     <require from='./tree-node'></require>   
 
-    <template id="taxonomyGraphTemplate">
+    <template id="ontologyGraphTemplate">
         <svg>
             <style>
                 svg {
@@ -174,18 +174,67 @@
                 }
 
                 .ghost {
-                    opacity: 0.5;
+                    opacity: 0.5 !important;
+                }
+
+                .taxonomy-group {
+                    fill: rgb(221, 221, 221) !important;
+                }
+
+                .type-group {
+                    fill: rgb(189, 189, 189) !important;
                 }
 
                 .position-rect {
                     fill: #6c28d95d !important;
-                    border-style: none;
+                    border-style: none !important;
+                }
+
+                .invisible-rect {
+                    fill: #ffffff00 !important;
+                    stroke: none !important;
                 }
 
                 .node>rect {
-                    fill: var(--fill-color);
+                    fill: none;
+                    stroke: black;
+                }
+
+                .edge {
+                    stroke: black;
+                }
+
+                .edge-group .marker {
+                    fill: none
+                }
+
+                .highlight-outgoing .edge {
+                    stroke: none
+                }
+
+                .highlight-outgoing.edge-group .marker {
+                    fill: none
                 }
             </style>
+            <defs class="templates">
+                <g id="taxonomy-item" data-template-type="node">
+                    <rect width="120" height="60" x="-60" y="-30" rx="5" data-link-handles="edges"></rect>
+                </g>
+                <g id="type-item" data-template-type="node">
+                    <rect width="120" height="120" x="-60" y="-30" rx="5" data-link-handles="edges"></rect>
+                    <rect class="type-title-background" x="-60" y="-30" height="20" width="120"></rect>
+                </g>
+                <g id="default-marker" data-template-type="marker" data-line-attachement-point="6">
+                    <circle cx="0" cy="0" r="6"></circle>
+                </g>
+                <g id="arrow" data-template-type="marker" data-line-attachement-point="-9 0">
+                    <path d="M -9 -4 L 0 0 L -9 4 z" />
+                </g>
+            </defs>
+            <g class="zoom-group"> <!-- the zoom-groop is used for the pan and zoom transormations -->
+                <g class="nodes"></g> <!-- the first group will be rendered below the following groups-->
+                <g class="edges"></g>
+            </g>
         </svg>
     </template>
 
@@ -235,7 +284,7 @@
             </div>
         </div>
         <network-graph class="maingraph menu-graph ml-2 px-3 py-2 card"
-            classes="taxonomy-item deleted" mode="layout" zoom="both" svg-template="#taxonomyGraphTemplate">
+            classes="taxonomy-item deleted" mode="layout" zoom="both" svg-template="#ontologyGraphTemplate">
         </network-graph>
         <div class="menu-graph mb-0 mt-auto ml-auto mr-0">
             <div if.bind="selectedNode != null" class="card bg-white px-3 py-2 items-center">
