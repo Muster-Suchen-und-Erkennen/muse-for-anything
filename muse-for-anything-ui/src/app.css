@@ -194,18 +194,6 @@ taxonomy-graph[data-maximized] {
     grid-template-columns: minmax(8rem, 1fr) 2.5fr minmax(12rem, 2fr); 
 }
 
-
-ontology-graph[data-maximized] {
-    position: absolute;
-    top: 0px;
-    bottom: 0px;
-    left: 0px;
-    right: 0px;
-    border-radius: 0px;
-    margin-bottom: 0px;
-    grid-template-columns: minmax(8rem, 1fr) 2.5fr minmax(12rem, 2fr); 
-}
-
 taxonomy-graph .graph {
     grid-row-start: 1;
     grid-row-end: -1;
@@ -431,21 +419,26 @@ ux-dialog>ux-dialog-footer{
     overflow:hidden
 }
 
-.item-main {
+ontology-graph .item-main {
     grid-area: main;
 }
-.item-filtersection {
+ontology-graph .item-filtersection {
     grid-area: filtersection;
 }
-.item-treesection {
+ontology-graph .item-treesection {
     grid-area: treesection;
 }
-.item-overview {
-    grid-area: overview;
+ontology-graph .item-overview {
+    grid-row-start: 1;
+    grid-row-end: -1;
+    grid-column-start: 1;
+    grid-column-end: -1;
 }
 
-.container {
-    height: 100%;
+ontology-graph {
+    contain: content;
+    background-color: white;
+    min-height: 60vh;
     display:grid;
     grid-template-columns: 30% 70%;
     grid-template-rows: auto;
@@ -453,6 +446,17 @@ ux-dialog>ux-dialog-footer{
     "filtersection main"
     "treesection main"
     "overview main"
+}
+
+ontology-graph[data-maximized] {
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    border-radius: 0px;
+    margin-bottom: 0px;
+    grid-template-columns: 30% 70%; 
 }
 
 .ontology-move{

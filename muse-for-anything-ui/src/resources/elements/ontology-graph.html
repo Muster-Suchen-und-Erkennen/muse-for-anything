@@ -190,91 +190,89 @@
         </svg>
     </template>
 
-    <div class="container bg-white">
-        <div if.bind=" !isAllowedToShowGraph">
-            <h1 t="loading">Loading</h1>
-        </div>
-        <template else>
-            <div class="card maindiv">
-                <div class="item-filtersection px-2 py-1 border-gray-200 border-b">
-                    ${"ontology.filter-area" | t}
-                    <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1" placeholder="search"
-                        value.from-view="filter & throttle" aria-owns="'datalist-'+slug" autocapitalize="none"
-                        value.bind="searchtext" type="text" autocomplete="off" aria-autocomplete="list" role="combobox"
-                        id="'input-'+slug">
-                </div>
-                <div class="item-treesection px-2 py-1 border-gray-200 border-b">
-                    ${"ontology.tree-view" | t}
-                    <tree-node repeat.for="node of nodes" current.bind="node"></tree-node>  
-                </div>
-                <div class="item-overview">
-                    <network-graph class="graphoverview" classes="taxonomy-item deleted" mode="display" zoom="automatic"
-                        svg-template="#ontologyoverviewGraphTemplate">
-                    </network-graph>
-                </div>
-            </div>
-            <network-graph class="maingraph item-main card ml-3 px-2 py-1 border-gray-200 border-l bg-white"
-                classes="taxonomy-item deleted" mode="layout" zoom="both" svg-template="#taxonomyGraphTemplate">
-            </network-graph>
-            <div class="item-main mb-0 mt-auto ml-auto mr-0 ">
-                <div if.bind="selectedNode != null" class="card bg-white px-3 py-2 items-center">
-                    detailinfo
-                    ${selectedNode.id}!
-                </div>
-                <div class="buttons card bg-white px-3 py-2 items-center" style="width: fit-content;float: right;">
-                    <button class="button-flat px-2 items-center" click.delegate="toggleMenu()"
-                        title='${"ontology.moveLeft" | t}'>
-                        <svg-icon icon.bind="maximizeMenu ? 'arrow-right' : 'arrow-left'" size.bind="18"></svg-icon>
-                    </button>
-                    <div if.bind="maximizeMenu">
-                        <div class="ontology-moveBackground">
-                            <div class="ontology-move">
-    
-                                <button class="button-flat px-2 items-center" click.delegate="moveGraph('up')"
-                                    title='${"ontology.moveUp" | t}'>
-                                    <svg-icon icon.bind="'arrow-up'" size.bind="18"></svg-icon>
-                                </button>
-                            </div>
-                            <div class="ontology-move">
-                                <button class="button-flat px-2 items-center" click.delegate="moveGraph('left')"
-                                    title='${"ontology.moveLeft" | t}'>
-                                    <svg-icon icon.bind="'arrow-left'" size.bind="18"></svg-icon>
-                                </button>
-                                <button class="button-flat px-2 items-center" click.delegate="moveGraph('right')"
-                                    title='${"ontology.moveRight" | t}'>
-                                    <svg-icon icon.bind="'arrow-right'" size.bind="18"></svg-icon>
-                                </button>
-    
-                            </div>
-                            <div class="ontology-move">
-                                <button class="button-flat px-2 items-center" click.delegate="moveGraph('down')"
-                                    title='${"ontology.moveDown" | t}'>
-                                    <svg-icon icon.bind="'arrow-down'" size.bind="18"></svg-icon>
-                                </button>
-    
-                            </div>
-                        </div>
-    
-                        <button class="button-flat px-2 items-center" click.delegate="zoomIn()"
-                            title='${"ontology.zoomIn" | t}'>
-                            <svg-icon icon.bind="'plus'" size.bind="18"></svg-icon>
-                        </button>
-                        <button class="button-flat px-2 items-center" click.delegate="zoomOut()"
-                            title='${"ontology.zoomOut" | t}'>
-                            <svg-icon icon.bind="'minus'" size.bind="18"></svg-icon>
-                        </button>
-                        <button class="button-flat px-2 items-center" click.delegate="resetLayout()"
-                            title='${"ontology.resetLayout" | t}'>
-                            <svg-icon icon.bind="'reset'" size.bind="18"></svg-icon>
-                        </button>
-                        <button class="button-flat px-2 items-center" click.delegate="toggleMaximize()"
-                            title='${"ontology.toggleMaximize" | t}'>
-                            <svg-icon icon.bind="maximized ? 'minimize' : 'maximize'" size.bind="18"></svg-icon>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            
-        </template>
+    <div if.bind=" !isAllowedToShowGraph">
+        <h1 t="loading">Loading</h1>
     </div>
+    <template else>
+        <div class="card maindiv">
+            <div class="item-filtersection px-2 py-1 border-gray-200 border-b">
+                ${"ontology.filter-area" | t}
+                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1" placeholder="search"
+                    value.from-view="filter & throttle" aria-owns="'datalist-'+slug" autocapitalize="none"
+                    value.bind="searchtext" type="text" autocomplete="off" aria-autocomplete="list" role="combobox"
+                    id="'input-'+slug">
+            </div>
+            <div class="item-treesection px-2 py-1 border-gray-200 border-b">
+                ${"ontology.tree-view" | t}
+                <tree-node repeat.for="node of nodes" current.bind="node"></tree-node>  
+            </div>
+            <div class="item-overview">
+                <network-graph class="graphoverview" classes="taxonomy-item deleted" mode="display" zoom="automatic"
+                    svg-template="#ontologyoverviewGraphTemplate">
+                </network-graph>
+            </div>
+        </div>
+        <network-graph class="maingraph item-main card ml-3 px-2 py-1 border-gray-200 border-l bg-white"
+            classes="taxonomy-item deleted" mode="layout" zoom="both" svg-template="#taxonomyGraphTemplate">
+        </network-graph>
+        <div class="item-main mb-0 mt-auto ml-auto mr-0 ">
+            <div if.bind="selectedNode != null" class="card bg-white px-3 py-2 items-center">
+                detailinfo
+                ${selectedNode.id}!
+            </div>
+            <div class="buttons card bg-white px-3 py-2 items-center" style="width: fit-content;float: right;">
+                <button class="button-flat px-2 items-center" click.delegate="toggleMenu()"
+                    title='${"ontology.moveLeft" | t}'>
+                    <svg-icon icon.bind="maximizeMenu ? 'arrow-right' : 'arrow-left'" size.bind="18"></svg-icon>
+                </button>
+                <div if.bind="maximizeMenu">
+                    <div class="ontology-moveBackground">
+                        <div class="ontology-move">
+
+                            <button class="button-flat px-2 items-center" click.delegate="moveGraph('up')"
+                                title='${"ontology.moveUp" | t}'>
+                                <svg-icon icon.bind="'arrow-up'" size.bind="18"></svg-icon>
+                            </button>
+                        </div>
+                        <div class="ontology-move">
+                            <button class="button-flat px-2 items-center" click.delegate="moveGraph('left')"
+                                title='${"ontology.moveLeft" | t}'>
+                                <svg-icon icon.bind="'arrow-left'" size.bind="18"></svg-icon>
+                            </button>
+                            <button class="button-flat px-2 items-center" click.delegate="moveGraph('right')"
+                                title='${"ontology.moveRight" | t}'>
+                                <svg-icon icon.bind="'arrow-right'" size.bind="18"></svg-icon>
+                            </button>
+
+                        </div>
+                        <div class="ontology-move">
+                            <button class="button-flat px-2 items-center" click.delegate="moveGraph('down')"
+                                title='${"ontology.moveDown" | t}'>
+                                <svg-icon icon.bind="'arrow-down'" size.bind="18"></svg-icon>
+                            </button>
+
+                        </div>
+                    </div>
+
+                    <button class="button-flat px-2 items-center" click.delegate="zoomIn()"
+                        title='${"ontology.zoomIn" | t}'>
+                        <svg-icon icon.bind="'plus'" size.bind="18"></svg-icon>
+                    </button>
+                    <button class="button-flat px-2 items-center" click.delegate="zoomOut()"
+                        title='${"ontology.zoomOut" | t}'>
+                        <svg-icon icon.bind="'minus'" size.bind="18"></svg-icon>
+                    </button>
+                    <button class="button-flat px-2 items-center" click.delegate="resetLayout()"
+                        title='${"ontology.resetLayout" | t}'>
+                        <svg-icon icon.bind="'reset'" size.bind="18"></svg-icon>
+                    </button>
+                    <button class="button-flat px-2 items-center" click.delegate="toggleMaximize()"
+                        title='${"ontology.toggleMaximize" | t}'>
+                        <svg-icon icon.bind="maximized ? 'minimize' : 'maximize'" size.bind="18"></svg-icon>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+    </template>
 </template>
