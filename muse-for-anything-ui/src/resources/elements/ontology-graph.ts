@@ -125,12 +125,15 @@ export class ListNodeModel {
     public children: ListNodeModel[];
     public expanded: boolean;
     public visible: boolean;
+    private graph: GraphEditor;
+    @observable() isSelected: boolean;
    
-    constructor(idVal: string,name: string, visible: boolean, children: ListNodeModel[]) {
+    constructor(graph: GraphEditor, idVal: string,name: string, visible: boolean, children: ListNodeModel[]) {
       this.id = idVal;
       this.name = name;
       this.visible = visible;
       this.children = children || [];
+      this.graph = graph;
    
       if (this.hasChildren()) {
         this.icon = "arrow-right";
@@ -157,8 +160,17 @@ export class ListNodeModel {
       }
     }
 
+    isSelectedChanged(newValue,oldValue) {
+        if (newValue === true) {
+          this.graph.selectNode(this.id);
+        } else {
+          this.graph.deselectNode(this.id);
+        }
+        this.graph.updateHighlights();
+    }
+
     addChild(childName: string,id: string) {
-        this.children.push(new ListNodeModel(id,childName,false,null))
+        this.children.push(new ListNodeModel(this.graph,id,childName,false,null))
         this.icon = "arrow-right";
         this.expanded = false;
     }
@@ -414,7 +426,7 @@ export class OntologyGraph {
         newGraph.dynamicTemplateRegistry.addDynamicTemplate('taxonomy-group-node-template',new TaxonomyNodeTemplate);
     }
 
-    searchtextChanged(newText: String, old) {
+    searchtextChanged(newText: string, old: string) {
         if(this.graph==null) {
             return;
         }
@@ -429,8 +441,22 @@ export class OntologyGraph {
                 }
             });
         }
-        // TODO: add searching in tree view
+        
+        this.recursiveListSearch(this.nodes,newText);
+
         this.graph.updateHighlights();
+    }
+
+    recursiveListSearch(items: ListNodeModel[], searchText: string) {
+        items.forEach(item => {
+            if (item.name.includes(searchText) && searchText!="") {
+                item.isSelected = true;
+            }
+            else {
+                item.isSelected = false;
+            }
+            this.recursiveListSearch(item.children,searchText)
+        })
     }
     
     typeItemsChanged(newItem) {
@@ -568,7 +594,7 @@ export class OntologyGraph {
         let groupManager = this.graph.groupingManager;
         let parentID =  this.addNodeToGraph({id: typeMainObject.self.href, title: typeMainObject.name, dynamicTemplate:"type-group-node-template", ...parentPosition});
 
-        this.nodes.push(new ListNodeModel(parentID.id.toString(),typeMainObject.self.name,true,null))
+        this.nodes.push(new ListNodeModel(this.graph,parentID.id.toString(),typeMainObject.self.name,true,null))
 
         if(parentID.id==null) {
             return;
@@ -652,6 +678,9 @@ export class OntologyGraph {
         let taxonomyItemSize = this.getSizeOfStaticTemplateNode('taxonomy-item');
 
         parentID = this.addNodeToGraph({id: taxonomyMainObject.href+taxonomyGroupIdMarker, title: taxonomyMainObject.name, dynamicTemplate:"taxonomy-group-node-template",...parentPosition});
+
+        this.nodes.push(new ListNodeModel(this.graph,parentID.id.toString(),taxonomyMainObject.name,true,null))
+
         let nodeID = parentID;
         if(parentID != null) 
         {

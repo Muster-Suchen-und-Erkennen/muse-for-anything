@@ -8,8 +8,8 @@
                 <svg-icon icon.bind="current.icon" size.bind="18"></svg-icon>
             </span>
             <div class="left eachMinQueueCheckSection" if.bind="!current.hasChildren()">
-                <label class="cb_control control--checkbox">
-                    <input type="checkbox">
+                <label class="cb_control control--checkbox" >
+                    <input type="checkbox" checked.bind="current.isSelected">
                     <span class="control__indicator"></span>
                 </label>
             </div>
