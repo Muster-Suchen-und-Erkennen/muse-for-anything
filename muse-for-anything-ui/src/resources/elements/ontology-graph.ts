@@ -694,6 +694,7 @@ export class OntologyGraph {
             console.log(childElement.name)
             nodeID = this.addNodeToGraph({id: childElement.self.href, title: childElement.name, type: 'taxonomy-item', x:parentID.bbox.x+(Math.floor(childElements.length/2))*(Number(taxonomyItemSize.width)+10),y:parentID.bbox.y+(childElements.length%2)*(Number(taxonomyItemSize.height)+10)});
             childElements.push({href:childElement.self.href,id:nodeID.id});
+            this.nodes.find(p=>p.id==parentID.id).addChild(childElement.name,nodeID.id.toString())
             if(nodeID != null) 
             {
                 groupManager.addNodeToGroup(parentID.id, nodeID.id);
