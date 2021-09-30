@@ -589,7 +589,7 @@ export class OntologyGraph {
             let typeProps = typeMainObject.schema.definitions?.root?.properties[typeElement];
             if(typeProps["type"]=="object") {
                 if(typeProps["referenceType"]=="ont-taxonomy") {
-                    nodeID = this.addNodeToGraph({id: this.getTaxonomyHref(typeProps["referenceKey"]["namespaceId"],typeProps["referenceKey"]["taxonomyId"])+"childItem", title: "Tax: " + this.taxonomyItems.find(f => f.namespaceId == typeProps["referenceKey"]["namespaceId"] && f.taxonomyId == typeProps["referenceKey"]["taxonomyId"]).name, type: "taxonomy-item", x:nodeID.bbox.x,y:nodeID.bbox.y});
+                    nodeID = this.addNodeToGraph({id: this.getTaxonomyHref(typeProps["referenceKey"]["namespaceId"],typeProps["referenceKey"]["taxonomyId"])+"childItem", title: "Tax: " + this.taxonomyItems.find(f => f.namespaceId == typeProps["referenceKey"]["namespaceId"] && f.taxonomyId == typeProps["referenceKey"]["taxonomyId"]).name, type: "taxonomy-link-item", x:nodeID.bbox.x,y:nodeID.bbox.y});
                     this.nodes.find(p=>p.id==parentID.id).addChild(this.taxonomyItems.find(f => f.namespaceId == typeProps["referenceKey"]["namespaceId"] && f.taxonomyId == typeProps["referenceKey"]["taxonomyId"]).name,nodeID.id.toString())
                     /*if(this.taxonomyItems.some(f => f.namespaceId == typeProps["referenceKey"]["namespaceId"] && f.taxonomyId == typeProps["referenceKey"]["taxonomyId"])){
                         nodeID = this.addTaxonomyItem(this.taxonomyItems.find(f => f.namespaceId == typeProps["referenceKey"]["namespaceId"] && f.taxonomyId == typeProps["referenceKey"]["taxonomyId"]),{x:nodeID.bbox.x,y:nodeID.bbox.y});
@@ -599,7 +599,7 @@ export class OntologyGraph {
                     }*/
                 } else if(typeProps["referenceType"]=="ont-type") {
                     let typeHref = this.getTypeHref(typeProps["referenceKey"]["namespaceId"],typeProps["referenceKey"]["typeId"])
-                    nodeID = this.addNodeToGraph({id: typeHref+"childItem", title: "Type: " + this.typeItems.find(f => f.self.href == typeHref).name, type: "taxonomy-item", x:nodeID.bbox.x,y:nodeID.bbox.y});
+                    nodeID = this.addNodeToGraph({id: typeHref+"childItem", title: "Type: " + this.typeItems.find(f => f.self.href == typeHref).name, type: "type-link-item", x:nodeID.bbox.x,y:nodeID.bbox.y});
                     this.nodes.find(p=>p.id==parentID.id).addChild(this.typeItems.find(f => f.self.href == typeHref).name,nodeID.id.toString())
                     
                     /*if(this.typeItems.some(f => f.self.href == typeHref)){
@@ -650,9 +650,9 @@ export class OntologyGraph {
 
         // needed to change between upper and lower new taxonomy item
         let taxonomyItemSize = this.getSizeOfStaticTemplateNode('taxonomy-item');
-        let yPosition = taxonomyItemSize.height/2+10;
 
         parentID = this.addNodeToGraph({id: taxonomyMainObject.href+taxonomyGroupIdMarker, title: taxonomyMainObject.name, dynamicTemplate:"taxonomy-group-node-template",...parentPosition});
+        let nodeID = parentID;
         if(parentID != null) 
         {
             groupManager.markAsTreeRoot(parentID.id);
@@ -662,8 +662,8 @@ export class OntologyGraph {
 
         let childElements: Array<{href:string,id:number|string}> = []
         taxonomyMainObject.itemsData.forEach(childElement => {
-            let nodeID = this.addNodeToGraph({id: childElement.self.href, title: childElement.name, type: 'taxonomy-item', x:parentPosition.x+Math.floor(childElements.length/2)*(taxonomyItemSize.width),y:parentPosition.y+taxonomyItemSize.height/2+10-yPosition});
-            yPosition = yPosition*-1;
+            console.log(childElement.name)
+            nodeID = this.addNodeToGraph({id: childElement.self.href, title: childElement.name, type: 'taxonomy-item', x:parentID.bbox.x+(Math.floor(childElements.length/2))*(Number(taxonomyItemSize.width)+10),y:parentID.bbox.y+(childElements.length%2)*(Number(taxonomyItemSize.height)+10)});
             childElements.push({href:childElement.self.href,id:nodeID.id});
             if(nodeID != null) 
             {
@@ -705,7 +705,7 @@ export class OntologyGraph {
      * @param node, node to add to the graph
      * @returns id of the new added node and the left bottom point of the node
      */
-    private addNodeToGraph(node: Node): {id:string|number, bbox: {x,y}} {
+    private addNodeToGraph(node: Node): {id:string|number, bbox: {x:number,y:number}} {
         node.id = String(node.id).replace(RegExp(/\/\/|\/|:| /g),"")
         // add some random number (unix time stamp) to the id, no make it unique
         node.id = node.id + "-" + Math.floor(Date.now());
@@ -713,6 +713,8 @@ export class OntologyGraph {
         if(this.graph.nodeList.some(element => element.id == node.id)){
             throw new Error("Item already exists in graph: "+ node.id);
         }
+
+        node.y = node.y + 10;
 
         // if the node template based on a static template, change x and y coordinate to the center of the node
         if(node.type) {
@@ -732,7 +734,7 @@ export class OntologyGraph {
      * @param nodeType, name of the static template
      * @returns size of the node
      */
-    private getSizeOfStaticTemplateNode(nodeType: string): {width, height} {
+    private getSizeOfStaticTemplateNode(nodeType: string): {width:number, height:number} {
         let width = this.graph.staticTemplateRegistry.getNodeTemplate(nodeType)._groups[0][0].getElementsByTagName("rect")[0].getAttribute("width");
         let height = this.graph.staticTemplateRegistry.getNodeTemplate(nodeType)._groups[0][0].getElementsByTagName("rect")[0].getAttribute("height");
         return {width,height}
@@ -846,21 +848,29 @@ export class OntologyGraph {
         let dirX = this.speed;
         let dirY = this.speed;
         
-        if(direction=='up') {
-            dirY = -this.speed;
-        } else if(direction=='left') {
-            dirX = -this.speed;
+        let div = -80;
+        let currentView = this.graph.currentViewWindow;
+        if(direction=='down') {
+            currentView.y = currentView.y-dirY;
         } else if(direction=='right') {
-            dirX = this.speed;
-        } else if(direction=='down') {
-            dirY = this.speed;
+            currentView.x = currentView.x-dirX;
+        } else if(direction=='left') {
+            currentView.x = currentView.x+dirX;
+        } else if(direction=='up') {
+            currentView.y = currentView.y+dirY;
         } 
+        currentView.x = currentView.x-div;
+        currentView.y = currentView.y-div;
+        currentView.height = currentView.height+2*div;
+        currentView.width = currentView.width+2*div;
 
-        this.graph.nodeList.forEach(node => {            
+        /*this.graph.nodeList.forEach(node => {            
             this.graph.moveNode(node.id, node.x+dirX, node.y+dirY, false);
-        })
+        })*/
 
-        this.renderMainViewPositionInOverviewGraph();
+
+        this.graph.zoomToBox(currentView);
+
         this.graph.completeRender();
     }
 }

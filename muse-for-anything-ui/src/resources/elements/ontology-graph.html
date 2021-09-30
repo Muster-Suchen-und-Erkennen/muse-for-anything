@@ -47,6 +47,14 @@
                     stroke: var(--line-color);
                 }
 
+                .taxonomy-link-item {
+                    stroke-dasharray: 5px;
+                }
+
+                .type-link-item {
+                    stroke-dasharray: 5px;
+                }
+
                 .link-handle {
                     display: none;
                     visibility:hidden;
@@ -128,6 +136,18 @@
                         data-wrap-lines="110 70|110 110 70"></text>
                     <text class="sort-key" data-content="sortKey" x="55" y="26" width="35"></text>
                 </g>
+                <g id="taxonomy-link-item" data-template-type="node">
+                    <rect width="120" height="60" x="-60" y="-30" rx="5" data-link-handles="edges" class="taxonomy-link-item"></rect>
+                    <text class="title" data-content="title" x="-55" y="-13" width="110"></text>
+                    <text class="description" data-content="description" x="-55" y="2"
+                        data-wrap-lines="110 70|110 110 70"></text>
+                </g>
+                <g id="type-link-item" data-template-type="node">
+                    <rect width="120" height="60" x="-60" y="-30" rx="5" data-link-handles="edges" class="type-link-item"></rect>
+                    <text class="title" data-content="title" x="-55" y="-13" width="110"></text>
+                    <text class="description" data-content="description" x="-55" y="2"
+                        data-wrap-lines="110 70|110 110 70"></text>
+                </g>
                 <g id="type-item" data-template-type="node">
                     <rect width="120" height="120" x="-60" y="-30" rx="5" data-link-handles="edges"></rect>
                     <rect class="type-title-background" x="-60" y="-30" height="20" width="120"></rect>
@@ -135,7 +155,6 @@
                     <text class="type-title" data-content="props" x="-55" y="-13" width="110"></text>
                     <text class="description" data-content="description" x="-55" y="2"
                         data-wrap-lines="110 70|110 110 70"></text>
-                    <text class="sort-key" data-content="sortKey" x="55" y="26" width="35"></text>
                 </g>
                 <g id="default-marker" data-template-type="marker" data-line-attachement-point="6">
                     <circle cx="0" cy="0" r="6"></circle>
