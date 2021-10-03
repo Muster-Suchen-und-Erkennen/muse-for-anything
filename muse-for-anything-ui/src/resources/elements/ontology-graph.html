@@ -68,6 +68,15 @@
                     border-bottom: double;
                 }
 
+                .titleDescription {
+                    fill: var(--text-color);
+                    font-size: small;
+                    text-overflow: ellipsis;
+                    word-break: break-all;
+                    border-bottom: double;
+
+                }
+
                 .type-title {
                     fill: var(--text-color);
                     font-size: initial;
@@ -131,20 +140,23 @@
             <defs class="templates">
                 <g id="taxonomy-item" data-template-type="node">
                     <rect width="120" height="60" x="-60" y="-30" rx="5" data-link-handles="edges"></rect>
-                    <text class="title" data-content="title" x="-55" y="-13" width="110"></text>
+                    <text class="titleDescription" x="-55" y="-13" width="110" data-content="typedescription"></text>
+                    <text class="title" data-content="title" x="-55" y="4" width="110"></text>
                     <text class="description" data-content="description" x="-55" y="2"
                         data-wrap-lines="110 70|110 110 70"></text>
                     <text class="sort-key" data-content="sortKey" x="55" y="26" width="35"></text>
                 </g>
                 <g id="taxonomy-link-item" data-template-type="node">
                     <rect width="120" height="60" x="-60" y="-30" rx="5" data-link-handles="edges" class="taxonomy-link-item"></rect>
-                    <text class="title" data-content="title" x="-55" y="-13" width="110"></text>
+                    <text class="titleDescription" x="-55" y="-13" width="110" data-content="typedescription"></text>
+                    <text class="title" data-content="title" x="-55" y="4" width="110"></text>
                     <text class="description" data-content="description" x="-55" y="2"
                         data-wrap-lines="110 70|110 110 70"></text>
                 </g>
                 <g id="type-link-item" data-template-type="node">
                     <rect width="120" height="60" x="-60" y="-30" rx="5" data-link-handles="edges" class="type-link-item"></rect>
-                    <text class="title" data-content="title" x="-55" y="-13" width="110"></text>
+                    <text class="titleDescription" x="-55" y="-13" width="110" data-content="typedescription"></text>
+                    <text class="title" data-content="title" x="-55" y="4" width="110"></text>
                     <text class="description" data-content="description" x="-55" y="2"
                         data-wrap-lines="110 70|110 110 70"></text>
                 </g>
@@ -261,8 +273,8 @@
     <h1 t="loading">Loading</h1>
 </div>
 <template else>
-        <div class=" maindiv menu-section px-3 py-2 card">
-            <div class="item-filtersection px-2 py-1 border-gray-200 border-b scroll-area">
+        <div class=" maindiv menu-section card">
+            <div class="item-filtersection px-1 py-1 border-gray-200 border-b scroll-area">
 
                 <span class="section-title">
                     ${"ontology.filter-area" | t}
@@ -289,7 +301,7 @@
                     Types
                 </div>
             </div>
-            <div class="item-treesection px-2 py-1 border-gray-200 border-b scroll-area" >
+            <div class="item-treesection px-1 py-1 border-gray-200 border-b scroll-area" >
 
                 <span class="section-title">
                     ${"ontology.tree-view" | t}
@@ -302,7 +314,7 @@
                 </network-graph>
             </div>
         </div>
-        <network-graph class="maingraph menu-graph ml-2 px-3 py-2 card"
+        <network-graph class="maingraph menu-graph ml-2 card"
             classes="taxonomy-item deleted" mode="layout" zoom="both" svg-template="#ontologyGraphTemplate">
         </network-graph>
         <div class="menu-graph mb-0 mt-auto ml-auto mr-0">
