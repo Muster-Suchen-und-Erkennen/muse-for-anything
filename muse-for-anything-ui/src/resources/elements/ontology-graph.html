@@ -269,10 +269,10 @@
         </svg>
     </template>
 
-<div if.bind=" !isAllowedToShowGraph">
-    <h1 t="loading">Loading</h1>
-</div>
-<template else>
+    <div if.bind=" !isAllowedToShowGraph">
+        <h1 t="loading">Loading</h1>
+    </div>
+    <template else>
         <div class=" maindiv menu-section card">
             <div class="item-filtersection px-1 py-1 border-gray-200 border-b scroll-area">
 
@@ -317,6 +317,12 @@
         <network-graph class="maingraph menu-graph ml-2 card"
             classes="taxonomy-item deleted" mode="layout" zoom="both" svg-template="#ontologyGraphTemplate">
         </network-graph>
+        <div class="menu-graph ml-2 card" if.bind="isLoading!=2">
+            <button class="button-outline px-2 items-center" click.delegate="finishDataLoading()">${"ontology.ShowGraph" | t}
+            <!--                    </button>
+            <spinner if.bind="isLoading!=0" type="S8" style-class="" size="100" color="default"></spinner>
+            Loading: ${isLoading}-->
+        </div>
         <div class="menu-graph mb-0 mt-auto ml-auto mr-0">
             <div if.bind="selectedNode != null" class="card bg-white px-3 py-2 items-center">
                 detailinfo
