@@ -481,6 +481,7 @@ export class OntologyGraph {
     }
     
     typeItemsChanged(newItem) {
+        return;
         if(newItem.length != 0) {
             
             let pos = {x:Math.floor(Math.random()*1000),y:Math.floor(Math.random()*1000)}; 
@@ -492,6 +493,7 @@ export class OntologyGraph {
     }
 
     taxonomyItemsChanged(newItem) {
+        return;
         if(newItem.length != 0) {
             let pos = {x:Math.floor(Math.random()*1000),y:Math.floor(Math.random()*1000)}; 
             this.addTaxonomyItem(this.taxonomyItems[newItem[0].index],pos);
@@ -531,10 +533,7 @@ export class OntologyGraph {
         const promise = this.api.getByApiLink<TypeApiObject>(typesRootLink, ignoreCache).then(apiResponse => {
             apiResponse.links.forEach(link=> {
                 if(link.rel.includes("next")) {
-                    if(link.rel.includes("last")) {
-                        this.loadDataTypes(link.href,this.ignoreCache);
-                    }
-
+                    this.loadDataTypes(link.href,this.ignoreCache);
                 }
             })
             // for each type in namespace
@@ -608,33 +607,37 @@ export class OntologyGraph {
             this.addTaxonomyItem(element,pos);
         });
 
-        // add invisible links between types and taxonomies
-        this.addHiddenLinks();
-
         await this.graph.completeRender();
 
         await this.addChildnodesToParents();
 
+        await this.addHiddenLinks();
+
+        await this.graph.completeRender();
+
         await this.graph?.zoomToBoundingBox();
 
         this.isLoading=2;
-        alert("Duration for rendering: "+ ((Date.now()-startTime)/1000));
     }
 
-    private async addHiddenLinks() {
-        await this.graph.nodeList.forEach(node => {
+    private addHiddenLinks() {
+        this.graph.nodeList.forEach(node => {
+            console.log()
             if(node.id.toString().includes("childItem") && this.isNumber(node.id.toString().substr(node.id.toString().indexOf("childItem")+9))) {
                 let target = this.graph.nodeList.find(tar => !tar.id.toString().includes("childItem") && tar.id.toString().startsWith(node.id.toString().substr(0,node.id.toString().indexOf("childItem"))))
                 
-                if(this.graph.edgeList.some(edge => edge.source == node.id && edge.target == target.id)) return;
-
-                let path = {source: node.id, target: target.id,markerEnd : {
-                    template: "arrow",
-                    scale: 0.8,
-                    relativeRotation: 0,
-                }}
-                this.graph.addEdge(path,true)
-                this.graphoverview.addEdge(path,true)
+                if(target) {    
+                    let path = {source: node.id, target: target.id,markerEnd : {
+                        template: "arrow",
+                        scale: 0.8,
+                        relativeRotation: 0,
+                    }}
+                    this.graph.addEdge(path,false)
+                    this.graphoverview.addEdge(path,false)
+                } else {
+                    //throw new Error("Target for edge could not be found" + node.id)
+                    console.log("Target for edge could not be found", node)
+                }
 
             }
         })
@@ -693,8 +696,10 @@ export class OntologyGraph {
 
         // sore previous nodes values
         let nodeID: {id:Node, bbox: {x,y}} = {id:null, bbox:{x:parentID.bbox.x,y:parentID.bbox.y}};
-
+        let counter = 0;
         for (let typeElement in typeMainObject.schema.definitions?.root?.properties) {  
+            if (counter>3) return;
+            counter++;
             let typeProps = typeMainObject.schema.definitions?.root?.properties[typeElement];
             if(typeProps["type"]=="object") {
                 if(typeProps["referenceType"]=="ont-taxonomy") {
@@ -703,8 +708,8 @@ export class OntologyGraph {
                     
                 } else if(typeProps["referenceType"]=="ont-type") {
                     let typeHref = this.getTypeHref(typeProps["referenceKey"]["namespaceId"],typeProps["referenceKey"]["typeId"])
-                    nodeID = this.addNodeToGraph({id: typeHref+"childItem", title: this.typeItems.find(f => f.self.href == typeHref).name, type: "type-link-item", x:nodeID.bbox.x,y:nodeID.bbox.y, typedescription:"Type-Ref"},true);
-                    this.nodes.find(p=>p.id==parentID.id).addChild(this.typeItems.find(f => f.self.href == typeHref).name,nodeID.id)
+                    nodeID = this.addNodeToGraph({id: typeHref+"childItem", title: this.typeItems.find(f => f.self.href == typeHref)?.name, type: "type-link-item", x:nodeID.bbox.x,y:nodeID.bbox.y, typedescription:"Type-Ref"},true);
+                    this.nodes.find(p=>p.id==parentID.id).addChild(this.typeItems.find(f => f.self.href == typeHref)?.name,nodeID.id)
                     
                 } else {
                     console.warn("Undefined Object found: " , typeProps["referenceType"])
@@ -800,7 +805,7 @@ export class OntologyGraph {
             scale: 0.8,
             relativeRotation: 0,
         }}
-        this.graph.addEdge(path,true)
+        this.graph.addEdge(path,false)
     }
 
     /**
@@ -811,10 +816,11 @@ export class OntologyGraph {
     private addNodeToGraph(node: Node, redrawGraph: boolean): {id:Node, bbox: {x:number,y:number}} {
         node.id = String(node.id).replace(RegExp(/\/\/|\/|:| /g),"")
         // add some random number (unix time stamp) to the id, no make it unique
-        node.id = node.id + "-" + Math.floor(Date.now());
+        let nodeIdOrig = node.id;
+        node.id = nodeIdOrig + "-" + Math.floor(Date.now())
 
-        if(this.graph.nodeList.some(element => element.id == node.id)){
-            throw new Error("Item already exists in graph: "+ node.id);
+        while(this.graph.nodeList.some(element => element.id == node.id)){
+            node.id = nodeIdOrig + "-" + Math.floor(Date.now())
         }
 
         node.y = node.y + 10;
