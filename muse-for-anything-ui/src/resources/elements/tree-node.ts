@@ -1,6 +1,6 @@
 import { bindable } from "aurelia-framework";
-import { ListNodeModel } from "./ontology-graph";
+import { DataItemModel } from "./ontology-graph";
  
 export class TreeNode {
-  @bindable current: ListNodeModel;
+  @bindable current: DataItemModel;
 }
