@@ -383,6 +383,8 @@ export class OntologyGraph {
     @observable() searchtext: String = "";
     @observable() selectedNode: Node;
     @observable() typeChildsToShow: number = 3;
+    @observable() showTaxonomies: boolean= true;
+    @observable() showTypes: boolean= true;
 
     missingParentConnection: Array<{ parent: number | string, child: number | string, joinTree: boolean }> = [];
 
@@ -673,6 +675,36 @@ export class OntologyGraph {
         items.forEach(item => this.sortList(item.children))
     }
 
+    async showTypesChanged(value: boolean) {
+        if(value) {
+            this.renderTypes();
+            await this.graph.completeRender();
+            await this.addChildnodesToParents();
+    
+            await this.updateHiddenLinks();
+    
+            await this.graph.completeRender();
+    
+            await this.graph?.zoomToBoundingBox();
+        } else {
+            this.deleteTypes();
+        }
+    }
+
+    async showTaxonomiesChanged(value: boolean) {
+        if(value) {
+            this.renderTaxonomies();
+            await this.graph.completeRender();
+            await this.updateHiddenLinks();
+    
+            await this.graph.completeRender();
+    
+            await this.graph?.zoomToBoundingBox();
+        } else {
+            this.deleteTaxonomies();
+        }
+    }
+
     private async renderGraph() {
         this.sortList(this.dataItems);
         
@@ -681,19 +713,9 @@ export class OntologyGraph {
             return;
         }
 
-        await this.dataItems.forEach(element => {
-            if (element.itemType == DataItemTypeEnum.TypeItem) {
-                let pos = { x: Math.floor(Math.random() * 1000), y: Math.floor(Math.random() * 1000) };
-                this.addTypeItem(element, pos);
-            }
-        });
+        if(this.showTypes) this.renderTypes();
 
-        await this.dataItems.forEach((element) => {
-            if (element.itemType == DataItemTypeEnum.TaxonomyItem) {
-                let pos = { x: Math.floor(Math.random() * 1000), y: Math.floor(Math.random() * 1000) };
-                this.addTaxonomyItem(element, pos);
-            }
-        });
+        if(this.showTaxonomies) this.renderTaxonomies();
 
         await this.graph.completeRender();
 
@@ -706,6 +728,46 @@ export class OntologyGraph {
         await this.graph?.zoomToBoundingBox();
 
         this.isLoading = 2;
+    }
+
+    private async renderTypes() {
+        await this.dataItems.forEach(element => {
+            if (element.itemType == DataItemTypeEnum.TypeItem) {
+                let pos = { x: Math.floor(Math.random() * 1000), y: Math.floor(Math.random() * 1000) };
+                this.addTypeItem(element, pos);
+            }
+        });
+    }
+
+    private async renderTaxonomies() {
+        await this.dataItems.forEach((element) => {
+            if (element.itemType == DataItemTypeEnum.TaxonomyItem) {
+                let pos = { x: Math.floor(Math.random() * 1000), y: Math.floor(Math.random() * 1000) };
+                this.addTaxonomyItem(element, pos);
+            }
+        });
+    }
+
+    private deleteTypes() {
+        this.dataItems.filter(p => p.itemType==DataItemTypeEnum.TypeItem).forEach(parent => {
+            parent.children.forEach(child => {
+                this.graph.groupingManager.removeNodeFromGroup(parent.id,child.id);
+                this.graph.removeNode(child.id)
+            });
+            this.graph.removeNode(parent.id)
+        });
+        this.graph.completeRender();
+    }
+
+    private deleteTaxonomies() {
+        this.dataItems.filter(p => p.itemType==DataItemTypeEnum.TaxonomyItem).forEach(parent => {
+            parent.children.forEach(child => {
+                this.graph.groupingManager.removeNodeFromGroup(parent.id,child.id);
+                this.graph.removeNode(child.id)
+            });
+            this.graph.removeNode(parent.id)
+        });
+        this.graph.completeRender();
     }
 
     private updateHiddenLinks() {
