@@ -66,27 +66,11 @@ class TypeNodeTemplate implements DynamicNodeTemplate {
 
     private calculateRect(g: any, grapheditor: GraphEditor, context: DynamicTemplateContext<Node>, updated?: boolean) {
         let props = g._groups[0][0].__data__;
-        const children = grapheditor.groupingManager.getAllChildrenOf(props.id);
-        if (children.size == 0) {
+        if(props.height) {
+            this.drawRect(g, { x: 0, y: 0, width: props.width, height: props.height }, props)
+        } else {
             this.drawRect(g, { x: 0, y: 0, width: 120, height: 20 }, props)
-            return;
         }
-
-        const boxes: Rect[] = [];
-        children.forEach(childId => {
-            const node = grapheditor.getNode(childId);
-            const bbox = grapheditor.getNodeBBox(childId);
-            boxes.push({
-                x: node.x + bbox.x,
-                y: node.y + bbox.y,
-                width: bbox.width,
-                height: bbox.height,
-            });
-        });
-
-        const minBox = calculateMinBoundingRect(boxes);
-
-        this.drawRect(g, minBox, props);
     }
 
     private drawRect(g: any, minBox: any, props: any) {
@@ -134,6 +118,7 @@ export class DataItemModel {
     public itemType: DataItemTypeEnum;
     public node: Node;
     public taxonomyParentRelations: string[];
+    public position: {x,y}
 
     public icon: string;
     public children: DataItemModel[];
@@ -211,29 +196,16 @@ class TaxonomyNodeTemplate implements DynamicNodeTemplate {private linkHandleOpt
 
     private calculateRect(g: any, grapheditor: GraphEditor, context: DynamicTemplateContext<Node>, updated?: boolean) {
         let props = g._groups[0][0].__data__;
-        const children = grapheditor.groupingManager.getAllChildrenOf(props.id);
-
-        if (children.size == 0) {
-            this.drawRect(g, { x: 0, y: 0, width: 120, height: 20 }, props, false)
-            return;
+        if(!props.height) {
+            props.height = 20;
         }
-
-        const boxes: Rect[] = [];
-        children.forEach(childId => {
-            const node = grapheditor.getNode(childId);
-            const bbox = grapheditor.getNodeBBox(childId);
-
-            boxes.push({
-                x: node.x + bbox.x,
-                y: node.y + bbox.y,
-                width: bbox.width,
-                height: bbox.height,
-            });
-        });
-
-        let minBox = calculateMinBoundingRect(boxes);
-
-        this.drawRect(g, minBox, props, true);
+        if (!props.width) {
+            props.width = 140;
+        }
+        if (!props.childVisible) {
+            props.childVisible = false;
+        }
+        this.drawRect(g, { x: 0, y: 0, width: props.width, height: props.height }, props,props.childVisible)
     }
 
     private drawRect(g: any, minBox: any, props: any, childsVisible: boolean) {
@@ -299,12 +271,33 @@ class TaxonomyGroupBehaviour implements GroupBehaviour {
     allowDraggedNodesLeavingGroup = false;
 
     afterNodeJoinedGroup(group: string, childGroup: string, groupNode: Node, childNode: Node, graphEditor: GraphEditor, atPosition?: Point) {
-        repositionGroupNode(group, groupNode, graphEditor);
+        this.calcSize(groupNode, group, graphEditor);
+    }
+
+    afterNodeLeftGroup(group: string, childGroup: string, groupNode: Node, childNode: Node, graphEditor: GraphEditor) {
+        //repositionGroupNode(group, groupNode, graphEditor);
+        this.calcSize(groupNode, group, graphEditor);
+    }
+
+    calcSize(groupNode: Node,groupId: string, graphEditor: GraphEditor) {
+        if (graphEditor.groupingManager.getAllChildrenOf(groupId).size>1) {
+            groupNode.height = 140;
+        } else {
+            groupNode.height = 20;
+        }
+        groupNode.width = graphEditor.groupingManager.getAllChildrenOf(groupId).size/2*(140)
+    }
+
+    onNodeMoveStart(group: string, childGroup: string, groupNode: Node, childNode: Node, graphEditor: GraphEditor) {
+        //repositionGroupNode(group, groupNode, graphEditor);
+        //TODO
     }
 
     onNodeMoveEnd(group: string, childGroup: string, groupNode: Node, childNode: Node, graphEditor: GraphEditor) {
-        repositionGroupNode(group, groupNode, graphEditor);
+        //repositionGroupNode(group, groupNode, graphEditor);
+        //TODO
     }
+
 }
 
 class TypeGroupBehaviour implements GroupBehaviour {
@@ -314,22 +307,36 @@ class TypeGroupBehaviour implements GroupBehaviour {
     allowDraggedNodesLeavingGroup = false;
 
     afterNodeJoinedGroup(group: string, childGroup: string, groupNode: Node, childNode: Node, graphEditor: GraphEditor, atPosition?: Point) {
-        repositionGroupNode(group, groupNode, graphEditor);
+        //repositionGroupNode(group, groupNode, graphEditor);
+        this.calcSize(groupNode, group, graphEditor);
     }
 
     afterNodeLeftGroup(group: string, childGroup: string, groupNode: Node, childNode: Node, graphEditor: GraphEditor) {
         //repositionGroupNode(group, groupNode, graphEditor);
+        this.calcSize(groupNode, group, graphEditor);
+    }
+
+    calcSize(groupNode: Node,groupId: string, graphEditor: GraphEditor) {
+        if (graphEditor.groupingManager.getAllChildrenOf(groupId).size>0) {
+            groupNode.height = graphEditor.groupingManager.getAllChildrenOf(groupId).size*70;
+        } else {
+            groupNode.height = 20;
+        }
+        groupNode.width = 140;
     }
 
     onNodeMoveStart(group: string, childGroup: string, groupNode: Node, childNode: Node, graphEditor: GraphEditor) {
-        repositionGroupNode(group, groupNode, graphEditor);
+        //repositionGroupNode(group, groupNode, graphEditor);
+        //TODO
     }
 
     onNodeMoveEnd(group: string, childGroup: string, groupNode: Node, childNode: Node, graphEditor: GraphEditor) {
-        repositionGroupNode(group, groupNode, graphEditor);
+        //repositionGroupNode(group, groupNode, graphEditor);
+        //TODO
     }
 }
 
+/*
 // reposition the groups parent node if one child element changed position
 function repositionGroupNode(group: string, groupNode: Node, graphEditor: GraphEditor) {
     const children = graphEditor.groupingManager.getAllChildrenOf(group);
@@ -356,7 +363,7 @@ function repositionGroupNode(group: string, groupNode: Node, graphEditor: GraphE
     graphEditor.groupingManager.getGroupBehaviourOf(groupNode.id).moveChildrenAlongGoup = tempConfig;
 
     graphEditor.completeRender();
-}
+}*/
 
 @autoinject
 export class OntologyGraph {
@@ -423,23 +430,28 @@ export class OntologyGraph {
 
     dataItemsChanged(newValue: any) {
         //TODO
-        /*if(newValue?.length>0) {
+        /*if(newValue?.length>0) {{
+            console.log("newvalue")
             this.isLoading=2;
-            let newItem:DataItemModel = this.dataItems[newValue[0].index]
-            let pos = { x: Math.floor(Math.random() * 1000), y: Math.floor(Math.random() * 1000) };
-            if(newItem.itemType==DataItemTypeEnum.TypeItem) {
-                this.addTypeItem(newItem,pos)
-            } else if (newItem.itemType==DataItemTypeEnum.TaxonomyItem) {
-                this.addTaxonomyItem(newItem,pos)
+            if(this.dataItems.length%30==0) 
+                for(let counter = this.dataItems.length-30;counter<this.dataItems.length;counter++) {
+                    let newItem:DataItemModel = this.dataItems[counter]
+                    let pos = { x: Math.floor(Math.random() * 1000), y: Math.floor(Math.random() * 1000) };
+                    if(newItem.itemType==DataItemTypeEnum.TypeItem) {
+                        this.addTypeItem(newItem,pos)
+                    } else if (newItem.itemType==DataItemTypeEnum.TaxonomyItem) {
+                        this.addTaxonomyItem(newItem,pos)
+                    } 
+                    this.graph.completeRender();
+                    this.addChildnodesToParents();
+            
+                    this.updateHiddenLinks();
+            
+                    this.graph.completeRender();
+            
+                    this.graph?.zoomToBoundingBox();
+                }   
             } 
-            this.graph.completeRender();
-            this.addChildnodesToParents();
-    
-            this.updateHiddenLinks();
-    
-            this.graph.completeRender();
-    
-            this.graph?.zoomToBoundingBox();
         }*/
     }
 
@@ -530,10 +542,10 @@ export class OntologyGraph {
                 if (childs.size < Math.min(parent.children.length, newValue)) {
                     for (let i = childs.size; i < Math.min(parent.children.length, newValue); i++) {
                         if (childs.size == 0) {
-                            this.addItemToType(parent.children[i], { x: parent.node.x, y: parent.node.y }, parent);
+                            this.addItemsToType(parent.children[i], { x: parent.node.x+20, y: parent.node.y+20 }, parent);
                         } else {
                             let { width, height } = this.getSizeOfStaticTemplateNode(parent.children[i - 1].node.type);
-                            this.addItemToType(parent.children[i], { x: parent.children[i - 1].node.x - Math.floor(width / 2), y: parent.children[i - 1].node.y + Math.floor(height / 2) }, parent);
+                            this.addItemsToType(parent.children[i], { x: parent.children[i - 1].node.x - Math.floor(width / 2), y: parent.children[i - 1].node.y + Math.floor(height / 2) }, parent);
                         }
                     }
                 }
@@ -644,7 +656,6 @@ export class OntologyGraph {
         });
     }
 
-
     private mapTypeEnums(type: any): DataItemTypeEnum {
         if (type["type"] == "object") {
             if (type["referenceType"] == "ont-taxonomy") {
@@ -671,6 +682,12 @@ export class OntologyGraph {
                 return DataItemTypeEnum.Undefined;
             }
         }
+    }
+
+    private getNodePositions() {
+        this.dataItems.forEach(item => {
+            item.position = { x: Math.floor(Math.random() * 1000), y: Math.floor(Math.random() * 1000) };
+        })
     }
 
     private sortList(items: DataItemModel[]) {
@@ -721,6 +738,7 @@ export class OntologyGraph {
     }
 
     private async renderGraph() {
+        this.getNodePositions();
         this.sortList(this.dataItems);
         
         let startTime = Date.now();
@@ -748,8 +766,7 @@ export class OntologyGraph {
     private async renderTypes() {
         await this.dataItems.forEach(element => {
             if (element.itemType == DataItemTypeEnum.TypeItem) {
-                let pos = { x: Math.floor(Math.random() * 1000), y: Math.floor(Math.random() * 1000) };
-                this.addTypeItem(element, pos);
+                this.addTypeItem(element);
             }
         });
     }
@@ -757,8 +774,7 @@ export class OntologyGraph {
     private async renderTaxonomies() {
         await this.dataItems.forEach((element) => {
             if (element.itemType == DataItemTypeEnum.TaxonomyItem) {
-                let pos = { x: Math.floor(Math.random() * 1000), y: Math.floor(Math.random() * 1000) };
-                this.addTaxonomyItem(element, pos);
+                this.addTaxonomyItem(element);
             }
         });
     }
@@ -853,7 +869,8 @@ export class OntologyGraph {
         return "http://localhost:5000/api/v1/namespaces/" + namespaceId + "/types/" + typeID + "/";
     }
 
-    private addTypeItem(parentItem: DataItemModel, parentPosition: { x, y }): { x, y } {
+    private addTypeItem(parentItem: DataItemModel): { x, y } {
+        let parentPosition = parentItem.position;
         parentPosition.x = parentPosition.x + boundingBoxBorder;
         parentPosition.y = parentPosition.y + boundingBoxBorder;
         let groupManager = this.graph.groupingManager;
@@ -868,18 +885,18 @@ export class OntologyGraph {
         }
 
         // sore previous nodes values
-        let nodeBox: { x, y } = { x: parentBox.x, y: parentBox.y };
+        let nodeBox: { x, y } = { x: parentBox.x+20, y: parentBox.y+20 };
         let counter = 0;
         parentItem.children.forEach(childItem => {
             if (counter >= this.typeChildsToShow) return;
             counter++;
-            nodeBox = this.addItemToType(childItem, nodeBox, parentItem);
+            nodeBox = this.addItemsToType(childItem, nodeBox, parentItem);
 
         });
         return this.getLeftBottomPointOfItem(parentItem.node);
     }
 
-    private addItemToType(childItem: DataItemModel, nodeBox: { x, y }, parentItem: DataItemModel): { x, y } {
+    private addItemsToType(childItem: DataItemModel, nodeBox: { x, y }, parentItem: DataItemModel): { x, y } {
         if (childItem.itemType == DataItemTypeEnum.TaxonomyProperty) {
             nodeBox = this.addNodeToGraph({ id: childItem.id, title: childItem.name, type: "taxonomy-link-item", x: nodeBox.x, y: nodeBox.y, typedescription: "Taxonomy-Ref" }, false);
         } else if (childItem.itemType == DataItemTypeEnum.TypeProperty) {
@@ -898,7 +915,8 @@ export class OntologyGraph {
         return nodeBox;
     }
 
-    private addTaxonomyItem(parentItem: DataItemModel, parentPosition: { x, y }): { x, y } {
+    private addTaxonomyItem(parentItem: DataItemModel): { x, y } {
+        let parentPosition = parentItem.position;
         parentPosition.x = parentPosition.x + boundingBoxBorder;
         parentPosition.y = parentPosition.y + boundingBoxBorder;
 
@@ -920,7 +938,7 @@ export class OntologyGraph {
 
         let childElements: Array<{ href: string, id: string }> = []
         taxonomyParent.children.forEach(childElement => {
-            this.addNodeToGraph({ id: childElement.id, title: childElement.name, type: 'taxonomy-item', x: parentBox.x + (Math.floor(childElements.length / 2)) * (Number(taxonomyItemSize.width) + 10), y: parentBox.y + (childElements.length % 2) * (Number(taxonomyItemSize.height) + 10) }, false);
+            this.addNodeToGraph({ id: childElement.id, title: childElement.name, type: 'taxonomy-item', x: parentBox.x+20 + (Math.floor(childElements.length / 2)) * (Number(taxonomyItemSize.width) + 10), y: parentBox.y+20 + (childElements.length % 2) * (Number(taxonomyItemSize.height) + 10) }, false);
             childElements.push({ href: childElement.href, id: childElement.id });
             this.missingParentConnection.push({ parent: taxonomyParent.id, child: childElement.id, joinTree: false })
         });
@@ -1046,6 +1064,7 @@ export class OntologyGraph {
                 this.addItemsToTaxonomy(this.dataItems.find(t => t.id == node.id), this.getLeftBottomPointOfItem(node));
                 this.graph.completeRender();
                 this.addChildnodesToParents();
+                this.graph.completeRender();
             }
         }
 
