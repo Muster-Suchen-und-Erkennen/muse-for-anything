@@ -65,27 +65,30 @@ class TypeNodeTemplate implements DynamicNodeTemplate {
     }
 
     private calculateRect(g: any, grapheditor: GraphEditor, context: DynamicTemplateContext<Node>, updated?: boolean) {
+        let isOverviewGraph = grapheditor.className.includes("graphoverview")
         let props = g._groups[0][0].__data__;
         if(props.height) {
-            this.drawRect(g, { x: 0, y: 0, width: props.width, height: props.height }, props)
+            this.drawRect(g, { x: 0, y: 0, width: props.width, height: props.height }, props, isOverviewGraph)
         } else {
-            this.drawRect(g, { x: 0, y: 0, width: 120, height: 20 }, props)
+            this.drawRect(g, { x: 0, y: 0, width: 120, height: 20 }, props, isOverviewGraph)
         }
     }
 
-    private drawRect(g: any, minBox: any, props: any) {
+    private drawRect(g: any, minBox: any, props: any, isOverviewGraph: boolean) {
         g.selectAll("*").remove();
         g.append("rect")
             .attr("width", minBox.width + boundingBoxBorder * 2)
             .attr("height", minBox.height + boundingBoxBorder * 2)
             .attr("class", "type-group")
             .attr("rx", 5);
-        g.append("text")
-            .attr("x", 5)
-            .attr("y", 15)
-            .attr("class", "title")
-            .attr("width", minBox.width + boundingBoxBorder * 2 - 5)
-            .attr('data-content', 'title');
+        if(!isOverviewGraph) {
+            g.append("text")
+                .attr("x", 5)
+                .attr("y", 15)
+                .attr("class", "title")
+                .attr("width", minBox.width + boundingBoxBorder * 2 - 5)
+                .attr('data-content', 'title');
+        }
     }
 }
 
@@ -195,6 +198,7 @@ class TaxonomyNodeTemplate implements DynamicNodeTemplate {private linkHandleOpt
     }
 
     private calculateRect(g: any, grapheditor: GraphEditor, context: DynamicTemplateContext<Node>, updated?: boolean) {
+        let isOverviewGraph = grapheditor.className.includes("graphoverview")
         let props = g._groups[0][0].__data__;
         if(!props.height) {
             props.height = 20;
@@ -205,10 +209,10 @@ class TaxonomyNodeTemplate implements DynamicNodeTemplate {private linkHandleOpt
         if (!props.childVisible) {
             props.childVisible = false;
         }
-        this.drawRect(g, { x: 0, y: 0, width: props.width, height: props.height }, props,props.childVisible)
+        this.drawRect(g, { x: 0, y: 0, width: props.width, height: props.height }, props,props.childVisible, isOverviewGraph)
     }
 
-    private drawRect(g: any, minBox: any, props: any, childsVisible: boolean) {
+    private drawRect(g: any, minBox: any, props: any, childsVisible: boolean, isOverviewGraph: boolean) {
         g.selectAll("*").remove();
         g.append("rect")
             .attr("width", minBox.width + boundingBoxBorder * 2)
@@ -216,7 +220,9 @@ class TaxonomyNodeTemplate implements DynamicNodeTemplate {private linkHandleOpt
             .attr("class", "taxonomy-group")
             .attr("data-click", "node")
             .attr("rx", 5);
-        g.append("text")
+        if(!isOverviewGraph)
+        {
+            g.append("text")
             .attr("x", 5)
             .attr("y", 15)
             .attr("class", "title")
@@ -224,14 +230,15 @@ class TaxonomyNodeTemplate implements DynamicNodeTemplate {private linkHandleOpt
             .attr("data-click", "header")
             .attr('data-content', 'title');
 
-        // add + or - to node for collapsing details or not
-        let collapseIconElement = g.append("g")
-            .attr("transform", "translate(5,20)")
-            .attr("data-click", "expandNode").attr("fill", "white").attr("fill-rule", "evenodd").attr("stroke", "currentColor").attr("stroke-linecap", "round").attr("stroke-linejoin", "round")
-        collapseIconElement.append("path").attr("d", "m12.5 10.5v-8c0-1.1045695-.8954305-2-2-2h-8c-1.1045695 0-2 .8954305-2 2v8c0 1.1045695.8954305 2 2 2h8c1.1045695 0 2-.8954305 2-2z")
-        collapseIconElement.append("path").attr("d", "m6.5 3.5v6").attr("transform", "matrix(0 1 -1 0 13 0)")
+            // add + or - to node for collapsing details or not
+            let collapseIconElement = g.append("g")
+                .attr("transform", "translate(5,20)")
+                .attr("data-click", "expandNode").attr("fill", "white").attr("fill-rule", "evenodd").attr("stroke", "currentColor").attr("stroke-linecap", "round").attr("stroke-linejoin", "round")
+            collapseIconElement.append("path").attr("d", "m12.5 10.5v-8c0-1.1045695-.8954305-2-2-2h-8c-1.1045695 0-2 .8954305-2 2v8c0 1.1045695.8954305 2 2 2h8c1.1045695 0 2-.8954305 2-2z")
+            collapseIconElement.append("path").attr("d", "m6.5 3.5v6").attr("transform", "matrix(0 1 -1 0 13 0)")
 
-        if (!childsVisible) collapseIconElement.append("path").attr("d", "m6.5 3.5v6.056")
+            if (!childsVisible) collapseIconElement.append("path").attr("d", "m6.5 3.5v6.056")
+        }
     }
 }
 
@@ -469,7 +476,7 @@ export class OntologyGraph {
         }
 
         if (newValue.getElementsByClassName("graphoverview").length > 0) {
-            //this.graphoverview = newValue.getElementsByClassName("graphoverview")[0]
+            this.graphoverview = newValue.getElementsByClassName("graphoverview")[0]
         } else {
             throw new Error("No graphoverview element in DOM found")
         }
@@ -741,7 +748,6 @@ export class OntologyGraph {
         this.getNodePositions();
         this.sortList(this.dataItems);
         
-        let startTime = Date.now();
         if (this.graph == null) {
             return;
         }
@@ -759,6 +765,7 @@ export class OntologyGraph {
         await this.graph.completeRender();
 
         await this.graph?.zoomToBoundingBox();
+        await this.graphoverview.completeRender();
 
         this.isLoading = 2;
     }
@@ -786,8 +793,10 @@ export class OntologyGraph {
                 this.graph.removeNode(child.id)
             });
             this.graph.removeNode(parent.id)
+            this.graphoverview.removeNode(parent.id)
         });
         this.graph.completeRender();
+        this.graphoverview.completeRender();
     }
 
     private deleteTaxonomies() {
@@ -797,8 +806,10 @@ export class OntologyGraph {
                 this.graph.removeNode(child.id)
             });
             this.graph.removeNode(parent.id)
+            this.graphoverview.removeNode(parent.id)
         });
         this.graph.completeRender();
+        this.graphoverview.completeRender();
     }
 
     private updateHiddenLinks() {
@@ -829,11 +840,19 @@ export class OntologyGraph {
                                 }
                             }
 
+                            let pathOverview = {
+                                source: parItem.id, target: parent.id, markerEnd: {
+                                    template: "arrow",
+                                    scale: 0.8,
+                                    relativeRotation: 0,
+                                }
+                            }
+
                             if (!this.graph.edgeList.some(p => p.source == source && p.target == parent.id) &&
                                 this.graph.nodeList.some(p => p.id == path.source) &&
                                 this.graph.nodeList.some(p => p.id == path.target)) {
                                 this.graph.addEdge(path, false)
-                                this.graphoverview?.addEdge(path, false)
+                                this.graphoverview?.addEdge(pathOverview, false)
                             }
                         }
                     });
