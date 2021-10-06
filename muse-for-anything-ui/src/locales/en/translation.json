@@ -138,7 +138,12 @@
         "moveUp":"up",
         "moveDown":"down",
         "moveLeft":"left",
-        "moveRight":"right"
+        "moveRight":"right",
+        "visibleElements":"Visible elements",
+        "taxonomies":"Taxonomies",
+        "types":"Types",
+        "childsToShow":"Number of properties to show:",
+        "itemsInGraph":"Items in graph"
 
     }
 }
