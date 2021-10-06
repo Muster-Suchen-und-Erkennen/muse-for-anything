@@ -692,9 +692,49 @@ export class OntologyGraph {
     }
 
     private getNodePositions() {
-        this.dataItems.forEach(item => {
+        /*this.dataItems.forEach(item => {
             item.position = { x: Math.floor(Math.random() * 1000), y: Math.floor(Math.random() * 1000) };
-        })
+        })*/
+        var createGraph = require('ngraph.graph');
+        var g = createGraph();
+        
+        this.dataItems.forEach(item => g.addNode(item.id))
+
+        this.dataItems.forEach(parItem => {
+            parItem.children.forEach(child => {
+                if (child.itemType == DataItemTypeEnum.TaxonomyProperty || child.itemType == DataItemTypeEnum.TypeProperty) {
+                    this.dataItems.forEach(parent => {
+                        if (child.id.startsWith(parent.id.split("-")[0])) {
+                            g.addLink(parItem.id, parent.id)
+                        }
+                    });
+                }
+            });
+        });
+
+        // TODO: optimize Settings
+        var physicsSettings = {
+            timeStep: 0.5,
+            dimensions: 2,
+            gravity: -12,
+            theta: 0.8,
+            springLength: 50,
+            springCoefficient: 0.8,
+            dragCoefficient: 0.9,
+          };
+
+        var createLayout = require('ngraph.forcelayout');
+        var layout = createLayout(g, physicsSettings);
+        for (var i = 0; i < 500; ++i) {
+            layout.step();
+        }
+
+        g.forEachNode(node => {
+            let pos = layout.getNodePosition(node.id);
+            let positionDifference = 20;
+            this.dataItems.find(el => el.id == node.id).position = {x:pos.x*positionDifference,y:pos.y*positionDifference}
+        });
+
     }
 
     private sortList(items: DataItemModel[]) {
