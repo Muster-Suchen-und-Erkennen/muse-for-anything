@@ -11,7 +11,7 @@ import { Point } from "@ustutt/grapheditor-webcomponent/lib/edge";
 import { TaxonomyApiObject, TaxonomyItemApiObject, TaxonomyItemRelationApiObject } from "./taxonomy-graph";
 import { GroupBehaviour } from "@ustutt/grapheditor-webcomponent/lib/grouping";
 import { DynamicNodeTemplate, DynamicTemplateContext } from "@ustutt/grapheditor-webcomponent/lib/dynamic-templates/dynamic-template";
-import { LinkHandle } from "@ustutt/grapheditor-webcomponent/lib/link-handle";
+import { handlesForRectangle, LinkHandle } from "@ustutt/grapheditor-webcomponent/lib/link-handle";
 import { calculateBoundingRect, Rect } from "@ustutt/grapheditor-webcomponent/lib/util";
 
 const boundingBoxBorder: number = 20;
@@ -47,20 +47,13 @@ interface TypeItemApiObject extends ApiObject {
     };
 }
 
-class TaxonomyObject {
-    name: string;
-    href: string;
-    namespaceId: string;
-    taxonomyId: string;
-    description: string | null;
-    itemsData: TaxonomyItemApiObject[];
-    nodeId: string | number;
-}
-
 class TypeNodeTemplate implements DynamicNodeTemplate {
 
-    getLinkHandles(g: Node, grapheditor: GraphEditor): LinkHandle[] {
-        return;
+    getLinkHandles(g: any, grapheditor: GraphEditor): LinkHandle[] {
+        let innerHTML = g._groups[0][0].innerHTML;
+        const width = innerHTML.split("width=\"")[1].split("\"")[0];
+        const height = innerHTML.split("height=\"")[1].split("\"")[0];
+        return handlesForRectangle(0, 0, Number(width), Number(height), "edges");
     }
 
     renderInitialTemplate(g: any, grapheditor: GraphEditor, context: DynamicTemplateContext<Node>): void {
@@ -199,10 +192,13 @@ export class DataItemModel {
     }
 }
 
-class TaxonomyNodeTemplate implements DynamicNodeTemplate {
+class TaxonomyNodeTemplate implements DynamicNodeTemplate {private linkHandleOptions: string;
 
     getLinkHandles(g: any, grapheditor: GraphEditor): LinkHandle[] {
-        return;
+        let innerHTML = g._groups[0][0].innerHTML;
+        const width = innerHTML.split("width=\"")[1].split("\"")[0];
+        const height = innerHTML.split("height=\"")[1].split("\"")[0];
+        return handlesForRectangle(0, 0, Number(width), Number(height), "edges");
     }
 
     renderInitialTemplate(g: any, grapheditor: GraphEditor, context: DynamicTemplateContext<Node>): void {
@@ -425,7 +421,26 @@ export class OntologyGraph {
         }
     }
 
-    dataItemsChanged(newValue) {
+    dataItemsChanged(newValue: any) {
+        //TODO
+        /*if(newValue?.length>0) {
+            this.isLoading=2;
+            let newItem:DataItemModel = this.dataItems[newValue[0].index]
+            let pos = { x: Math.floor(Math.random() * 1000), y: Math.floor(Math.random() * 1000) };
+            if(newItem.itemType==DataItemTypeEnum.TypeItem) {
+                this.addTypeItem(newItem,pos)
+            } else if (newItem.itemType==DataItemTypeEnum.TaxonomyItem) {
+                this.addTaxonomyItem(newItem,pos)
+            } 
+            this.graph.completeRender();
+            this.addChildnodesToParents();
+    
+            this.updateHiddenLinks();
+    
+            this.graph.completeRender();
+    
+            this.graph?.zoomToBoundingBox();
+        }*/
     }
 
     apiLinkChanged(newValue: ApiLink, oldValue) {
@@ -965,7 +980,10 @@ export class OntologyGraph {
         }
 
         this.graph?.addNode(node, false);
-        this.graphoverview?.addNode(node, false);
+        //only add root elements to graphoverview
+        if  (this.dataItems.some(p=>p.id==node.id)) {
+            this.graphoverview?.addNode(node, false);
+        } 
 
         return this.getLeftBottomPointOfItem(node);
     }
