@@ -248,18 +248,8 @@
                 }
             </style>
             <defs class="templates">
-                <g id="taxonomy-item" data-template-type="node">
+                <g id="item" data-template-type="node">
                     <rect width="120" height="60" x="-60" y="-30" rx="5" data-link-handles="edges"></rect>
-                </g>
-                <g id="type-item" data-template-type="node">
-                    <rect width="120" height="120" x="-60" y="-30" rx="5" data-link-handles="edges"></rect>
-                    <rect class="type-title-background" x="-60" y="-30" height="20" width="120"></rect>
-                </g>
-                <g id="default-marker" data-template-type="marker" data-line-attachement-point="6">
-                    <circle cx="0" cy="0" r="6"></circle>
-                </g>
-                <g id="arrow" data-template-type="marker" data-line-attachement-point="-9 0">
-                    <path d="M -9 -4 L 0 0 L -9 4 z" />
                 </g>
             </defs>
             <g class="zoom-group"> <!-- the zoom-groop is used for the pan and zoom transormations -->
@@ -284,33 +274,33 @@
                     value.bind="searchtext" type="text" autocomplete="off" aria-autocomplete="list" role="combobox"
                     id="'input-'+slug">
                 <span class="section-title">
-                    Visible elements
+                    ${"ontology.visibleElements" | t}
                 </span>
                 <div>
                     <label class="cb_control control--checkbox">
                         <input type="checkbox"  checked.bind="showTaxonomies">
                         <span class="control__indicator"></span>
                     </label>
-                    Taxonomies
+                    ${"ontology.taxonomies" | t}
                 </div>
                 <div>
                     <label class="cb_control control--checkbox">
                         <input type="checkbox" checked.bind="showTypes">
                         <span class="control__indicator"></span>
                     </label>
-                    Types
+                    ${"ontology.types" | t}
                 </div>
                 <div>
                     <span class="section-title">
-                        Childs of types to show:
+                        ${"ontology.childsToShow" | t}
                     </span>
                     <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1" placeholder="search"
                     value.from-view="filter & throttle" aria-owns="'datalist-'+slug" autocapitalize="none"
                     value.bind="typeChildsToShow" type="number" autocomplete="off" aria-autocomplete="list" role="combobox"
-                    id="'input-'+slug">
+                    id="'input-'+slug" min="0">
                 </div>
                 <div>
-                    Items in Graph ${graph.nodeList.length}
+                    ${"ontology.itemsInGraph" | t} ${graph.nodeList.length}
                 </div>
             </div>
             <div class="item-treesection px-1 py-1 border-gray-200 border-b scroll-area" >
