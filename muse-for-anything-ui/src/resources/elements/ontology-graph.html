@@ -47,6 +47,16 @@
                     stroke: var(--line-color);
                 }
 
+                .node>ellipse {
+                    fill: #FABA6F !important;
+                    stroke: #FABA6F;
+                }
+
+                .node.selected>ellipse {
+                    fill: rgb(255, 0, 234) !important;
+                    stroke: rgb(255, 230, 0);
+                }
+
                 .taxonomy-link-item {
                     stroke-dasharray: 5px;
                 }
@@ -109,7 +119,7 @@
                 }
 
                 .node.selected>rect {
-                    fill: var(--fill-highlight-color);
+                    fill: rgb(255, 0, 234) !important;
                     stroke: var(--line-highlight-color);
                 }
 
@@ -302,6 +312,46 @@
                 <div>
                     ${"ontology.itemsInGraph" | t} ${graph.nodeList.length}
                 </div>
+                <!--springLength
+                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1" placeholder="search"
+                    value.from-view="filter & throttle" aria-owns="'datalist-'+slug" autocapitalize="none"
+                    value.bind="springLength" type="text" autocomplete="off" aria-autocomplete="list" role="combobox"
+                    id="'input-'+slug">
+                    springCoefficient
+                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1" placeholder="search"
+                value.from-view="filter & throttle" aria-owns="'datalist-'+slug" autocapitalize="none"
+                value.bind="springCoefficient" type="text" autocomplete="off" aria-autocomplete="list" role="combobox"
+                id="'input-'+slug">
+                gravity
+                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1" placeholder="search"
+                    value.from-view="filter & throttle" aria-owns="'datalist-'+slug" autocapitalize="none"
+                    value.bind="gravity" type="text" autocomplete="off" aria-autocomplete="list" role="combobox"
+                    id="'input-'+slug">
+                    dimensions
+                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1" placeholder="search"
+                value.from-view="filter & throttle" aria-owns="'datalist-'+slug" autocapitalize="none"
+                value.bind="dimensions" type="text" autocomplete="off" aria-autocomplete="list" role="combobox"
+                id="'input-'+slug">
+                theta
+                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1" placeholder="search"
+                    value.from-view="filter & throttle" aria-owns="'datalist-'+slug" autocapitalize="none"
+                    value.bind="theta" type="text" autocomplete="off" aria-autocomplete="list" role="combobox"
+                    id="'input-'+slug">
+                    dragCoefficient
+                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1" placeholder="search"
+                value.from-view="filter & throttle" aria-owns="'datalist-'+slug" autocapitalize="none"
+                value.bind="dragCoefficient" type="text" autocomplete="off" aria-autocomplete="list" role="combobox"
+                id="'input-'+slug">
+                timeStep
+                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1" placeholder="search"
+                    value.from-view="filter & throttle" aria-owns="'datalist-'+slug" autocapitalize="none"
+                    value.bind="timeStep" type="text" autocomplete="off" aria-autocomplete="list" role="combobox"
+                    id="'input-'+slug">
+                    positionDifference
+                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1" placeholder="search"
+                value.from-view="filter & throttle" aria-owns="'datalist-'+slug" autocapitalize="none"
+                value.bind="positionDifference" type="text" autocomplete="off" aria-autocomplete="list" role="combobox"
+                id="'input-'+slug">-->
             </div>
             <div class="item-treesection px-1 py-1 border-gray-200 border-b scroll-area" >
 
@@ -380,6 +430,10 @@
                     <button class="button-flat px-2 items-center" click.delegate="toggleMaximize()"
                         title='${"ontology.toggleMaximize" | t}'>
                         <svg-icon icon.bind="maximized ? 'minimize' : 'maximize'" size.bind="18"></svg-icon>
+                    </button>
+                    <button class="button-flat px-2 items-center" click.delegate="downloadSVG()"
+                        title='${"ontology.toggleMaximize" | t}'>
+                        <svg-icon icon.bind="'download'" size.bind="18"></svg-icon>
                     </button>
                 </div>
             </div>
