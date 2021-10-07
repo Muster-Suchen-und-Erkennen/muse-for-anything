@@ -495,16 +495,19 @@ tree-node  ul:first-child{
 }
 
 .EachMiniQueueWithOutCollapse {
-    padding:2px 1px;
+    flex-direction: row;
+    display: flex;
+    align-items: center;
 }
  
 .eachMinQueueCheckSection{
     margin-right:10px;
+    width:10px;
 }
 
 .ont-treeview-item {
+    margin-left: 10px;
     display: inline-block;
-    width: 80%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
