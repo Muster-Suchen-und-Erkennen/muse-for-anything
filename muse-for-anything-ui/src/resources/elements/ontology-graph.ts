@@ -127,12 +127,14 @@ export class DataItemModel {
     public children: DataItemModel[];
     public expanded: boolean;
     public visible: boolean;
+    public abstract: boolean;
     @observable() isSelected: boolean;
     private graph: GraphEditor;
 
-    constructor(id: string, name: string, href: string, description: string, itemType: DataItemTypeEnum, graph: GraphEditor, isVisible = true, taxonomyChildRelations = []) {
+    constructor(id: string, name: string, abstract: boolean, href: string, description: string, itemType: DataItemTypeEnum, graph: GraphEditor, isVisible = true, taxonomyChildRelations = []) {
         this.id = id;
         this.name = name;
+        this.abstract = abstract;
         this.href = href;
         this.description = description;
         this.itemType = itemType;
@@ -144,7 +146,10 @@ export class DataItemModel {
     }
 
     hasChildren() {
-        return this.children.length > 0;
+        if(this.itemType==DataItemTypeEnum.TypeItem || this.itemType==DataItemTypeEnum.TaxonomyItem) {
+            return true;
+        }
+        return false;
     }
 
     toggleNode() {
@@ -173,8 +178,8 @@ export class DataItemModel {
     }
 
 
-    addChild(id: string, name: string, href: string, description: string, itemType: DataItemTypeEnum, childHrefs?: string[]) {
-        this.children.push(new DataItemModel(id, name, href, description, itemType, this.graph, false, childHrefs));
+    addChild(id: string, name: string, abstract: boolean, href: string, description: string, itemType: DataItemTypeEnum, childHrefs?: string[]) {
+        this.children.push(new DataItemModel(id, name, abstract, href, description, itemType, this.graph, false, childHrefs));
         this.icon = "arrow-right";
         this.expanded = false;
     }
@@ -214,25 +219,33 @@ class TaxonomyNodeTemplate implements DynamicNodeTemplate {private linkHandleOpt
 
     private drawRect(g: any, minBox: any, props: any, childsVisible: boolean, isOverviewGraph: boolean) {
         g.selectAll("*").remove();
-        g.append("rect")
+        /*g.append("rect")
             .attr("width", minBox.width + boundingBoxBorder * 2)
             .attr("height", minBox.height + boundingBoxBorder * 2)
             .attr("class", "taxonomy-group")
             .attr("data-click", "node")
-            .attr("rx", 5);
+            .attr("rx", 5);*/
+        g.append("ellipse")
+            .attr("width", minBox.width + boundingBoxBorder * 2)
+            .attr("height", minBox.height + boundingBoxBorder * 2)
+            .attr("cx",(minBox.width + boundingBoxBorder * 2)/2)
+            .attr("cy",(minBox.height + boundingBoxBorder * 2)/2)
+            .attr("rx",(minBox.width + boundingBoxBorder * 2)/2)
+            .attr("ry",(minBox.height + boundingBoxBorder * 2)/2)
+            .attr("class", "taxonomy-group")
         if(!isOverviewGraph)
         {
             g.append("text")
             .attr("x", 5)
-            .attr("y", 15)
+            .attr("y", (minBox.height + boundingBoxBorder * 2)/2+5)
             .attr("class", "title")
-            .attr("width", minBox.width + boundingBoxBorder * 2 - 5)
+            .attr("width", 150)
             .attr("data-click", "header")
             .attr('data-content', 'title');
 
             // add + or - to node for collapsing details or not
             let collapseIconElement = g.append("g")
-                .attr("transform", "translate(5,20)")
+                .attr("transform", "translate("+minBox.width/2+",5)")
                 .attr("data-click", "expandNode").attr("fill", "white").attr("fill-rule", "evenodd").attr("stroke", "currentColor").attr("stroke-linecap", "round").attr("stroke-linejoin", "round")
             collapseIconElement.append("path").attr("d", "m12.5 10.5v-8c0-1.1045695-.8954305-2-2-2h-8c-1.1045695 0-2 .8954305-2 2v8c0 1.1045695.8954305 2 2 2h8c1.1045695 0 2-.8954305 2-2z")
             collapseIconElement.append("path").attr("d", "m6.5 3.5v6").attr("transform", "matrix(0 1 -1 0 13 0)")
@@ -250,17 +263,16 @@ class OverviewGraphNode implements DynamicNodeTemplate {
 
     renderInitialTemplate(g: any, grapheditor: GraphEditor, context: DynamicTemplateContext<Node>): void {
         let props = g._groups[0][0].__data__;
-        g.selectAll("*").remove();
         this.drawRect(g, props);
     }
 
     updateTemplate(g: any, grapheditor: GraphEditor, context: DynamicTemplateContext<Node>): void {
         let props = g._groups[0][0].__data__;
-        g.selectAll("*").remove();
         this.drawRect(g, props);
     }
 
     private drawRect(g: any, props: any) {
+        g.selectAll("*").remove();
         g.append("rect")
             .attr("width", props.width)
             .attr("height", props.height)
@@ -289,10 +301,11 @@ class TaxonomyGroupBehaviour implements GroupBehaviour {
     calcSize(groupNode: Node,groupId: string, graphEditor: GraphEditor) {
         if (graphEditor.groupingManager.getAllChildrenOf(groupId).size>1) {
             groupNode.height = 140;
+            groupNode.childVisible = true;
         } else {
             groupNode.height = 20;
         }
-        groupNode.width = graphEditor.groupingManager.getAllChildrenOf(groupId).size/2*(140)
+        groupNode.width = (2+graphEditor.groupingManager.getAllChildrenOf(groupId).size/2)*(140)
     }
 
     onNodeMoveStart(group: string, childGroup: string, groupNode: Node, childNode: Node, graphEditor: GraphEditor) {
@@ -374,6 +387,14 @@ function repositionGroupNode(group: string, groupNode: Node, graphEditor: GraphE
 
 @autoinject
 export class OntologyGraph {
+    @bindable springLength= 30
+    @bindable springCoefficient= 0.08
+    @bindable gravity= -1.2
+    @bindable dimensions= 2
+    @bindable theta= 0.8
+    @bindable dragCoefficient= 0.02
+    @bindable timeStep= 20
+    @bindable positionDifference = 1;
     @bindable isLoading = 0;
     @bindable apiLink;
     @bindable ignoreCache = false;
@@ -382,7 +403,7 @@ export class OntologyGraph {
     totalNodesToAdd = 0;
     totalNodesAdded = 0;
 
-    maximized: boolean = false;
+    maximized: boolean = true;
     isAllowedToShowGraph: boolean = false;
     speed: number = 10; // pixels to move the nodes in the graph on interaction
 
@@ -560,9 +581,11 @@ export class OntologyGraph {
             }
         });
         this.graph.completeRender();
+        this.graphoverview.completeRender();
         this.addChildnodesToParents();
         this.updateHiddenLinks();
         this.graph.completeRender();
+        this.graphoverview.completeRender();
     }
 
     recursiveListSearch(items: DataItemModel[], searchText: string) {
@@ -598,7 +621,7 @@ export class OntologyGraph {
                 promises.push(this.api.getByApiLink<TypeItemApiObject>(element, ignoreCache).then(apiResponse => {
                     let data = apiResponse.data;
                     let nodeID = this.createUniqueId(data.self.href);
-                    this.dataItems.push(new DataItemModel(nodeID, data.name, data.self.href, data.schema.description, DataItemTypeEnum.TypeItem, this.graph));
+                    this.dataItems.push(new DataItemModel(nodeID, data.name, data.abstract, data.self.href, data.schema.description, DataItemTypeEnum.TypeItem, this.graph));
                     for (let typeElement in data.schema.definitions?.root?.properties) {
                         let typeProps = data.schema.definitions?.root?.properties[typeElement];
                         let typeEnum = this.mapTypeEnums(data.schema.definitions?.root?.properties[typeElement]);
@@ -610,10 +633,9 @@ export class OntologyGraph {
                         } else {
                             typeHref = nodeID + "-" + typeElement;
                         }
-                        //typeEnum == DataItemTypeEnum.TaxonomyProperty ||
 
                         let childID = this.createUniqueId(typeHref)
-                        this.dataItems.find(p => p.id == nodeID).addChild(childID, typeElement, typeHref, "tbd", typeEnum);
+                        this.dataItems.find(p => p.id == nodeID).addChild(childID, typeElement, false,typeHref, "tbd", typeEnum);
                     }
                 }));
             });
@@ -638,7 +660,7 @@ export class OntologyGraph {
             apiResponse.data.items.forEach(element => {
                 promises.push(this.api.getByApiLink<TaxonomyApiObject>(element, ignoreCache).then(apiResponse => {
                     let nodeID = this.createUniqueId(apiResponse.data.self.href);
-                    this.dataItems.push(new DataItemModel(nodeID, apiResponse.data.name, apiResponse.data.self.href, apiResponse.data.description, DataItemTypeEnum.TaxonomyItem, this.graph))
+                    this.dataItems.push(new DataItemModel(nodeID, apiResponse.data.name, false, apiResponse.data.self.href, apiResponse.data.description, DataItemTypeEnum.TaxonomyItem, this.graph))
                     apiResponse.data.items.forEach(element => {
                         promises.push(this.api.getByApiLink<TaxonomyItemApiObject>(element, ignoreCache).then(apiResponse => {
 
@@ -649,7 +671,7 @@ export class OntologyGraph {
                                     parentItemHrefs.push(apiResponses.data.targetItem.href)
                                 }));
                             });
-                            this.dataItems.find(p => p.id == nodeID).addChild(this.createUniqueId(apiResponse.data.self.href), apiResponse.data.name, apiResponse.data.self.href, apiResponse.data.description, DataItemTypeEnum.TaxonomyItemProperty, parentItemHrefs);
+                            this.dataItems.find(p => p.id == nodeID).addChild(this.createUniqueId(apiResponse.data.self.href), apiResponse.data.name,false, apiResponse.data.self.href, apiResponse.data.description, DataItemTypeEnum.TaxonomyItemProperty, parentItemHrefs);
 
                         }));
                     });
@@ -692,9 +714,6 @@ export class OntologyGraph {
     }
 
     private getNodePositions() {
-        /*this.dataItems.forEach(item => {
-            item.position = { x: Math.floor(Math.random() * 1000), y: Math.floor(Math.random() * 1000) };
-        })*/
         var createGraph = require('ngraph.graph');
         var g = createGraph();
         
@@ -722,6 +741,15 @@ export class OntologyGraph {
             springCoefficient: 0.8,
             dragCoefficient: 0.9,
           };
+        /*physicsSettings = {   springLength: this.springLength,
+            springCoefficient: this.springCoefficient,
+          gravity: this.gravity,
+          dimensions: this.dimensions,
+          theta: this.theta,
+          dragCoefficient: this.dragCoefficient,
+          timeStep: this.timeStep
+          }*/
+          let positionDifference = 20;
 
         var createLayout = require('ngraph.forcelayout');
         var layout = createLayout(g, physicsSettings);
@@ -731,7 +759,6 @@ export class OntologyGraph {
 
         g.forEachNode(node => {
             let pos = layout.getNodePosition(node.id);
-            let positionDifference = 20;
             this.dataItems.find(el => el.id == node.id).position = {x:pos.x*positionDifference,y:pos.y*positionDifference}
         });
 
@@ -758,13 +785,13 @@ export class OntologyGraph {
         if(value) {
             this.renderTypes();
             await this.graph.completeRender();
+            await this.graphoverview.completeRender();
             await this.addChildnodesToParents();
     
             await this.updateHiddenLinks();
     
             await this.graph.completeRender();
-    
-            await this.graph?.zoomToBoundingBox();
+            await this.graphoverview.completeRender();
         } else {
             this.deleteTypes();
         }
@@ -774,11 +801,11 @@ export class OntologyGraph {
         if(value) {
             this.renderTaxonomies();
             await this.graph.completeRender();
+            await this.graphoverview.completeRender();
             await this.updateHiddenLinks();
     
             await this.graph.completeRender();
-    
-            await this.graph?.zoomToBoundingBox();
+            await this.graphoverview.completeRender();
         } else {
             this.deleteTaxonomies();
         }
@@ -803,16 +830,17 @@ export class OntologyGraph {
         await this.updateHiddenLinks();
 
         await this.graph.completeRender();
-
-        await this.graph?.zoomToBoundingBox();
+        await this.graph.zoomToBoundingBox();
+        
         await this.graphoverview.completeRender();
+        await this.graphoverview.zoomToBoundingBox();
 
         this.isLoading = 2;
     }
 
     private async renderTypes() {
         await this.dataItems.forEach(element => {
-            if (element.itemType == DataItemTypeEnum.TypeItem) {
+            if (element.itemType == DataItemTypeEnum.TypeItem && !element.abstract) {
                 this.addTypeItem(element);
             }
         });
@@ -997,7 +1025,7 @@ export class OntologyGraph {
 
         let childElements: Array<{ href: string, id: string }> = []
         taxonomyParent.children.forEach(childElement => {
-            this.addNodeToGraph({ id: childElement.id, title: childElement.name, type: 'taxonomy-item', x: parentBox.x+20 + (Math.floor(childElements.length / 2)) * (Number(taxonomyItemSize.width) + 10), y: parentBox.y+20 + (childElements.length % 2) * (Number(taxonomyItemSize.height) + 10) }, false);
+            this.addNodeToGraph({ id: childElement.id, title: childElement.name, type: 'taxonomy-item', x: parentBox.x+150 + (Math.floor(childElements.length / 2)) * (Number(taxonomyItemSize.width) + 10), y: parentBox.y+20 + (childElements.length % 2) * (Number(taxonomyItemSize.height) + 10) }, false);
             childElements.push({ href: childElement.href, id: childElement.id });
             this.missingParentConnection.push({ parent: taxonomyParent.id, child: childElement.id, joinTree: false })
         });
@@ -1118,12 +1146,14 @@ export class OntologyGraph {
                     this.graph.removeNode(child, true);
                     this.graphoverview?.removeNode(child, true);
                 })
+                this.graphoverview.completeRender();
             }
             else {
                 this.addItemsToTaxonomy(this.dataItems.find(t => t.id == node.id), this.getLeftBottomPointOfItem(node));
                 this.graph.completeRender();
                 this.addChildnodesToParents();
                 this.graph.completeRender();
+                this.graphoverview.completeRender();
             }
         }
 
@@ -1155,7 +1185,9 @@ export class OntologyGraph {
     }
 
     private onZoomChange(event: CustomEvent<{ eventSource: "API" | "USER_INTERACTION" | "INTERNAL", node: Node }>) {
-        this.renderMainViewPositionInOverviewGraph();
+        //TODO: fix calling
+        //console.log(event)
+        //this.renderMainViewPositionInOverviewGraph();
     }
 
     private renderMainViewPositionInOverviewGraph() {
@@ -1203,6 +1235,7 @@ export class OntologyGraph {
 
     // function called by buttons from the front-end, to interact with the graph
     private moveGraph(direction: String) {
+        //TODO: fix movement
         let dirX = this.speed;
         let dirY = this.speed;
 
@@ -1222,13 +1255,26 @@ export class OntologyGraph {
         currentView.height = currentView.height + 2 * div;
         currentView.width = currentView.width + 2 * div;
 
-        /*this.graph.nodeList.forEach(node => {            
-            this.graph.moveNode(node.id, node.x+dirX, node.y+dirY, false);
-        })*/
-
-
         this.graph.zoomToBox(currentView);
 
         this.graph.completeRender();
+    }
+
+    private downloadSVG() {
+        // TODO
+        /*const doc = new jsPDF()
+
+        this.graph.currentViewWindow
+
+        console.log(this.graph.getSVG()._groups[0][0])
+
+        const element = document.getElementById("graphexportsvg").shadowRoot.querySelector(".graph-editor")
+        console.log(element, this.graph.currentViewWindow)
+        
+        doc.svg(this.graph.getSVG()._groups[0][0], this.graph.currentViewWindow)
+          .then(() => {
+            // save the created pdf
+            doc.save('myPDF.pdf')
+          })*/
     }
 }
