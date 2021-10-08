@@ -12,6 +12,7 @@
     "doc": "../docs"
   },
   "dependencies": {
+    "@bmaxtech/aurelia-loaders": "^1.0.3",
     "@ustutt/grapheditor-webcomponent": "^0.6.2",
     "aurelia-animator-css": "^1.0.4",
     "aurelia-bootstrapper": "^2.3.3",

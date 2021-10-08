@@ -142,8 +142,9 @@
         "visibleElements":"Visible elements",
         "taxonomies":"Taxonomies",
         "types":"Types",
-        "childsToShow":"Number of properties to show:",
-        "itemsInGraph":"Items in graph"
-
+        "showSelectedItems": "show only selected items",
+        "childsToShow":"number of type properties to be displayed:",
+        "itemsInGraph":"Items in graph",
+        "detailview-header": "Detailview"
     }
 }

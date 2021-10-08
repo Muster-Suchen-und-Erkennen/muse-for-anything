@@ -15,6 +15,7 @@ export interface TaxonomyApiObject extends ApiObject {
     name: string;
     description: string | null;
     items: ApiLink[];
+    collectionSize: number;
 }
 
 export interface TaxonomyItemApiObject extends ApiObject {

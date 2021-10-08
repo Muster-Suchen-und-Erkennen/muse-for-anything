@@ -513,6 +513,33 @@ tree-node  ul:first-child{
     white-space: nowrap;
 }
 
+.ont-treeview-item-highlight {
+    color:rgb(255, 0, 234);
+}
+
+.detailview-item {
+    display: inline-block;
+    overflow: hidden;
+    margin-bottom: -10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+}
+
+#ontology-loading-indicator {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.section-subpart {
+    margin-left: 20px;
+}
+
+.detailview {
+    max-width: 400px;
+}
+
 /* style scrollbar */
 ::-webkit-scrollbar {
     width: 5px;

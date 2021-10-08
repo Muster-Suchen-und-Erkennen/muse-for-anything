@@ -284,4 +284,52 @@
         <g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" transform="translate(4 2)"><path d="m4.5 1.5h-2.00245461c-1.1045695 0-2 .8954305-2 2v10c0 1.1045695.8954305 2 2 2h8.00000001c1.1043778-.000491 1.9997288-.8956223 2.0004909-2l.0019637-8-4-4"/><path d="m9.5 8.586-3 2.914-3-2.914"/><path d="m6.5.5v11"/></g>
     </svg>
 
+    <svg if.bind="icon === 'string'" height="${iconSize}" width="${iconSize}" xmlns="http://www.w3.org/2000/svg">
+        <g transform="scale(0.18)">
+            <rect stroke-width="3" fill="#ffffff" x="2.5" y="2.5" width="95" height="95" id="svg_1" rx="10" stroke="#000000"/>
+            <rect fill="#BBBBBB" stroke="#C48157" x="265" y="23" width="0" height="1" id="svg_2"/>
+            <text transform="matrix(1 0 0 1 0 0)" font-style="normal" font-weight="normal" xml:space="preserve" text-anchor="start" font-family="sans-serif" font-size="51" id="svg_3" y="67.6246" x="6.20247" stroke-width="0" stroke="#000000" fill="#000000">Abc</text>
+        </g>        
+    </svg>
+
+    <svg if.bind="icon === 'integer'" height="${iconSize}" width="${iconSize}" xmlns="http://www.w3.org/2000/svg">
+        <g transform="scale(0.18)">
+            <rect stroke-width="3" fill="#ffffff" x="2.5" y="2.5" width="95" height="95" id="svg_1" rx="10" stroke="#000000"/>
+            <rect fill="#BBBBBB" stroke="#C48157" x="265" y="23" width="0" height="1" id="svg_2"/>
+            <text transform="matrix(1 0 0 1 0 0)" font-style="normal" font-weight="normal" xml:space="preserve" text-anchor="start" font-family="sans-serif" font-size="51" id="svg_3" y="67.6246" x="7.46028" stroke-width="0" stroke="#000000" fill="#000000">123</text>
+        </g>
+    </svg>
+
+    <svg if.bind="icon === 'boolean'" height="${iconSize}" width="${iconSize}" xmlns="http://www.w3.org/2000/svg">
+        <g transform="scale(0.18)">
+            <rect stroke="#000000" rx="10" id="svg_1" height="95" width="95" y="2.5" x="2.5" fill="#ffffff" stroke-width="3"/>
+            <rect id="svg_2" height="1" width="0" y="23" x="265" stroke="#C48157" fill="#BBBBBB"/>
+            <text transform="matrix(1 0 0 1 0 0)" style="cursor: move;" fill="#000000" stroke="#000000" stroke-width="0" x="12.22591" y="67.6246" id="svg_3" font-size="51" font-family="sans-serif" text-anchor="start" xml:space="preserve" font-weight="normal" font-style="normal">T|F</text>
+        </g>
+    </svg>
+
+    <svg if.bind="icon === 'object'" height="${iconSize}" width="${iconSize}" xmlns="http://www.w3.org/2000/svg">
+        <g transform="scale(0.18)">
+            <rect stroke-width="3" fill="#ffffff" x="2.5" y="2.5" width="95" height="95" id="svg_1" rx="10" stroke="#000000"/>
+            <rect fill="#BBBBBB" stroke="#C48157" x="265" y="23" width="0" height="1" id="svg_2"/>
+            <ellipse ry="40" rx="40" id="svg_3" cy="50" cx="50" stroke-width="0" stroke="#000000" fill="#000000"/>
+        </g>
+    </svg>
+
+    <svg if.bind="icon === 'number'" height="${iconSize}" width="${iconSize}" xmlns="http://www.w3.org/2000/svg">
+        <g transform="scale(0.18)">
+            <rect stroke-width="3" fill="#ffffff" x="2.5" y="2.5" width="95" height="95" id="svg_1" rx="10" stroke="#000000"/>
+            <rect fill="#BBBBBB" stroke="#C48157" x="265" y="23" width="0" height="1" id="svg_2"/>
+            <text transform="matrix(1 0 0 1 0 0)" style="cursor: move;" font-style="normal" font-weight="normal" xml:space="preserve" text-anchor="start" font-family="sans-serif" font-size="51" id="svg_3" y="67.50741" x="14.55404" stroke-width="0" stroke="#000000" fill="#000000">1.2</text>
+        </g>
+    </svg>
+
+    <svg if.bind="icon === 'enum'" height="${iconSize}" width="${iconSize}" xmlns="http://www.w3.org/2000/svg">
+        <g transform="scale(0.18)">
+            <rect stroke="#000000" rx="10" id="svg_1" height="95" width="95" y="2.5" x="2.5" fill="#ffffff" stroke-width="3"/>
+            <path stroke-width="3" id="svg_2" d="m22.50919,77.8308l0,-55.66173l53.24014,55.66173l-53.24014,0z" stroke="#000" fill="#fff" transform="rotate(-135, 49.1293, 49.9999)"/>
+            <ellipse ry="22.07522" rx="21.50919" id="svg_1" cy="50" cx="42.91692" stroke="#000" fill="#fff"/>
+        </g>
+    </svg>
+
 </template>

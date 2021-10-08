@@ -2,7 +2,7 @@
     <require from="./schema-form"></require>
     <require from="./validity-indicator"></require>
     <require from="./svg-icon.html"></require>
-    <require from='./tree-node'></require>   
+    <require from='./tree-node'></require>
 
     <template id="ontologyGraphTemplate">
         <svg>
@@ -67,7 +67,7 @@
 
                 .link-handle {
                     display: none;
-                    visibility:hidden;
+                    visibility: hidden;
                 }
 
                 .title {
@@ -155,16 +155,19 @@
                     <text class="description" data-content="description" x="-55" y="2"
                         data-wrap-lines="110 70|110 110 70"></text>
                     <text class="sort-key" data-content="sortKey" x="55" y="26" width="35"></text>
+                    <!--TODO: fabi: include data item-->
                 </g>
                 <g id="taxonomy-link-item" data-template-type="node">
-                    <rect width="120" height="60" x="-60" y="-30" rx="5" data-link-handles="edges" class="taxonomy-link-item"></rect>
+                    <rect width="120" height="60" x="-60" y="-30" rx="5" data-link-handles="edges"
+                        class="taxonomy-link-item"></rect>
                     <text class="titleDescription" x="-55" y="-13" width="110" data-content="typedescription"></text>
                     <text class="title" data-content="title" x="-55" y="4" width="110"></text>
                     <text class="description" data-content="description" x="-55" y="2"
                         data-wrap-lines="110 70|110 110 70"></text>
                 </g>
                 <g id="type-link-item" data-template-type="node">
-                    <rect width="120" height="60" x="-60" y="-30" rx="5" data-link-handles="edges" class="type-link-item"></rect>
+                    <rect width="120" height="60" x="-60" y="-30" rx="5" data-link-handles="edges"
+                        class="type-link-item"></rect>
                     <text class="titleDescription" x="-55" y="-13" width="110" data-content="typedescription"></text>
                     <text class="title" data-content="title" x="-55" y="4" width="110"></text>
                     <text class="description" data-content="description" x="-55" y="2"
@@ -185,7 +188,8 @@
                     <path d="M -9 -4 L 0 0 L -9 4 z" />
                 </g>
             </defs>
-            <g class="zoom-group"> <!-- the zoom-groop is used for the pan and zoom transormations -->
+            <g class="zoom-group">
+                <!-- the zoom-groop is used for the pan and zoom transormations -->
                 <g class="nodes"></g> <!-- the first group will be rendered below the following groups-->
                 <g class="edges"></g>
             </g>
@@ -262,7 +266,8 @@
                     <rect width="120" height="60" x="-60" y="-30" rx="5" data-link-handles="edges"></rect>
                 </g>
             </defs>
-            <g class="zoom-group"> <!-- the zoom-groop is used for the pan and zoom transormations -->
+            <g class="zoom-group">
+                <!-- the zoom-groop is used for the pan and zoom transormations -->
                 <g class="nodes"></g> <!-- the first group will be rendered below the following groups-->
                 <g class="edges"></g>
             </g>
@@ -275,39 +280,50 @@
     <template else>
         <div class=" maindiv menu-section card">
             <div class="item-filtersection px-1 py-1 border-gray-200 border-b scroll-area">
-
                 <span class="section-title">
                     ${"ontology.filter-area" | t}
                 </span>
-                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1" placeholder="search"
-                    value.from-view="filter & throttle" aria-owns="'datalist-'+slug" autocapitalize="none"
-                    value.bind="searchtext" type="text" autocomplete="off" aria-autocomplete="list" role="combobox"
-                    id="'input-'+slug">
+                <div class="section-subpart">
+                    <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1" placeholder="search"
+                        value.from-view="filter & throttle" aria-owns="'datalist-'+slug" autocapitalize="none"
+                        value.bind="searchtext" type="text" autocomplete="off" aria-autocomplete="list" role="combobox"
+                        id="'input-'+slug">
+                </div>
                 <span class="section-title">
                     ${"ontology.visibleElements" | t}
                 </span>
-                <div>
-                    <label class="cb_control control--checkbox">
-                        <input type="checkbox"  checked.bind="showTaxonomies">
-                        <span class="control__indicator"></span>
-                    </label>
-                    ${"ontology.taxonomies" | t}
+                <div class="section-subpart">
+                    <div>
+                        <label class="cb_control control--checkbox">
+                            <input type="checkbox" checked.bind="showTaxonomies">
+                            <span class="control__indicator"></span>
+                        </label>
+                        ${"ontology.taxonomies" | t}
+                    </div>
+                    <div>
+                        <label class="cb_control control--checkbox">
+                            <input type="checkbox" checked.bind="showTypes">
+                            <span class="control__indicator"></span>
+                        </label>
+                        ${"ontology.types" | t}
+                    </div>
+                    <div if.bind="!isLoading">
+                        <button class="button-outline px-2 items-center" click.delegate="showSelectedItems()"
+                            title='${"ontology.showSelectedItems" | t}'>
+                            ${"ontology.showSelectedItems" | t}
+                        </button>
+                    </div>
                 </div>
-                <div>
-                    <label class="cb_control control--checkbox">
-                        <input type="checkbox" checked.bind="showTypes">
-                        <span class="control__indicator"></span>
-                    </label>
-                    ${"ontology.types" | t}
-                </div>
-                <div>
-                    <span class="section-title">
-                        ${"ontology.childsToShow" | t}
-                    </span>
-                    <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1" placeholder="search"
-                    value.from-view="filter & throttle" aria-owns="'datalist-'+slug" autocapitalize="none"
-                    value.bind="typeChildsToShow" type="number" autocomplete="off" aria-autocomplete="list" role="combobox"
-                    id="'input-'+slug" min="0">
+                <span class="section-title">
+                    ${"ontology.childsToShow" | t}
+                </span>
+                <div class="section-subpart">
+                    <div>
+                        <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1"
+                            placeholder="search" value.from-view="filter & throttle" aria-owns="'datalist-'+slug"
+                            autocapitalize="none" value.bind="typeChildsToShow" type="number" autocomplete="off"
+                            aria-autocomplete="list" role="combobox" id="'input-'+slug" min="0">
+                    </div>
                 </div>
                 <div>
                     ${"ontology.itemsInGraph" | t} ${graph.nodeList.length}
@@ -353,12 +369,12 @@
                 value.bind="positionDifference" type="text" autocomplete="off" aria-autocomplete="list" role="combobox"
                 id="'input-'+slug">-->
             </div>
-            <div class="item-treesection px-1 py-1 border-gray-200 border-b scroll-area" >
+            <div class="item-treesection px-1 py-1 border-gray-200 border-b scroll-area">
 
                 <span class="section-title">
                     ${"ontology.tree-view" | t}
                 </span>
-                <tree-node repeat.for="node of dataItems" current.bind="node"></tree-node> 
+                <tree-node repeat.for="node of dataItems" current.bind="node"></tree-node>
             </div>
             <div class="item-overview">
                 <network-graph class="graphoverview" classes="taxonomy-item deleted" mode="display" zoom="automatic"
@@ -366,19 +382,24 @@
                 </network-graph>
             </div>
         </div>
-        <network-graph class="maingraph menu-graph ml-2 card"
-            classes="taxonomy-item deleted" mode="layout" zoom="both" svg-template="#ontologyGraphTemplate">
+        <network-graph id="graphexportsvg" class="maingraph menu-graph ml-2 card" classes="taxonomy-item deleted" mode="layout" zoom="both"
+            svg-template="#ontologyGraphTemplate">
         </network-graph>
-        <div class="menu-graph ml-2 card" if.bind="isLoading!=2">
-            <button class="button-outline px-2 items-center" click.delegate="renderGraph()">${"ontology.ShowGraph" | t}
-            <!--                    </button>
-            <spinner if.bind="isLoading!=0" type="S8" style-class="" size="100" color="default"></spinner>
-            Loading: ${isLoading}-->
+        <div id="ontology-loading-indicator" class="menu-graph ml-2 card" if.bind="isLoading">
+            ${"loading" | t}
+            <spinner type="S8" size="100" color="default"></spinner>
         </div>
         <div class="menu-graph mb-0 mt-auto ml-auto mr-0">
-            <div if.bind="selectedNode != null" class="card bg-white px-3 py-2 items-center">
-                detailinfo
-                ${selectedNode.id}!
+            <div if.bind="selectedNode != null" class="card bg-white px-3 py-2 items-center detailview">
+                <p class="section-title">${"ontology.detailview-header" | t}</p>
+                <p class="detailview-item">name: ${selectedNode.name}</p>
+                <p class="detailview-item">id: ${selectedNode.id}</p>
+                <p class="detailview-item">description: ${selectedNode.description}</p>
+                <p class="detailview-item">type: ${selectedNode.itemType}</p>
+                <p class="detailview-item">abstract: ${selectedNode.abstract}</p>
+                <p class="detailview-item">implementations: t.b.d.</p>
+                <p class="detailview-item">href: ${selectedNode.href}</p>
+                <p class="detailview-item">children: ${selectedNode.children.length}</p>
             </div>
             <div class="buttons card bg-white px-3 py-2 items-center" style="width: fit-content;float: right;">
                 <button class="button-flat px-2 items-center" click.delegate="toggleMenu()"
@@ -402,7 +423,7 @@
                             <button class="button-flat px-2 items-center" click.delegate="moveGraph('right')"
                                 title='${"ontology.moveRight" | t}'>
                                 <svg-icon icon.bind="'arrow-right'" size.bind="18"></svg-icon>
-                                
+
                             </button>
 
                         </div>
@@ -438,6 +459,6 @@
                 </div>
             </div>
         </div>
-        
+
     </template>
 </template>
