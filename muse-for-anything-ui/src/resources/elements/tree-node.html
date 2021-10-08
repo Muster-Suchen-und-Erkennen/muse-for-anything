@@ -40,10 +40,10 @@
                 <svg-icon icon.bind="'boolean'" size.bind="18"></svg-icon>
             </div>
             <div if.bind="current.itemType=='type'" title="Item Type: Type-Reference">
-                <svg-icon icon.bind="'object'" size.bind="18"></svg-icon>
+                <svg-icon icon.bind="'typeref'" size.bind="18"></svg-icon>
             </div>
             <div if.bind="current.itemType=='taxonomy'" title="Item Type: Taxonomy-Reference">
-                <svg-icon icon.bind="'object'" size.bind="18"></svg-icon>
+                <svg-icon icon.bind="'taxref'" size.bind="18"></svg-icon>
             </div>
             
             <div class="ont-treeview-item" title="${current.name}" class.bind="current.isSearchResult ? 'ont-treeview-item-highlight':''"> ${current.name}</div>

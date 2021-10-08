@@ -308,11 +308,18 @@
         </g>
     </svg>
 
-    <svg if.bind="icon === 'object'" height="${iconSize}" width="${iconSize}" xmlns="http://www.w3.org/2000/svg">
+    <svg if.bind="icon === 'typeref'" height="${iconSize}" width="${iconSize}" xmlns="http://www.w3.org/2000/svg">
         <g transform="scale(0.18)">
             <rect stroke-width="3" fill="#ffffff" x="2.5" y="2.5" width="95" height="95" id="svg_1" rx="10" stroke="#000000"/>
             <rect fill="#BBBBBB" stroke="#C48157" x="265" y="23" width="0" height="1" id="svg_2"/>
-            <ellipse ry="40" rx="40" id="svg_3" cy="50" cx="50" stroke-width="0" stroke="#000000" fill="#000000"/>
+            <ellipse ry="40" rx="40" id="svg_3" cy="50" cx="50" stroke-width="0" stroke="#dddddd" fill="#dddddd"/>
+        </g>
+    </svg>
+    <svg if.bind="icon === 'taxref'" height="${iconSize}" width="${iconSize}" xmlns="http://www.w3.org/2000/svg">
+        <g transform="scale(0.18)">
+            <rect stroke-width="3" fill="#ffffff" x="2.5" y="2.5" width="95" height="95" id="svg_1" rx="10" stroke="#000000"/>
+            <rect fill="#BBBBBB" stroke="#C48157" x="265" y="23" width="0" height="1" id="svg_2"/>
+            <ellipse ry="40" rx="40" id="svg_3" cy="50" cx="50" stroke-width="0" stroke="#FABA6F" fill="#FABA6F"/>
         </g>
     </svg>
 
