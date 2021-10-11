@@ -296,9 +296,11 @@ class TaxonomyGroupBehaviour implements GroupBehaviour {
 
     calcSize(groupNode: Node, groupId: string, graphEditor: GraphEditor) {
         if (graphEditor.groupingManager.getAllChildrenOf(groupId).size > 1) {
-            groupNode.height = 140;
+
+            let itemsPerColumn = Math.max(2,Math.round(Math.sqrt(graphEditor.groupingManager.getAllChildrenOf(groupId).size/2)))
+            groupNode.height = 100*itemsPerColumn;
             groupNode.childVisible = true;
-            groupNode.width = (2 + graphEditor.groupingManager.getAllChildrenOf(groupId).size / 2) * (140)
+            groupNode.width = (2 + graphEditor.groupingManager.getAllChildrenOf(groupId).size / itemsPerColumn) * (160)
         } else {
             groupNode.height = 20;
             groupNode.width = 140;
@@ -307,7 +309,7 @@ class TaxonomyGroupBehaviour implements GroupBehaviour {
     }
 
     onNodeMoveEnd(group: string, childGroup: string, groupNode: Node, childNode: Node, graphEditor: GraphEditor) {
-        repositionGroupNode(group, groupNode, graphEditor);
+        //repositionGroupNode(group, groupNode, graphEditor);
     }
 
 }
@@ -396,7 +398,7 @@ export class OntologyGraph {
     totalNodesToAdd = 0;
     totalNodesAdded = 0;
 
-    maximized: boolean = true;
+    maximized: boolean = false;
     isAllowedToShowGraph: boolean = false;
 
     @child("network-graph.maingraph") graph: GraphEditor;
@@ -977,7 +979,7 @@ export class OntologyGraph {
             childItem.itemType == DataItemTypeEnum.NumberProperty ||
             childItem.itemType == DataItemTypeEnum.StringProperty ||
             childItem.itemType == DataItemTypeEnum.Undefined) {
-            nodeBox = this.addNodeToGraph({ id: childItem.id, title: childItem.name, type: "taxonomy-item", x: nodeBox.x, y: nodeBox.y, typedescription: childItem.itemType }, false);
+            nodeBox = this.addNodeToGraph({ id: childItem.id, title: childItem.name, type: "type-item", x: nodeBox.x, y: nodeBox.y, typedescription: childItem.itemType }, false);
         } else {
             console.log("fuckof", childItem)
         }
@@ -1007,8 +1009,9 @@ export class OntologyGraph {
         let taxonomyItemSize = this.getSizeOfStaticTemplateNode('taxonomy-item');
 
         let childElements: Array<{ href: string, id: string }> = []
+        let itemsPerColumn = Math.max(2,Math.round(Math.sqrt(taxonomyParent.children.length/2)))
         taxonomyParent.children.forEach(childElement => {
-            this.addNodeToGraph({ id: childElement.id, title: childElement.name, type: 'taxonomy-item', x: parentBox.x + 150 + (Math.floor(childElements.length / 2)) * (Number(taxonomyItemSize.width) + 10), y: parentBox.y + 20 + (childElements.length % 2) * (Number(taxonomyItemSize.height) + 10) }, false);
+            this.addNodeToGraph({ id: childElement.id, title: childElement.name, type: 'taxonomy-item', x: parentBox.x + 150 + itemsPerColumn*23 + (Math.floor(childElements.length / itemsPerColumn)) * (Number(taxonomyItemSize.width) + 10), y: parentBox.y + 20 + itemsPerColumn*15+ (childElements.length % itemsPerColumn) * (Number(taxonomyItemSize.height) + 10) }, false);
             childElements.push({ href: childElement.href, id: childElement.id });
             this.missingParentConnection.push({ parent: taxonomyParent.id, child: childElement.id, joinTree: false })
         });

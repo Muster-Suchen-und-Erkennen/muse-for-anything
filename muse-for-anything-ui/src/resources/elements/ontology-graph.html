@@ -37,6 +37,35 @@
                     fill: rgb(189, 189, 189) !important;
                 }
 
+                .node.selected>.type-group {
+                    fill: rgb(255, 0, 234) !important;
+                }
+
+                .node.selected>.taxonomy-group {
+                    fill: rgb(255, 0, 234) !important;
+                }
+
+                .node.selected>.taxonomy-link-item {
+                    fill: rgb(250, 123, 239) !important;
+                }
+                
+                .node.selected>.type-link-item {
+                    fill: rgb(250, 123, 239) !important;
+                }
+                
+                .node.selected>.type-item {
+                    fill: rgb(250, 123, 239) !important;
+                }
+                
+                .node.selected>.taxonomy-item {
+                    fill: rgb(250, 123, 239) !important;
+                }
+
+                .node.selected>ellipse {
+                    fill: rgb(255, 0, 234) !important;
+                    stroke: rgb(255, 230, 0);
+                }
+
                 .type-title-background {
                     fill: brown !important;
                     border-style: none;
@@ -54,7 +83,6 @@
 
                 .node.selected>ellipse {
                     fill: rgb(255, 0, 234) !important;
-                    stroke: rgb(255, 230, 0);
                 }
 
                 .taxonomy-link-item {
@@ -118,11 +146,6 @@
                     stroke: var(--line-highlight-color);
                 }
 
-                .node.selected>rect {
-                    fill: rgb(255, 0, 234) !important;
-                    stroke: var(--line-highlight-color);
-                }
-
                 .node.selected .title {
                     fill: var(--text-highlight-color);
                 }
@@ -148,15 +171,6 @@
                 }
             </style>
             <defs class="templates">
-                <g id="taxonomy-item" data-template-type="node">
-                    <rect width="120" height="60" x="-60" y="-30" rx="5" data-link-handles="edges"></rect>
-                    <text class="titleDescription" x="-55" y="-13" width="110" data-content="typedescription"></text>
-                    <text class="title" data-content="title" x="-55" y="4" width="110"></text>
-                    <text class="description" data-content="description" x="-55" y="2"
-                        data-wrap-lines="110 70|110 110 70"></text>
-                    <text class="sort-key" data-content="sortKey" x="55" y="26" width="35"></text>
-                    <!--TODO: fabi: include data item-->
-                </g>
                 <g id="taxonomy-link-item" data-template-type="node">
                     <rect width="120" height="60" x="-60" y="-30" rx="5" data-link-handles="edges"
                         class="taxonomy-link-item"></rect>
@@ -174,12 +188,21 @@
                         data-wrap-lines="110 70|110 110 70"></text>
                 </g>
                 <g id="type-item" data-template-type="node">
-                    <rect width="120" height="120" x="-60" y="-30" rx="5" data-link-handles="edges"></rect>
-                    <rect class="type-title-background" x="-60" y="-30" height="20" width="120"></rect>
-                    <text class="type-title" data-content="title" x="-55" y="-13" width="110"></text>
-                    <text class="type-title" data-content="props" x="-55" y="-13" width="110"></text>
+                    <rect width="120" height="60" x="-60" y="-30" rx="5" data-link-handles="edges" class="type-item"></rect>
+                    <text class="titleDescription" x="-55" y="-13" width="110" data-content="typedescription"></text>
+                    <text class="title" data-content="title" x="-55" y="4" width="110"></text>
                     <text class="description" data-content="description" x="-55" y="2"
                         data-wrap-lines="110 70|110 110 70"></text>
+                    <text class="sort-key" data-content="sortKey" x="55" y="26" width="35"></text>
+                </g>
+                <g id="taxonomy-item" data-template-type="node">
+                    <rect width="120" height="60" x="-60" y="-30" rx="5" data-link-handles="edges" class="taxonomy-item"></rect>
+                    <text class="titleDescription" x="-55" y="-13" width="110" data-content="typedescription"></text>
+                    <text class="title" data-content="title" x="-55" y="4" width="110"></text>
+                    <text class="description" data-content="description" x="-55" y="2"
+                        data-wrap-lines="110 70|110 110 70"></text>
+                    <text class="sort-key" data-content="sortKey" x="55" y="26" width="35"></text>
+                    <!--TODO: fabi: include data item-->
                 </g>
                 <g id="default-marker" data-template-type="marker" data-line-attachement-point="6">
                     <circle cx="0" cy="0" r="6"></circle>
@@ -243,6 +266,11 @@
                 .node>rect {
                     fill: none;
                     stroke: black;
+                }
+
+                .node>ellipse {
+                    fill: #FABA6F !important;
+                    stroke: #FABA6F;
                 }
 
                 .edge {
