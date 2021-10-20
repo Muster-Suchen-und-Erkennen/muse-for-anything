@@ -152,6 +152,7 @@ export class DataItemModel {
     public visible: boolean;
     public abstract: boolean;
     @observable() isSelected: boolean;
+    @observable() isVisibleInGraph: boolean;
     @observable() isSearchResult: boolean;
     private graph: GraphEditor;
 
@@ -168,6 +169,7 @@ export class DataItemModel {
         this.graph = graph;
         this.children = [];
         this.taxonomyParentRelations = taxonomyChildRelations;
+        this.isVisibleInGraph = true;
     }
 
     hasChildren() {
@@ -583,30 +585,19 @@ export class OntologyGraph {
             }
         })
         this.graph.updateHighlights();
-
+        console.log(this.graph.selected)
         this.graph.getSVG().selectAll("g.node").nodes().forEach(node => {
-            if(this.graph.selected.has(node.id) || newText == "") {
-                node.childNodes?.forEach(element => {
-                    if(element.classList?.contains("type-link-item") ||element.classList?.contains("taxonomy-link-item") || element.classList?.contains("type-item") || element.classList?.contains("type-group")|| element.classList?.contains("taxonomy-group")) {
-                        element.classList.remove("invisible-node")
-                    }
-                });
+            console.log(node.id, this.graph.selected.has(node.id))
+            if(this.graph.selected.has(node.id.substring(5)) || newText == "") {
+                node.classList.remove("greyedout-node")
             } else {
-                node.childNodes?.forEach(element => {
-                    if(element.classList?.contains("type-link-item") ||element.classList?.contains("taxonomy-link-item") || element.classList?.contains("type-item") || element.classList?.contains("type-group")|| element.classList?.contains("taxonomy-group")) {
-                        element.classList.add("invisible-node")
-                    }
-                });
+                node.classList.add("greyedout-node")
             }
         });
     }
 
     searchtextFocusLeft() {
-        this.graph.getSVG().selectAll("g.node").nodes().forEach(node => {
-            node.childNodes?.forEach(element => {
-                element?.classList?.remove("invisible-node")
-            });
-        });
+        this.graph.getSVG().selectAll("g.node").nodes().forEach(node => node.classList?.remove("greyedout-node"));
     }
 
     typeChildsToShowChanged(newValue: number, oldValue: number) {
@@ -842,10 +833,17 @@ export class OntologyGraph {
             return;
         }
         if (value) {
-            this.renderTypes();
-            this.postRender();
+            this.dataItems.filter(p => p.itemType==DataItemTypeEnum.TypeItem).forEach(p => {
+                p.isVisibleInGraph = true
+                p.children?.forEach(child => child.isVisibleInGraph = true);
+            });
+            this.updateVisibilityInGraph();
         } else {
-            this.deleteTypes();
+            this.dataItems.filter(p => p.itemType==DataItemTypeEnum.TypeItem).forEach(p => {
+                p.isVisibleInGraph = false
+                p.children?.forEach(child => child.isVisibleInGraph = false);
+            });
+            this.updateVisibilityInGraph();
         }
     }
 
@@ -873,11 +871,56 @@ export class OntologyGraph {
             return;
         }
         if (value) {
-            this.renderTaxonomies();
-            this.postRender();
+            /*this.renderTaxonomies();
+            this.postRender();*/
+            this.dataItems.filter(p => p.itemType==DataItemTypeEnum.TaxonomyItem).forEach(p => {
+                p.isVisibleInGraph = true
+                p.children?.forEach(child => child.isVisibleInGraph = true);
+            });
+            this.updateVisibilityInGraph();
         } else {
-            this.deleteTaxonomies();
+            //this.deleteTaxonomies();
+            this.dataItems.filter(p => p.itemType==DataItemTypeEnum.TaxonomyItem).forEach(p => {
+                p.isVisibleInGraph = false
+                p.children?.forEach(child => child.isVisibleInGraph = false);
+            });
+            this.updateVisibilityInGraph();
         }
+    }
+
+    private updateVisibilityInGraph() {
+        this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
+            edge.classList?.remove("invisible-node")
+        });
+
+        this.dataItems.forEach(node => {
+            if(node.isVisibleInGraph) {
+                this.graph.getSVG().select("#node-" + node.id).node()?.classList?.remove("invisible-node")
+            } else {
+                this.graph.getSVG().select("#node-" + node.id).node()?.classList?.add("invisible-node")
+                this.updateVisibilityOfEdge(node.id,false)
+            }
+            node.children.forEach(child => {
+                if(child.isVisibleInGraph) {
+                    this.graph.getSVG().select("#node-" + child.id).node()?.classList?.remove("invisible-node")
+                } else {
+                    this.graph.getSVG().select("#node-" + child.id).node()?.classList?.add("invisible-node")
+                    this.updateVisibilityOfEdge(child.id,false)
+                }
+            });
+        })
+    }
+
+    private updateVisibilityOfEdge(nodeid: string, visibile: boolean) {
+        this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
+            if(edge.id.includes(nodeid)) {
+                if(visibile) {
+                    edge.classList?.remove("invisible-node")
+                } else {
+                    edge.classList?.add("invisible-node")
+                }
+            }
+        });
     }
 
     private async preRenderGraph() {
