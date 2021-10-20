@@ -50,10 +50,31 @@ interface TypeItemApiObject extends ApiObject {
 class TypeNodeTemplate implements DynamicNodeTemplate {
 
     getLinkHandles(g: any, grapheditor: GraphEditor): LinkHandle[] {
-        let innerHTML = g._groups[0][0].innerHTML;
-        const width = innerHTML.split("width=\"")[1].split("\"")[0];
-        const height = innerHTML.split("height=\"")[1].split("\"")[0];
-        return handlesForRectangle(0, 0, Number(width), Number(height), "edges");
+        const width = g.datum().width+2*boundingBoxBorder;
+        const height = g.datum().height+2*boundingBoxBorder;
+        let handles = [];
+        handles.push({
+            id: 0,
+            normal: {dx: 1, dy: 0},
+            x: width,
+            y: height/2});
+        handles.push({
+            id: 1,
+            normal: {dx: -1, dy: 0},
+            x: 0,
+            y: height/2});
+        handles.push({
+            id: 2,
+            normal: {dx: 0, dy: 1},
+            x: width/2,
+            y: height});
+        handles.push({
+            id: 3,
+            normal: {dx: 0, dy: -1},
+            x: width/2,
+            y: 0});
+
+        return handles;
     }
 
     renderInitialTemplate(g: any, grapheditor: GraphEditor, context: DynamicTemplateContext<Node>): void {
@@ -66,11 +87,12 @@ class TypeNodeTemplate implements DynamicNodeTemplate {
 
     private calculateRect(g: any, grapheditor: GraphEditor, context: DynamicTemplateContext<Node>, updated?: boolean) {
         let isOverviewGraph = grapheditor.className.includes("graphoverview")
-        let props = g._groups[0][0].__data__;
-        if (props.height) {
-            this.drawRect(g, { x: 0, y: 0, width: props.width, height: props.height }, props, isOverviewGraph)
+        const width = g.datum().width;
+        const height = g.datum().height;
+        if (height) {
+            this.drawRect(g, { x: 0, y: 0, width: width, height: height }, g.datum(), isOverviewGraph)
         } else {
-            this.drawRect(g, { x: 0, y: 0, width: 120, height: 20 }, props, isOverviewGraph)
+            this.drawRect(g, { x: 0, y: 0, width: 120, height: 20 }, g.datum(), isOverviewGraph)
         }
     }
 
@@ -191,10 +213,31 @@ class TaxonomyNodeTemplate implements DynamicNodeTemplate {
     private linkHandleOptions: string;
 
     getLinkHandles(g: any, grapheditor: GraphEditor): LinkHandle[] {
-        let innerHTML = g._groups[0][0].innerHTML;
-        const width = innerHTML.split("width=\"")[1].split("\"")[0];
-        const height = innerHTML.split("height=\"")[1].split("\"")[0];
-        return handlesForRectangle(0, 0, Number(width), Number(height), "edges");
+        const width = g.datum().width+2*boundingBoxBorder;
+        const height = g.datum().height+2*boundingBoxBorder;
+        let handles = [];
+        handles.push({
+            id: 0,
+            normal: {dx: 1, dy: 0},
+            x: width,
+            y: height/2});
+        handles.push({
+            id: 1,
+            normal: {dx: -1, dy: 0},
+            x: 0,
+            y: height/2});
+        handles.push({
+            id: 2,
+            normal: {dx: 0, dy: 1},
+            x: width/2,
+            y: height});
+        handles.push({
+            id: 3,
+            normal: {dx: 0, dy: -1},
+            x: width/2,
+            y: 0});
+
+        return handles;
     }
 
     renderInitialTemplate(g: any, grapheditor: GraphEditor, context: DynamicTemplateContext<Node>): void {
@@ -207,7 +250,7 @@ class TaxonomyNodeTemplate implements DynamicNodeTemplate {
 
     private calculateRect(g: any, grapheditor: GraphEditor, context: DynamicTemplateContext<Node>, updated?: boolean) {
         let isOverviewGraph = grapheditor.className.includes("graphoverview")
-        let props = g._groups[0][0].__data__;
+        let props = g.datum();
         if (!props.height) {
             props.height = 20;
         }
@@ -258,12 +301,12 @@ class OverviewGraphNode implements DynamicNodeTemplate {
     }
 
     renderInitialTemplate(g: any, grapheditor: GraphEditor, context: DynamicTemplateContext<Node>): void {
-        let props = g._groups[0][0].__data__;
+        let props = g.datum();
         this.drawRect(g, props);
     }
 
     updateTemplate(g: any, grapheditor: GraphEditor, context: DynamicTemplateContext<Node>): void {
-        let props = g._groups[0][0].__data__;
+        let props = g.datum();
         this.drawRect(g, props);
     }
 
@@ -387,6 +430,7 @@ export class OntologyGraph {
     @bindable timeStep = 20
     @bindable positionDifference = 1;
     @bindable isLoading = true;
+    @bindable isRendered = false;
     @bindable apiLink;
     @bindable ignoreCache = false;
     @bindable maximizeMenu = false;
@@ -495,6 +539,7 @@ export class OntologyGraph {
         newGraph.dynamicTemplateRegistry.addDynamicTemplate('overview-node-template', new OverviewGraphNode);
         newGraph.dynamicTemplateRegistry.addDynamicTemplate('type-group-node-template', new TypeNodeTemplate);
         newGraph.dynamicTemplateRegistry.addDynamicTemplate('taxonomy-group-node-template', new TaxonomyNodeTemplate);
+        
     }
 
     searchtextChanged(newText: string, old: string) {
@@ -509,7 +554,10 @@ export class OntologyGraph {
             }
             else {
                 parent.isSearchResult = false;
-                if (!parent.isSelected) this.graph.deselectNode(parent.id)
+                if (!parent.isSelected) {
+                    this.graph.deselectNode(parent.id)
+                    //this.graph.nodeList.find(n => n.id == parent.id).
+                }
             }
             let closeParent = true;
             parent.children.forEach(child => {
@@ -622,7 +670,7 @@ export class OntologyGraph {
             Promise.all(promisesTypes).then(() => {
                 console.log("done with all type data", this.dataItems.length, this.totalTypes)
                 if(this.dataItems.length==this.totalTypes + this.totalTaxonomies) {
-                    this.renderGraph(); 
+                    this.preRenderGraph(); 
                 }
             });
 
@@ -664,7 +712,7 @@ export class OntologyGraph {
             Promise.all(promises).then(() => {
                 console.log("done with all tax data", this.dataItems.length)
                 if(this.dataItems.length==this.totalTypes + this.totalTaxonomies) {
-                    this.renderGraph(); 
+                    this.preRenderGraph(); 
                 }
             });
         });
@@ -779,17 +827,23 @@ export class OntologyGraph {
         }
     }
 
-    private async postRender() {
+    private postRender() {
 
-        await this.graph.completeRender();
-        await this.graphoverview.completeRender();
-        await this.addChildnodesToParents();
+        this.graph.completeRender();
+        this.graphoverview.completeRender();
+        this.addChildnodesToParents();
 
-        await this.updateHiddenLinks();
+        this.updateHiddenLinks();
 
-        await this.graph.completeRender();
-        await this.graphoverview.completeRender();
+        this.graph.completeRender();
+        this.graphoverview.completeRender();
+
+        let svgOverviewgraph = this.graphoverview.getSVG().select("g.zoom-group");
+        svgOverviewgraph.append("g")
+        .attr("id", "overviewrect").append("rect");
+
         this.isLoading = false;
+        this.isRendered = true;
     }
 
     async showTaxonomiesChanged(value: boolean) {
@@ -804,11 +858,14 @@ export class OntologyGraph {
         }
     }
 
-    private async renderGraph() {
-        console.log("types", this.dataItems.filter(p => p.itemType==DataItemTypeEnum.TypeItem).length)
-        console.log("taxonomies", this.dataItems.filter(p => p.itemType==DataItemTypeEnum.TaxonomyItem).length)
+    private async preRenderGraph() {
         this.getNodePositions();
         this.sortList(this.dataItems);
+        this.isLoading=false;
+    }
+
+    private renderGraph() {
+        this.isLoading=true;
 
         if (this.graph == null) {
             return;
@@ -818,9 +875,9 @@ export class OntologyGraph {
 
         if (this.showTaxonomies) this.renderTaxonomies();
         this.postRender();
-        await this.graph.zoomToBoundingBox();
+        this.graph.zoomToBoundingBox();
 
-        await this.graphoverview.zoomToBoundingBox();
+        this.graphoverview.zoomToBoundingBox();
     }
 
     private async renderTypes() {
@@ -970,16 +1027,16 @@ export class OntologyGraph {
 
     private addItemsToType(childItem: DataItemModel, nodeBox: { x, y }, parentItem: DataItemModel): { x, y } {
         if (childItem.itemType == DataItemTypeEnum.TaxonomyProperty) {
-            nodeBox = this.addNodeToGraph({ id: childItem.id, title: childItem.name, type: "taxonomy-link-item", x: nodeBox.x, y: nodeBox.y, typedescription: "Taxonomy-Ref" }, false);
+            nodeBox = this.addNodeToGraph({ id: childItem.id, title: childItem.name, type: "taxonomy-link-item", x: nodeBox.x, y: nodeBox.y, typedescription: "Taxonomy-Ref", typedescriptionHref: "#"+childItem.itemType }, false);
         } else if (childItem.itemType == DataItemTypeEnum.TypeProperty) {
-            nodeBox = this.addNodeToGraph({ id: childItem.id, title: childItem.name, type: "type-link-item", x: nodeBox.x, y: nodeBox.y, typedescription: "Type-Ref" }, false);
+            nodeBox = this.addNodeToGraph({ id: childItem.id, title: childItem.name, type: "type-link-item", x: nodeBox.x, y: nodeBox.y, typedescription: "Type-Ref", typedescriptionHref: "#"+childItem.itemType }, false);
         } else if (childItem.itemType == DataItemTypeEnum.EnumProperty ||
             childItem.itemType == DataItemTypeEnum.BooleanProperty ||
             childItem.itemType == DataItemTypeEnum.IntegerProperty ||
             childItem.itemType == DataItemTypeEnum.NumberProperty ||
             childItem.itemType == DataItemTypeEnum.StringProperty ||
             childItem.itemType == DataItemTypeEnum.Undefined) {
-            nodeBox = this.addNodeToGraph({ id: childItem.id, title: childItem.name, type: "type-item", x: nodeBox.x, y: nodeBox.y, typedescription: childItem.itemType }, false);
+            nodeBox = this.addNodeToGraph({ id: childItem.id, title: childItem.name, type: "type-item", x: nodeBox.x, y: nodeBox.y, typedescription: childItem.itemType, typedescriptionHref: "#"+childItem.itemType}, false);
         } else {
             console.log("fuckof", childItem)
         }
@@ -1099,8 +1156,8 @@ export class OntologyGraph {
      * @returns size of the node
      */
     private getSizeOfStaticTemplateNode(nodeType: string): { width: number, height: number } {
-        let width = this.graph.staticTemplateRegistry.getNodeTemplate(nodeType)._groups[0][0].getElementsByTagName("rect")[0].getAttribute("width");
-        let height = this.graph.staticTemplateRegistry.getNodeTemplate(nodeType)._groups[0][0].getElementsByTagName("rect")[0].getAttribute("height");
+        let width = this.graph.staticTemplateRegistry.getNodeTemplate(nodeType).node().getElementsByTagName("rect")[0].getAttribute("width");
+        let height = this.graph.staticTemplateRegistry.getNodeTemplate(nodeType).node().getElementsByTagName("rect")[0].getAttribute("height");
         return { width, height }
     }
 
@@ -1120,13 +1177,11 @@ export class OntologyGraph {
     }
 
     private onNodeClick(event: CustomEvent<{ eventSource: "API" | "USER_INTERACTION" | "INTERNAL", node: Node, key: string }>) {
-
         if (event.detail.eventSource !== "USER_INTERACTION") {
             return;
         }
         event.preventDefault();
         const node = event.detail.node;
-        console.log("Click event", event)
 
         if (node.dynamicTemplate === "taxonomy-group-node-template" && event.detail.key == "expandNode") {
             if (this.graph.groupingManager.getAllChildrenOf(node.id).size > 0) {
@@ -1150,6 +1205,15 @@ export class OntologyGraph {
         if (event.detail.key == "header") {
             this.selectedNode = this.dataItems.find(item => item.id == node.id);
         }
+
+        // highlight links
+        // TODO: kanten highlighten
+        this.graph.edgeList.forEach(edge => {
+            edge.selected = true;
+            if (edge.source == node.id) {
+                //edge. = true;
+            }
+        })
     }
 
     private onEdgeClick(event: CustomEvent<{ eventSource: "API" | "USER_INTERACTION" | "INTERNAL", node: Node }>) {
@@ -1175,15 +1239,22 @@ export class OntologyGraph {
     }
 
     private onZoomChange(event: CustomEvent<{ eventSource: "API" | "USER_INTERACTION" | "INTERNAL", node: Node }>) {
-        //TODO: fabi: fix calling
-        //console.log(event)
-        //this.renderMainViewPositionInOverviewGraph();
+        this.renderMainViewPositionInOverviewGraph();
     }
 
     private renderMainViewPositionInOverviewGraph() {
+        if(this.graphoverviewChanged==null) {
+            return;
+        }
         let currentView = this.graph.currentViewWindow;
-        this.graphoverview?.removeNode(4242424242424242424242424242424242, false);
-        this.graphoverview?.addNode({ id: 4242424242424242424242424242424242, class: "position-rect", dynamicTemplate: 'overview-node-template', x: currentView.x, y: currentView.y, width: currentView.width, height: currentView.height }, true);
+        let svg = this.graphoverview.getSVG();
+        svg.select("g#overviewrect").select("rect")
+            .attr("x", currentView.x)
+            .attr("y", currentView.y)
+            .attr("width", currentView.width)
+            .attr("height", currentView.height)
+            .attr("class","position-rect");
+
     }
 
     // function called by buttons from the front-end, to interact with the graph

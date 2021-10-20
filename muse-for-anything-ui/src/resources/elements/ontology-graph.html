@@ -19,56 +19,54 @@
                     --text-highlight-color: #6d28d9;
                     --fill-color: white;
                     --fill-highlight-color: white;
+                    --highlight-child-color: #fa7bef;
+                    --highlight-parent-color: #ff00ea;
+                    --taxonomy-color: #FABA6F;
+                    --type-color: #bdbdbd;
+                    --position-rect-color: #6c28d95d;
                 }
 
                 svg .zoom-group {
                     will-change: contents, transform;
                 }
 
-                .ghost {
-                    opacity: 0.5 !important;
-                }
-
-                .taxonomy-group {
-                    fill: rgb(221, 221, 221) !important;
-                }
-
                 .type-group {
-                    fill: rgb(189, 189, 189) !important;
+                    fill: var(--type-color) !important;
                 }
 
                 .node.selected>.type-group {
-                    fill: rgb(255, 0, 234) !important;
+                    fill: var(--highlight-parent-color) !important;
+                    opacity: 1;
                 }
 
                 .node.selected>.taxonomy-group {
-                    fill: rgb(255, 0, 234) !important;
+                    fill: var(--highlight-parent-color) !important;
+                    opacity: 1;
                 }
 
                 .node.selected>.taxonomy-link-item {
-                    fill: rgb(250, 123, 239) !important;
+                    fill: var(--highlight-child-color) !important;
+                    opacity: 1;
                 }
                 
                 .node.selected>.type-link-item {
-                    fill: rgb(250, 123, 239) !important;
+                    fill: var(--highlight-child-color) !important;
+                    opacity: 1;
                 }
                 
                 .node.selected>.type-item {
-                    fill: rgb(250, 123, 239) !important;
+                    fill: var(--highlight-child-color) !important;
+                    opacity: 1;
                 }
                 
                 .node.selected>.taxonomy-item {
-                    fill: rgb(250, 123, 239) !important;
+                    fill: var(--highlight-child-color) !important;
+                    opacity: 1;
                 }
 
                 .node.selected>ellipse {
-                    fill: rgb(255, 0, 234) !important;
-                    stroke: rgb(255, 230, 0);
-                }
-
-                .type-title-background {
-                    fill: brown !important;
-                    border-style: none;
+                    fill: var(--highlight-parent-color) !important;
+                    opacity: 1;
                 }
 
                 .node>rect {
@@ -77,19 +75,11 @@
                 }
 
                 .node>ellipse {
-                    fill: #FABA6F !important;
-                    stroke: #FABA6F;
+                    fill: var(--taxonomy-color);
+                    stroke: var(--line-color);
                 }
 
-                .node.selected>ellipse {
-                    fill: rgb(255, 0, 234) !important;
-                }
-
-                .taxonomy-link-item {
-                    stroke-dasharray: 5px;
-                }
-
-                .type-link-item {
+                .type-link-item, .taxonomy-link-item {
                     stroke-dasharray: 5px;
                 }
 
@@ -115,26 +105,10 @@
 
                 }
 
-                .type-title {
-                    fill: var(--text-color);
-                    font-size: initial;
-                    text-overflow: ellipsis;
-                    word-break: break-all;
-                    border-bottom: double;
-                }
-
                 .description {
                     fill: var(--text-color);
                     font-size: 6pt;
                     text-overflow: ellipsis;
-                }
-
-                .sort-key {
-                    fill: var(--text-color);
-                    opacity: 0.8;
-                    font-size: 6pt;
-                    text-overflow: ellipsis;
-                    text-anchor: end;
                 }
 
                 .node.hovered:not(.deleted) .link-handle {
@@ -156,6 +130,13 @@
 
                 .edge {
                     stroke: var(--line-color);
+                    opacity: 0.5;
+                }
+
+                .edge.selected {
+                    stroke: var(--line-color);
+                    opacity: 1;
+                    stroke-width: 5px;
                 }
 
                 .edge-group .marker {
@@ -169,31 +150,78 @@
                 .highlight-outgoing.edge-group .marker {
                     fill: var(--line-highlight-color);
                 }
+
+                .position-rect {
+                    fill: var(--position-rect-color) !important;
+                    border-style: none !important;
+                }
             </style>
             <defs class="templates">
+                <g transform="scale(0.1)" id="string">
+                    <rect stroke-width="3" fill="#ffffff" x="2.5" y="2.5" width="95" height="95" id="svg_1" rx="10" stroke="#000000"/>
+                    <rect fill="#BBBBBB" stroke="#C48157" x="265" y="23" width="0" height="1" id="svg_2"/>
+                    <text transform="matrix(1 0 0 1 0 0)" font-style="normal" font-weight="normal" xml:space="preserve" text-anchor="start" font-family="sans-serif" font-size="51" id="svg_3" y="67.6246" x="6.20247" stroke-width="0" stroke="#000000" fill="#000000">Abc</text>
+                </g>        
+                <g transform="scale(0.1)" id="integer">
+                    <rect stroke-width="3" fill="#ffffff" x="2.5" y="2.5" width="95" height="95" id="svg_1" rx="10" stroke="#000000"/>
+                    <rect fill="#BBBBBB" stroke="#C48157" x="265" y="23" width="0" height="1" id="svg_2"/>
+                    <text transform="matrix(1 0 0 1 0 0)" font-style="normal" font-weight="normal" xml:space="preserve" text-anchor="start" font-family="sans-serif" font-size="51" id="svg_3" y="67.6246" x="7.46028" stroke-width="0" stroke="#000000" fill="#000000">123</text>
+                </g>
+                <g transform="scale(0.1)" id="boolean">
+                    <rect stroke="#000000" rx="10" id="svg_1" height="95" width="95" y="2.5" x="2.5" fill="#ffffff" stroke-width="3"/>
+                    <rect id="svg_2" height="1" width="0" y="23" x="265" stroke="#C48157" fill="#BBBBBB"/>
+                    <text transform="matrix(1 0 0 1 0 0)" style="cursor: move;" fill="#000000" stroke="#000000" stroke-width="0" x="12.22591" y="67.6246" id="svg_3" font-size="51" font-family="sans-serif" text-anchor="start" xml:space="preserve" font-weight="normal" font-style="normal">T|F</text>
+                </g>
+                <g transform="scale(0.1)" id="number">
+                    <rect stroke-width="3" fill="#ffffff" x="2.5" y="2.5" width="95" height="95" id="svg_1" rx="10" stroke="#000000"/>
+                    <rect fill="#BBBBBB" stroke="#C48157" x="265" y="23" width="0" height="1" id="svg_2"/>
+                    <text transform="matrix(1 0 0 1 0 0)" style="cursor: move;" font-style="normal" font-weight="normal" xml:space="preserve" text-anchor="start" font-family="sans-serif" font-size="51" id="svg_3" y="67.50741" x="14.55404" stroke-width="0" stroke="#000000" fill="#000000">1.2</text>
+                </g>
+                <g transform="scale(0.1)" id="enum">
+                    <rect stroke="#000000" rx="10" id="svg_1" height="95" width="95" y="2.93137" x="3.16667" fill="#ffffff" stroke-width="3"/>
+                    <text transform="matrix(0.676311 0 0 0.69423 9.06328 19.6744)" stroke="#000000" xml:space="preserve" text-anchor="start" font-family="sans-serif" font-size="51" y="27.39974" x="34.5811" stroke-width="0" fill="#000000">Abc</text>
+                    <text transform="matrix(0.676311 0 0 0.69423 9.06328 19.6744)" stroke="#000000" xml:space="preserve" text-anchor="start" font-family="sans-serif" font-size="51" y="67.39974" x="34.5811" stroke-width="0" fill="#000000">Abc</text>
+                    <text transform="matrix(0.676311 0 0 0.69423 9.06328 19.6744)" stroke="#000000" xml:space="preserve" text-anchor="start" font-family="sans-serif" font-size="51" y="107.39974" x="34.5811" stroke-width="0" fill="#000000">Abc</text>
+                    <ellipse ry="7.33333" rx="7.33333" cy="29.43137" cx="20.66667" stroke-width="0" stroke="#000000" fill="#000000"/>
+                    <ellipse ry="7.33333" rx="7.33333" cy="55.43137" cx="20.66667" stroke-width="0" stroke="#000000" fill="#000000"/>
+                    <ellipse ry="7.33333" rx="7.33333" cy="80.43137" cx="20.66667" stroke-width="0" stroke="#000000" fill="#000000"/>
+                </g>
+
+
                 <g id="taxonomy-link-item" data-template-type="node">
                     <rect width="120" height="60" x="-60" y="-30" rx="5" data-link-handles="edges"
                         class="taxonomy-link-item"></rect>
-                    <text class="titleDescription" x="-55" y="-13" width="110" data-content="typedescription"></text>
+                    <text class="titleDescription" x="-45" y="-13" width="110" data-content="typedescription"></text>
                     <text class="title" data-content="title" x="-55" y="4" width="110"></text>
                     <text class="description" data-content="description" x="-55" y="2"
                         data-wrap-lines="110 70|110 110 70"></text>
+                    <g transform="scale(0.1), translate(-570,-225)">
+                        <rect stroke-width="3" fill="#ffffff" x="2.5" y="2.5" width="95" height="95" id="svg_1" rx="10" stroke="#000000"/>
+                        <rect fill="#BBBBBB" stroke="#C48157" x="265" y="23" width="0" height="1" id="svg_2"/>
+                        <ellipse ry="40" rx="40" id="svg_3" cy="50" cx="50" stroke-width="0" stroke="#FABA6F" fill="#FABA6F"/>
+                    </g>
                 </g>
                 <g id="type-link-item" data-template-type="node">
                     <rect width="120" height="60" x="-60" y="-30" rx="5" data-link-handles="edges"
                         class="type-link-item"></rect>
-                    <text class="titleDescription" x="-55" y="-13" width="110" data-content="typedescription"></text>
+                    <text class="titleDescription" x="-45" y="-13" width="110" data-content="typedescription"></text>
                     <text class="title" data-content="title" x="-55" y="4" width="110"></text>
                     <text class="description" data-content="description" x="-55" y="2"
                         data-wrap-lines="110 70|110 110 70"></text>
+                    <g transform="scale(0.1), translate(-570,-225)">
+                        <rect stroke-width="3" fill="#ffffff" x="2.5" y="2.5" width="95" height="95" id="svg_1" rx="10" stroke="#000000"/>
+                        <rect fill="#BBBBBB" stroke="#C48157" x="265" y="23" width="0" height="1" id="svg_2"/>
+                        <ellipse ry="40" rx="40" id="svg_3" cy="50" cx="50" stroke-width="0" stroke="#dddddd" fill="#dddddd"/>
+                    </g>
                 </g>
                 <g id="type-item" data-template-type="node">
                     <rect width="120" height="60" x="-60" y="-30" rx="5" data-link-handles="edges" class="type-item"></rect>
-                    <text class="titleDescription" x="-55" y="-13" width="110" data-content="typedescription"></text>
+                    <text class="titleDescription" x="-45" y="-13" width="110" data-content="typedescription"></text>
                     <text class="title" data-content="title" x="-55" y="4" width="110"></text>
                     <text class="description" data-content="description" x="-55" y="2"
                         data-wrap-lines="110 70|110 110 70"></text>
                     <text class="sort-key" data-content="sortKey" x="55" y="26" width="35"></text>
+                    <use data-href="typedescriptionHref" x="-56" y="-23"/>
                 </g>
                 <g id="taxonomy-item" data-template-type="node">
                     <rect width="120" height="60" x="-60" y="-30" rx="5" data-link-handles="edges" class="taxonomy-item"></rect>
@@ -202,7 +230,6 @@
                     <text class="description" data-content="description" x="-55" y="2"
                         data-wrap-lines="110 70|110 110 70"></text>
                     <text class="sort-key" data-content="sortKey" x="55" y="26" width="35"></text>
-                    <!--TODO: fabi: include data item-->
                 </g>
                 <g id="default-marker" data-template-type="marker" data-line-attachement-point="6">
                     <circle cx="0" cy="0" r="6"></circle>
@@ -314,7 +341,7 @@
                 <div class="section-subpart">
                     <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1" placeholder="search"
                         value.from-view="filter & throttle" aria-owns="'datalist-'+slug" autocapitalize="none"
-                        value.bind="searchtext" type="text" autocomplete="off" aria-autocomplete="list" role="combobox"
+                        value.bind="searchtext & debounce" type="text" autocomplete="off" aria-autocomplete="list" role="combobox"
                         id="'input-'+slug">
                 </div>
                 <span class="section-title">
@@ -405,18 +432,23 @@
                 <tree-node repeat.for="node of dataItems" current.bind="node"></tree-node>
             </div>
             <div class="item-overview">
-                <network-graph class="graphoverview" classes="taxonomy-item deleted" mode="display" zoom="automatic"
-                    svg-template="#ontologyoverviewGraphTemplate">
+                <network-graph class="graphoverview" classes="deleted" mode="display" zoom="automatic"
+                    svg-template="#ontologyGraphTemplate">
                 </network-graph>
             </div>
         </div>
-        <network-graph id="graphexportsvg" class="maingraph menu-graph ml-2 card" classes="taxonomy-item deleted" mode="layout" zoom="both"
+        <network-graph id="graphexportsvg" class="maingraph menu-graph ml-2 card" classes="deleted" mode="layout" zoom="both"
             svg-template="#ontologyGraphTemplate">
         </network-graph>
         <div id="ontology-loading-indicator" class="menu-graph ml-2 card" if.bind="isLoading">
             ${"loading" | t}
             <spinner type="S8" size="100" color="default"></spinner>
         </div>
+        <div class="menu-graph ml-2 card"  if.bind="!isLoading && !isRendered">
+            <button class="button-outline px-2 items-center" click.delegate="renderGraph()"
+                    title='${"ontology.renderGraph" | t}'>
+                    ${"ontology.renderGraph" | t}
+                </button></div>
         <div class="menu-graph mb-0 mt-auto ml-auto mr-0">
             <div if.bind="selectedNode != null" class="card bg-white px-3 py-2 items-center detailview">
                 <p class="section-title">${"ontology.detailview-header" | t}</p>

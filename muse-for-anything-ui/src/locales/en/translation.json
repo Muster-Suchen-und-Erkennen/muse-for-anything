@@ -145,6 +145,7 @@
         "showSelectedItems": "show only selected items",
         "childsToShow":"number of type properties to be displayed:",
         "itemsInGraph":"Items in graph",
-        "detailview-header": "Detailview"
+        "detailview-header": "Detailview",
+        "renderGraph": "Render graph"
     }
 }
