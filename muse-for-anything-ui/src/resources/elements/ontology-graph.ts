@@ -556,7 +556,6 @@ export class OntologyGraph {
                 parent.isSearchResult = false;
                 if (!parent.isSelected) {
                     this.graph.deselectNode(parent.id)
-                    //this.graph.nodeList.find(n => n.id == parent.id).
                 }
             }
             let closeParent = true;
@@ -583,8 +582,31 @@ export class OntologyGraph {
                 parent.toggleNode();
             }
         })
-
         this.graph.updateHighlights();
+
+        this.graph.getSVG().selectAll("g.node").nodes().forEach(node => {
+            if(this.graph.selected.has(node.id) || newText == "") {
+                node.childNodes?.forEach(element => {
+                    if(element.classList?.contains("type-link-item") ||element.classList?.contains("taxonomy-link-item") || element.classList?.contains("type-item") || element.classList?.contains("type-group")|| element.classList?.contains("taxonomy-group")) {
+                        element.classList.remove("invisible-node")
+                    }
+                });
+            } else {
+                node.childNodes?.forEach(element => {
+                    if(element.classList?.contains("type-link-item") ||element.classList?.contains("taxonomy-link-item") || element.classList?.contains("type-item") || element.classList?.contains("type-group")|| element.classList?.contains("taxonomy-group")) {
+                        element.classList.add("invisible-node")
+                    }
+                });
+            }
+        });
+    }
+
+    searchtextFocusLeft() {
+        this.graph.getSVG().selectAll("g.node").nodes().forEach(node => {
+            node.childNodes?.forEach(element => {
+                element?.classList?.remove("invisible-node")
+            });
+        });
     }
 
     typeChildsToShowChanged(newValue: number, oldValue: number) {
@@ -1182,6 +1204,7 @@ export class OntologyGraph {
         }
         event.preventDefault();
         const node = event.detail.node;
+        console.log(event)
 
         if (node.dynamicTemplate === "taxonomy-group-node-template" && event.detail.key == "expandNode") {
             if (this.graph.groupingManager.getAllChildrenOf(node.id).size > 0) {
@@ -1206,14 +1229,22 @@ export class OntologyGraph {
             this.selectedNode = this.dataItems.find(item => item.id == node.id);
         }
 
-        // highlight links
-        // TODO: kanten highlighten
-        this.graph.edgeList.forEach(edge => {
-            edge.selected = true;
-            if (edge.source == node.id) {
-                //edge. = true;
-            }
-        })
+        // highlight links        
+        this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
+            edge.childNodes[0].classList.remove("highlight-edge")
+        });
+        if(event.type=='nodeclick') {
+            this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
+                if(edge.id.includes(node.id)) {
+                    edge.childNodes[0].classList.add("highlight-edge")
+                }
+                this.dataItems.find(p => p.id == node.id)?.children?.forEach(childNode => {
+                    if(edge.id.includes(childNode.id)) {
+                        edge.childNodes[0].classList.add("highlight-edge")
+                    }
+                })
+            });
+        }
     }
 
     private onEdgeClick(event: CustomEvent<{ eventSource: "API" | "USER_INTERACTION" | "INTERNAL", node: Node }>) {
@@ -1230,6 +1261,9 @@ export class OntologyGraph {
     private onBackgroundClick(event: CustomEvent<{ eventSource: "API" | "USER_INTERACTION" | "INTERNAL", node: Node }>) {
         this.selectedNode = null;
         this.renderMainViewPositionInOverviewGraph();
+        this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
+            edge.childNodes[0].classList.remove("highlight-edge")
+        });
     }
 
     private onNodeAdd(event: CustomEvent<{ eventSource: "API" | "USER_INTERACTION" | "INTERNAL", node: Node }>) {

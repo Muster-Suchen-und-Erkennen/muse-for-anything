@@ -16,7 +16,7 @@
                     --line-color: black;
                     --line-highlight-color: #6d28d9;
                     --text-color: black;
-                    --text-highlight-color: #6d28d9;
+                    --text-highlight-color: black;
                     --fill-color: white;
                     --fill-highlight-color: white;
                     --highlight-child-color: #fa7bef;
@@ -72,6 +72,22 @@
                 .node>rect {
                     fill: var(--fill-color);
                     stroke: var(--line-color);
+                }
+
+                .node>rect.invisible-node {
+                    opacity: 0.1;
+                }
+
+                .node>rect.invisible-node ~ text{
+                    opacity: 0.1;
+                }
+
+                .node>ellipse.invisible-node {
+                    opacity: 0.1;
+                }
+
+                .node>ellipse.invisible-node ~ text{
+                    opacity: 0.1;
                 }
 
                 .node>ellipse {
@@ -134,6 +150,12 @@
                 }
 
                 .edge.selected {
+                    stroke: var(--line-color);
+                    opacity: 1;
+                    stroke-width: 5px;
+                }
+
+                .edge.highlight-edge {
                     stroke: var(--line-color);
                     opacity: 1;
                     stroke-width: 5px;
@@ -342,7 +364,7 @@
                     <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1" placeholder="search"
                         value.from-view="filter & throttle" aria-owns="'datalist-'+slug" autocapitalize="none"
                         value.bind="searchtext & debounce" type="text" autocomplete="off" aria-autocomplete="list" role="combobox"
-                        id="'input-'+slug">
+                        id="'input-'+slug" blur.trigger="searchtextFocusLeft()">
                 </div>
                 <span class="section-title">
                     ${"ontology.visibleElements" | t}
