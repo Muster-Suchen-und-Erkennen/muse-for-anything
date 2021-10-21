@@ -457,7 +457,7 @@ ontology-graph[data-maximized] {
 .menu-graph { grid-area: menu-graph; }
 
 .section-title {
-    font-size:large;
+    font-size:small;
 }
 
 .ontology-move{

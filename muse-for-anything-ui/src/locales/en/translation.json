@@ -146,6 +146,9 @@
         "childsToShow":"number of type properties to be displayed:",
         "itemsInGraph":"Items in graph",
         "detailview-header": "Detailview",
-        "renderGraph": "Render graph"
+        "renderGraph": "Render graph",
+        "repositionVisibleItems":"Reposition all visible items",
+        "repositionVisibleItemsButton":"reposition",
+        "toggleFixedPosition":"Fix or unfix position of element"
     }
 }

@@ -47,6 +47,9 @@
             </div>
             
             <div class="ont-treeview-item" title="${current.name}" class.bind="current.isSearchResult ? 'ont-treeview-item-highlight':''"> ${current.name}</div>
+
+            
+            
         </div>
 
         <tree-node repeat.for="node of current.children" current.bind="node">

@@ -394,7 +394,18 @@
                             aria-autocomplete="list" role="combobox" id="'input-'+slug" min="0">
                     </div>
                 </div>
-                <div>
+                <span class="section-title">
+                    ${"ontology.repositionVisibleItems" | t}
+                </span>
+                <div class="section-subpart">
+                    <div>
+                        <button class="button-outline px-2 items-center" click.delegate="repositionNodes()"
+                            title='${"ontology.repositionVisibleItemsButton" | t}'>
+                            ${"ontology.repositionVisibleItemsButton" | t}
+                        </button>
+                    </div>
+                </div>
+                <div class="section-title">
                     ${"ontology.itemsInGraph" | t} ${graph.nodeList.length}
                 </div>
                 <!--springLength
@@ -474,6 +485,13 @@
                 <p class="detailview-item">implementations: t.b.d.</p>
                 <p class="detailview-item">href: ${selectedNode.href}</p>
                 <p class="detailview-item">children: ${selectedNode.children.length}</p>
+                <p class="detailview-item">
+                    fix elements position in graph:
+                    <button class="button-flat items-center" click.delegate="selectedNode.togglePositionFixed()"
+                    title='${"ontology.toggleFixedPosition" | t}' style="margin:0px !important">
+                        <svg-icon icon.bind="selectedNode.positionIsFixed ? 'fixed-position' : 'unfixed-position'" size.bind="15"></svg-icon>
+                    </button>
+                </p>
             </div>
             <div class="buttons card bg-white px-3 py-2 items-center" style="width: fit-content;float: right;">
                 <button class="button-flat px-2 items-center" click.delegate="toggleMenu()"
