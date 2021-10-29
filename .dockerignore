@@ -1,16 +1,15 @@
 
 # Ref: https://github.com/github/gitignore/blob/master/Global
 .chrome
-/muse-for-anything-ui/*.log
+muse-for-anything-ui/*.log
 
 # Dependencies
-node_modules
-/muse-for-anything-ui/node_modules
+muse-for-anything-ui/node_modules
 
 # Compiled files
-/muse-for-anything-ui/scripts
-/muse-for-anything-ui/src/environment.ts
-/muse-for-anything-ui/test/coverage-jest
+muse-for-anything-ui/scripts
+muse-for-anything-ui/src/environment.ts
+muse-for-anything-ui/test/coverage-jest
 
 # from gitignore ###############################################################
 
