@@ -19,6 +19,8 @@
     "aurelia-dialog": "^2.0.0",
     "aurelia-fetch-client": "^1.8.2",
     "aurelia-i18n": "^3.1.4",
+    "d3": "^7.1.1",
+    "d3-force": "^3.0.0",
     "i18next": "^19.9.2",
     "i18next-xhr-backend": "^3.2.2",
     "nanoid": "^3.1.22",

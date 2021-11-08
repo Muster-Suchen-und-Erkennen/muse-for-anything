@@ -13,6 +13,8 @@ import { GroupBehaviour } from "@ustutt/grapheditor-webcomponent/lib/grouping";
 import { DynamicNodeTemplate, DynamicTemplateContext } from "@ustutt/grapheditor-webcomponent/lib/dynamic-templates/dynamic-template";
 import { LinkHandle } from "@ustutt/grapheditor-webcomponent/lib/link-handle";
 import { calculateBoundingRect, Rect } from "@ustutt/grapheditor-webcomponent/lib/util";
+import * as d3 from "d3";
+
 
 const boundingBoxBorder: number = 20;
 
@@ -467,6 +469,11 @@ export class OntologyGraph {
     @bindable ignoreCache = false;
     @bindable maximizeMenu = false;
 
+    algorithms = [
+        { id: 0, name: 'ngraph.forcedirected' },
+        { id: 1, name: 'd3-force' },
+      ];
+
     totalTypes = 0;
     totalTaxonomies = 0;
 
@@ -486,6 +493,7 @@ export class OntologyGraph {
     @observable() typeChildsToShow: number = 3;
     @observable() showTaxonomies: boolean = true;
     @observable() showTypes: boolean = true;
+    @observable() selectedAlgorithmId: number = 0;
 
     missingParentConnection: Array<{ parent: number | string, child: number | string, joinTree: boolean }> = [];
 
@@ -574,12 +582,17 @@ export class OntologyGraph {
 
     }
 
+    selectedAlgorithmIdChanged() {
+        this.getNodePositions();
+    }
+
     searchtextChanged(newText: string, old: string) {
         if (this.graph == null) {
             return;
         }
 
         this.dataItems.forEach(parent => {
+            parent.visible = true
             if (parent.name.toLowerCase().includes(newText.toLowerCase()) && newText != "") {
                 parent.isSearchResult = true;
                 this.graph.selectNode(parent.id)
@@ -612,6 +625,9 @@ export class OntologyGraph {
 
             if (parent.expanded && closeParent) {
                 parent.toggleNode();
+            }
+            if(closeParent &&  newText != "") {
+                parent.visible = false
             }
         })
         this.graph.updateHighlights();
@@ -791,6 +807,17 @@ export class OntologyGraph {
     }
 
     private getNodePositions() {
+        if(this.graph==null) {
+            return;
+        }
+        if(this.selectedAlgorithmId==0) {
+            this.getNodePositionsNgraph();
+        } else if(this.selectedAlgorithmId==1) {
+            this.getNodePositionsd3();
+        }
+    }
+
+    private getNodePositionsNgraph() {
         var createGraph = require('ngraph.graph');
         var g = createGraph();
 
@@ -842,6 +869,42 @@ export class OntologyGraph {
             let pos = layout.getNodePosition(node.id);
             this.dataItems.find(el => el.id == node.id).position = { x: pos.x * positionDifference, y: pos.y * positionDifference }
         });
+    }
+
+    private getNodePositionsd3() {
+
+        const links = [];
+        const nodes = [];
+
+        this.dataItems.filter(item => item.isVisibleInGraph).forEach(item => nodes.push({id:item.id}))
+
+        this.dataItems.filter(p => p.isVisibleInGraph).forEach(parItem => {
+            parItem.children.filter(p => p.isVisibleInGraph).forEach(child => {
+                if (child.itemType == DataItemTypeEnum.TaxonomyProperty || child.itemType == DataItemTypeEnum.TypeProperty) {
+                    this.dataItems.filter(p => p.isVisibleInGraph).forEach(parent => {
+                        if (child.id.startsWith(parent.id.split("-")[0])) {
+                            links.push({target: parItem.id, source:parent.id})
+                        }
+                    });
+                }
+            });
+        });
+
+        const simulation = d3.forceSimulation(nodes)
+            .force("link", d3.forceLink(links).id(d => d.id))
+            .force("charge", d3.forceManyBody())
+            .force("center", d3.forceCenter(2000000 / 2, 2000000 / 2));
+
+        simulation
+            .nodes(nodes);
+      
+        simulation.force("link")
+            .links(links);
+
+        let positionDifference = 30
+        nodes.forEach(x => {
+            this.dataItems.find(y => y.id == x.id).position = {x:x.x*positionDifference,y:x.y*positionDifference};
+        })
 
     }
 

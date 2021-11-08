@@ -437,6 +437,16 @@
                     </div>
                 </div>
                 <div class="section-title">
+                    Algorithm
+                </div>
+                <div class="section-subpart">
+                    <div repeat.for="algo of algorithms">
+                        <input type="radio" name="group1"
+                                model.bind="algo.id" checked.bind="selectedAlgorithmId">
+                        ${algo.name}
+                    </div>
+                </div>
+                <div class="section-title">
                     ${"ontology.itemsInGraph" | t} ${graph.nodeList.length}
                 </div>
                 <!--springLength
@@ -480,6 +490,7 @@
                 value.bind="positionDifference" type="text" autocomplete="off" aria-autocomplete="list" role="combobox"
                 id="'input-'+slug">-->
             </div>
+
             <div class="item-treesection px-1 py-1 border-gray-200 border-b scroll-area">
 
                 <span class="section-title">
