@@ -441,9 +441,10 @@
                     Algorithm
                 </div>
                 <div class="section-subpart">
-                    <div repeat.for="algo of algorithms">
+                    <div repeat.for="algo of algorithms" class="ontology-algorithm-label">
                         <input type="radio" name="group1"
                                 model.bind="algo.id" checked.bind="selectedAlgorithmId">
+                      
                         ${algo.name}
                     </div>
                 </div>

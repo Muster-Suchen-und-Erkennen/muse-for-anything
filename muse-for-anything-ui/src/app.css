@@ -527,6 +527,13 @@ tree-node  ul:first-child{
     width: 100%;
 }
 
+.ontology-algorithm-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 95%;
+}
+
 #ontology-loading-indicator {
     display: flex;
     justify-content: center;
@@ -544,6 +551,7 @@ tree-node  ul:first-child{
 /* style scrollbar */
 ::-webkit-scrollbar {
     width: 5px;
+    height: 5px;
 }
 ::-webkit-scrollbar-track {
     background: #f1f1f1;

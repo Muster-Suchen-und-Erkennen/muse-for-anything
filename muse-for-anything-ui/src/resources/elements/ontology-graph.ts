@@ -1338,14 +1338,21 @@ export class OntologyGraph {
             this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
                 if (edge.id.includes(node.id)) {
                     edge.childNodes[0].classList.add("highlight-edge")
+                    this.highlightMarker(edge.childNodes[1],1.8)
                 }
                 this.dataItems.find(p => p.id == node.id)?.children?.forEach(childNode => {
                     if (edge.id.includes(childNode.id)) {
                         edge.childNodes[0].classList.add("highlight-edge")
+                        this.highlightMarker(edge.childNodes[1],1.8)
                     }
                 })
             });
         }
+    }
+
+    private highlightMarker(element,size:number) {
+        let transformsettings = element.getAttribute("transform") 
+        element.setAttribute("transform", transformsettings.split("scale(")[0] + "scale(" + size + transformsettings.split("scale(")[1].substring(transformsettings.split("scale(")[1].indexOf(")")))
     }
 
     private onEdgeClick(event: CustomEvent<{ eventSource: "API" | "USER_INTERACTION" | "INTERNAL", node: Node }>) {
@@ -1364,6 +1371,7 @@ export class OntologyGraph {
         this.renderMainViewPositionInOverviewGraph();
         this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
             edge.childNodes[0].classList.remove("highlight-edge")
+            this.highlightMarker(edge.childNodes[1],0.8)
         });
     }
 
