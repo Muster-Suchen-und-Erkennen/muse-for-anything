@@ -455,14 +455,6 @@ function repositionGroupNode(group: string, groupNode: Node, graphEditor: GraphE
 
 @autoinject
 export class OntologyGraph {
-    @bindable springLength = 30
-    @bindable springCoefficient = 0.08
-    @bindable gravity = -1.2
-    @bindable dimensions = 2
-    @bindable theta = 0.8
-    @bindable dragCoefficient = 0.02
-    @bindable timeStep = 20
-    @bindable positionDifference = 1;
     @bindable isLoading = true;
     @bindable isRendered = false;
     @bindable apiLink;
@@ -494,6 +486,7 @@ export class OntologyGraph {
     @observable() showTaxonomies: boolean = true;
     @observable() showTypes: boolean = true;
     @observable() selectedAlgorithmId: number = 0;
+    @observable() distanceBetweenElements: number = 100;
 
     missingParentConnection: Array<{ parent: number | string, child: number | string, joinTree: boolean }> = [];
 
@@ -583,6 +576,10 @@ export class OntologyGraph {
     }
 
     selectedAlgorithmIdChanged() {
+        this.getNodePositions();
+    }
+
+    distanceBetweenElementsChanged() {
         this.getNodePositions();
     }
 
@@ -835,7 +832,6 @@ export class OntologyGraph {
             });
         });
 
-        // TODO: optimize Settings
         var physicsSettings = {
             timeStep: 0.5,
             dimensions: 2,
@@ -845,15 +841,7 @@ export class OntologyGraph {
             springCoefficient: 0.8,
             dragCoefficient: 0.9,
         };
-        /*physicsSettings = {   springLength: this.springLength,
-            springCoefficient: this.springCoefficient,
-          gravity: this.gravity,
-          dimensions: this.dimensions,
-          theta: this.theta,
-          dragCoefficient: this.dragCoefficient,
-          timeStep: this.timeStep
-          }*/
-        let positionDifference = 20;
+        let positionDifference = 20*(this.distanceBetweenElements/100);
 
         var createLayout = require('ngraph.forcelayout');
         var layout = createLayout(g, physicsSettings);
@@ -872,7 +860,6 @@ export class OntologyGraph {
     }
 
     private getNodePositionsd3() {
-
         const links = [];
         const nodes = [];
 
@@ -890,6 +877,11 @@ export class OntologyGraph {
             });
         });
 
+        this.dataItems.filter(item => item.positionIsFixed).forEach(item => {
+            nodes.find(x => x.id == item.id).fx = item.position.x;
+            nodes.find(x => x.id == item.id).fy = item.position.y;
+        });
+
         const simulation = d3.forceSimulation(nodes)
             .force("link", d3.forceLink(links).id(d => d.id))
             .force("charge", d3.forceManyBody())
@@ -901,7 +893,7 @@ export class OntologyGraph {
         simulation.force("link")
             .links(links);
 
-        let positionDifference = 30
+        let positionDifference = 30*(this.distanceBetweenElements/100);
         nodes.forEach(x => {
             this.dataItems.find(y => y.id == x.id).position = {x:x.x*positionDifference,y:x.y*positionDifference};
         })

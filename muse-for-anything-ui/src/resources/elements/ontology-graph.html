@@ -425,15 +425,16 @@
                             aria-autocomplete="list" role="combobox" id="'input-'+slug" min="0">
                     </div>
                 </div>
-                <span class="section-title">
-                    ${"ontology.repositionVisibleItems" | t}
-                </span>
+                <div class="section-title">
+                    Distance between elements
+                </div>
                 <div class="section-subpart">
                     <div>
-                        <button class="button-outline px-2 items-center" click.delegate="repositionNodes()"
-                            title='${"ontology.repositionVisibleItemsButton" | t}'>
-                            ${"ontology.repositionVisibleItemsButton" | t}
-                        </button>
+                        <input class="border rounded-sm border-gray-800 focus:ring-4 w-4/5 px-2 py-1"
+                            placeholder="distance in percentage" value.from-view="filter & throttle" aria-owns="'datalist-'+slug"
+                            autocapitalize="none" value.bind="distanceBetweenElements" type="number" autocomplete="off"
+                            aria-autocomplete="list" role="combobox" id="'input-'+slug" min="0"> 
+                            <span>%</span>
                     </div>
                 </div>
                 <div class="section-title">
@@ -446,49 +447,20 @@
                         ${algo.name}
                     </div>
                 </div>
+                <span class="section-title">
+                    ${"ontology.repositionVisibleItems" | t}
+                </span>
+                <div class="section-subpart">
+                    <div>
+                        <button class="button-outline px-2 items-center" click.delegate="repositionNodes()"
+                            title='${"ontology.repositionVisibleItemsButton" | t}'>
+                            ${"ontology.repositionVisibleItemsButton" | t}
+                        </button>
+                    </div>
+                </div>
                 <div class="section-title">
                     ${"ontology.itemsInGraph" | t} ${graph.nodeList.length}
                 </div>
-                <!--springLength
-                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1" placeholder="search"
-                    value.from-view="filter & throttle" aria-owns="'datalist-'+slug" autocapitalize="none"
-                    value.bind="springLength" type="text" autocomplete="off" aria-autocomplete="list" role="combobox"
-                    id="'input-'+slug">
-                    springCoefficient
-                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1" placeholder="search"
-                value.from-view="filter & throttle" aria-owns="'datalist-'+slug" autocapitalize="none"
-                value.bind="springCoefficient" type="text" autocomplete="off" aria-autocomplete="list" role="combobox"
-                id="'input-'+slug">
-                gravity
-                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1" placeholder="search"
-                    value.from-view="filter & throttle" aria-owns="'datalist-'+slug" autocapitalize="none"
-                    value.bind="gravity" type="text" autocomplete="off" aria-autocomplete="list" role="combobox"
-                    id="'input-'+slug">
-                    dimensions
-                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1" placeholder="search"
-                value.from-view="filter & throttle" aria-owns="'datalist-'+slug" autocapitalize="none"
-                value.bind="dimensions" type="text" autocomplete="off" aria-autocomplete="list" role="combobox"
-                id="'input-'+slug">
-                theta
-                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1" placeholder="search"
-                    value.from-view="filter & throttle" aria-owns="'datalist-'+slug" autocapitalize="none"
-                    value.bind="theta" type="text" autocomplete="off" aria-autocomplete="list" role="combobox"
-                    id="'input-'+slug">
-                    dragCoefficient
-                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1" placeholder="search"
-                value.from-view="filter & throttle" aria-owns="'datalist-'+slug" autocapitalize="none"
-                value.bind="dragCoefficient" type="text" autocomplete="off" aria-autocomplete="list" role="combobox"
-                id="'input-'+slug">
-                timeStep
-                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1" placeholder="search"
-                    value.from-view="filter & throttle" aria-owns="'datalist-'+slug" autocapitalize="none"
-                    value.bind="timeStep" type="text" autocomplete="off" aria-autocomplete="list" role="combobox"
-                    id="'input-'+slug">
-                    positionDifference
-                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1" placeholder="search"
-                value.from-view="filter & throttle" aria-owns="'datalist-'+slug" autocapitalize="none"
-                value.bind="positionDifference" type="text" autocomplete="off" aria-autocomplete="list" role="combobox"
-                id="'input-'+slug">-->
             </div>
 
             <div class="item-treesection px-1 py-1 border-gray-200 border-b scroll-area">
