@@ -11,7 +11,7 @@ import { Point } from "@ustutt/grapheditor-webcomponent/lib/edge";
 import { TaxonomyApiObject, TaxonomyItemApiObject, TaxonomyItemRelationApiObject } from "./taxonomy-graph";
 import { GroupBehaviour } from "@ustutt/grapheditor-webcomponent/lib/grouping";
 import { DynamicNodeTemplate, DynamicTemplateContext } from "@ustutt/grapheditor-webcomponent/lib/dynamic-templates/dynamic-template";
-import { handlesForRectangle, LinkHandle } from "@ustutt/grapheditor-webcomponent/lib/link-handle";
+import { LinkHandle } from "@ustutt/grapheditor-webcomponent/lib/link-handle";
 import { calculateBoundingRect, Rect } from "@ustutt/grapheditor-webcomponent/lib/util";
 
 const boundingBoxBorder: number = 20;
@@ -115,15 +115,10 @@ class TypeNodeTemplate implements DynamicNodeTemplate {
                 .attr("data-click", "header")
                 .attr("width", minBox.width + boundingBoxBorder * 2 - 5)
                 .attr('data-content', 'title');
+            g.append("title")
+                .attr('data-content', 'title');
         }
     }
-}
-
-function calculateMinBoundingRect(boxes: Rect[]): Rect {
-    const minBox = calculateBoundingRect(...boxes);
-    minBox.width = Math.max(160, minBox.width);
-    minBox.height = Math.max(80, minBox.height);
-    return minBox;
 }
 
 enum DataItemTypeEnum {
@@ -219,6 +214,25 @@ export class DataItemModel {
         this.icon = "arrow-right";
         this.expanded = false;
     }
+
+    getLink() {
+        console.log()
+        if(this.itemType == DataItemTypeEnum.TypeItem) {
+            // http://localhost:5000/api/v1/namespaces/5/types/39
+            let namespaceID = this.href.split("namespaces/")[1].split("/")[0]
+            let typeID = this.href.split("types/")[1].split("/")[0]
+
+            return "http://localhost:5000/explore/ont-namespace/:"+namespaceID+"/ont-type/:"+typeID
+
+        } else if(this.itemType == DataItemTypeEnum.TaxonomyItem) {
+            let namespaceID = this.href.split("namespaces/")[1].split("/")[0]
+            let typeID = this.href.split("taxonomies/")[1].split("/")[0]
+
+            return "http://localhost:5000/explore/ont-namespace/:"+namespaceID+"/ont-taxonomy/:"+typeID
+
+        }
+        return ""
+    }
 }
 
 class TaxonomyNodeTemplate implements DynamicNodeTemplate {
@@ -296,6 +310,8 @@ class TaxonomyNodeTemplate implements DynamicNodeTemplate {
                 .attr("class", "title")
                 .attr("width", 150)
                 .attr("data-click", "header")
+                .attr('data-content', 'title');
+            g.append("title")
                 .attr('data-content', 'title');
 
             // add + or - to node for collapsing details or not
@@ -938,7 +954,7 @@ export class OntologyGraph {
 
     repositionNodes() {
         this.getNodePositions();
-        this.dataItems.forEach(parent => {
+        this.dataItems.filter(p => !p.abstract).forEach(parent => {
             console.log(parent)
             this.graph.moveNode(parent.id, parent.position.x, parent.position.y)
         })
@@ -1346,6 +1362,8 @@ export class OntologyGraph {
     // function called by buttons from the front-end, to interact with the graph
     private toggleMaximize() {
         this.maximized = !this.maximized;
+        this.graphoverview.zoomToBoundingBox();
+        this.graphoverview.completeRender();
     }
 
     // function called by buttons from the front-end, to interact with the graph
@@ -1402,21 +1420,12 @@ export class OntologyGraph {
         this.updateVisibilityInGraph();
     }
 
+    unselectNode() {
+        this.selectedNode = null;
+    }
+
     private downloadSVG() {
         // TODO: dowload svg
-        /*const doc = new jsPDF()
 
-        this.graph.currentViewWindow
-
-        console.log(this.graph.getSVG()._groups[0][0])
-
-        const element = document.getElementById("graphexportsvg").shadowRoot.querySelector(".graph-editor")
-        console.log(element, this.graph.currentViewWindow)
-        
-        doc.svg(this.graph.getSVG()._groups[0][0], this.graph.currentViewWindow)
-          .then(() => {
-            // save the created pdf
-            doc.save('myPDF.pdf')
-          })*/
     }
 }

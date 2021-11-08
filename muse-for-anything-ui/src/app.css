@@ -443,7 +443,7 @@ ontology-graph[data-maximized] {
 .menu-section {
     display: grid; 
     grid-template-columns: 100%; 
-    grid-template-rows: 30% 50% 20%; 
+    grid-template-rows: 80% 10% 10%; 
     grid-template-areas: 
         "item-filtersection"
         "item-treesection"
@@ -511,6 +511,7 @@ tree-node  ul:first-child{
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    width: 100%;
 }
 
 .ont-treeview-item-highlight {

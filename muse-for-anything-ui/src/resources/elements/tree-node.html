@@ -45,11 +45,15 @@
             <div if.bind="current.itemType=='taxonomy'" title="Item Type: Taxonomy-Reference">
                 <svg-icon icon.bind="'taxref'" size.bind="18"></svg-icon>
             </div>
-            
-            <div class="ont-treeview-item" title="${current.name}" class.bind="current.isSearchResult ? 'ont-treeview-item-highlight':''"> ${current.name}</div>
 
-            
-            
+            <div class="ont-treeview-item" title="${current.name}"
+                class.bind="current.isSearchResult ? 'ont-treeview-item-highlight':''"> ${current.name}</div>
+
+            <button if.bind="current.positionIsFixed" class="button-flat items-center"
+                click.delegate="current.togglePositionFixed()" title='${"ontology.toggleFixedPosition" | t}'
+                style="margin: 0 !important; padding: 0 !important">
+                <svg-icon icon.bind="'fixed-position'" size.bind="20"></svg-icon>
+            </button>
         </div>
 
         <tree-node repeat.for="node of current.children" current.bind="node">
