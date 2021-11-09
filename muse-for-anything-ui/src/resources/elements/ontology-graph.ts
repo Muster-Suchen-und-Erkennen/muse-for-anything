@@ -17,6 +17,8 @@ import * as d3 from "d3";
 
 
 const boundingBoxBorder: number = 20;
+const smallMarkerSize: number = 0.8;
+const largeMarkerSize: number = 2.8;
 
 interface TypeApiObject extends ApiObject {
     collectionSize: number;
@@ -1080,7 +1082,7 @@ export class OntologyGraph {
                             let path = {
                                 source: source, target: parent.id, markerEnd: {
                                     template: "arrow",
-                                    scale: 0.8,
+                                    scale: smallMarkerSize,
                                     relativeRotation: 0,
                                 }
                             }
@@ -1088,7 +1090,7 @@ export class OntologyGraph {
                             let pathOverview = {
                                 source: parItem.id, target: parent.id, markerEnd: {
                                     template: "arrow",
-                                    scale: 0.8,
+                                    scale: smallMarkerSize,
                                     relativeRotation: 0,
                                 }
                             }
@@ -1216,7 +1218,7 @@ export class OntologyGraph {
         let path = {
             source: source, target: target, markerEnd: {
                 template: "arrow",
-                scale: 0.8,
+                scale: smallMarkerSize,
                 relativeRotation: 0,
             }
         }
@@ -1341,12 +1343,12 @@ export class OntologyGraph {
             this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
                 if (edge.id.includes(node.id)) {
                     edge.childNodes[0].classList.add("highlight-edge")
-                    this.highlightMarker(edge.childNodes[1],2.8)
+                    this.highlightMarker(edge.childNodes[1],largeMarkerSize)
                 }
                 this.dataItems.find(p => p.id == node.id)?.children?.forEach(childNode => {
                     if (edge.id.includes(childNode.id)) {
                         edge.childNodes[0].classList.add("highlight-edge")
-                        this.highlightMarker(edge.childNodes[1],2.8)
+                        this.highlightMarker(edge.childNodes[1],largeMarkerSize)
                     }
                 })
             });
@@ -1374,7 +1376,7 @@ export class OntologyGraph {
         this.renderMainViewPositionInOverviewGraph();
         this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
             edge.childNodes[0].classList.remove("highlight-edge")
-            this.highlightMarker(edge.childNodes[1],0.8)
+            this.highlightMarker(edge.childNodes[1],smallMarkerSize)
         });
     }
 
