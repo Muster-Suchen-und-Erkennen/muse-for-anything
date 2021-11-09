@@ -612,9 +612,7 @@ export class OntologyGraph {
             }
         })
         this.graph.updateHighlights();
-        console.log(this.graph.selected)
         this.graph.getSVG().selectAll("g.node").nodes().forEach(node => {
-            console.log(node.id, this.graph.selected.has(node.id))
             if (this.graph.selected.has(node.id.substring(5)) || newText == "") {
                 node.classList.remove("greyedout-node")
             } else {
@@ -799,8 +797,8 @@ export class OntologyGraph {
     }
 
     private getNodePositionsNgraph() {
-        var createGraph = require('ngraph.graph');
-        var g = createGraph();
+        let createGraph = require('ngraph.graph');
+        let g = createGraph();
 
         this.dataItems.filter(item => item.isVisibleInGraph).forEach(item => g.addNode(item.id))
 
@@ -816,7 +814,7 @@ export class OntologyGraph {
             });
         });
 
-        var physicsSettings = {
+        let physicsSettings = {
             timeStep: 0.5,
             dimensions: 2,
             gravity: -12,
@@ -827,11 +825,12 @@ export class OntologyGraph {
         };
         let positionDifference = 20 * (this.distanceBetweenElements / 100);
 
-        var createLayout = require('ngraph.forcelayout');
-        var layout = createLayout(g, physicsSettings);
+        let createLayout = require('ngraph.forcelayout');
+        let layout = createLayout(g, physicsSettings);
         this.dataItems.filter(item => item.positionIsFixed).forEach(item => {
-            console.log(item)
-            layout.pinNode(item.id, item.position.x, item.position.y)
+            layout.setNodePosition(item.id, item.node.x, item.node.y);
+            var node = g.getNode(item.id);
+            layout.pinNode(node, true); // toggle it
         });
         for (var i = 0; i < 500; ++i) {
             layout.step();
@@ -839,13 +838,18 @@ export class OntologyGraph {
 
         g.forEachNode(node => {
             let pos = layout.getNodePosition(node.id);
-            this.dataItems.find(el => el.id == node.id).position = { x: pos.x * positionDifference, y: pos.y * positionDifference }
+            let nodeToPin = g.getNode(node.id);
+            if(layout.isNodePinned(node)) {
+                this.dataItems.find(el => el.id == node.id).position = { x: pos.x, y: pos.y }
+            }else {
+                this.dataItems.find(el => el.id == node.id).position = { x: pos.x * positionDifference, y: pos.y * positionDifference }
+            }
         });
     }
 
     private getNodePositionsd3() {
-        const links = [];
-        const nodes = [];
+        let links = [];
+        let nodes = [];
 
         this.dataItems.filter(item => item.isVisibleInGraph).forEach(item => nodes.push({ id: item.id }))
         this.dataItems.filter(p => p.isVisibleInGraph).forEach(parItem => {
@@ -861,22 +865,25 @@ export class OntologyGraph {
         });
 
         this.dataItems.filter(item => item.positionIsFixed).forEach(item => {
-            nodes.find(x => x.id == item.id).fx = item.position.x;
-            nodes.find(x => x.id == item.id).fy = item.position.y;
+            nodes.find(x => x.id == item.id).fx = item.node.x;
+            nodes.find(x => x.id == item.id).fy = item.node.y;
         });
 
-        const simulation = d3.forceSimulation(nodes)
+        d3.forceSimulation(nodes)
             .force("link", d3.forceLink(links).id(d => d.id))
             .force("charge", d3.forceManyBody())
-            .force("center", d3.forceCenter(2000000 / 2, 2000000 / 2));
+            .force("center", d3.forceCenter(this.graph.currentViewWindow.width / 2, this.graph.currentViewWindow.height / 2))
+            .stop()
+            .tick(100);
 
-        simulation.nodes(nodes);
-        simulation.force("link").links(links);
-        simulation.stop()
-        simulation.tick(100)
         let positionDifference = 10 * (this.distanceBetweenElements / 100);
+        
         nodes.forEach(x => {
-            this.dataItems.find(y => y.id == x.id).position = { x: x.x * positionDifference, y: x.y * positionDifference };
+            if(this.dataItems.find(y => y.id == x.id).positionIsFixed) {
+                this.dataItems.find(y => y.id == x.id).position = { x: x.x, y: x.y  };
+            }else {
+                this.dataItems.find(y => y.id == x.id).position = { x: x.x * positionDifference, y: x.y * positionDifference };
+            }
         })
 
     }
@@ -1006,6 +1013,7 @@ export class OntologyGraph {
     private async preRenderGraph() {
         this.getNodePositions();
         this.sortList(this.dataItems);
+        this.renderGraph();
         this.isLoading = false;
     }
 
