@@ -212,7 +212,6 @@ export class DataItemModel {
         this.graph.updateHighlights();
     }
 
-
     addChild(id: string, name: string, abstract: boolean, href: string, description: string, itemType: DataItemTypeEnum, childHrefs?: string[]) {
         this.children.push(new DataItemModel(id, name, abstract, href, description, itemType, this.graph, false, childHrefs));
         this.icon = "arrow-right";
@@ -221,27 +220,22 @@ export class DataItemModel {
 
     getLink() {
         console.log()
-        if(this.itemType == DataItemTypeEnum.TypeItem) {
-            // http://localhost:5000/api/v1/namespaces/5/types/39
+        if (this.itemType == DataItemTypeEnum.TypeItem) {
             let namespaceID = this.href.split("namespaces/")[1].split("/")[0]
             let typeID = this.href.split("types/")[1].split("/")[0]
 
-            return "http://localhost:5000/explore/ont-namespace/:"+namespaceID+"/ont-type/:"+typeID
-
-        } else if(this.itemType == DataItemTypeEnum.TaxonomyItem) {
+            return "http://localhost:5000/explore/ont-namespace/:" + namespaceID + "/ont-type/:" + typeID
+        } else if (this.itemType == DataItemTypeEnum.TaxonomyItem) {
             let namespaceID = this.href.split("namespaces/")[1].split("/")[0]
             let typeID = this.href.split("taxonomies/")[1].split("/")[0]
 
-            return "http://localhost:5000/explore/ont-namespace/:"+namespaceID+"/ont-taxonomy/:"+typeID
-
+            return "http://localhost:5000/explore/ont-namespace/:" + namespaceID + "/ont-taxonomy/:" + typeID
         }
         return ""
     }
 }
 
 class TaxonomyNodeTemplate implements DynamicNodeTemplate {
-    private linkHandleOptions: string;
-
     getLinkHandles(g: any, grapheditor: GraphEditor): LinkHandle[] {
         const width = g.datum().width + 2 * boundingBoxBorder;
         const height = g.datum().height + 2 * boundingBoxBorder;
@@ -369,7 +363,6 @@ class TaxonomyGroupBehaviour implements GroupBehaviour {
     }
 
     afterNodeLeftGroup(group: string, childGroup: string, groupNode: Node, childNode: Node, graphEditor: GraphEditor) {
-        //repositionGroupNode(group, groupNode, graphEditor);
         this.calcSize(groupNode, group, graphEditor);
     }
 
@@ -388,7 +381,6 @@ class TaxonomyGroupBehaviour implements GroupBehaviour {
     }
 
     onNodeMoveEnd(group: string, childGroup: string, groupNode: Node, childNode: Node, graphEditor: GraphEditor) {
-        //repositionGroupNode(group, groupNode, graphEditor);
     }
 
 }
@@ -400,12 +392,10 @@ class TypeGroupBehaviour implements GroupBehaviour {
     allowDraggedNodesLeavingGroup = false;
 
     afterNodeJoinedGroup(group: string, childGroup: string, groupNode: Node, childNode: Node, graphEditor: GraphEditor, atPosition?: Point) {
-        //repositionGroupNode(group, groupNode, graphEditor);
         this.calcSize(groupNode, group, graphEditor);
     }
 
     afterNodeLeftGroup(group: string, childGroup: string, groupNode: Node, childNode: Node, graphEditor: GraphEditor) {
-        //repositionGroupNode(group, groupNode, graphEditor);
         this.calcSize(groupNode, group, graphEditor);
     }
 
@@ -466,7 +456,7 @@ export class OntologyGraph {
     layoutAlgorithms = [
         { id: 0, name: 'ngraph.forcedirected' },
         { id: 1, name: 'd3-force' },
-      ];
+    ];
 
     totalTypes = 0;
     totalTaxonomies = 0;
@@ -506,9 +496,6 @@ export class OntologyGraph {
         this.checkNavigationLinks();
         this.events = events;
         this.subscribe();
-
-        bindingEngine.collectionObserver(this.dataItems)
-            .subscribe(this.dataItemsChanged.bind(this));
     }
 
     private subscribe() {
@@ -527,10 +514,6 @@ export class OntologyGraph {
                 this.isAllowedToShowGraph = false;
             }
         }
-    }
-
-    dataItemsChanged(newValue: any) {
-
     }
 
     apiLinkChanged(newValue: ApiLink, oldValue) {
@@ -621,11 +604,10 @@ export class OntologyGraph {
                 }
             })
 
-
             if (parent.expanded && closeParent) {
                 parent.toggleNode();
             }
-            if(closeParent &&  newText != "") {
+            if (closeParent && newText != "") {
                 parent.visible = false
             }
         })
@@ -806,12 +788,12 @@ export class OntologyGraph {
     }
 
     private getNodePositions() {
-        if(this.graph==null) {
+        if (this.graph == null) {
             return;
         }
-        if(this.selectedAlgorithmId==0) {
+        if (this.selectedAlgorithmId == 0) {
             this.getNodePositionsNgraph();
-        } else if(this.selectedAlgorithmId==1) {
+        } else if (this.selectedAlgorithmId == 1) {
             this.getNodePositionsd3();
         }
     }
@@ -843,7 +825,7 @@ export class OntologyGraph {
             springCoefficient: 0.8,
             dragCoefficient: 0.9,
         };
-        let positionDifference = 20*(this.distanceBetweenElements/100);
+        let positionDifference = 20 * (this.distanceBetweenElements / 100);
 
         var createLayout = require('ngraph.forcelayout');
         var layout = createLayout(g, physicsSettings);
@@ -865,13 +847,13 @@ export class OntologyGraph {
         const links = [];
         const nodes = [];
 
-        this.dataItems.filter(item => item.isVisibleInGraph).forEach(item => nodes.push({id:item.id}))
+        this.dataItems.filter(item => item.isVisibleInGraph).forEach(item => nodes.push({ id: item.id }))
         this.dataItems.filter(p => p.isVisibleInGraph).forEach(parItem => {
             parItem.children.filter(p => p.isVisibleInGraph).forEach(child => {
                 if (child.itemType == DataItemTypeEnum.TaxonomyProperty || child.itemType == DataItemTypeEnum.TypeProperty) {
                     this.dataItems.filter(p => p.isVisibleInGraph).forEach(parent => {
                         if (child.id.startsWith(parent.id.split("-")[0])) {
-                            links.push({target: parItem.id, source:parent.id})
+                            links.push({ target: parItem.id, source: parent.id })
                         }
                     });
                 }
@@ -890,11 +872,11 @@ export class OntologyGraph {
 
         simulation.nodes(nodes);
         simulation.force("link").links(links);
-        simulation.stop() 
+        simulation.stop()
         simulation.tick(100)
-        let positionDifference = 10*(this.distanceBetweenElements/100);
+        let positionDifference = 10 * (this.distanceBetweenElements / 100);
         nodes.forEach(x => {
-            this.dataItems.find(y => y.id == x.id).position = {x:x.x*positionDifference,y:x.y*positionDifference};
+            this.dataItems.find(y => y.id == x.id).position = { x: x.x * positionDifference, y: x.y * positionDifference };
         })
 
     }
@@ -1343,20 +1325,20 @@ export class OntologyGraph {
             this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
                 if (edge.id.includes(node.id)) {
                     edge.childNodes[0].classList.add("highlight-edge")
-                    this.highlightMarker(edge.childNodes[1],largeMarkerSize)
+                    this.highlightMarker(edge.childNodes[1], largeMarkerSize)
                 }
                 this.dataItems.find(p => p.id == node.id)?.children?.forEach(childNode => {
                     if (edge.id.includes(childNode.id)) {
                         edge.childNodes[0].classList.add("highlight-edge")
-                        this.highlightMarker(edge.childNodes[1],largeMarkerSize)
+                        this.highlightMarker(edge.childNodes[1], largeMarkerSize)
                     }
                 })
             });
         }
     }
 
-    private highlightMarker(element,size:number) {
-        let transformsettings = element.getAttribute("transform") 
+    private highlightMarker(element, size: number) {
+        let transformsettings = element.getAttribute("transform")
         element.setAttribute("transform", transformsettings.split("scale(")[0] + "scale(" + size + transformsettings.split("scale(")[1].substring(transformsettings.split("scale(")[1].indexOf(")")))
     }
 
@@ -1376,7 +1358,7 @@ export class OntologyGraph {
         this.renderMainViewPositionInOverviewGraph();
         this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
             edge.childNodes[0].classList.remove("highlight-edge")
-            this.highlightMarker(edge.childNodes[1],smallMarkerSize)
+            this.highlightMarker(edge.childNodes[1], smallMarkerSize)
         });
     }
 

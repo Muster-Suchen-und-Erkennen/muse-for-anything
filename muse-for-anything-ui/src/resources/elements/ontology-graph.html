@@ -228,7 +228,7 @@
                         class="taxonomy-link-item">
                         <title data-content="title"></title>
                     </rect>
-                    
+
                     <text class="titleDescription" x="-45" y="-13" width="110" data-content="typedescription"></text>
                     <text class="title" data-content="title" x="-55" y="4" width="110">
                     </text>
@@ -353,10 +353,11 @@
                 <div class="section-subpart">
                     <div>
                         <input class="border rounded-sm border-gray-800 focus:ring-4 w-4/5 px-2 py-1"
-                            placeholder="distance in percentage" value.from-view="filter & throttle" aria-owns="'datalist-'+slug"
-                            autocapitalize="none" value.bind="distanceBetweenElements" type="number" autocomplete="off"
-                            aria-autocomplete="list" role="combobox" id="'input-'+slug" min="0"> 
-                            <span>%</span>
+                            placeholder="distance in percentage" value.from-view="filter & throttle"
+                            aria-owns="'datalist-'+slug" autocapitalize="none" value.bind="distanceBetweenElements"
+                            type="number" autocomplete="off" aria-autocomplete="list" role="combobox" id="'input-'+slug"
+                            min="0">
+                        <span>%</span>
                     </div>
                 </div>
                 <div class="section-title">
@@ -364,8 +365,7 @@
                 </div>
                 <div class="section-subpart">
                     <div repeat.for="algo of layoutAlgorithms" class="ontology-algorithm-label">
-                        <input type="radio" name="group1"
-                                model.bind="algo.id" checked.bind="selectedAlgorithmId">
+                        <input type="radio" name="group1" model.bind="algo.id" checked.bind="selectedAlgorithmId">
                         ${algo.name}
                     </div>
                 </div>
@@ -380,7 +380,7 @@
                         </button>
                     </div>
                 </div>
-                <div class="section-title"  if.bind="isRendered">
+                <div class="section-title" if.bind="isRendered">
                     ${"ontology.itemsInGraph" | t}: ${graph.nodeList.length}
                 </div>
             </div>
@@ -428,7 +428,8 @@
                 <p class="detailview-item">• ${"ontology.detailview.abstract" | t}: ${selectedNode.abstract}</p>
                 <p class="detailview-item">• ${"ontology.detailview.implementations" | t}: t.b.d.</p>
                 <p class="detailview-item">• ${"ontology.detailview.api-link" | t}: ${selectedNode.href}</p>
-                <p class="detailview-item">• <a class="buttons button-outline" href="${selectedNode.getLink()}" target="_blank">${"ontology.detailview.openEdit" | t}</a></p>
+                <p class="detailview-item">• <a class="buttons button-outline" href="${selectedNode.getLink()}"
+                        target="_blank">${"ontology.detailview.openEdit" | t}</a></p>
                 <p class="detailview-item">• ${"ontology.detailview.children" | t}: ${selectedNode.children.length}</p>
                 <p class="detailview-item">
                     • ${"ontology.detailview.fixPosition" | t}:
