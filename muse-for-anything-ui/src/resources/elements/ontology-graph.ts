@@ -461,7 +461,7 @@ export class OntologyGraph {
     @bindable ignoreCache = false;
     @bindable maximizeMenu = false;
 
-    algorithms = [
+    layoutAlgorithms = [
         { id: 0, name: 'ngraph.forcedirected' },
         { id: 1, name: 'd3-force' },
       ];
@@ -485,7 +485,7 @@ export class OntologyGraph {
     @observable() typeChildsToShow: number = 3;
     @observable() showTaxonomies: boolean = true;
     @observable() showTypes: boolean = true;
-    @observable() selectedAlgorithmId: number = 0;
+    @observable() selectedAlgorithmId: number = 1;
     @observable() distanceBetweenElements: number = 100;
 
     missingParentConnection: Array<{ parent: number | string, child: number | string, joinTree: boolean }> = [];
@@ -864,7 +864,6 @@ export class OntologyGraph {
         const nodes = [];
 
         this.dataItems.filter(item => item.isVisibleInGraph).forEach(item => nodes.push({id:item.id}))
-
         this.dataItems.filter(p => p.isVisibleInGraph).forEach(parItem => {
             parItem.children.filter(p => p.isVisibleInGraph).forEach(child => {
                 if (child.itemType == DataItemTypeEnum.TaxonomyProperty || child.itemType == DataItemTypeEnum.TypeProperty) {
@@ -887,13 +886,11 @@ export class OntologyGraph {
             .force("charge", d3.forceManyBody())
             .force("center", d3.forceCenter(2000000 / 2, 2000000 / 2));
 
-        simulation
-            .nodes(nodes);
-      
-        simulation.force("link")
-            .links(links);
-
-        let positionDifference = 30*(this.distanceBetweenElements/100);
+        simulation.nodes(nodes);
+        simulation.force("link").links(links);
+        simulation.stop() 
+        simulation.tick(100)
+        let positionDifference = 10*(this.distanceBetweenElements/100);
         nodes.forEach(x => {
             this.dataItems.find(y => y.id == x.id).position = {x:x.x*positionDifference,y:x.y*positionDifference};
         })
@@ -1010,10 +1007,16 @@ export class OntologyGraph {
     repositionNodes() {
         this.getNodePositions();
         this.dataItems.filter(p => !p.abstract).forEach(parent => {
-            console.log(parent)
             this.graph.moveNode(parent.id, parent.position.x, parent.position.y)
+            this.graphoverview.moveNode(parent.id, parent.position.x, parent.position.y)
         })
         this.graph.completeRender();
+        this.graph.zoomToBoundingBox();
+        let currentView = this.graph.currentViewWindow;
+        this.graphoverview?.removeNode(42424242424242424242424242424242421, false);
+        this.graphoverview?.addNode({ id: 42424242424242424242424242424242421, class: "invisible-rect", dynamicTemplate: 'overview-node-template', x: currentView.x, y: currentView.y, width: currentView.width, height: currentView.height }, false);
+        this.graphoverview.completeRender();
+        this.graphoverview.zoomToBoundingBox(true);
     }
 
     private async preRenderGraph() {
@@ -1338,12 +1341,12 @@ export class OntologyGraph {
             this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
                 if (edge.id.includes(node.id)) {
                     edge.childNodes[0].classList.add("highlight-edge")
-                    this.highlightMarker(edge.childNodes[1],1.8)
+                    this.highlightMarker(edge.childNodes[1],2.8)
                 }
                 this.dataItems.find(p => p.id == node.id)?.children?.forEach(childNode => {
                     if (edge.id.includes(childNode.id)) {
                         edge.childNodes[0].classList.add("highlight-edge")
-                        this.highlightMarker(edge.childNodes[1],1.8)
+                        this.highlightMarker(edge.childNodes[1],2.8)
                     }
                 })
             });

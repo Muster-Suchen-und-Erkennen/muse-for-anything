@@ -163,6 +163,11 @@
                     fill: var(--position-rect-color) !important;
                     border-style: none !important;
                 }
+
+                .invisible-rect {
+                    fill: #ffffff00 !important;
+                    stroke: none !important;
+                }
             </style>
             <defs class="templates">
                 <g transform="scale(0.1)" id="string">
@@ -291,91 +296,8 @@
         </svg>
     </template>
 
-
-    <template id="ontologyoverviewGraphTemplate">
-        <svg>
-            <style>
-                svg {
-                    display: block;
-                    width: 100%;
-                    height: 100%;
-                    border-radius: 0.375rem;
-                    background-color: var(--fill-color);
-                    --line-color: black;
-                    --line-highlight-color: #6d28d9;
-                    --text-color: black;
-                    --text-highlight-color: #6d28d9;
-                    --fill-color: rgba(255, 255, 255, 0);
-                    --fill-highlight-color: rgba(255, 255, 255, 0);
-                }
-
-                svg .zoom-group {
-                    will-change: contents, transform;
-                }
-
-                .ghost {
-                    opacity: 0.5 !important;
-                }
-
-                .taxonomy-group {
-                    fill: rgb(221, 221, 221) !important;
-                }
-
-                .type-group {
-                    fill: rgb(189, 189, 189) !important;
-                }
-
-                .position-rect {
-                    fill: #6c28d95d !important;
-                    border-style: none !important;
-                }
-
-                .invisible-rect {
-                    fill: #ffffff00 !important;
-                    stroke: none !important;
-                }
-
-                .node>rect {
-                    fill: none;
-                    stroke: black;
-                }
-
-                .node>ellipse {
-                    fill: #FABA6F !important;
-                    stroke: #FABA6F;
-                }
-
-                .edge {
-                    stroke: black;
-                }
-
-                .edge-group .marker {
-                    fill: none
-                }
-
-                .highlight-outgoing .edge {
-                    stroke: none
-                }
-
-                .highlight-outgoing.edge-group .marker {
-                    fill: none
-                }
-            </style>
-            <defs class="templates">
-                <g id="item" data-template-type="node">
-                    <rect width="120" height="60" x="-60" y="-30" rx="5" data-link-handles="edges"></rect>
-                </g>
-            </defs>
-            <g class="zoom-group">
-                <!-- the zoom-groop is used for the pan and zoom transormations -->
-                <g class="nodes"></g> <!-- the first group will be rendered below the following groups-->
-                <g class="edges"></g>
-            </g>
-        </svg>
-    </template>
-
     <div if.bind=" !isAllowedToShowGraph">
-        <h1 t="loading">Loading</h1>
+        <h1 t="loading">${"loading" | t}</h1>
     </div>
     <template else>
         <div class=" maindiv menu-section card">
@@ -426,7 +348,7 @@
                     </div>
                 </div>
                 <div class="section-title">
-                    Distance between elements
+                    ${"ontology.distance-header" | t}
                 </div>
                 <div class="section-subpart">
                     <div>
@@ -438,20 +360,19 @@
                     </div>
                 </div>
                 <div class="section-title">
-                    Algorithm
+                    ${"ontology.algorithm-header" | t}
                 </div>
                 <div class="section-subpart">
-                    <div repeat.for="algo of algorithms" class="ontology-algorithm-label">
+                    <div repeat.for="algo of layoutAlgorithms" class="ontology-algorithm-label">
                         <input type="radio" name="group1"
                                 model.bind="algo.id" checked.bind="selectedAlgorithmId">
-                      
                         ${algo.name}
                     </div>
                 </div>
-                <span class="section-title">
+                <span class="section-title" if.bind="isRendered">
                     ${"ontology.repositionVisibleItems" | t}
                 </span>
-                <div class="section-subpart">
+                <div class="section-subpart" if.bind="isRendered">
                     <div>
                         <button class="button-outline px-2 items-center" click.delegate="repositionNodes()"
                             title='${"ontology.repositionVisibleItemsButton" | t}'>
@@ -459,8 +380,8 @@
                         </button>
                     </div>
                 </div>
-                <div class="section-title">
-                    ${"ontology.itemsInGraph" | t} ${graph.nodeList.length}
+                <div class="section-title"  if.bind="isRendered">
+                    ${"ontology.itemsInGraph" | t}: ${graph.nodeList.length}
                 </div>
             </div>
 
@@ -472,7 +393,7 @@
                 <tree-node repeat.for="node of dataItems" current.bind="node"></tree-node>
             </div>
             <div class="item-overview">
-                <network-graph class="graphoverview" classes="deleted" mode="display" zoom="automatic"
+                <network-graph class="graphoverview" classes="deleted" mode="layout" zoom="both"
                     svg-template="#ontologyGraphTemplate">
                 </network-graph>
             </div>
@@ -500,17 +421,17 @@
                         <svg-icon icon.bind="'arrow-right'" size.bind="18"></svg-icon>
                     </button>
                 </p>
-                <p class="detailview-item">• name: ${selectedNode.name}</p>
-                <p class="detailview-item">• id: ${selectedNode.id}</p>
-                <p class="detailview-item">• description: ${selectedNode.description}</p>
-                <p class="detailview-item">• type: ${selectedNode.itemType}</p>
-                <p class="detailview-item">• abstract: ${selectedNode.abstract}</p>
-                <p class="detailview-item">• implementations: t.b.d.</p>
-                <p class="detailview-item">• api-link: ${selectedNode.href}</p>
-                <p class="detailview-item">• <a class="buttons button-outline" href="${selectedNode.getLink()}" target="_blank">open item to edit</a></p>
-                <p class="detailview-item">• children: ${selectedNode.children.length}</p>
+                <p class="detailview-item">• ${"ontology.detailview.name" | t}: ${selectedNode.name}</p>
+                <p class="detailview-item">• ${"ontology.detailview.id" | t}: ${selectedNode.id}</p>
+                <p class="detailview-item">• ${"ontology.detailview.description" | t}: ${selectedNode.description}</p>
+                <p class="detailview-item">• ${"ontology.detailview.type" | t}: ${selectedNode.itemType}</p>
+                <p class="detailview-item">• ${"ontology.detailview.abstract" | t}: ${selectedNode.abstract}</p>
+                <p class="detailview-item">• ${"ontology.detailview.implementations" | t}: t.b.d.</p>
+                <p class="detailview-item">• ${"ontology.detailview.api-link" | t}: ${selectedNode.href}</p>
+                <p class="detailview-item">• <a class="buttons button-outline" href="${selectedNode.getLink()}" target="_blank">${"ontology.detailview.openEdit" | t}</a></p>
+                <p class="detailview-item">• ${"ontology.detailview.children" | t}: ${selectedNode.children.length}</p>
                 <p class="detailview-item">
-                    • fix elements position in graph:
+                    • ${"ontology.detailview.fixPosition" | t}:
                     <button class="button-flat items-center" click.delegate="selectedNode.togglePositionFixed()"
                         title='${"ontology.toggleFixedPosition" | t}'
                         style="margin: 0 !important; padding: 0 !important">

@@ -149,6 +149,20 @@
         "renderGraph": "Render graph",
         "repositionVisibleItems":"Reposition all visible items",
         "repositionVisibleItemsButton":"reposition",
-        "toggleFixedPosition":"Fix or unfix position of element"
+        "toggleFixedPosition":"Fix or unfix position of element",
+        "algorithm-header":"Algorithm",
+        "distance-header":"Distance between elements",
+        "detailview": {
+            "name":"name",
+            "id":"id",
+            "description":"description",
+            "type":"type",
+            "abstract":"abtract",
+            "implementations":"implementations",
+            "api-link":"api-link",
+            "children":"child elements",
+            "fixPosition":"fix elements position in graph",
+            "openEdit":"open item to edit"
+        }
     }
 }
