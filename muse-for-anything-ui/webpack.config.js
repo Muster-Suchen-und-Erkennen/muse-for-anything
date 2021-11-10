@@ -48,7 +48,10 @@ const cssRules = (production) => [
 ];
 
 
-module.exports = ({ production } = {}, { extractCss, analyze, tests, hmr, port, host } = {}) => ({
+module.exports = ({ production } = {    "externals": {       "fs": "require('fs')"    }}, { extractCss, analyze, tests, hmr, port, host } = {}) => ({
+    node: {
+        fs: 'empty'
+     },
     resolve: {
         extensions: ['.ts', '.js'],
         modules: [srcDir, 'node_modules'],

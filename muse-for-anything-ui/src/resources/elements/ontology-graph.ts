@@ -13,8 +13,8 @@ import { GroupBehaviour } from "@ustutt/grapheditor-webcomponent/lib/grouping";
 import { DynamicNodeTemplate, DynamicTemplateContext } from "@ustutt/grapheditor-webcomponent/lib/dynamic-templates/dynamic-template";
 import { LinkHandle } from "@ustutt/grapheditor-webcomponent/lib/link-handle";
 import { calculateBoundingRect, Rect } from "@ustutt/grapheditor-webcomponent/lib/util";
-import * as d3 from "d3";
-
+import * as fs from 'fs';
+import {forceSimulation, forceLink, forceCenter,forceManyBody,forceCollide} from "d3-force";
 
 const boundingBoxBorder: number = 20;
 const smallMarkerSize: number = 0.8;
@@ -851,7 +851,7 @@ export class OntologyGraph {
         let links = [];
         let nodes = [];
 
-        this.dataItems.filter(item => item.isVisibleInGraph).forEach(item => nodes.push({ id: item.id }))
+        this.dataItems.filter(item => item.isVisibleInGraph).forEach(item => nodes.push({ id: item.id, radius: this.calcRadius(item) }))
         this.dataItems.filter(p => p.isVisibleInGraph).forEach(parItem => {
             parItem.children.filter(p => p.isVisibleInGraph).forEach(child => {
                 if (child.itemType == DataItemTypeEnum.TaxonomyProperty || child.itemType == DataItemTypeEnum.TypeProperty) {
@@ -868,24 +868,56 @@ export class OntologyGraph {
             nodes.find(x => x.id == item.id).fx = item.node.x;
             nodes.find(x => x.id == item.id).fy = item.node.y;
         });
-
-        d3.forceSimulation(nodes)
-            .force("link", d3.forceLink(links).id(d => d.id))
-            .force("charge", d3.forceManyBody())
-            .force("center", d3.forceCenter(this.graph.currentViewWindow.width / 2, this.graph.currentViewWindow.height / 2))
+       
+        forceSimulation(nodes)
+            .force("link", forceLink(links).id(d => d.id))
+            .force("charge", forceManyBody())
+            .force("center", forceCenter(this.graph.currentViewWindow.width / 2, this.graph.currentViewWindow.height / 2))
+            .force('collision', forceCollide().radius(d => this.calcRadius(d)))
+            .on('tick', this.tick())
             .stop()
             .tick(100);
 
-        let positionDifference = 10 * (this.distanceBetweenElements / 100);
+        let positionDifference = (this.distanceBetweenElements / 100);
         
         nodes.forEach(x => {
+            console.log(x)
             if(this.dataItems.find(y => y.id == x.id).positionIsFixed) {
                 this.dataItems.find(y => y.id == x.id).position = { x: x.x, y: x.y  };
             }else {
-                this.dataItems.find(y => y.id == x.id).position = { x: x.x * positionDifference, y: x.y * positionDifference };
+                let dx = this.calcRadius(this.dataItems.find(y => y.id == x.id));
+                let dy = this.calcRadius(this.dataItems.find(y => y.id == x.id));
+                this.dataItems.find(y => y.id == x.id).position = { x: (x.x-dx) * positionDifference, y: (x.y-dy) * positionDifference };
             }
         })
 
+    }
+
+    private calcRadius(d) {
+        if (this.dataItems.find(x => x.id == d.id).itemType == DataItemTypeEnum.TaxonomyItem) 
+        {
+            return 130;
+        } else if(this.dataItems.find(x => x.id == d.id).itemType == DataItemTypeEnum.TypeItem)
+        {
+            if (this.dataItems.find(x => x.id == d.id).children.length > 2) {
+                return 165;
+            } else if (this.dataItems.find(x => x.id == d.id).children.length > 1) {
+                return 130;
+            } else if (this.dataItems.find(x => x.id == d.id).children.length > 0) {
+                return 95;
+            }
+            return 60;
+        }
+
+        // 3 --> 250 - 135
+        // 2 --> 180 - 100 
+        // 1 --> 110 - 65
+        // 0 --> 60  - 30 
+        // tax -> 180 - 100
+    }
+
+    private tick() {
+        console.log("done tick")
     }
 
     private sortList(items: DataItemModel[]) {
@@ -996,7 +1028,7 @@ export class OntologyGraph {
     }
 
     repositionNodes() {
-        this.getNodePositions();
+        //this.getNodePositions();
         this.dataItems.filter(p => !p.abstract).forEach(parent => {
             this.graph.moveNode(parent.id, parent.position.x, parent.position.y)
             this.graphoverview.moveNode(parent.id, parent.position.x, parent.position.y)
@@ -1013,7 +1045,7 @@ export class OntologyGraph {
     private async preRenderGraph() {
         this.getNodePositions();
         this.sortList(this.dataItems);
-        this.renderGraph();
+        //this.renderGraph();
         this.isLoading = false;
     }
 
@@ -1484,6 +1516,19 @@ export class OntologyGraph {
 
     private downloadSVG() {
         // TODO: dowload svg
+        var PDFDocument = require('pdfkit'),
+            SVGtoPDF = require('svg-to-pdfkit');
 
+        var doc = new PDFDocument(),
+            stream = fs.createWriteStream('file.pdf');
+
+        SVGtoPDF(doc, this.graph.getSVG, 0, 0);
+
+        stream.on('finish', function() {
+            console.log(fs.readFileSync('file.pdf'))
+        });
+        
+        doc.pipe(stream);
+        doc.end();
     }
 }
