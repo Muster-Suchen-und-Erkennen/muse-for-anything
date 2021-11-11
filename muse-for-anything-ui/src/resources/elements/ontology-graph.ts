@@ -14,7 +14,7 @@ import { DynamicNodeTemplate, DynamicTemplateContext } from "@ustutt/grapheditor
 import { LinkHandle } from "@ustutt/grapheditor-webcomponent/lib/link-handle";
 import { calculateBoundingRect, Rect } from "@ustutt/grapheditor-webcomponent/lib/util";
 import * as fs from 'fs';
-import {forceSimulation, forceLink, forceCenter,forceManyBody,forceCollide} from "d3-force";
+import { forceSimulation, forceLink, forceCenter, forceManyBody, forceCollide } from "d3-force";
 
 const boundingBoxBorder: number = 20;
 const smallMarkerSize: number = 0.8;
@@ -49,80 +49,6 @@ interface TypeItemApiObject extends ApiObject {
         description: string | null;
         titel: string;
     };
-}
-
-class TypeNodeTemplate implements DynamicNodeTemplate {
-
-    getLinkHandles(g: any, grapheditor: GraphEditor): LinkHandle[] {
-        const width = g.datum().width + 2 * boundingBoxBorder;
-        const height = g.datum().height + 2 * boundingBoxBorder;
-        let handles = [];
-        handles.push({
-            id: 0,
-            normal: { dx: 1, dy: 0 },
-            x: width,
-            y: height / 2
-        });
-        handles.push({
-            id: 1,
-            normal: { dx: -1, dy: 0 },
-            x: 0,
-            y: height / 2
-        });
-        handles.push({
-            id: 2,
-            normal: { dx: 0, dy: 1 },
-            x: width / 2,
-            y: height
-        });
-        handles.push({
-            id: 3,
-            normal: { dx: 0, dy: -1 },
-            x: width / 2,
-            y: 0
-        });
-
-        return handles;
-    }
-
-    renderInitialTemplate(g: any, grapheditor: GraphEditor, context: DynamicTemplateContext<Node>): void {
-        this.calculateRect(g, grapheditor, context, false);
-    }
-
-    updateTemplate(g: any, grapheditor: GraphEditor, context: DynamicTemplateContext<Node>): void {
-        this.calculateRect(g, grapheditor, context, true);
-    }
-
-    private calculateRect(g: any, grapheditor: GraphEditor, context: DynamicTemplateContext<Node>, updated?: boolean) {
-        let isOverviewGraph = grapheditor.className.includes("graphoverview")
-        const width = g.datum().width;
-        const height = g.datum().height;
-        if (height) {
-            this.drawRect(g, { x: 0, y: 0, width: width, height: height }, g.datum(), isOverviewGraph)
-        } else {
-            this.drawRect(g, { x: 0, y: 0, width: 120, height: 20 }, g.datum(), isOverviewGraph)
-        }
-    }
-
-    private drawRect(g: any, minBox: any, props: any, isOverviewGraph: boolean) {
-        g.selectAll("*").remove();
-        g.append("rect")
-            .attr("width", minBox.width + boundingBoxBorder * 2)
-            .attr("height", minBox.height + boundingBoxBorder * 2)
-            .attr("class", "type-group")
-            .attr("rx", 5);
-        if (!isOverviewGraph) {
-            g.append("text")
-                .attr("x", 10)
-                .attr("y", 20)
-                .attr("class", "title")
-                .attr("data-click", "header")
-                .attr("width", minBox.width + boundingBoxBorder * 2 - 5)
-                .attr('data-content', 'title');
-            g.append("title")
-                .attr('data-content', 'title');
-        }
-    }
 }
 
 enum DataItemTypeEnum {
@@ -222,7 +148,6 @@ export class DataItemModel {
     }
 
     getLink() {
-        console.log()
         if (this.itemType == DataItemTypeEnum.TypeItem) {
             let namespaceID = this.href.split("namespaces/")[1].split("/")[0]
             let typeID = this.href.split("types/")[1].split("/")[0]
@@ -234,7 +159,80 @@ export class DataItemModel {
 
             return "http://localhost:5000/explore/ont-namespace/:" + namespaceID + "/ont-taxonomy/:" + typeID
         }
-        return ""
+    }
+}
+
+class TypeNodeTemplate implements DynamicNodeTemplate {
+
+    getLinkHandles(g: any, grapheditor: GraphEditor): LinkHandle[] {
+        const width = g.datum().width + 2 * boundingBoxBorder;
+        const height = g.datum().height + 2 * boundingBoxBorder;
+        let handles = [];
+        handles.push({
+            id: 0,
+            normal: { dx: 1, dy: 0 },
+            x: width,
+            y: height / 2
+        });
+        handles.push({
+            id: 1,
+            normal: { dx: -1, dy: 0 },
+            x: 0,
+            y: height / 2
+        });
+        handles.push({
+            id: 2,
+            normal: { dx: 0, dy: 1 },
+            x: width / 2,
+            y: height
+        });
+        handles.push({
+            id: 3,
+            normal: { dx: 0, dy: -1 },
+            x: width / 2,
+            y: 0
+        });
+
+        return handles;
+    }
+
+    renderInitialTemplate(g: any, grapheditor: GraphEditor, context: DynamicTemplateContext<Node>): void {
+        this.calculateRect(g, grapheditor, context, false);
+    }
+
+    updateTemplate(g: any, grapheditor: GraphEditor, context: DynamicTemplateContext<Node>): void {
+        this.calculateRect(g, grapheditor, context, true);
+    }
+
+    private calculateRect(g: any, grapheditor: GraphEditor, context: DynamicTemplateContext<Node>, updated?: boolean) {
+        let isOverviewGraph = grapheditor.className.includes("graphoverview")
+        const width = g.datum().width;
+        const height = g.datum().height;
+        if (height) {
+            this.drawRect(g, { x: 0, y: 0, width: width, height: height }, g.datum(), isOverviewGraph)
+        } else {
+            this.drawRect(g, { x: 0, y: 0, width: 120, height: 20 }, g.datum(), isOverviewGraph)
+        }
+    }
+
+    private drawRect(g: any, minBox: any, props: any, isOverviewGraph: boolean) {
+        g.selectAll("*").remove();
+        g.append("rect")
+            .attr("width", minBox.width + boundingBoxBorder * 2)
+            .attr("height", minBox.height + boundingBoxBorder * 2)
+            .attr("class", "type-group")
+            .attr("rx", 5);
+        if (!isOverviewGraph) {
+            g.append("text")
+                .attr("x", 10)
+                .attr("y", 20)
+                .attr("class", "title")
+                .attr("data-click", "header")
+                .attr("width", minBox.width + boundingBoxBorder * 2 - 5)
+                .attr('data-content', 'title');
+            g.append("title")
+                .attr('data-content', 'title');
+        }
     }
 }
 
@@ -416,7 +414,6 @@ class TypeGroupBehaviour implements GroupBehaviour {
     }
 }
 
-
 // reposition the groups parent node if one child element changed position
 function repositionGroupNode(group: string, groupNode: Node, graphEditor: GraphEditor) {
     const children = graphEditor.groupingManager.getAllChildrenOf(group);
@@ -432,7 +429,6 @@ function repositionGroupNode(group: string, groupNode: Node, graphEditor: GraphE
             height: bbox.height,
         });
     });
-
 
     const minBox = calculateBoundingRect(...boxes);
 
@@ -456,44 +452,40 @@ export class OntologyGraph {
     @bindable ignoreCache = false;
     @bindable maximizeMenu = false;
 
-    layoutAlgorithms = [
-        { id: 0, name: 'ngraph.forcedirected' },
-        { id: 1, name: 'd3-force' },
-    ];
-
-    totalTypes = 0;
-    totalTaxonomies = 0;
-
-
-    totalNodesToAdd = 0;
-    totalNodesAdded = 0;
-
-    maximized: boolean = false;
-    isAllowedToShowGraph: boolean = false;
-
-    @child("network-graph.maingraph") graph: GraphEditor;
-    @child("div.maindiv") maindiv: any;
     @observable graphoverview: GraphEditor;
-
     @observable() searchtext: String = "";
     @observable() selectedNode: DataItemModel;
     @observable() typeChildsToShow: number = 3;
     @observable() showTaxonomies: boolean = true;
     @observable() showTypes: boolean = true;
-    @observable() selectedAlgorithmId: number = 1;
+    @observable() selectedLayoutAlgorithmId: number = 1;
     @observable() distanceBetweenElements: number = 100;
     @observable() keepSearchResultsInFocus: boolean = false;
-    private normalView;
     @observable() currentEdgeStyleBold: boolean = true;
 
-    missingParentConnection: Array<{ parent: number | string, child: number | string, joinTree: boolean }> = [];
+    @child("network-graph.maingraph") graph: GraphEditor;
+    @child("div.maindiv") maindiv: any;
 
-    @observable() dataItems: Array<DataItemModel> = [];
+    private layoutAlgorithms = [
+        { id: 0, name: 'ngraph.forcedirected' },
+        { id: 1, name: 'd3-force' },
+    ];
+
+    private totalTypes = 0;
+    private totalTaxonomies = 0;
+
+    private defaultCurrentViewWindowSize;
+
+    private maximized: boolean = false;
+    private isAllowedToShowGraph: boolean = false;
+
+    private missingParentConnection: Array<{ parent: number | string, child: number | string, joinTree: boolean }> = [];
+
+    dataItems: Array<DataItemModel> = [];
 
     private api: BaseApiService;
     private navService: NavigationLinksService;
     private events: EventAggregator;
-
     private subscription: Subscription;
 
     constructor(baseApi: BaseApiService, navService: NavigationLinksService, events: EventAggregator, bindingEngine: BindingEngine) {
@@ -526,7 +518,7 @@ export class OntologyGraph {
         if (newValue == null) {
             return;
         }
-        this.loadData(this.apiLink, this.ignoreCache);
+        this.loadData(this.ignoreCache);
     }
 
     maindivChanged(newValue: any, oldValue) {
@@ -554,6 +546,13 @@ export class OntologyGraph {
 
         newGraph.dynamicTemplateRegistry.addDynamicTemplate('type-group-node-template', new TypeNodeTemplate);
         newGraph.dynamicTemplateRegistry.addDynamicTemplate('taxonomy-group-node-template', new TaxonomyNodeTemplate);
+
+        newGraph.setEdgeClass = (className, edge, sourceNode, targetNode) => {
+            if (targetNode == null) {
+                return false;
+            }
+            return className === targetNode.type;
+        }
     }
 
     graphoverviewChanged(newGraph: GraphEditor, oldGraph) {
@@ -567,11 +566,11 @@ export class OntologyGraph {
     }
 
     selectedAlgorithmIdChanged() {
-        this.getNodePositions();
+        this.calculateNodePositions();
     }
 
     distanceBetweenElementsChanged() {
-        this.getNodePositions();
+        this.calculateNodePositions();
     }
 
     searchtextChanged(newText: string, old: string) {
@@ -629,67 +628,10 @@ export class OntologyGraph {
         });
     }
 
-    searchtextFocusLeft() {
-        if(!this.keepSearchResultsInFocus && this.graph != null)
-        {
-            this.removeSearchResults();
-        }
-    }
-
-    removeSearchResults() {
-        this.graph.getSVG().selectAll("g.node").nodes().forEach(node => node.classList?.remove("greyedout-node"));
-        this.dataItems.forEach(par => {
-            par.isSearchResult = false;
-            par.childIsInResult = false;
-            par.visible = true;
-            if(!par.isSelected) this.graph.deselectNode(par.id)
-            let collapse:boolean = true;
-            par.children.forEach(child => {
-                child.isSearchResult = false;
-                if(!child.isSelected) this.graph.deselectNode(child.id)
-                if(child.isSelected) collapse = false;
-            });
-            if(collapse && par.expanded) {
-                par.toggleNode();
-            }
-        });
-        this.graph.updateHighlights();
-    }
-
     keepSearchResultsInFocusChanged(newValue: boolean, oldValue: boolean) {
-        if(!newValue && this.graph != null)
-        {
-            this.removeSearchResults();
+        if (!newValue && this.graph != null) {
+            this.removeSearchResultsHighlighting();
         }
-    }
-
-    showAllElementsWithoutAnEdge() {
-        // TODO
-        let allEdgeConnections = []
-        this.graph.edgeList.forEach(edge => {
-            allEdgeConnections.push(edge.target)
-            allEdgeConnections.push(edge.source)
-        });
-
-        this.showTypes = false
-        this.showTaxonomies = false
-        this.dataItems.forEach(parent => {
-            parent.isVisibleInGraph = true;
-            parent.children?.forEach(child => child.isVisibleInGraph = true);
-
-            if (allEdgeConnections.includes(parent.id)) {
-                parent.isVisibleInGraph = false;
-                parent.children?.forEach(child => child.isVisibleInGraph = false);
-            }
-            
-            parent.children.forEach(child => {
-                if (allEdgeConnections.includes(child.id)) {
-                    parent.isVisibleInGraph = false;
-                    parent.children?.forEach(child => child.isVisibleInGraph = false);
-                }
-            })
-        })
-        this.updateVisibilityInGraph();
     }
 
     typeChildsToShowChanged(newValue: number, oldValue: number) {
@@ -697,10 +639,10 @@ export class OntologyGraph {
         this.dataItems?.filter(p => !p.abstract).filter(p => p.itemType == DataItemTypeEnum.TypeItem).forEach(parent => {
             let childrend = parent.children;
             childrend.forEach(childItem => {
-                    this.graph.groupingManager.removeNodeFromGroup(parent.id, childItem.id);
-                    this.graph.removeNode(childItem.id);
-                })
-            
+                this.graph.groupingManager.removeNodeFromGroup(parent.id, childItem.id);
+                this.graph.removeNode(childItem.id);
+            })
+
             let nodeBox: { x, y } = { x: parent.node.x + 20, y: parent.node.y + 20 };
             let counter = 0;
             parent.children.forEach(childItem => {
@@ -709,40 +651,51 @@ export class OntologyGraph {
                 nodeBox = this.addItemsToType(childItem, nodeBox, parent);
 
             });
-            /*if (oldValue > newValue) {
-                //delete items
-                let childs = parent.children;
-                let counter = 0;
-                childs.forEach(childItem => {
-                    if (counter < newValue) {
-
-                    } else if (this.graph.nodeList.some(p => p.id == childItem.id)) {
-                        this.graph.groupingManager.removeNodeFromGroup(parent.id, childItem.id);
-                        this.graph.removeNode(childItem.id);
-                    }
-                    counter++;
-                })
-            } else if (newValue > oldValue && this.graph.nodeList.some(p => p.id == parent.id)) {
-                //add items
-                let childs: Set<string> = this.graph.groupingManager.getAllChildrenOf(parent.id);
-
-                if (childs.size < Math.min(parent.children.length, newValue)) {
-                    for (let i = childs.size; i < Math.min(parent.children.length, newValue); i++) {
-                        if (childs.size == 0) {
-                            this.addItemsToType(parent.children[i], { x: parent.node.x + 20, y: parent.node.y + 20 }, parent);
-                        } else {
-                            let { width, height } = this.getSizeOfStaticTemplateNode(parent.children[i - 1].node.type);
-                            this.addItemsToType(parent.children[i], { x: parent.children[i - 1].node.x - Math.floor(width / 2), y: parent.children[i - 1].node.y + Math.floor(height / 2) }, parent);
-                        }
-                    }
-                }
-
-            }*/
         });
         this.postRender();
     }
 
-    private loadData(apiLink: ApiLink, ignoreCache: boolean) {
+    showTaxonomiesChanged(value: boolean) {
+        if (this.graph == null) {
+            return;
+        }
+        if (value) {
+            this.dataItems.filter(p => p.itemType == DataItemTypeEnum.TaxonomyItem).forEach(p => {
+                p.isVisibleInGraph = true
+                p.children?.forEach(child => child.isVisibleInGraph = true);
+            });
+        } else {
+            this.dataItems.filter(p => p.itemType == DataItemTypeEnum.TaxonomyItem).filter(p => !p.isSelected).forEach(p => {
+                p.isVisibleInGraph = false
+                p.children?.forEach(child => child.isVisibleInGraph = false);
+            });
+        }
+        this.updateVisibilityInGraph();
+    }
+
+    showTypesChanged(value: boolean) {
+        if (this.graph == null) {
+            return;
+        }
+        if (value) {
+            this.dataItems.filter(p => p.itemType == DataItemTypeEnum.TypeItem).forEach(p => {
+                p.isVisibleInGraph = true
+                p.children?.forEach(child => child.isVisibleInGraph = true);
+            });
+        } else {
+            this.dataItems.filter(p => p.itemType == DataItemTypeEnum.TypeItem).filter(p => !p.isSelected).forEach(p => {
+                p.isVisibleInGraph = false
+                p.children?.forEach(child => child.isVisibleInGraph = false);
+            });
+        }
+        this.updateVisibilityInGraph();
+    }
+
+    /**
+     * load the data from the server, links are given by the navigation service
+     * @param ignoreCache 
+     */
+    private loadData(ignoreCache: boolean) {
         console.log("Start loading data")
         if (this.navService.getCurrentNavLinks().nav.some(link => link.apiLink.resourceType == "ont-type")) {
             this.loadDataTypes(this.navService.getCurrentNavLinks().nav.find(link => link.apiLink.resourceType == "ont-type").apiLink, this.ignoreCache);
@@ -752,8 +705,12 @@ export class OntologyGraph {
         }
     }
 
+    /**
+     * load all type items of the namespace
+     * @param rootLink root link from the navigation-service
+     * @param ignoreCache 
+     */
     private loadDataTypes(rootLink: ApiLink, ignoreCache: boolean) {
-
         this.api.getByApiLink<TypeApiObject>(rootLink, ignoreCache).then(apiResponse => {
             apiResponse.links.forEach(link => {
                 if (link.rel.includes("next")) {
@@ -797,6 +754,11 @@ export class OntologyGraph {
     }
 
 
+    /**
+     * load all taxonomy items of the namespace
+     * @param rootLink root link from the navigation-service
+     * @param ignoreCache 
+     */
     private loadDataTaxonomy(rootLink: ApiLink, ignoreCache: boolean) {
         this.api.getByApiLink<TaxonomyApiObject>(rootLink, ignoreCache).then(apiResponse => {
             apiResponse.links.forEach(link => {
@@ -813,7 +775,6 @@ export class OntologyGraph {
                     this.dataItems.push(new DataItemModel(nodeID, apiResponse.data.name, false, apiResponse.data.self.href, apiResponse.data.description, DataItemTypeEnum.TaxonomyItem, this.graph))
                     apiResponse.data.items.forEach(element => {
                         promises.push(this.api.getByApiLink<TaxonomyItemApiObject>(element, ignoreCache).then(apiResponse => {
-
                             //load taxonomy relations
                             let parentItemHrefs: string[] = [];
                             apiResponse.data.children.forEach(childElement => {
@@ -838,6 +799,11 @@ export class OntologyGraph {
 
     }
 
+    /**
+     * get the corresponding DataItemTypeEnum from the api response for a given element to store the correct value in the datamodel
+     * @param type type from the api response
+     * @returns the corresponding DataItemTypeEnum
+     */
     private mapTypeEnums(type: any): DataItemTypeEnum {
         if (type["type"] == "object") {
             if (type["referenceType"] == "ont-taxonomy") {
@@ -866,18 +832,89 @@ export class OntologyGraph {
         }
     }
 
-    private getNodePositions() {
-        if (this.graph == null) {
-            return;
-        }
-        if (this.selectedAlgorithmId == 0) {
-            this.getNodePositionsNgraph();
-        } else if (this.selectedAlgorithmId == 1) {
-            this.getNodePositionsd3();
+    /**
+     * if the focus of the searchtext input box is left, decide to show all elements normal or keep it as it is
+     */
+    searchtextFocusLeft() {
+        if (!this.keepSearchResultsInFocus && this.graph != null) {
+            this.removeSearchResultsHighlighting();
         }
     }
 
-    private getNodePositionsNgraph() {
+    /**
+     * remove the searchresult higlighting
+     */
+    removeSearchResultsHighlighting() {
+        this.graph.getSVG().selectAll("g.node").nodes().forEach(node => node.classList?.remove("greyedout-node"));
+        this.dataItems.forEach(par => {
+            par.isSearchResult = false;
+            par.childIsInResult = false;
+            par.visible = true;
+            if (!par.isSelected) this.graph.deselectNode(par.id)
+            let collapse: boolean = true;
+            par.children.forEach(child => {
+                child.isSearchResult = false;
+                if (!child.isSelected) this.graph.deselectNode(child.id)
+                if (child.isSelected) collapse = false;
+            });
+            if (collapse && par.expanded) {
+                par.toggleNode();
+            }
+        });
+        this.graph.updateHighlights();
+    }
+
+    /**
+     * show all elements without an connected edge
+     */
+    showAllElementsWithoutAnEdge() {
+        // get all edge connections in a list
+        let allEdgeConnections = []
+        this.graph.edgeList.forEach(edge => allEdgeConnections.push(edge.target, edge.source));
+
+        // set the checkboxes to false
+        this.showTypes = false
+        this.showTaxonomies = false
+
+        // check all parent items, if they are in the list of edge connections and decide to show or hide
+        this.dataItems.forEach(parent => {
+            parent.isVisibleInGraph = true;
+            parent.children?.forEach(child => child.isVisibleInGraph = true);
+
+            if (allEdgeConnections.includes(parent.id)) {
+                parent.isVisibleInGraph = false;
+                parent.children?.forEach(child => child.isVisibleInGraph = false);
+            }
+
+            parent.children.forEach(child => {
+                if (allEdgeConnections.includes(child.id)) {
+                    parent.isVisibleInGraph = false;
+                    parent.children?.forEach(child => child.isVisibleInGraph = false);
+                }
+            })
+        })
+        this.updateVisibilityInGraph();
+    }
+
+    /**
+     * calcualte the position of the nodes based on the selected layout algorithm
+     */
+    private calculateNodePositions() {
+        if (this.graph == null) {
+            return;
+        }
+        if (this.selectedLayoutAlgorithmId == 0) {
+            this.calculateNodePositionsNgraph();
+        } else if (this.selectedLayoutAlgorithmId == 1) {
+            this.calculateNodePositionsd3();
+        }
+    }
+
+    /**
+     * calculate the nodes position based on the ngraph.forcedirected algorithm
+     * store the positions in each node
+     */
+    private calculateNodePositionsNgraph() {
         let createGraph = require('ngraph.graph');
         let g = createGraph();
 
@@ -920,15 +957,19 @@ export class OntologyGraph {
         g.forEachNode(node => {
             let pos = layout.getNodePosition(node.id);
             let nodeToPin = g.getNode(node.id);
-            if(layout.isNodePinned(node)) {
+            if (layout.isNodePinned(node)) {
                 this.dataItems.find(el => el.id == node.id).position = { x: pos.x, y: pos.y }
-            }else {
+            } else {
                 this.dataItems.find(el => el.id == node.id).position = { x: pos.x * positionDifference, y: pos.y * positionDifference }
             }
         });
     }
 
-    private getNodePositionsd3() {
+    /**
+     * calculate the nodes position based on the d3-force algorithm
+     * store the positions in each node
+     */
+    private calculateNodePositionsd3() {
         let links = [];
         let nodes = [];
 
@@ -949,36 +990,38 @@ export class OntologyGraph {
             nodes.find(x => x.id == item.id).fx = item.node.x;
             nodes.find(x => x.id == item.id).fy = item.node.y;
         });
-       
+
         forceSimulation(nodes)
             .force("link", forceLink(links).id(d => d.id))
             .force("charge", forceManyBody())
             .force("center", forceCenter(this.graph.currentViewWindow.width / 2, this.graph.currentViewWindow.height / 2))
             .force('collision', forceCollide().radius(d => this.calcRadius(d)))
-            .on('tick', this.tick())
             .stop()
             .tick(100);
 
         let positionDifference = (this.distanceBetweenElements / 100);
-        
+
         nodes.forEach(x => {
-            if(this.dataItems.find(y => y.id == x.id).positionIsFixed) {
-                this.dataItems.find(y => y.id == x.id).position = { x: x.x, y: x.y  };
-            }else {
+            if (this.dataItems.find(y => y.id == x.id).positionIsFixed) {
+                this.dataItems.find(y => y.id == x.id).position = { x: x.x, y: x.y };
+            } else {
                 let dx = this.calcRadius(this.dataItems.find(y => y.id == x.id));
                 let dy = this.calcRadius(this.dataItems.find(y => y.id == x.id));
-                this.dataItems.find(y => y.id == x.id).position = { x: (x.x-dx) * positionDifference, y: (x.y-dy) * positionDifference };
+                this.dataItems.find(y => y.id == x.id).position = { x: (x.x - dx) * positionDifference, y: (x.y - dy) * positionDifference };
             }
         })
 
     }
 
+    /**
+     * calculate the radius for a given node for a good layouting with d3-force
+     * @param d node of the graph
+     * @returns radius of the given node
+     */
     private calcRadius(d) {
-        if (this.dataItems.find(x => x.id == d.id).itemType == DataItemTypeEnum.TaxonomyItem) 
-        {
+        if (this.dataItems.find(x => x.id == d.id).itemType == DataItemTypeEnum.TaxonomyItem) {
             return 130;
-        } else if(this.dataItems.find(x => x.id == d.id).itemType == DataItemTypeEnum.TypeItem)
-        {
+        } else if (this.dataItems.find(x => x.id == d.id).itemType == DataItemTypeEnum.TypeItem) {
             if (this.dataItems.find(x => x.id == d.id).children.length > 2) {
                 return 165;
             } else if (this.dataItems.find(x => x.id == d.id).children.length > 1) {
@@ -988,18 +1031,12 @@ export class OntologyGraph {
             }
             return 60;
         }
-
-        // 3 --> 250 - 135
-        // 2 --> 180 - 100 
-        // 1 --> 110 - 65
-        // 0 --> 60  - 30 
-        // tax -> 180 - 100
     }
 
-    private tick() {
-        console.log("done tick")
-    }
-
+    /**
+     * sort all dataitems in an alphabetical order
+     * @param items dataitems list
+     */
     private sortList(items: DataItemModel[]) {
         items.sort(function (a, b) {
             var nameA = a.name.toUpperCase(); // ignore upper and lowercase
@@ -1017,26 +1054,10 @@ export class OntologyGraph {
         items.forEach(item => this.sortList(item.children))
     }
 
-    async showTypesChanged(value: boolean) {
-        if (this.graph == null) {
-            return;
-        }
-        if (value) {
-            this.dataItems.filter(p => p.itemType == DataItemTypeEnum.TypeItem).forEach(p => {
-                p.isVisibleInGraph = true
-                p.children?.forEach(child => child.isVisibleInGraph = true);
-            });
-        } else {
-            this.dataItems.filter(p => p.itemType == DataItemTypeEnum.TypeItem).filter(p => !p.isSelected).forEach(p => {
-                p.isVisibleInGraph = false
-                p.children?.forEach(child => child.isVisibleInGraph = false);
-            });
-        }
-        this.updateVisibilityInGraph();
-    }
-
+    /**
+     * complete graph rendering
+     */
     private postRender() {
-
         this.graph.completeRender();
         this.graphoverview.completeRender();
         this.addChildnodesToParents();
@@ -1054,28 +1075,9 @@ export class OntologyGraph {
         this.isRendered = true;
     }
 
-    async showTaxonomiesChanged(value: boolean) {
-        if (this.graph == null) {
-            return;
-        }
-        if (value) {
-            this.dataItems.filter(p => p.itemType == DataItemTypeEnum.TaxonomyItem).forEach(p => {
-                p.isVisibleInGraph = true
-                p.children?.forEach(child => child.isVisibleInGraph = true);
-            });
-        } else {
-            this.dataItems.filter(p => p.itemType == DataItemTypeEnum.TaxonomyItem).filter(p => !p.isSelected).forEach(p => {
-                p.isVisibleInGraph = false
-                p.children?.forEach(child => child.isVisibleInGraph = false);
-            });
-        }
-        this.updateVisibilityInGraph();
-    }
-
-    private fixallSearchResults() {
-        this.dataItems.filter(p => p.isSearchResult).forEach(p=> p.positionIsFixed=true);
-    }
-
+    /**
+     * update the visibility of all nodes in the graph based on the dataitems isVisibleInGraph value
+     */
     private updateVisibilityInGraph() {
         this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
             edge.classList?.remove("invisible-node")
@@ -1103,6 +1105,11 @@ export class OntologyGraph {
         })
     }
 
+    /**
+     * update the visibility of an edge in the graph
+     * @param nodeid all edges of this id should be hidden or shown, based on the visibile param
+     * @param visibile show or hide the edges
+     */
     private updateVisibilityOfEdge(nodeid: string, visibile: boolean) {
         this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
             if (edge.id.includes(nodeid)) {
@@ -1124,45 +1131,28 @@ export class OntologyGraph {
         });
     }
 
+    /**
+     * reposition all nodes back to the calculated positions
+     */
     repositionNodes() {
-        this.getNodePositions();
         this.dataItems.filter(p => !p.abstract).forEach(parent => {
             this.graph.moveNode(parent.id, parent.position.x, parent.position.y)
             this.graphoverview.moveNode(parent.id, parent.position.x, parent.position.y)
         })
         this.graph.completeRender();
-        //this.graph.zoomToBoundingBox();
         this.resetLayout();
-        let currentView = this.graph.currentViewWindow;
-        this.graphoverview?.removeNode(42424242424242424242424242424242421, false);
-        this.graphoverview?.addNode({ id: 42424242424242424242424242424242421, class: "invisible-rect", dynamicTemplate: 'overview-node-template', x: currentView.x, y: currentView.y, width: currentView.width, height: currentView.height }, false);
+        this.addInvisibleRectToOverview();
         this.graphoverview.completeRender();
         this.graphoverview.zoomToBoundingBox(true);
     }
 
     private async preRenderGraph() {
-        this.getNodePositions();
+        this.calculateNodePositions();
         this.sortList(this.dataItems);
-        //this.renderGraph();
         this.isLoading = false;
     }
 
-    private renderGraph() {
-        this.isLoading = true;
 
-        if (this.graph == null) {
-            return;
-        }
-
-        if (this.showTypes) this.renderTypes();
-
-        if (this.showTaxonomies) this.renderTaxonomies();
-        this.postRender();
-        //this.graph.zoomToBoundingBox();
-        this.resetLayout();
-
-        this.graphoverview.zoomToBoundingBox();
-    }
 
     private async renderTypes() {
         await this.dataItems?.forEach(element => {
@@ -1205,7 +1195,8 @@ export class OntologyGraph {
                                     template: "arrow",
                                     scale: smallMarkerSize,
                                     relativeRotation: 0,
-                                }
+                                },
+                                id: source + parent.id
                             }
 
                             let pathOverview = {
@@ -1213,7 +1204,8 @@ export class OntologyGraph {
                                     template: "arrow",
                                     scale: smallMarkerSize,
                                     relativeRotation: 0,
-                                }
+                                },
+                                id: parItem.id + parent.id
                             }
 
                             if (!this.graph.edgeList.some(p => p.source == source && p.target == parent.id) &&
@@ -1286,7 +1278,7 @@ export class OntologyGraph {
             childItem.itemType == DataItemTypeEnum.StringProperty ||
             childItem.itemType == DataItemTypeEnum.Undefined) {
             nodeBox = this.addNodeToGraph({ id: childItem.id, title: childItem.name, type: "type-item", x: nodeBox.x, y: nodeBox.y, typedescription: childItem.itemType, typedescriptionHref: "#" + childItem.itemType }, false);
-        } 
+        }
         this.missingParentConnection.push({ parent: parentItem.id, child: childItem.id, joinTree: false })
         return nodeBox;
     }
@@ -1457,26 +1449,35 @@ export class OntologyGraph {
         // highlight links        
         this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
             edge.childNodes[0].classList.remove("highlight-edge")
+            this.highlightMarker(edge.id.substring(5), "arrow", 0.8)
         });
         if (event.type == 'nodeclick') {
-            this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
-                if (edge.id.includes(node.id)) {
-                    edge.childNodes[0].classList.add("highlight-edge")
-                    this.highlightMarker(edge.childNodes[1], largeMarkerSize)
-                }
-                this.dataItems.find(p => p.id == node.id)?.children?.forEach(childNode => {
-                    if (edge.id.includes(childNode.id)) {
+            this.graph.edgeList.forEach(edge => {
+                this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
+                    if (edge.id.includes(node.id)) {
                         edge.childNodes[0].classList.add("highlight-edge")
-                        this.highlightMarker(edge.childNodes[1], largeMarkerSize)
+                        this.highlightMarker(edge.id.substring(5), "big-arrow", 1.8)
                     }
-                })
-            });
+                    this.dataItems.find(p => p.id == node.id)?.children?.forEach(childNode => {
+                        if (edge.id.includes(childNode.id)) {
+                            edge.childNodes[0].classList.add("highlight-edge")
+                            this.highlightMarker(edge.id.substring(5), "big-arrow", 1.8)
+                        }
+                    })
+                });
+            })
+            this.graph.completeRender();
         }
     }
 
-    private highlightMarker(element, size: number) {
-        let transformsettings = element.getAttribute("transform")
-        element.setAttribute("transform", transformsettings.split("scale(")[0] + "scale(" + size + transformsettings.split("scale(")[1].substring(transformsettings.split("scale(")[1].indexOf(")")))
+    private highlightMarker(edgeID, template, scale) {
+        //let transformsettings = element.getAttribute("transform")
+        //element.setAttribute("transform", transformsettings.split("scale(")[0] + "scale(" + size + transformsettings.split("scale(")[1].substring(transformsettings.split("scale(")[1].indexOf(")")))
+        this.graph.getEdge(edgeID).markerEnd = {
+            template: template,
+            scale: scale,
+            relativeRotation: 0,
+        }
     }
 
     private onEdgeClick(event: CustomEvent<{ eventSource: "API" | "USER_INTERACTION" | "INTERNAL", node: Node }>) {
@@ -1495,37 +1496,41 @@ export class OntologyGraph {
         this.renderMainViewPositionInOverviewGraph();
         this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
             edge.childNodes[0].classList.remove("highlight-edge")
-            this.highlightMarker(edge.childNodes[1], smallMarkerSize)
+            this.highlightMarker(edge.id.substring(5), "arrow", 0.8)
         });
+        this.graph.completeRender();
     }
 
     private onNodeAdd(event: CustomEvent<{ eventSource: "API" | "USER_INTERACTION" | "INTERNAL", node: Node }>) {
+        this.addInvisibleRectToOverview();
+    }
+
+    private addInvisibleRectToOverview() {
         let currentView = this.graph.currentViewWindow;
         this.graphoverview?.removeNode(42424242424242424242424242424242421, false);
         this.graphoverview?.addNode({ id: 42424242424242424242424242424242421, class: "invisible-rect", dynamicTemplate: 'overview-node-template', x: currentView.x, y: currentView.y, width: currentView.width, height: currentView.height }, false);
     }
 
     currentEdgeStyleBoldChanged(newValue: boolean) {
-        if(this.graph==null) return;
-        if(newValue) {
+        if (this.graph == null) return;
+        if (newValue) {
             this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
                 edge.childNodes[0].classList.remove("small-edge")
-                this.highlightMarker(edge.childNodes[1], smallMarkerSize)
+                this.highlightMarker(edge.id.substring(5), "arrow", smallMarkerSize)
             });
         } else {
             this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
                 edge.childNodes[0].classList.add("small-edge")
-                this.highlightMarker(edge.childNodes[1], smallMarkerSize)
+                this.highlightMarker(edge.id.substring(5), "arrow", smallMarkerSize)
             });
         }
     }
 
     private onZoomChange(event: CustomEvent<{ eventSource: "API" | "USER_INTERACTION" | "INTERNAL", node: Node }>) {
         this.renderMainViewPositionInOverviewGraph();
-        if(this.graph.currentViewWindow.width<=this.normalView.width)
-        {
+        if (this.graph.currentViewWindow.width <= this.defaultCurrentViewWindowSize.width) {
             this.currentEdgeStyleBold = false;
-            
+
         } else {
             this.currentEdgeStyleBold = true;
         }
@@ -1580,10 +1585,14 @@ export class OntologyGraph {
         this.maximizeMenu = !this.maximizeMenu;
     }
 
+    private fixallSearchResults() {
+        this.dataItems.filter(p => p.isSearchResult).forEach(p => p.positionIsFixed = true);
+    }
+
     // function called by buttons from the front-end, to interact with the graph
     private resetLayout() {
         this.graph?.zoomToBoundingBox(true);
-        this.normalView = this.graph.currentViewWindow;
+        this.defaultCurrentViewWindowSize = this.graph.currentViewWindow;
     }
 
     // function called by buttons from the front-end, to interact with the graph
@@ -1644,54 +1653,71 @@ export class OntologyGraph {
 
         SVGtoPDF(doc, this.graph.getSVG, 0, 0);
 
-        stream.on('finish', function() {
+        stream.on('finish', function () {
             console.log(fs.readFileSync('file.pdf'))
         });
-        
+
         doc.pipe(stream);
         doc.end();
     }
-    
+
+    private renderGraph() {
+        this.isLoading = true;
+
+        if (this.graph == null) {
+            return;
+        }
+
+        if (this.showTypes) this.renderTypes();
+
+        if (this.showTaxonomies) this.renderTaxonomies();
+        this.postRender();
+        //this.graph.zoomToBoundingBox();
+        this.resetLayout();
+
+        this.graphoverview.zoomToBoundingBox();
+    }
+
     isLeftDragging: boolean = false;
     isRightDragging: boolean = false;
 
-    endDrag(){
+    endDrag() {
         console.log("end")
         this.isLeftDragging = false;
     }
-    startLeftDrag(){
+    startLeftDrag() {
         console.log("start")
         this.isLeftDragging = true;
     }
 
     onDrag(event) {
-        if(this.isLeftDragging || this.isRightDragging) {
+        if (this.isLeftDragging || this.isRightDragging) {
             console.log("Dragging");
             //console.log(event);
-            
+
             let page = document.getElementById("mainontology-graph");
             let searchArea = document.getElementById("menu-section");
-            let graphArea = document.getElementById("graphexportsvg");	
-            let filterSubarea = document.getElementById("item-filtersection");	
-            let treeSubarea = document.getElementById("item-treesection");	
-            let overviewSubarea = document.getElementById("item-overview");	
-            
+            let graphArea = document.getElementById("graphexportsvg");
+            let filterSubarea = document.getElementById("item-filtersection");
+            let treeSubarea = document.getElementById("item-treesection");
+            let overviewSubarea = document.getElementById("item-overview");
+
             let leftColWidth = this.isLeftDragging ? event.clientX : searchArea.clientWidth;
             let rightColWidth = this.isRightDragging ? page.clientWidth - event.clientX : graphArea.clientWidth;
-            
+
             let dragbarWidth = 6;
-            
+
             let cols = [
                 leftColWidth,
                 dragbarWidth,
                 rightColWidth
             ];
-            
+
             let newColDefn = cols.map(c => c.toString() + "px").join(" ");
-                
+
             console.log(newColDefn);
             page.style.gridTemplateColumns = newColDefn;
-            
+
             event.preventDefault()
         }
     }
