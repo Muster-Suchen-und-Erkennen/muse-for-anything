@@ -139,7 +139,8 @@
 
                 .edge {
                     stroke: var(--line-color);
-                    opacity: 0.5;
+                    opacity: 1;
+                    stroke-width: 5px;
                 }
 
                 .edge.selected {
@@ -148,10 +149,16 @@
                     stroke-width: 5px;
                 }
 
+                .edge.small-edge {
+                    stroke: var(--line-color);
+                    opacity: 0.5;
+                    stroke-width: 1px;
+                }
+
                 .edge.highlight-edge {
                     stroke: var(--line-color);
                     opacity: 1;
-                    stroke-width: 5px;
+                    stroke-width: 8px;
                 }
 
                 .edge-group .marker {
@@ -300,104 +307,121 @@
         <h1 t="loading">${"loading" | t}</h1>
     </div>
     <template else>
-        <div class=" maindiv menu-section card">
-            <div class="item-filtersection px-1 py-1 border-gray-200 border-b scroll-area">
-                <span class="section-title">
+        <div id="menu-section" class=" maindiv card">
+            <div id="item-filtersection" class="px-1 py-1 border-gray-200 border-b">
+                <div class="section-main-title bg-gray-600">
                     ${"ontology.filter-area" | t}
-                </span>
-                <div class="section-subpart">
-                    <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1" placeholder="search"
-                        value.from-view="filter & throttle" aria-owns="'datalist-'+slug" autocapitalize="none"
-                        value.bind="searchtext & debounce" type="text" autocomplete="off" aria-autocomplete="list"
-                        role="combobox" id="'input-'+slug" blur.trigger="searchtextFocusLeft()">
                 </div>
-                <span class="section-title">
-                    ${"ontology.visibleElements" | t}
-                </span>
-                <div class="section-subpart">
-                    <div>
-                        <label class="cb_control control--checkbox">
-                            <input type="checkbox" checked.bind="showTaxonomies">
-                            <span class="control__indicator"></span>
-                        </label>
-                        ${"ontology.taxonomies" | t}
+                <div class="scroll-area" if.bind="!isLoading">
+                    <div class="section-subpart">
+                        <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1" placeholder="search"
+                            value.from-view="filter & throttle" aria-owns="'datalist-'+slug" autocapitalize="none"
+                            value.bind="searchtext & debounce" type="text" autocomplete="off" aria-autocomplete="list"
+                            role="combobox" id="'input-'+slug" blur.trigger="searchtextFocusLeft()">
+                        <div class="ontology-algorithm-label" title='${"ontology.keepFocus" | t}'>
+                             <input type="checkbox" checked.bind="keepSearchResultsInFocus"> ${"ontology.keepFocus" | t}
+                        </div>
                     </div>
-                    <div>
-                        <label class="cb_control control--checkbox">
-                            <input type="checkbox" checked.bind="showTypes">
-                            <span class="control__indicator"></span>
-                        </label>
-                        ${"ontology.types" | t}
-                    </div>
-                    <div if.bind="!isLoading">
-                        <button class="button-outline px-2 items-center" click.delegate="showSelectedItems()"
-                            title='${"ontology.showSelectedItems" | t}'>
-                            ${"ontology.showSelectedItems" | t}
+                    <div class="section-subpart">
+                        <button class="button-outline px-2 items-center button-oneline" click.delegate="fixallSearchResults()"
+                                title='${"ontology.fixallSearchResultsButton" | t}'>
+                                ${"ontology.fixallSearchResultsButton" | t}
                         </button>
                     </div>
-                </div>
-                <span class="section-title">
-                    ${"ontology.childsToShow" | t}
-                </span>
-                <div class="section-subpart">
-                    <div>
-                        <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1"
-                            placeholder="search" value.from-view="filter & throttle" aria-owns="'datalist-'+slug"
-                            autocapitalize="none" value.bind="typeChildsToShow" type="number" autocomplete="off"
-                            aria-autocomplete="list" role="combobox" id="'input-'+slug" min="0">
-                    </div>
-                </div>
-                <div class="section-title">
-                    ${"ontology.distance-header" | t}
-                </div>
-                <div class="section-subpart">
-                    <div>
-                        <input class="border rounded-sm border-gray-800 focus:ring-4 w-4/5 px-2 py-1"
-                            placeholder="distance in percentage" value.from-view="filter & throttle"
-                            aria-owns="'datalist-'+slug" autocapitalize="none" value.bind="distanceBetweenElements"
-                            type="number" autocomplete="off" aria-autocomplete="list" role="combobox" id="'input-'+slug"
-                            min="0">
-                        <span>%</span>
-                    </div>
-                </div>
-                <div class="section-title">
-                    ${"ontology.algorithm-header" | t}
-                </div>
-                <div class="section-subpart">
-                    <div repeat.for="algo of layoutAlgorithms" class="ontology-algorithm-label">
-                        <input type="radio" name="group1" model.bind="algo.id" checked.bind="selectedAlgorithmId">
-                        ${algo.name}
-                    </div>
-                </div>
-                <span class="section-title" if.bind="isRendered">
-                    ${"ontology.repositionVisibleItems" | t}
-                </span>
-                <div class="section-subpart" if.bind="isRendered">
-                    <div>
-                        <button class="button-outline px-2 items-center" click.delegate="repositionNodes()"
-                            title='${"ontology.repositionVisibleItemsButton" | t}'>
-                            ${"ontology.repositionVisibleItemsButton" | t}
+                    <span class="section-title">
+                        ${"ontology.visibleElements" | t}
+                    </span>
+                    <div class="section-subpart">
+                        <div>
+                            <label class="cb_control control--checkbox">
+                                <input type="checkbox" checked.bind="showTaxonomies">
+                                <span class="control__indicator"></span>
+                            </label>
+                            ${"ontology.taxonomies" | t}
+                        </div>
+                        <div>
+                            <label class="cb_control control--checkbox">
+                                <input type="checkbox" checked.bind="showTypes">
+                                <span class="control__indicator"></span>
+                            </label>
+                            ${"ontology.types" | t}
+                        </div>
+                        <div>
+                            <button class="button-outline px-2 items-center button-oneline" click.delegate="showSelectedItems()"
+                                title='${"ontology.showSelectedItems" | t}'>
+                                ${"ontology.showSelectedItems" | t}
+                            </button>
+                        </div>
+                        <button class="button-outline px-2 items-center button-oneline" click.delegate="showAllElementsWithoutAnEdge()"
+                                title='${"ontology.showAllElementsWithoutAnEdgeButton" | t}'>
+                                ${"ontology.showAllElementsWithoutAnEdgeButton" | t}
                         </button>
                     </div>
-                </div>
-                <div class="section-title" if.bind="isRendered">
-                    ${"ontology.itemsInGraph" | t}: ${graph.nodeList.length}
+                    <span class="section-title" title='{"ontology.childsToShow" | t}'>
+                        ${"ontology.childsToShow" | t}
+                    </span>
+                    <div class="section-subpart">
+                        <div>
+                            <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1"
+                                placeholder="search" value.from-view="filter & throttle" aria-owns="'datalist-'+slug"
+                                autocapitalize="none" value.bind="typeChildsToShow & debounce" type="number" autocomplete="off"
+                                aria-autocomplete="list" role="combobox" id="'input-'+slug" min="0">
+                        </div>
+                    </div>
+                    <div class="section-title">
+                        ${"ontology.distance-header" | t}
+                    </div>
+                    <div class="section-subpart">
+                        <div>
+                            <input type="range" min="10" max="500" value.bind="distanceBetweenElements" class="slider">
+                            <span>${distanceBetweenElements} %</span>
+                        </div>
+                    </div>
+                    <div class="section-title">
+                        ${"ontology.algorithm-header" | t}
+                    </div>
+                    <div class="section-subpart">
+                        <div repeat.for="algo of layoutAlgorithms" class="ontology-algorithm-label">
+                            <input type="radio" name="group1" model.bind="algo.id" checked.bind="selectedAlgorithmId">
+                            ${algo.name}
+                        </div>
+                    </div>
+                    <span class="section-title" if.bind="isRendered">
+                        ${"ontology.repositionVisibleItems" | t}
+                    </span>
+                    <div class="section-subpart" if.bind="isRendered">
+                        <div>
+                            <button class="button-outline px-2 items-center button-oneline" click.delegate="repositionNodes()"
+                                title='${"ontology.repositionVisibleItemsButton" | t}'>
+                                ${"ontology.repositionVisibleItemsButton" | t}
+                            </button>
+                        </div>
+                    </div>
+                    <div class="section-title" if.bind="isRendered">
+                        ${"ontology.itemsInGraph" | t}: ${graph.nodeList.length}
+                    </div>
                 </div>
             </div>
 
-            <div class="item-treesection px-1 py-1 border-gray-200 border-b scroll-area">
-
-                <span class="section-title">
+            <div id="item-treesection" class=" px-1 border-gray-200 border-b">
+                <div class="section-main-title bg-gray-600">
                     ${"ontology.tree-view" | t}
-                </span>
-                <tree-node repeat.for="node of dataItems" current.bind="node"></tree-node>
+                </div>
+                <div class=" scroll-area">
+                    <tree-node repeat.for="node of dataItems" current.bind="node"></tree-node>
+                </div>
             </div>
-            <div class="item-overview">
-                <network-graph class="graphoverview" classes="deleted" mode="layout" zoom="both"
+            <div id="item-overview">
+
+                <div class="section-main-title bg-gray-600">
+                    ${"ontology.overview" | t}
+                </div>
+                <network-graph class="graphoverview" classes="deleted" mode="display" zoom="automatic"
                     svg-template="#ontologyGraphTemplate">
                 </network-graph>
             </div>
         </div>
+        <!--<div id="dragbar" mousedown.delegate="startLeftDrag()" mouseup.delegate="endDrag()" mousemove.delegate="onDrag($event)"></div>-->
         <network-graph id="graphexportsvg" class="maingraph menu-graph ml-2 card" classes="deleted" mode="layout"
             zoom="both" svg-template="#ontologyGraphTemplate">
         </network-graph>
@@ -406,7 +430,7 @@
             <spinner type="S8" size="100" color="default"></spinner>
         </div>
         <div class="menu-graph ml-2 card" if.bind="!isLoading && !isRendered">
-            <button class="button-outline px-2 items-center" click.delegate="renderGraph()"
+            <button class="button-outline px-2 items-center button-oneline" click.delegate="renderGraph()"
                 title='${"ontology.renderGraph" | t}'>
                 ${"ontology.renderGraph" | t}
             </button>
@@ -422,14 +446,20 @@
                     </button>
                 </p>
                 <p class="detailview-item">• ${"ontology.detailview.name" | t}: ${selectedNode.name}</p>
-                <p class="detailview-item">• ${"ontology.detailview.id" | t}: ${selectedNode.id}</p>
                 <p class="detailview-item">• ${"ontology.detailview.description" | t}: ${selectedNode.description}</p>
                 <p class="detailview-item">• ${"ontology.detailview.type" | t}: ${selectedNode.itemType}</p>
                 <p class="detailview-item">• ${"ontology.detailview.abstract" | t}: ${selectedNode.abstract}</p>
                 <p class="detailview-item">• ${"ontology.detailview.implementations" | t}: t.b.d.</p>
                 <p class="detailview-item">• ${"ontology.detailview.api-link" | t}: ${selectedNode.href}</p>
-                <p class="detailview-item">• <a class="buttons button-outline" href="${selectedNode.getLink()}"
-                        target="_blank">${"ontology.detailview.openEdit" | t}</a></p>
+                <p class="detailview-item">
+                    <!--<a class="button-flat" href="${selectedNode.getLink()}" target="_blank">-->
+                        
+                        <a class="button-flat" href="${selectedNode.getLink()}" target="_blank" style="margin: 0 !important; padding: 0 !important">
+                            <span>• ${"ontology.detailview.openEdit" | t}
+                            <svg-icon style="display:inline-block" icon.bind="'open-in-new-tab'" size.bind="20"></svg-icon>
+                        </span>
+                    </a>
+                </p>
                 <p class="detailview-item">• ${"ontology.detailview.children" | t}: ${selectedNode.children.length}</p>
                 <p class="detailview-item">
                     • ${"ontology.detailview.fixPosition" | t}:

@@ -422,11 +422,17 @@ ux-dialog>ux-dialog-footer{
 ontology-graph {
     background-color: white;
     display: grid; 
-    grid-template-columns: 30% 70%; 
+    grid-template-columns: 30% 6px 70%; 
     grid-template-rows: 100%; 
     grid-template-areas: 
-      "menu-section menu-graph"; 
+      "menu-section dragbar menu-graph"; 
     height: 500px; 
+}
+
+#dragbar {
+	background-color: black;
+	grid-area: dragbar;
+	cursor: ew-resize;
 }
 
 ontology-graph[data-maximized] {
@@ -437,10 +443,10 @@ ontology-graph[data-maximized] {
     right: 0px;
     border-radius: 0px;
     margin-bottom: 0px;
-    grid-template-columns: 30% 70%; 
+    grid-template-columns: 30% 6px 70%; 
     height: 100%; 
 }
-.menu-section {
+#menu-section {
     display: grid; 
     grid-template-columns: 100%; 
     grid-template-rows: 30% 50% 20%; 
@@ -451,13 +457,20 @@ ontology-graph[data-maximized] {
     grid-area: menu-section; 
 }
 
-.item-filtersection { grid-area: item-filtersection; }
-.item-treesection { grid-area: item-treesection; }
-.item-overview { grid-area: item-overview; }
+#item-filtersection { grid-area: item-filtersection; }
+#item-treesection { grid-area: item-treesection; }
+#item-overview { grid-area: item-overview; }
 .menu-graph { grid-area: menu-graph; }
 
 .section-title {
     font-size:small;
+}
+
+.section-main-title {
+    font-size: small;
+    color: white;
+    margin-bottom: 5px;
+    padding-left: 5px;
 }
 
 .ontology-move{
@@ -474,7 +487,16 @@ ontology-graph[data-maximized] {
 
 .scroll-area {
     overflow: auto;
-    height: 100%
+    height: calc(100% - 24px);
+    padding-right: 5px;
+}
+
+.button-oneline {
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
 }
 
 ul{
@@ -487,7 +509,7 @@ tree-node  ul:first-child{
 }
 
 .StartOfTreeNode > tree-node > .StartOfTreeNode{
-    padding-left:20px;
+    padding-left:30px;
 }
       
 .left{
@@ -546,6 +568,20 @@ tree-node  ul:first-child{
 
 .detailview {
     max-width: 400px;
+}
+
+input[type="checkbox"]:indeterminate {
+    content: "\f068";
+    color: #2b6daf;
+}
+
+.button-list-fixed-position {
+    opacity: 10%;
+}
+
+
+.button-list-fixed-position:hover {
+    opacity: 100%;
 }
 
 /* style scrollbar */

@@ -113,8 +113,8 @@ class TypeNodeTemplate implements DynamicNodeTemplate {
             .attr("rx", 5);
         if (!isOverviewGraph) {
             g.append("text")
-                .attr("x", 5)
-                .attr("y", 15)
+                .attr("x", 10)
+                .attr("y", 20)
                 .attr("class", "title")
                 .attr("data-click", "header")
                 .attr("width", minBox.width + boundingBoxBorder * 2 - 5)
@@ -157,6 +157,7 @@ export class DataItemModel {
     @observable() isSelected: boolean;
     @observable() isVisibleInGraph: boolean;
     @observable() isSearchResult: boolean;
+    @observable() childIsInResult: boolean;
     @observable() positionIsFixed: boolean;
     private graph: GraphEditor;
 
@@ -175,6 +176,7 @@ export class DataItemModel {
         this.taxonomyParentRelations = taxonomyChildRelations;
         this.isVisibleInGraph = true;
         this.positionIsFixed = false;
+        this.childIsInResult = false;
     }
 
     hasChildren() {
@@ -210,6 +212,7 @@ export class DataItemModel {
             this.graph.deselectNode(this.id);
         }
         this.graph.updateHighlights();
+
     }
 
     addChild(id: string, name: string, abstract: boolean, href: string, description: string, itemType: DataItemTypeEnum, childHrefs?: string[]) {
@@ -303,7 +306,7 @@ class TaxonomyNodeTemplate implements DynamicNodeTemplate {
             .attr("class", "taxonomy-group")
         if (!isOverviewGraph) {
             g.append("text")
-                .attr("x", 5)
+                .attr("x", 15)
                 .attr("y", (minBox.height + boundingBoxBorder * 2) / 2 + 5)
                 .attr("class", "title")
                 .attr("width", 150)
@@ -479,6 +482,9 @@ export class OntologyGraph {
     @observable() showTypes: boolean = true;
     @observable() selectedAlgorithmId: number = 1;
     @observable() distanceBetweenElements: number = 100;
+    @observable() keepSearchResultsInFocus: boolean = false;
+    private normalView;
+    @observable() currentEdgeStyleBold: boolean = true;
 
     missingParentConnection: Array<{ parent: number | string, child: number | string, joinTree: boolean }> = [];
 
@@ -587,10 +593,12 @@ export class OntologyGraph {
             }
             let closeParent = true;
             parent.children.forEach(child => {
+                parent.childIsInResult = false;
                 if (child.name.toLowerCase().includes(newText.toLowerCase()) && newText != "") {
                     child.isSearchResult = true;
                     this.graph.selectNode(child.id)
                     closeParent = false;
+                    parent.childIsInResult = true;
                     if (!parent.expanded) parent.toggleNode();
                 }
                 else {
@@ -622,13 +630,86 @@ export class OntologyGraph {
     }
 
     searchtextFocusLeft() {
+        if(!this.keepSearchResultsInFocus && this.graph != null)
+        {
+            this.removeSearchResults();
+        }
+    }
+
+    removeSearchResults() {
         this.graph.getSVG().selectAll("g.node").nodes().forEach(node => node.classList?.remove("greyedout-node"));
+        this.dataItems.forEach(par => {
+            par.isSearchResult = false;
+            par.childIsInResult = false;
+            par.visible = true;
+            if(!par.isSelected) this.graph.deselectNode(par.id)
+            let collapse:boolean = true;
+            par.children.forEach(child => {
+                child.isSearchResult = false;
+                if(!child.isSelected) this.graph.deselectNode(child.id)
+                if(child.isSelected) collapse = false;
+            });
+            if(collapse && par.expanded) {
+                par.toggleNode();
+            }
+        });
+        this.graph.updateHighlights();
+    }
+
+    keepSearchResultsInFocusChanged(newValue: boolean, oldValue: boolean) {
+        if(!newValue && this.graph != null)
+        {
+            this.removeSearchResults();
+        }
+    }
+
+    showAllElementsWithoutAnEdge() {
+        // TODO
+        let allEdgeConnections = []
+        this.graph.edgeList.forEach(edge => {
+            allEdgeConnections.push(edge.target)
+            allEdgeConnections.push(edge.source)
+        });
+
+        this.showTypes = false
+        this.showTaxonomies = false
+        this.dataItems.forEach(parent => {
+            parent.isVisibleInGraph = true;
+            parent.children?.forEach(child => child.isVisibleInGraph = true);
+
+            if (allEdgeConnections.includes(parent.id)) {
+                parent.isVisibleInGraph = false;
+                parent.children?.forEach(child => child.isVisibleInGraph = false);
+            }
+            
+            parent.children.forEach(child => {
+                if (allEdgeConnections.includes(child.id)) {
+                    parent.isVisibleInGraph = false;
+                    parent.children?.forEach(child => child.isVisibleInGraph = false);
+                }
+            })
+        })
+        this.updateVisibilityInGraph();
     }
 
     typeChildsToShowChanged(newValue: number, oldValue: number) {
         if (oldValue == newValue || this.graph == null) return;
-        this.dataItems?.filter(p => p.itemType == DataItemTypeEnum.TypeItem).forEach(parent => {
-            if (oldValue > newValue) {
+        this.dataItems?.filter(p => !p.abstract).filter(p => p.itemType == DataItemTypeEnum.TypeItem).forEach(parent => {
+            let childrend = parent.children;
+            childrend.forEach(childItem => {
+                    this.graph.groupingManager.removeNodeFromGroup(parent.id, childItem.id);
+                    this.graph.removeNode(childItem.id);
+                })
+            
+            let nodeBox: { x, y } = { x: parent.node.x + 20, y: parent.node.y + 20 };
+            let counter = 0;
+            parent.children.forEach(childItem => {
+                if (counter >= this.typeChildsToShow) return;
+                counter++;
+                nodeBox = this.addItemsToType(childItem, nodeBox, parent);
+
+            });
+            /*if (oldValue > newValue) {
                 //delete items
                 let childs = parent.children;
                 let counter = 0;
@@ -656,7 +737,7 @@ export class OntologyGraph {
                     }
                 }
 
-            }
+            }*/
         });
         this.postRender();
     }
@@ -881,7 +962,6 @@ export class OntologyGraph {
         let positionDifference = (this.distanceBetweenElements / 100);
         
         nodes.forEach(x => {
-            console.log(x)
             if(this.dataItems.find(y => y.id == x.id).positionIsFixed) {
                 this.dataItems.find(y => y.id == x.id).position = { x: x.x, y: x.y  };
             }else {
@@ -992,6 +1072,10 @@ export class OntologyGraph {
         this.updateVisibilityInGraph();
     }
 
+    private fixallSearchResults() {
+        this.dataItems.filter(p => p.isSearchResult).forEach(p=> p.positionIsFixed=true);
+    }
+
     private updateVisibilityInGraph() {
         this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
             edge.classList?.remove("invisible-node")
@@ -1000,15 +1084,19 @@ export class OntologyGraph {
         this.dataItems.forEach(node => {
             if (node.isVisibleInGraph) {
                 this.graph.getSVG().select("#node-" + node.id).node()?.classList?.remove("invisible-node")
+                this.graphoverview.getSVG().select("#node-" + node.id).node()?.classList?.remove("invisible-node")
             } else {
                 this.graph.getSVG().select("#node-" + node.id).node()?.classList?.add("invisible-node")
+                this.graphoverview.getSVG().select("#node-" + node.id).node()?.classList?.add("invisible-node")
                 this.updateVisibilityOfEdge(node.id, false)
             }
             node.children.forEach(child => {
                 if (child.isVisibleInGraph) {
                     this.graph.getSVG().select("#node-" + child.id).node()?.classList?.remove("invisible-node")
+                    this.graphoverview.getSVG().select("#node-" + child.id).node()?.classList?.remove("invisible-node")
                 } else {
                     this.graph.getSVG().select("#node-" + child.id).node()?.classList?.add("invisible-node")
+                    this.graphoverview.getSVG().select("#node-" + child.id).node()?.classList?.add("invisible-node")
                     this.updateVisibilityOfEdge(child.id, false)
                 }
             });
@@ -1025,16 +1113,26 @@ export class OntologyGraph {
                 }
             }
         });
+        this.graphoverview.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
+            if (edge.id.includes(nodeid)) {
+                if (visibile) {
+                    edge.classList?.remove("invisible-node")
+                } else {
+                    edge.classList?.add("invisible-node")
+                }
+            }
+        });
     }
 
     repositionNodes() {
-        //this.getNodePositions();
+        this.getNodePositions();
         this.dataItems.filter(p => !p.abstract).forEach(parent => {
             this.graph.moveNode(parent.id, parent.position.x, parent.position.y)
             this.graphoverview.moveNode(parent.id, parent.position.x, parent.position.y)
         })
         this.graph.completeRender();
-        this.graph.zoomToBoundingBox();
+        //this.graph.zoomToBoundingBox();
+        this.resetLayout();
         let currentView = this.graph.currentViewWindow;
         this.graphoverview?.removeNode(42424242424242424242424242424242421, false);
         this.graphoverview?.addNode({ id: 42424242424242424242424242424242421, class: "invisible-rect", dynamicTemplate: 'overview-node-template', x: currentView.x, y: currentView.y, width: currentView.width, height: currentView.height }, false);
@@ -1060,7 +1158,8 @@ export class OntologyGraph {
 
         if (this.showTaxonomies) this.renderTaxonomies();
         this.postRender();
-        this.graph.zoomToBoundingBox();
+        //this.graph.zoomToBoundingBox();
+        this.resetLayout();
 
         this.graphoverview.zoomToBoundingBox();
     }
@@ -1187,9 +1286,7 @@ export class OntologyGraph {
             childItem.itemType == DataItemTypeEnum.StringProperty ||
             childItem.itemType == DataItemTypeEnum.Undefined) {
             nodeBox = this.addNodeToGraph({ id: childItem.id, title: childItem.name, type: "type-item", x: nodeBox.x, y: nodeBox.y, typedescription: childItem.itemType, typedescriptionHref: "#" + childItem.itemType }, false);
-        } else {
-            console.log("fuckof", childItem)
-        }
+        } 
         this.missingParentConnection.push({ parent: parentItem.id, child: childItem.id, joinTree: false })
         return nodeBox;
     }
@@ -1408,8 +1505,30 @@ export class OntologyGraph {
         this.graphoverview?.addNode({ id: 42424242424242424242424242424242421, class: "invisible-rect", dynamicTemplate: 'overview-node-template', x: currentView.x, y: currentView.y, width: currentView.width, height: currentView.height }, false);
     }
 
+    currentEdgeStyleBoldChanged(newValue: boolean) {
+        if(this.graph==null) return;
+        if(newValue) {
+            this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
+                edge.childNodes[0].classList.remove("small-edge")
+                this.highlightMarker(edge.childNodes[1], smallMarkerSize)
+            });
+        } else {
+            this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
+                edge.childNodes[0].classList.add("small-edge")
+                this.highlightMarker(edge.childNodes[1], smallMarkerSize)
+            });
+        }
+    }
+
     private onZoomChange(event: CustomEvent<{ eventSource: "API" | "USER_INTERACTION" | "INTERNAL", node: Node }>) {
         this.renderMainViewPositionInOverviewGraph();
+        if(this.graph.currentViewWindow.width<=this.normalView.width)
+        {
+            this.currentEdgeStyleBold = false;
+            
+        } else {
+            this.currentEdgeStyleBold = true;
+        }
     }
 
     private renderMainViewPositionInOverviewGraph() {
@@ -1464,6 +1583,7 @@ export class OntologyGraph {
     // function called by buttons from the front-end, to interact with the graph
     private resetLayout() {
         this.graph?.zoomToBoundingBox(true);
+        this.normalView = this.graph.currentViewWindow;
     }
 
     // function called by buttons from the front-end, to interact with the graph
@@ -1531,4 +1651,49 @@ export class OntologyGraph {
         doc.pipe(stream);
         doc.end();
     }
+    
+    isLeftDragging: boolean = false;
+    isRightDragging: boolean = false;
+
+    endDrag(){
+        console.log("end")
+        this.isLeftDragging = false;
+    }
+    startLeftDrag(){
+        console.log("start")
+        this.isLeftDragging = true;
+    }
+
+    onDrag(event) {
+        if(this.isLeftDragging || this.isRightDragging) {
+            console.log("Dragging");
+            //console.log(event);
+            
+            let page = document.getElementById("mainontology-graph");
+            let searchArea = document.getElementById("menu-section");
+            let graphArea = document.getElementById("graphexportsvg");	
+            let filterSubarea = document.getElementById("item-filtersection");	
+            let treeSubarea = document.getElementById("item-treesection");	
+            let overviewSubarea = document.getElementById("item-overview");	
+            
+            let leftColWidth = this.isLeftDragging ? event.clientX : searchArea.clientWidth;
+            let rightColWidth = this.isRightDragging ? page.clientWidth - event.clientX : graphArea.clientWidth;
+            
+            let dragbarWidth = 6;
+            
+            let cols = [
+                leftColWidth,
+                dragbarWidth,
+                rightColWidth
+            ];
+            
+            let newColDefn = cols.map(c => c.toString() + "px").join(" ");
+                
+            console.log(newColDefn);
+            page.style.gridTemplateColumns = newColDefn;
+            
+            event.preventDefault()
+        }
+    }
+
 }
