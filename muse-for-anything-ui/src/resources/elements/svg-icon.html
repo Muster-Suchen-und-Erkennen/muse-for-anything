@@ -26,6 +26,11 @@
         </g>
     </svg>
 
+    <svg if.bind="icon === 'open-in-new-tab'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21"
+    xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" transform="translate(3 3)"><path d="m15.5.5v5h-5" transform="matrix(1 0 0 -1 0 6)"/><path d="m12-.95v9.9" transform="matrix(.70710678 .70710678 -.70710678 .70710678 6.343146 -7.313708)"/><path d="m7.5.5h-5c-1.1045695 0-2 .8954305-2 2v10c0 1.1045695.8954305 2 2 2h11c1.1045695 0 2-.8954305 2-2v-4"/></g>
+    </svg>
+
 
     <svg if.bind="icon === 'login'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21"
         xmlns="http://www.w3.org/2000/svg">
@@ -343,22 +348,23 @@
         </g>
     </svg>
 
-    <svg if.bind="icon === 'unfixed-position'" height="${iconSize}" width="${iconSize}" xmlns="http://www.w3.org/2000/svg">
-        <g transform="scale(1.1)" fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m6.5 16.5407715.6311176-.7118691c.71585099-.8191184 1.36011688-1.5983525 1.93279767-2.3377022l.4733382-.6239608c1.97516433-2.6615039 2.96274653-4.77276704 2.96274653-6.33378943 0-3.33218241-2.6862915-6.03344997-6-6.03344997s-6 2.70126756-6 6.03344997c0 1.56102239.98758218 3.67228553 2.96274653 6.33378943l.4733382.6239608c.73630387.9505925 1.5909423 1.9671163 2.56391527 3.0495713z"/>
-            <circle cx="6.5" cy="6.5" r="2.5"/>
-            <line stroke-width="1" stroke-linecap="undefined" stroke-linejoin="undefined" y2="0" x2="13" y1="17" x1="0" stroke="#000" fill="none"/>
-            <line stroke-width="1" stroke-linecap="undefined" stroke-linejoin="undefined" y2="17" x2="13" y1="0" x1="0" stroke="#000000" fill="none"/>
-        </g>
-    </svg>
-
     <svg if.bind="icon === 'fixed-position'" height="${iconSize}" width="${iconSize}" xmlns="http://www.w3.org/2000/svg">
-        <g transform="scale(1.1)" fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m6.5 16.5407715.6311176-.7118691c.71585099-.8191184 1.36011688-1.5983525 1.93279767-2.3377022l.4733382-.6239608c1.97516433-2.6615039 2.96274653-4.77276704 2.96274653-6.33378943 0-3.33218241-2.6862915-6.03344997-6-6.03344997s-6 2.70126756-6 6.03344997c0 1.56102239.98758218 3.67228553 2.96274653 6.33378943l.4733382.6239608c.73630387.9505925 1.5909423 1.9671163 2.56391527 3.0495713z"/>
-            <circle cx="6.5" cy="6.5" r="2.5"/>
-        </g>
+        <g transform="scale(0.08)">
+            <path d="m172.54232,120.95584c-32.32044,0 -58.5,-26.17956 -58.5,-58.5c0,-32.32044 26.17956,-58.5 58.5,-58.5c32.32044,0 58.5,26.17956 58.5,58.5c0,32.32044 -26.17956,58.5 -58.5,58.5z" opacity="undefined" stroke="#000" fill="#000000"/>
+            <rect transform="rotate(30 131.849 128.382)" stroke="#000" height="148.09493" width="24.61169" y="54.33441" x="119.5431" fill="#000000"/>
+            <path transform="rotate(74 94.666 193.305)" d="m103.11836,184.97184l0,16.66663l-16.9047,0l16.9047,-16.66663z" opacity="undefined" stroke="#000" fill="#000000"/>
+            <ellipse ry="10.00004" rx="64.81509" cy="237.40963" cx="92.22427" stroke="#000" fill="#000000"/>
+           </g>
     </svg>
 
+    <svg if.bind="icon === 'unfixed-position'" height="${iconSize}" width="${iconSize}" xmlns="http://www.w3.org/2000/svg">   
+        <g transform="scale(0.08)">
+            <path  d="m125,120.6961c-32.32044,0 -58.5,-26.17956 -58.5,-58.5c0,-32.32044 26.17956,-58.5 58.5,-58.5c32.32044,0 58.5,26.17956 58.5,58.5c0,32.32044 -26.17956,58.5 -58.5,58.5z" opacity="undefined" stroke="#000" fill="#000000"/>
+            <rect stroke="#000" height="148.09493" width="24.61169" y="68.41799" x="112.69416" fill="#000000"/>
+            <path transform="rotate(45 125.26 217.201)"  d="m133.71196,208.86788l0,16.66663l-16.9047,0l16.9047,-16.66663z" opacity="undefined" stroke="#000" fill="#000000"/>
+            <ellipse ry="10.00004" rx="64.81509" cy="237.40963" cx="125.51948" fill="#444444"/>
+           </g>
+    </svg>
 
 </template>
 
