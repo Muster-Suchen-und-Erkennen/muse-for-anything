@@ -162,7 +162,11 @@
             "api-link":"api-link",
             "children":"child elements",
             "fixPosition":"fix elements position in graph",
-            "openEdit":"open item to edit"
-        }
+            "openEdit":"open item in new tab"
+        },
+        "fixallSearchResults":"search results",
+        "fixallSearchResultsButton":"fix all search results",
+        "keepFocus":"keep focus on search result",
+        "showAllElementsWithoutAnEdgeButton":"show all elements without an edge" 
     }
 }
