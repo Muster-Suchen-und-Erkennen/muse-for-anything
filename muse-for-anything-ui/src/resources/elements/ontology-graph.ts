@@ -565,7 +565,7 @@ export class OntologyGraph {
 
     }
 
-    selectedAlgorithmIdChanged() {
+    selectedLayoutAlgorithmIdChanged() {
         this.calculateNodePositions();
     }
 
@@ -946,6 +946,7 @@ export class OntologyGraph {
         let createLayout = require('ngraph.forcelayout');
         let layout = createLayout(g, physicsSettings);
         this.dataItems.filter(item => item.positionIsFixed).forEach(item => {
+            if(item.node==null) return
             layout.setNodePosition(item.id, item.node.x, item.node.y);
             var node = g.getNode(item.id);
             layout.pinNode(node, true); // toggle it
@@ -987,6 +988,7 @@ export class OntologyGraph {
         });
 
         this.dataItems.filter(item => item.positionIsFixed).forEach(item => {
+            if(item.node==null) return
             nodes.find(x => x.id == item.id).fx = item.node.x;
             nodes.find(x => x.id == item.id).fy = item.node.y;
         });
@@ -1528,7 +1530,8 @@ export class OntologyGraph {
 
     private onZoomChange(event: CustomEvent<{ eventSource: "API" | "USER_INTERACTION" | "INTERNAL", node: Node }>) {
         this.renderMainViewPositionInOverviewGraph();
-        if (this.graph.currentViewWindow.width <= this.defaultCurrentViewWindowSize.width) {
+        if(this.defaultCurrentViewWindowSize==null || this.graph ==null) return
+        if (this.graph.currentViewWindow.width <= document.getElementById('graphexportsvg').offsetWidth*2) {
             this.currentEdgeStyleBold = false;
 
         } else {
