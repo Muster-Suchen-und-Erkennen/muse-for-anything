@@ -307,234 +307,246 @@
         <h1 t="loading">${"loading" | t}</h1>
     </div>
     <template else>
-        <div id="menu-section" class=" maindiv card">
-            <div id="item-filtersection" class="px-1 py-1 border-gray-200 border-b">
-                <div class="section-main-title bg-gray-600">
-                    ${"ontology.filter-area" | t}
-                </div>
-                <div class="scroll-area" if.bind="!isLoading">
-                    <div class="section-subpart">
-                        <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1"
-                            placeholder="search" value.from-view="filter & throttle" aria-owns="'datalist-'+slug"
-                            autocapitalize="none" value.bind="searchtext & debounce" type="text" autocomplete="off"
-                            aria-autocomplete="list" role="combobox" id="'input-'+slug"
-                            blur.trigger="searchtextFocusLeft()">
-                        <div class="ontology-algorithm-label" title='${"ontology.keepFocus" | t}'>
-                            <input type="checkbox" checked.bind="keepSearchResultsInFocus"> ${"ontology.keepFocus" | t}
-                        </div>
+        <div id="mainontology-graph" mouseup.delegate="endDrag()" mousemove.delegate="onDrag($event)" mouseleave.delegate="endDrag()">
+            <div id="menu-section" class="maindiv card mr-1">
+                <div id="item-filtersection" class="px-1 py-1 border-gray-200 border-b">
+                    <div class="section-main-title bg-gray-600">
+                        ${"ontology.filter-area" | t}
                     </div>
-                    <div class="section-subpart">
-                        <button class="button-outline px-2 items-center button-oneline"
-                            click.delegate="fixallSearchResults()" title='${"ontology.fixallSearchResultsButton" | t}'>
-                            ${"ontology.fixallSearchResultsButton" | t}
-                        </button>
-                    </div>
-                    <span class="section-title">
-                        ${"ontology.visibleElements" | t}
-                    </span>
-                    <div class="section-subpart">
-                        <div>
-                            <label class="cb_control control--checkbox">
-                                <input type="checkbox" checked.bind="showTaxonomies">
-                                <span class="control__indicator"></span>
-                            </label>
-                            ${"ontology.taxonomies" | t}
-                        </div>
-                        <div>
-                            <label class="cb_control control--checkbox">
-                                <input type="checkbox" checked.bind="showTypes">
-                                <span class="control__indicator"></span>
-                            </label>
-                            ${"ontology.types" | t}
-                        </div>
-                        <div>
-                            <button class="button-outline px-2 items-center button-oneline"
-                                click.delegate="showSelectedItems()" title='${"ontology.showSelectedItems" | t}'>
-                                ${"ontology.showSelectedItems" | t}
-                            </button>
-                        </div>
-                        <button class="button-outline px-2 items-center button-oneline"
-                            click.delegate="showAllElementsWithoutAnEdge()"
-                            title='${"ontology.showAllElementsWithoutAnEdgeButton" | t}'>
-                            ${"ontology.showAllElementsWithoutAnEdgeButton" | t}
-                        </button>
-                    </div>
-                    <span class="section-title" title='{"ontology.childsToShow" | t}'>
-                        ${"ontology.childsToShow" | t}
-                    </span>
-                    <div class="section-subpart">
-                        <div>
+                    <div class="scroll-area" if.bind="!isLoading">
+                        <div class="section-subpart">
                             <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1"
                                 placeholder="search" value.from-view="filter & throttle" aria-owns="'datalist-'+slug"
-                                autocapitalize="none" value.bind="typeChildsToShow & debounce" type="number"
-                                autocomplete="off" aria-autocomplete="list" role="combobox" id="'input-'+slug" min="0">
+                                autocapitalize="none" value.bind="searchtext & debounce" type="text" autocomplete="off"
+                                aria-autocomplete="list" role="combobox" id="'input-'+slug"
+                                blur.trigger="searchtextFocusLeft()">
+                            <div class="ontology-algorithm-label" title='${"ontology.keepFocus" | t}'>
+                                <input type="checkbox" checked.bind="keepSearchResultsInFocus"> ${"ontology.keepFocus" | t}
+                            </div>
                         </div>
-                    </div>
-                    <div class="section-title">
-                        ${"ontology.distance-header" | t}
-                    </div>
-                    <div class="section-subpart">
-                        <div>
-                            <input type="range" min="10" max="500" value.bind="distanceBetweenElements" class="slider">
-                            <span>${distanceBetweenElements} %</span>
-                        </div>
-                    </div>
-                    <div class="section-title">
-                        ${"ontology.algorithm-header" | t}
-                    </div>
-                    <div class="section-subpart">
-                        <div repeat.for="algo of layoutAlgorithms" class="ontology-algorithm-label">
-                            <input type="radio" name="group1" model.bind="algo.id"
-                                checked.bind="selectedLayoutAlgorithmId">
-                            ${algo.name}
-                        </div>
-                    </div>
-                    <span class="section-title" if.bind="isRendered">
-                        ${"ontology.repositionVisibleItems" | t}
-                    </span>
-                    <div class="section-subpart" if.bind="isRendered">
-                        <div>
+                        <div class="section-subpart">
                             <button class="button-outline px-2 items-center button-oneline"
-                                click.delegate="repositionNodes()"
-                                title='${"ontology.repositionVisibleItemsButton" | t}'>
-                                ${"ontology.repositionVisibleItemsButton" | t}
+                                click.delegate="fixallSearchResults()" title='${"ontology.fixallSearchResultsButton" | t}'>
+                                ${"ontology.fixallSearchResultsButton" | t}
                             </button>
                         </div>
-                    </div>
-                    <div class="section-title" if.bind="isRendered">
-                        ${"ontology.itemsInGraph" | t}: ${graph.nodeList.length}
-                    </div>
-                </div>
-            </div>
-
-            <div id="item-treesection" class=" px-1 border-gray-200 border-b">
-                <div class="section-main-title bg-gray-600">
-                    ${"ontology.tree-view" | t}
-                </div>
-                <div class=" scroll-area">
-                    <tree-node repeat.for="node of dataItems" current.bind="node"></tree-node>
-                </div>
-            </div>
-            <div id="item-overview">
-
-                <div class="section-main-title bg-gray-600">
-                    ${"ontology.overview" | t}
-                </div>
-                <network-graph class="graphoverview" classes="deleted" mode="display" zoom="automatic"
-                    svg-template="#ontologyGraphTemplate">
-                </network-graph>
-            </div>
-        </div>
-        <!--<div id="dragbar" mousedown.delegate="startLeftDrag()" mouseup.delegate="endDrag()" mousemove.delegate="onDrag($event)"></div>-->
-        <network-graph id="graphexportsvg" class="maingraph menu-graph ml-2 card" classes="deleted" mode="layout"
-            zoom="both" svg-template="#ontologyGraphTemplate">
-        </network-graph>
-        <div id="ontology-loading-indicator" class="menu-graph ml-2 card" if.bind="isLoading">
-            ${"loading" | t}
-            <spinner type="S8" size="100" color="default"></spinner>
-        </div>
-        <div class="menu-graph ml-2 card" if.bind="!isLoading && !isRendered">
-            <button class="button-outline px-2 items-center button-oneline" click.delegate="renderGraph()"
-                title='${"ontology.renderGraph" | t}'>
-                ${"ontology.renderGraph" | t}
-            </button>
-        </div>
-        <div class="menu-graph mb-0 mt-auto ml-auto mr-0">
-            <div if.bind="selectedNode != null" class="card bg-white px-3 py-2 items-center detailview">
-
-                <p class="section-title">
-                    ${"ontology.detailview-header" | t}
-                    <button class="button-flat px-2 items-center" click.delegate="unselectNode()"
-                        title='${"ontology.moveLeft" | t}'>
-                        <svg-icon icon.bind="'arrow-right'" size.bind="18"></svg-icon>
-                    </button>
-                </p>
-                <p class="detailview-item">• ${"ontology.detailview.name" | t}: ${selectedNode.name}</p>
-                <p class="detailview-item">• ${"ontology.detailview.description" | t}: ${selectedNode.description}</p>
-                <p class="detailview-item">• ${"ontology.detailview.type" | t}: ${selectedNode.itemType}</p>
-                <p class="detailview-item">• ${"ontology.detailview.abstract" | t}: ${selectedNode.abstract}</p>
-                <p class="detailview-item">• ${"ontology.detailview.implementations" | t}: t.b.d.</p>
-                <p class="detailview-item">• ${"ontology.detailview.api-link" | t}: ${selectedNode.href}</p>
-                <p class="detailview-item">
-                    <!--<a class="button-flat" href="${selectedNode.getLink()}" target="_blank">-->
-
-                    <a class="button-flat" href="${selectedNode.getLink()}" target="_blank"
-                        style="margin: 0 !important; padding: 0 !important">
-                        <span>• ${"ontology.detailview.openEdit" | t}
-                            <svg-icon style="display:inline-block" icon.bind="'open-in-new-tab'" size.bind="20">
-                            </svg-icon>
+                        <span class="section-title">
+                            ${"ontology.visibleElements" | t}
                         </span>
-                    </a>
-                </p>
-                <p class="detailview-item">• ${"ontology.detailview.children" | t}: ${selectedNode.children.length}</p>
-                <p class="detailview-item">
-                    • ${"ontology.detailview.fixPosition" | t}:
-                    <button class="button-flat items-center" click.delegate="selectedNode.togglePositionFixed()"
-                        title='${"ontology.toggleFixedPosition" | t}'
-                        style="margin: 0 !important; padding: 0 !important">
-                        <svg-icon icon.bind="selectedNode.positionIsFixed ? 'unfixed-position' : 'fixed-position'"
-                            size.bind="20"></svg-icon>
-                    </button>
-                </p>
-            </div>
-            <div class="buttons card bg-white px-3 py-2 items-center" style="width: fit-content;float: right;">
-                <button class="button-flat px-2 items-center" click.delegate="toggleMenu()"
-                    title='${"ontology.moveLeft" | t}'>
-                    <svg-icon icon.bind="maximizeMenu ? 'arrow-right' : 'arrow-left'" size.bind="18"></svg-icon>
-                </button>
-                <div if.bind="maximizeMenu">
-                    <div class="ontology-moveBackground">
-                        <div class="ontology-move">
-
-                            <button class="button-flat px-2 items-center" click.delegate="moveGraph('up')"
-                                title='${"ontology.moveUp" | t}'>
-                                <svg-icon icon.bind="'arrow-up'" size.bind="18"></svg-icon>
+                        <div class="section-subpart">
+                            <div>
+                                <label class="cb_control control--checkbox">
+                                    <input type="checkbox" checked.bind="showTaxonomies">
+                                    <span class="control__indicator"></span>
+                                </label>
+                                ${"ontology.taxonomies" | t}
+                            </div>
+                            <div>
+                                <label class="cb_control control--checkbox">
+                                    <input type="checkbox" checked.bind="showTypes">
+                                    <span class="control__indicator"></span>
+                                </label>
+                                ${"ontology.types" | t}
+                            </div>
+                            <div>
+                                <button class="button-outline px-2 items-center button-oneline"
+                                    click.delegate="showSelectedItems()" title='${"ontology.showSelectedItems" | t}'>
+                                    ${"ontology.showSelectedItems" | t}
+                                </button>
+                            </div>
+                            <button class="button-outline px-2 items-center button-oneline"
+                                click.delegate="showAllElementsWithoutAnEdge()"
+                                title='${"ontology.showAllElementsWithoutAnEdgeButton" | t}'>
+                                ${"ontology.showAllElementsWithoutAnEdgeButton" | t}
                             </button>
                         </div>
-                        <div class="ontology-move">
-                            <button class="button-flat px-2 items-center" click.delegate="moveGraph('left')"
-                                title='${"ontology.moveLeft" | t}'>
-                                <svg-icon icon.bind="'arrow-left'" size.bind="18"></svg-icon>
-                            </button>
-                            <button class="button-flat px-2 items-center" click.delegate="moveGraph('right')"
-                                title='${"ontology.moveRight" | t}'>
-                                <svg-icon icon.bind="'arrow-right'" size.bind="18"></svg-icon>
-
-                            </button>
-
+                        <span class="section-title" title='{"ontology.childsToShow" | t}'>
+                            ${"ontology.childsToShow" | t}
+                        </span>
+                        <div class="section-subpart">
+                            <div>
+                                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1"
+                                    placeholder="search" value.from-view="filter & throttle" aria-owns="'datalist-'+slug"
+                                    autocapitalize="none" value.bind="typeChildsToShow & debounce" type="number"
+                                    autocomplete="off" aria-autocomplete="list" role="combobox" id="'input-'+slug" min="0">
+                            </div>
                         </div>
-                        <div class="ontology-move">
-                            <button class="button-flat px-2 items-center" click.delegate="moveGraph('down')"
-                                title='${"ontology.moveDown" | t}'>
-                                <svg-icon icon.bind="'arrow-down'" size.bind="18"></svg-icon>
-                            </button>
-
+                        <div class="section-title">
+                            ${"ontology.distance-header" | t}
+                        </div>
+                        <div class="section-subpart">
+                            <div>
+                                <input type="range" min="10" max="500" value.bind="distanceBetweenElements" class="slider">
+                                <span>${distanceBetweenElements} %</span>
+                            </div>
+                        </div>
+                        <div class="section-title">
+                            ${"ontology.algorithm-header" | t}
+                        </div>
+                        <div class="section-subpart">
+                            <div repeat.for="algo of layoutAlgorithms" class="ontology-algorithm-label">
+                                <input type="radio" name="group1" model.bind="algo.id"
+                                    checked.bind="selectedLayoutAlgorithmId">
+                                ${algo.name}
+                            </div>
+                        </div>
+                        <span class="section-title" if.bind="isRendered">
+                            ${"ontology.repositionVisibleItems" | t}
+                        </span>
+                        <div class="section-subpart" if.bind="isRendered">
+                            <div>
+                                <button class="button-outline px-2 items-center button-oneline"
+                                    click.delegate="repositionNodes()"
+                                    title='${"ontology.repositionVisibleItemsButton" | t}'>
+                                    ${"ontology.repositionVisibleItemsButton" | t}
+                                </button>
+                            </div>
+                        </div>
+                        <div class="section-title" if.bind="isRendered">
+                            ${"ontology.itemsInGraph" | t}: ${graph.nodeList.length}
                         </div>
                     </div>
+                </div>
 
-                    <button class="button-flat px-2 items-center" click.delegate="zoomIn()"
-                        title='${"ontology.zoomIn" | t}'>
-                        <svg-icon icon.bind="'plus'" size.bind="18"></svg-icon>
-                    </button>
-                    <button class="button-flat px-2 items-center" click.delegate="zoomOut()"
-                        title='${"ontology.zoomOut" | t}'>
-                        <svg-icon icon.bind="'minus'" size.bind="18"></svg-icon>
-                    </button>
-                    <button class="button-flat px-2 items-center" click.delegate="resetLayout()"
-                        title='${"ontology.resetLayout" | t}'>
-                        <svg-icon icon.bind="'reset'" size.bind="18"></svg-icon>
-                    </button>
-                    <button class="button-flat px-2 items-center" click.delegate="toggleMaximize()"
-                        title='${"ontology.toggleMaximize" | t}'>
-                        <svg-icon icon.bind="maximized ? 'minimize' : 'maximize'" size.bind="18"></svg-icon>
-                    </button>
-                    <button class="button-flat px-2 items-center" click.delegate="downloadSVG()"
-                        title='${"ontology.toggleMaximize" | t}'>
-                        <svg-icon icon.bind="'download'" size.bind="18"></svg-icon>
-                    </button>
+                <div id="item-treesection" class=" px-1 border-gray-200 border-b"  mousedown.delegate="startLeftUpperDrag($event)">
+                    <div class="section-main-title bg-gray-600">
+                        ${"ontology.tree-view" | t}
+                    </div>
+                    <div class=" scroll-area">
+                        <tree-node repeat.for="node of dataItems" current.bind="node"></tree-node>
+                    </div>
+                </div>
+                <div id="item-overview" mousedown.delegate="startLeftLowerDrag($event)">
+
+                    <div class="section-main-title bg-gray-600">
+                        ${"ontology.overview" | t}
+                    </div>
+                    <div style="height: calc(100% - 25px);">
+                        <network-graph id="overviewgraph" class="graphoverview" classes="deleted" mode="display" zoom="automatic"
+                            svg-template="#ontologyGraphTemplate">
+                        </network-graph>
+                    </div>
                 </div>
             </div>
+            <div id="dragbar" class="mb-2" mousedown.delegate="startMainDrag($event)">
+            </div>
+            <div id="maingraphpart" class="menu-graph card ml-1">
+                <div style="height: 100%;">
+                    <network-graph id="graphexportsvg" class="maingraph" classes="deleted" mode="layout"
+                        zoom="both" svg-template="#ontologyGraphTemplate">
+                    </network-graph>
+                </div>
+            </div>
+            <div class="menu-graph  ml-1" if.bind="isLoading">
+                <div id="ontology-loading-indicator" >
+                    ${"loading" | t}
+                    <spinner type="S8" size="100" color="default"></spinner>
+                </div>
+            </div>
+            <div class="menu-graph mb-0 mt-auto ml-auto mr-0">
+                    <div if.bind="selectedNode != null" class="card bg-white px-3 py-2 items-center detailview">
+        
+                        <p class="section-title">
+                            ${"ontology.detailview-header" | t}
+                            <button class="button-flat px-2 items-center" click.delegate="unselectNode()"
+                                title='${"ontology.moveLeft" | t}'>
+                                <svg-icon icon.bind="'arrow-right'" size.bind="18"></svg-icon>
+                            </button>
+                        </p>
+                        <p class="detailview-item">• ${"ontology.detailview.name" | t}: ${selectedNode.name}</p>
+                        <p class="detailview-item">• ${"ontology.detailview.description" | t}: ${selectedNode.description}</p>
+                        <p class="detailview-item">• ${"ontology.detailview.type" | t}: ${selectedNode.itemType}</p>
+                        <p class="detailview-item">• ${"ontology.detailview.abstract" | t}: ${selectedNode.abstract}</p>
+                        <p class="detailview-item">• ${"ontology.detailview.implementations" | t}: t.b.d.</p>
+                        <p class="detailview-item">• ${"ontology.detailview.api-link" | t}: ${selectedNode.href}</p>
+                        <p class="detailview-item">
+                            <!--<a class="button-flat" href="${selectedNode.getLink()}" target="_blank">-->
+        
+                            <a class="button-flat" href="${selectedNode.getLink()}" target="_blank"
+                                style="margin: 0 !important; padding: 0 !important">
+                                <span>• ${"ontology.detailview.openEdit" | t}
+                                    <svg-icon style="display:inline-block" icon.bind="'open-in-new-tab'" size.bind="20">
+                                    </svg-icon>
+                                </span>
+                            </a>
+                        </p>
+                        <p class="detailview-item">• ${"ontology.detailview.children" | t}: ${selectedNode.children.length}</p>
+                        <p class="detailview-item">
+                            • ${"ontology.detailview.fixPosition" | t}:
+                            <button class="button-flat items-center" click.delegate="selectedNode.togglePositionFixed()"
+                                title='${"ontology.toggleFixedPosition" | t}'
+                                style="margin: 0 !important; padding: 0 !important">
+                                <svg-icon icon.bind="selectedNode.positionIsFixed ? 'unfixed-position' : 'fixed-position'"
+                                    size.bind="20"></svg-icon>
+                            </button>
+                        </p>
+                    </div>
+                    <div class="buttons card bg-white px-3 py-2 items-center" style="width: fit-content;float: right;">
+                        <button class="button-flat px-2 items-center" click.delegate="toggleMenu()"
+                            title='${"ontology.moveLeft" | t}'>
+                            <svg-icon icon.bind="maximizeMenu ? 'arrow-right' : 'arrow-left'" size.bind="18"></svg-icon>
+                        </button>
+                        <div if.bind="maximizeMenu">
+                            <div class="ontology-moveBackground">
+                                <div class="ontology-move">
+        
+                                    <button class="button-flat px-2 items-center" click.delegate="moveGraph('up')"
+                                        title='${"ontology.moveUp" | t}'>
+                                        <svg-icon icon.bind="'arrow-up'" size.bind="18"></svg-icon>
+                                    </button>
+                                </div>
+                                <div class="ontology-move">
+                                    <button class="button-flat px-2 items-center" click.delegate="moveGraph('left')"
+                                        title='${"ontology.moveLeft" | t}'>
+                                        <svg-icon icon.bind="'arrow-left'" size.bind="18"></svg-icon>
+                                    </button>
+                                    <button class="button-flat px-2 items-center" click.delegate="moveGraph('right')"
+                                        title='${"ontology.moveRight" | t}'>
+                                        <svg-icon icon.bind="'arrow-right'" size.bind="18"></svg-icon>
+        
+                                    </button>
+        
+                                </div>
+                                <div class="ontology-move">
+                                    <button class="button-flat px-2 items-center" click.delegate="moveGraph('down')"
+                                        title='${"ontology.moveDown" | t}'>
+                                        <svg-icon icon.bind="'arrow-down'" size.bind="18"></svg-icon>
+                                    </button>
+        
+                                </div>
+                            </div>
+        
+                            <button class="button-flat px-2 items-center" click.delegate="zoomIn()"
+                                title='${"ontology.zoomIn" | t}'>
+                                <svg-icon icon.bind="'plus'" size.bind="18"></svg-icon>
+                            </button>
+                            <button class="button-flat px-2 items-center" click.delegate="zoomOut()"
+                                title='${"ontology.zoomOut" | t}'>
+                                <svg-icon icon.bind="'minus'" size.bind="18"></svg-icon>
+                            </button>
+                            <button class="button-flat px-2 items-center" click.delegate="resetLayout()"
+                                title='${"ontology.resetLayout" | t}'>
+                                <svg-icon icon.bind="'reset'" size.bind="18"></svg-icon>
+                            </button>
+                            <button class="button-flat px-2 items-center" click.delegate="toggleMaximize()"
+                                title='${"ontology.toggleMaximize" | t}'>
+                                <svg-icon icon.bind="maximized ? 'minimize' : 'maximize'" size.bind="18"></svg-icon>
+                            </button>
+                            <button class="button-flat px-2 items-center" click.delegate="downloadSVG()"
+                                title='${"ontology.toggleMaximize" | t}'>
+                                <svg-icon icon.bind="'download'" size.bind="18"></svg-icon>
+                            </button>
+                        </div>
+                </div>
+            </div>
+            <div class="menu-graph ml-1" if.bind="!isLoading && !isRendered" >
+                <button  class="button-outline px-2 items-center button-oneline" click.delegate="renderGraph()"
+                    title='${"ontology.renderGraph" | t}'>
+                    ${"ontology.renderGraph" | t}
+                </button>
+            </div>
         </div>
+        
 
     </template>
 </template>

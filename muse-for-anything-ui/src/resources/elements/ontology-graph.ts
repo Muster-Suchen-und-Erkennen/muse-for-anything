@@ -452,7 +452,6 @@ export class OntologyGraph {
     @bindable ignoreCache = false;
     @bindable maximizeMenu = false;
 
-    @observable graphoverview: GraphEditor;
     @observable() searchtext: String = "";
     @observable() selectedNode: DataItemModel;
     @observable() typeChildsToShow: number = 3;
@@ -463,8 +462,9 @@ export class OntologyGraph {
     @observable() keepSearchResultsInFocus: boolean = false;
     @observable() currentEdgeStyleBold: boolean = true;
 
-    @child("network-graph.maingraph") graph: GraphEditor;
-    @child("div.maindiv") maindiv: any;
+    @observable graph: GraphEditor;
+    @observable graphoverview: GraphEditor;
+    @child("div#mainontology-graph") maindiv: any;
 
     private layoutAlgorithms = [
         { id: 0, name: 'ngraph.forcedirected' },
@@ -473,8 +473,6 @@ export class OntologyGraph {
 
     private totalTypes = 0;
     private totalTaxonomies = 0;
-
-    private defaultCurrentViewWindowSize;
 
     private maximized: boolean = false;
     private isAllowedToShowGraph: boolean = false;
@@ -494,6 +492,7 @@ export class OntologyGraph {
         this.checkNavigationLinks();
         this.events = events;
         this.subscribe();
+
     }
 
     private subscribe() {
@@ -521,16 +520,19 @@ export class OntologyGraph {
         this.loadData(this.ignoreCache);
     }
 
-    maindivChanged(newValue: any, oldValue) {
-        // need div, to get access to the graph overview part
-        if (newValue == null) {
-            return;
-        }
-
+    maindivChanged(newValue: any) {
+        console.log("Found")
         if (newValue.getElementsByClassName("graphoverview").length > 0) {
+            console.log("Found1")
             this.graphoverview = newValue.getElementsByClassName("graphoverview")[0]
         } else {
             throw new Error("No graphoverview element in DOM found")
+        }
+        if (newValue.getElementsByClassName("maingraph").length > 0) {
+            console.log("Found2")
+            this.graph = newValue.getElementsByClassName("maingraph")[0]
+        } else {
+            throw new Error("No graph element in DOM found")
         }
     }
 
@@ -1530,8 +1532,8 @@ export class OntologyGraph {
 
     private onZoomChange(event: CustomEvent<{ eventSource: "API" | "USER_INTERACTION" | "INTERNAL", node: Node }>) {
         this.renderMainViewPositionInOverviewGraph();
-        if(this.defaultCurrentViewWindowSize==null || this.graph ==null) return
-        if (this.graph.currentViewWindow.width <= document.getElementById('graphexportsvg').offsetWidth*2) {
+        if(this.graph ==null) return
+        if (this.graph.currentViewWindow.width <= document.getElementById('maingraphpart').offsetWidth*2) {
             this.currentEdgeStyleBold = false;
 
         } else {
@@ -1579,6 +1581,11 @@ export class OntologyGraph {
     // function called by buttons from the front-end, to interact with the graph
     private toggleMaximize() {
         this.maximized = !this.maximized;
+        if(this.maximized) {
+            document.getElementById("mainontology-graph").style.height="100%"
+        } else {
+            document.getElementById("mainontology-graph").style.height="500px"
+        }
         this.graphoverview.zoomToBoundingBox();
         this.graphoverview.completeRender();
     }
@@ -1595,7 +1602,6 @@ export class OntologyGraph {
     // function called by buttons from the front-end, to interact with the graph
     private resetLayout() {
         this.graph?.zoomToBoundingBox(true);
-        this.defaultCurrentViewWindowSize = this.graph.currentViewWindow;
     }
 
     // function called by buttons from the front-end, to interact with the graph
@@ -1681,48 +1687,117 @@ export class OntologyGraph {
         this.graphoverview.zoomToBoundingBox();
     }
 
-    isLeftDragging: boolean = false;
-    isRightDragging: boolean = false;
+    isMainDragging: boolean = false;
+    isLeftUpperDragging: boolean = false;
+    isLeftLowerDragging: boolean = false;
+    startDraggingPosition;
 
     endDrag() {
-        console.log("end")
-        this.isLeftDragging = false;
-    }
-    startLeftDrag() {
-        console.log("start")
-        this.isLeftDragging = true;
+        if(this.isMainDragging || this.isLeftUpperDragging || this.isLeftLowerDragging) {
+            this.isMainDragging = false;
+            this.isLeftUpperDragging = false;
+            this.isLeftLowerDragging = false;
+            document.getElementById("overviewgraph").style.visibility = "visible";
+            document.getElementById("graphexportsvg").style.visibility = "visible";
+        }
     }
 
+    startMainDrag(event) {
+        this.isMainDragging = true;
+        this.startDraggingPosition = event.clientX;
+        document.getElementById("graphexportsvg").style.visibility = "hidden";
+        document.getElementById("overviewgraph").style.visibility = "hidden";
+    }
+
+    startLeftUpperDrag(event) {
+        this.isLeftUpperDragging = true;
+        this.startDraggingPosition = event.clientY;
+    }
+    
+    startLeftLowerDrag(event){
+        this.isLeftLowerDragging = true;
+        this.startDraggingPosition = event.clientY;
+        document.getElementById("overviewgraph").style.visibility = "hidden";
+        document.getElementById("graphexportsvg").style.visibility = "hidden";
+    }
+    
     onDrag(event) {
-        if (this.isLeftDragging || this.isRightDragging) {
-            console.log("Dragging");
-            //console.log(event);
-
+        if (this.isMainDragging) {
             let page = document.getElementById("mainontology-graph");
             let searchArea = document.getElementById("menu-section");
-            let graphArea = document.getElementById("graphexportsvg");
+            let graphArea = document.getElementById("maingraphpart");
+
+            let leftColWidth = searchArea.clientWidth+4;
+            let rightColWidth = graphArea.clientWidth+4;
+
+            let dragbarWidth = 2;
+            let move = event.clientX-this.startDraggingPosition
+            let total = leftColWidth+dragbarWidth+rightColWidth;
+            let cols = [
+                ((leftColWidth+move)/total)*100,
+                (dragbarWidth/total)*100,
+                ((rightColWidth-move)/total)*100
+            ];
+            console.log(leftColWidth, rightColWidth)
+            let newColDefn = cols.map(c => c.toString() + "%").join(" ");
+            console.log(newColDefn)
+            page.style.gridTemplateColumns = newColDefn;
+
+            this.startDraggingPosition = event.clientX;
+            event.preventDefault()
+        } else if(this.isLeftUpperDragging) {
+            let menusection = document.getElementById("menu-section");
             let filterSubarea = document.getElementById("item-filtersection");
             let treeSubarea = document.getElementById("item-treesection");
             let overviewSubarea = document.getElementById("item-overview");
 
-            let leftColWidth = this.isLeftDragging ? event.clientX : searchArea.clientWidth;
-            let rightColWidth = this.isRightDragging ? page.clientWidth - event.clientX : graphArea.clientWidth;
 
-            let dragbarWidth = 6;
+            let filterHeight = filterSubarea.clientHeight+1;
+            let treeHeight = treeSubarea.clientHeight+1;
+            let overviewHeight = overviewSubarea.clientHeight;
 
+            let total = filterHeight+treeHeight+overviewHeight;
+            let move = event.clientY-this.startDraggingPosition
             let cols = [
-                leftColWidth,
-                dragbarWidth,
-                rightColWidth
+                ((filterHeight+move)/total)*100,
+                ((treeHeight-move)/total)*100,
+                ((overviewHeight)/total)*100
             ];
+            console.log(filterHeight, treeHeight, overviewHeight)
+            let newColDefn = cols.map(c => c.toString() + "%").join(" ");
+            console.log(newColDefn)
+            menusection.style.gridTemplateRows = newColDefn;
 
-            let newColDefn = cols.map(c => c.toString() + "px").join(" ");
+            this.startDraggingPosition = event.clientY;
+            event.preventDefault()
 
-            console.log(newColDefn);
-            page.style.gridTemplateColumns = newColDefn;
+        } else if(this.isLeftLowerDragging) {
+            let menusection = document.getElementById("menu-section");
+            let filterSubarea = document.getElementById("item-filtersection");
+            let treeSubarea = document.getElementById("item-treesection");
+            let overviewSubarea = document.getElementById("item-overview");
 
+
+            let filterHeight = filterSubarea.clientHeight+1;
+            let treeHeight = treeSubarea.clientHeight+1;
+            let overviewHeight = overviewSubarea.clientHeight;
+
+            let total = filterHeight+treeHeight+overviewHeight;
+            let move = event.clientY-this.startDraggingPosition
+            let cols = [
+                ((filterHeight)/total)*100,
+                ((treeHeight+move)/total)*100,
+                ((overviewHeight-move)/total)*100
+            ];
+            console.log(filterHeight, treeHeight, overviewHeight)
+            let newColDefn = cols.map(c => c.toString() + "%").join(" ");
+            console.log(newColDefn)
+            menusection.style.gridTemplateRows = newColDefn;
+
+            this.startDraggingPosition = event.clientY;
             event.preventDefault()
         }
     }
+
 
 }
