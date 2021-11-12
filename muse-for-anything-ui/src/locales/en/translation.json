@@ -167,6 +167,7 @@
         "fixallSearchResults":"search results",
         "fixallSearchResultsButton":"fix all search results",
         "keepFocus":"keep focus on search result",
-        "showAllElementsWithoutAnEdgeButton":"show all elements without an edge" 
+        "showAllElementsWithoutAnEdgeButton":"show all elements without an edge",
+        "temporaryZoomOut":"temporary zoom out"
     }
 }

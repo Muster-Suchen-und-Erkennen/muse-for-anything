@@ -1670,6 +1670,17 @@ export class OntologyGraph {
         doc.end();
     }
 
+    storedViewWindow: Rect;
+
+    private tempZoomOut(state) {
+        if(state=="on") {
+            this.storedViewWindow = this.graph.currentViewWindow;
+            this.graph.zoomToBoundingBox();
+        } else {
+            this.graph.zoomToBox(this.storedViewWindow);
+        }
+    }
+
     private renderGraph() {
         this.isLoading = true;
 
@@ -1798,6 +1809,4 @@ export class OntologyGraph {
             event.preventDefault()
         }
     }
-
-
 }

@@ -528,13 +528,17 @@
                                 title='${"ontology.resetLayout" | t}'>
                                 <svg-icon icon.bind="'reset'" size.bind="18"></svg-icon>
                             </button>
-                            <button class="button-flat px-2 items-center" click.delegate="toggleMaximize()"
-                                title='${"ontology.toggleMaximize" | t}'>
-                                <svg-icon icon.bind="maximized ? 'minimize' : 'maximize'" size.bind="18"></svg-icon>
-                            </button>
                             <button class="button-flat px-2 items-center" click.delegate="downloadSVG()"
                                 title='${"ontology.toggleMaximize" | t}'>
                                 <svg-icon icon.bind="'download'" size.bind="18"></svg-icon>
+                            </button>
+                            <button class="button-flat px-2 items-center" mousedown.delegate="tempZoomOut('on')" mouseup.delegate="tempZoomOut('off')"
+                                title='${"ontology.temporaryZoomOut" | t}'>
+                                <svg-icon icon.bind="'eye'" size.bind="18"></svg-icon>
+                            </button>
+                            <button class="button-flat px-2 items-center" click.delegate="toggleMaximize()"
+                                title='${"ontology.toggleMaximize" | t}'>
+                                <svg-icon icon.bind="maximized ? 'minimize' : 'maximize'" size.bind="18"></svg-icon>
                             </button>
                         </div>
                 </div>
