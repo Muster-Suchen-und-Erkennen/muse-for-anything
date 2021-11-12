@@ -1586,8 +1586,7 @@ export class OntologyGraph {
         } else {
             document.getElementById("mainontology-graph").style.height="500px"
         }
-        this.graphoverview.zoomToBoundingBox();
-        this.graphoverview.completeRender();
+        this.graphoverview.zoomToBoundingBox(true);
     }
 
     // function called by buttons from the front-end, to interact with the graph
@@ -1710,6 +1709,7 @@ export class OntologyGraph {
             this.isLeftLowerDragging = false;
             document.getElementById("overviewgraph").style.visibility = "visible";
             document.getElementById("graphexportsvg").style.visibility = "visible";
+            this.graphoverview.zoomToBoundingBox(true);
         }
     }
 

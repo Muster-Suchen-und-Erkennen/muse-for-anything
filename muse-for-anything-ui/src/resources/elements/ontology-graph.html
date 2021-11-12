@@ -310,7 +310,7 @@
         <div id="mainontology-graph" mouseup.delegate="endDrag()" mousemove.delegate="onDrag($event)" mouseleave.delegate="endDrag()">
             <div id="menu-section" class="maindiv card mr-1">
                 <div id="item-filtersection" class="px-1 py-1 border-gray-200 border-b">
-                    <div class="section-main-title bg-gray-600" style="cursor: default;">
+                    <div class="section-main-title bg-gray-600">
                         ${"ontology.filter-area" | t}
                     </div>
                     <div class="scroll-area" if.bind="!isLoading">
@@ -409,7 +409,7 @@
                 </div>
 
                 <div id="item-treesection" class=" px-1 border-gray-200 border-b"  mousedown.delegate="startLeftUpperDrag($event)">
-                    <div class="section-main-title bg-gray-600">
+                    <div class="section-main-title bg-gray-600 section-main-title-draggable">
                         ${"ontology.tree-view" | t}
                     </div>
                     <div class=" scroll-area">
@@ -418,7 +418,7 @@
                 </div>
                 <div id="item-overview" mousedown.delegate="startLeftLowerDrag($event)">
 
-                    <div class="section-main-title bg-gray-600">
+                    <div class="section-main-title bg-gray-600 section-main-title-draggable">
                         ${"ontology.overview" | t}
                     </div>
                     <div style="height: calc(100% - 25px);">
@@ -453,33 +453,86 @@
                                 <svg-icon icon.bind="'arrow-right'" size.bind="18"></svg-icon>
                             </button>
                         </p>
-                        <p class="detailview-item">• ${"ontology.detailview.name" | t}: ${selectedNode.name}</p>
-                        <p class="detailview-item">• ${"ontology.detailview.description" | t}: ${selectedNode.description}</p>
-                        <p class="detailview-item">• ${"ontology.detailview.type" | t}: ${selectedNode.itemType}</p>
-                        <p class="detailview-item">• ${"ontology.detailview.abstract" | t}: ${selectedNode.abstract}</p>
-                        <p class="detailview-item">• ${"ontology.detailview.implementations" | t}: t.b.d.</p>
-                        <p class="detailview-item">• ${"ontology.detailview.api-link" | t}: ${selectedNode.href}</p>
+                        <table id="table-info">
+                            <tbody>
+                                <tr>
+                                    <td class="table-info-name" title='${"ontology.detailview.name" | t}'>${"ontology.detailview.name" | t}</td>
+                                    <td class="table-info-detail" title="${selectedNode.name}">${selectedNode.name}</td>
+                                </tr>
+                                <tr>
+                                    <td class="table-info-name" title='${"ontology.detailview.description" | t}'>${"ontology.detailview.description" | t}</td>
+                                    <td class="table-info-detail" title="${selectedNode.description}">${selectedNode.description}</td>
+                                </tr>
+                                <tr>
+                                    <td class="table-info-name" title='${"ontology.detailview.type" | t}'>${"ontology.detailview.type" | t}</td>
+                                    <td class="table-info-detail" title="${selectedNode.itemType}">${selectedNode.itemType}</td>
+                                </tr>
+                                <tr>
+                                    <td class="table-info-name" title='${"ontology.detailview.abstract" | t}'>${"ontology.detailview.abstract" | t}</td>
+                                    <td class="table-info-detail" title='${selectedNode.abstract}'>${selectedNode.abstract}</td>
+                                </tr>
+                                <tr>
+                                    <td class="table-info-name" title='${"ontology.detailview.implementations" | t}'>${"ontology.detailview.implementations" | t}</td>
+                                    <td class="table-info-detail"></td>
+                                </tr>
+                                <tr>
+                                    <td class="table-info-name" title='${"ontology.detailview.api-link" | t}'>${"ontology.detailview.api-link" | t}</td>
+                                    <td class="table-info-detail" title='${selectedNode.href}'>${selectedNode.href}</td>
+                                </tr>
+                                <tr>
+                                    <td class="table-info-name" title='${"ontology.detailview.openEdit" | t}'>${"ontology.detailview.openEdit" | t}</td>
+                                    <td class="table-info-detail">
+                                        <a class="button-flat" href="${selectedNode.getLink()}" target="_blank"
+                                        style="margin: 0 !important; padding: 0 !important">
+                                        ${"ontology.detailview.openEditButton" | t}
+                                            <svg-icon style="display:inline-block" icon.bind="'open-in-new-tab'" size.bind="20">
+                                            </svg-icon>
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="table-info-name" title='${"ontology.detailview.children" | t}'>${"ontology.detailview.children" | t}</td>
+                                    <td class="table-info-detail" title='${selectedNode.children.length}'>${selectedNode.children.length}</td>
+                                </tr>
+                                <tr>
+                                    <td class="table-info-name" title='${"ontology.detailview.fixPosition" | t}'>${"ontology.detailview.fixPosition" | t}</td>
+                                    <td class="table-info-detail" title='${"ontology.toggleFixedPosition" | t}'>
+                                        <button class="button-flat items-center" click.delegate="selectedNode.togglePositionFixed()"
+                                            title='${"ontology.toggleFixedPosition" | t}'
+                                            style="margin: 0 !important; padding: 0 !important">
+                                            <svg-icon icon.bind="selectedNode.positionIsFixed ? 'unfixed-position' : 'fixed-position'"
+                                                size.bind="20"></svg-icon>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <!--<p class="detailview-item" title="${selectedNode.name}">${"ontology.detailview.name" | t}: ${selectedNode.name}</p>
+                        <p class="detailview-item" title="${selectedNode.description}">${"ontology.detailview.description" | t}: ${selectedNode.description}</p>
+                        <p class="detailview-item" title="${selectedNode.itemType}">${"ontology.detailview.type" | t}: ${selectedNode.itemType}</p>
+                        <p class="detailview-item" title="${selectedNode.abstract}">${"ontology.detailview.abstract" | t}: ${selectedNode.abstract}</p>
+                        <p class="detailview-item" title="">${"ontology.detailview.implementations" | t}: t.b.d.</p>
+                        <p class="detailview-item" title="${selectedNode.href}">${"ontology.detailview.api-link" | t}: ${selectedNode.href}</p>
                         <p class="detailview-item">
-                            <!--<a class="button-flat" href="${selectedNode.getLink()}" target="_blank">-->
         
                             <a class="button-flat" href="${selectedNode.getLink()}" target="_blank"
                                 style="margin: 0 !important; padding: 0 !important">
-                                <span>• ${"ontology.detailview.openEdit" | t}
+                                <span>${"ontology.detailview.openEdit" | t}
                                     <svg-icon style="display:inline-block" icon.bind="'open-in-new-tab'" size.bind="20">
                                     </svg-icon>
                                 </span>
                             </a>
                         </p>
-                        <p class="detailview-item">• ${"ontology.detailview.children" | t}: ${selectedNode.children.length}</p>
+                        <p class="detailview-item" title="${selectedNode.children.length}">${"ontology.detailview.children" | t}: ${selectedNode.children.length}</p>
                         <p class="detailview-item">
-                            • ${"ontology.detailview.fixPosition" | t}:
+                            ${"ontology.detailview.fixPosition" | t}:
                             <button class="button-flat items-center" click.delegate="selectedNode.togglePositionFixed()"
                                 title='${"ontology.toggleFixedPosition" | t}'
                                 style="margin: 0 !important; padding: 0 !important">
                                 <svg-icon icon.bind="selectedNode.positionIsFixed ? 'unfixed-position' : 'fixed-position'"
                                     size.bind="20"></svg-icon>
                             </button>
-                        </p>
+                        </p>-->
                     </div>
                     <div class="buttons card bg-white px-3 py-2 items-center" style="width: fit-content;float: right;">
                         <button class="button-flat px-2 items-center" click.delegate="toggleMenu()"

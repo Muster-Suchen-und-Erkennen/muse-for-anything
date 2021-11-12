@@ -433,10 +433,12 @@ ux-dialog>ux-dialog-footer{
     background-color: darkgray;
 	grid-area: dragbar;
     cursor: ew-resize; 
+    width: 1px;
 }
 
 #dragbar:hover {
-    background-color: darkorchid;
+    background-color: rgb(255, 0, 234); 
+    width: 4px;
 }
 
 ontology-graph[data-maximized] {
@@ -479,7 +481,14 @@ ontology-graph[data-maximized] {
     color: white;
     margin-bottom: 5px;
     padding-left: 5px;
+}
+
+.section-main-title-draggable {
     cursor: ns-resize; 
+}
+
+.section-main-title-draggable:hover {
+    background-color: rgb(255, 0, 234); 
 }
 
 .ontology-move{
@@ -556,6 +565,36 @@ tree-node  ul:first-child{
     text-overflow: ellipsis;
     white-space: nowrap;
     width: 100%;
+    border-style: solid;
+    border-bottom: gray;
+    border-top-width: 1px;
+}
+
+table, th, td {
+    border: 1px solid lightgray;
+    border-collapse: collapse;
+  }
+
+#table-info {
+    width: 100%;
+    white-space: nowrap; 
+    table-layout: fixed;
+}
+
+.table-info-detail {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+    padding-left: 5px;
+}
+
+.table-info-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 40%;
+    padding-left: 5px;
 }
 
 .ontology-algorithm-label {

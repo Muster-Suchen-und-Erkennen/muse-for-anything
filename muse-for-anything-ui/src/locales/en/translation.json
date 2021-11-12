@@ -162,7 +162,8 @@
             "api-link":"api-link",
             "children":"child elements",
             "fixPosition":"fix elements position in graph",
-            "openEdit":"open item in new tab"
+            "openEdit":"open item in new tab",
+            "openEditButton":"open"
         },
         "fixallSearchResults":"search results",
         "fixallSearchResultsButton":"fix all search results",
