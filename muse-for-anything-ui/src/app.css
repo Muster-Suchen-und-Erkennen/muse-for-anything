@@ -483,6 +483,14 @@ ontology-graph[data-maximized] {
     padding-left: 5px;
 }
 
+.detailview-description{
+    font-size: small
+}
+
+.detailview-title {
+    font-size: medium;
+}
+
 .section-main-title-draggable {
     cursor: ns-resize; 
 }
@@ -501,6 +509,8 @@ ontology-graph[data-maximized] {
     border-radius: 50px;
     background: #cacaca;
     width: 102px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .scroll-area {
@@ -645,4 +655,65 @@ input[type="checkbox"]:indeterminate {
 }
 ::-webkit-scrollbar-thumb:hover {
     background: #555;
+}
+
+/* toogle switch */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 30px;
+    height: 18px;
+  }
+  
+.switch input { 
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 1px;
+    background-color: #ccc;
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 13px;
+    width: 13px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+    -webkit-transform: translateX(13px);
+    -ms-transform: translateX(13px);
+    transform: translateX(13px);
+}
+
+/* Rounded sliders */
+.slider.round {
+    border-radius: 17px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
 }

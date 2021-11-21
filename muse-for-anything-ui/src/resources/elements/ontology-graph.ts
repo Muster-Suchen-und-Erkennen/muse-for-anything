@@ -109,6 +109,9 @@ export class DataItemModel {
         if (this.itemType == DataItemTypeEnum.TypeItem || this.itemType == DataItemTypeEnum.TaxonomyItem) {
             return true;
         }
+        if(this.children.length>0){
+            return true;
+        }
         return false;
     }
 
@@ -143,6 +146,12 @@ export class DataItemModel {
 
     addChild(id: string, name: string, abstract: boolean, href: string, description: string, itemType: DataItemTypeEnum, childHrefs?: string[]) {
         this.children.push(new DataItemModel(id, name, abstract, href, description, itemType, this.graph, false, childHrefs));
+        this.icon = "arrow-right";
+        this.expanded = false;
+    }
+
+    addChildItem(item: DataItemModel) {
+        this.children.push(item)
         this.icon = "arrow-right";
         this.expanded = false;
     }
@@ -201,7 +210,20 @@ class TypeNodeTemplate implements DynamicNodeTemplate {
     }
 
     updateTemplate(g: any, grapheditor: GraphEditor, context: DynamicTemplateContext<Node>): void {
-        this.calculateRect(g, grapheditor, context, true);
+        let width = g.datum().width;
+        let height = g.datum().height;
+        if (height) {
+            width += + boundingBoxBorder * 2
+            height += + boundingBoxBorder * 2
+        } else {
+            width = 120;
+            height = 20;
+        }
+
+        console.log(g.selectAll("*"))
+
+        g.selectAll("rect").attr("width", width)
+                            .attr("height", height)
     }
 
     private calculateRect(g: any, grapheditor: GraphEditor, context: DynamicTemplateContext<Node>, updated?: boolean) {
@@ -274,7 +296,25 @@ class TaxonomyNodeTemplate implements DynamicNodeTemplate {
     }
 
     updateTemplate(g: any, grapheditor: GraphEditor, context: DynamicTemplateContext<Node>): void {
-        this.calculateRect(g, grapheditor, context, true);
+        let props = g.datum();
+        if (!props.height) {
+            props.height = 20;
+        }
+        if (!props.width) {
+            props.width = 140;
+        }
+        console.log(g.selectAll("*"))
+
+        g.selectAll("ellipse").attr("width", props.width + boundingBoxBorder * 2)
+            .attr("height", props.height + boundingBoxBorder * 2)
+            .attr("cx", (props.width + boundingBoxBorder * 2) / 2)
+            .attr("cy", (props.height + boundingBoxBorder * 2) / 2)
+            .attr("rx", (props.width + boundingBoxBorder * 2) / 2)
+            .attr("ry", (props.height + boundingBoxBorder * 2) / 2)
+        g.selectAll("text")
+            .attr("y", (props.height + boundingBoxBorder * 2) / 2 + 5)
+        g.selectAll("g")
+            .attr("transform", "translate(" + props.width / 2 + ",5)")
     }
 
     private calculateRect(g: any, grapheditor: GraphEditor, context: DynamicTemplateContext<Node>, updated?: boolean) {
@@ -338,7 +378,9 @@ class OverviewGraphNode implements DynamicNodeTemplate {
 
     updateTemplate(g: any, grapheditor: GraphEditor, context: DynamicTemplateContext<Node>): void {
         let props = g.datum();
-        this.drawRect(g, props);
+        g.selectAll("rect")
+            .attr("width", props.width)
+            .attr("height", props.height)
     }
 
     private drawRect(g: any, props: any) {
@@ -457,6 +499,8 @@ export class OntologyGraph {
     @observable() typeChildsToShow: number = 3;
     @observable() showTaxonomies: boolean = true;
     @observable() showTypes: boolean = true;
+    @observable() showSelectedItems: boolean = false;
+    @observable() showElementsWithoutAnEdge: boolean = false;
     @observable() selectedLayoutAlgorithmId: number = 1;
     @observable() distanceBetweenElements: number = 100;
     @observable() keepSearchResultsInFocus: boolean = false;
@@ -661,6 +705,8 @@ export class OntologyGraph {
         if (this.graph == null) {
             return;
         }
+        this.showElementsWithoutAnEdge = false;
+        this.showSelectedItems = false;
         if (value) {
             this.dataItems.filter(p => p.itemType == DataItemTypeEnum.TaxonomyItem).forEach(p => {
                 p.isVisibleInGraph = true
@@ -684,6 +730,8 @@ export class OntologyGraph {
                 p.isVisibleInGraph = true
                 p.children?.forEach(child => child.isVisibleInGraph = true);
             });
+            this.showElementsWithoutAnEdge = false;
+            this.showSelectedItems = false;
         } else {
             this.dataItems.filter(p => p.itemType == DataItemTypeEnum.TypeItem).filter(p => !p.isSelected).forEach(p => {
                 p.isVisibleInGraph = false
@@ -691,6 +739,21 @@ export class OntologyGraph {
             });
         }
         this.updateVisibilityInGraph();
+    }
+
+    showElementsWithoutAnEdgeChanged(value: boolean) {
+        if(value && this.graph!=null) {
+            this.showSelectedItems = false;
+            this.showAllElementsWithoutEdge();
+        }
+
+    }
+
+    showSelectedItemsChanged(value: boolean) {
+        if(value && this.graph!=null) {
+            this.showElementsWithoutAnEdge = false;
+            this.showSelectedItemsFunction();
+        }
     }
 
     /**
@@ -761,7 +824,7 @@ export class OntologyGraph {
      * @param rootLink root link from the navigation-service
      * @param ignoreCache 
      */
-    private loadDataTaxonomy(rootLink: ApiLink, ignoreCache: boolean) {
+     private loadDataTaxonomy(rootLink: ApiLink, ignoreCache: boolean) {
         this.api.getByApiLink<TaxonomyApiObject>(rootLink, ignoreCache).then(apiResponse => {
             apiResponse.links.forEach(link => {
                 if (link.rel.includes("next")) {
@@ -869,7 +932,7 @@ export class OntologyGraph {
     /**
      * show all elements without an connected edge
      */
-    showAllElementsWithoutAnEdge() {
+    showAllElementsWithoutEdge() {
         // get all edge connections in a list
         let allEdgeConnections = []
         this.graph.edgeList.forEach(edge => allEdgeConnections.push(edge.target, edge.source));
@@ -1331,7 +1394,7 @@ export class OntologyGraph {
      */
     private addEdgeToTaxonomy(source: string | number, target: string | number) {
         let path = {
-            source: source, target: target, markerEnd: {
+            source: target, target: source, markerEnd: {
                 template: "arrow",
                 scale: smallMarkerSize,
                 relativeRotation: 0,
@@ -1583,8 +1646,10 @@ export class OntologyGraph {
         this.maximized = !this.maximized;
         if(this.maximized) {
             document.getElementById("mainontology-graph").style.height="100%"
+            document.getElementById("ontology-graph").style.padding="0px"
         } else {
             document.getElementById("mainontology-graph").style.height="500px"
+            document.getElementById("ontology-graph").style.padding=""
         }
         this.graphoverview.zoomToBoundingBox(true);
     }
@@ -1627,7 +1692,7 @@ export class OntologyGraph {
         element.setAttribute("transform", "translate(" + width + "," + height + ") scale(" + scaling + ")")
     }
 
-    private showSelectedItems() {
+    private showSelectedItemsFunction() {
         this.showTypes = false;
         this.showTaxonomies = false;
         this.dataItems.forEach(parent => {

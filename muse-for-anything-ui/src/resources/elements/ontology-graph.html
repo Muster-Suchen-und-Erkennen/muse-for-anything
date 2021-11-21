@@ -321,7 +321,11 @@
                                 aria-autocomplete="list" role="combobox" id="'input-'+slug"
                                 blur.trigger="searchtextFocusLeft()">
                             <div class="ontology-algorithm-label" title='${"ontology.keepFocus" | t}'>
-                                <input type="checkbox" checked.bind="keepSearchResultsInFocus"> ${"ontology.keepFocus" | t}
+                                <label class="switch">
+                                    <input type="checkbox" checked.bind="keepSearchResultsInFocus">
+                                    <span class="slider round"></span>
+                                </label>
+                                ${"ontology.keepFocus" | t}
                             </div>
                         </div>
                         <div class="section-subpart">
@@ -334,41 +338,55 @@
                             ${"ontology.visibleElements" | t}
                         </span>
                         <div class="section-subpart">
-                            <div>
-                                <label class="cb_control control--checkbox">
+                            <div class="button-oneline" title='${"ontology.taxonomies" | t}'>
+                                <label class="switch">
                                     <input type="checkbox" checked.bind="showTaxonomies">
-                                    <span class="control__indicator"></span>
+                                    <span class="slider round"></span>
                                 </label>
                                 ${"ontology.taxonomies" | t}
                             </div>
-                            <div>
-                                <label class="cb_control control--checkbox">
+                            <div class="button-oneline" title='${"ontology.types" | t}'>
+                                <label class="switch">
                                     <input type="checkbox" checked.bind="showTypes">
-                                    <span class="control__indicator"></span>
+                                    <span class="slider round"></span>
                                 </label>
                                 ${"ontology.types" | t}
                             </div>
-                            <div>
-                                <button class="button-outline px-2 items-center button-oneline"
+                            <div class="button-oneline" title='${"ontology.showSelectedItems" | t}'>
+                                <label class="switch">
+                                    <input type="checkbox" checked.bind="showSelectedItems">
+                                    <span class="slider round"></span>
+                                </label>
+                                ${"ontology.showSelectedItems" | t}
+                                <!--<button class="button-outline px-2 items-center button-oneline"
                                     click.delegate="showSelectedItems()" title='${"ontology.showSelectedItems" | t}'>
                                     ${"ontology.showSelectedItems" | t}
-                                </button>
+                                </button>-->
                             </div>
-                            <button class="button-outline px-2 items-center button-oneline"
+                            <div class="button-oneline" title='${"ontology.showAllElementsWithoutAnEdgeButton" | t}'>
+                                <label class="switch">
+                                    <input type="checkbox" checked.bind="showElementsWithoutAnEdge">
+                                    <span class="slider round"></span>
+                                </label>
+                                ${"ontology.showAllElementsWithoutAnEdgeButton" | t}
+                            </div>
+                            <!-- <button class="button-outline px-2 items-center button-oneline"
                                 click.delegate="showAllElementsWithoutAnEdge()"
                                 title='${"ontology.showAllElementsWithoutAnEdgeButton" | t}'>
                                 ${"ontology.showAllElementsWithoutAnEdgeButton" | t}
-                            </button>
+                            </button> -->
                         </div>
                         <span class="section-title" title='{"ontology.childsToShow" | t}'>
                             ${"ontology.childsToShow" | t}
                         </span>
                         <div class="section-subpart">
                             <div>
-                                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1"
-                                    placeholder="search" value.from-view="filter & throttle" aria-owns="'datalist-'+slug"
-                                    autocapitalize="none" value.bind="typeChildsToShow & debounce" type="number"
+                                <label>
+                                    <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1"
+                                        placeholder="search" value.from-view="filter & throttle" aria-owns="'datalist-'+slug"
+                                        autocapitalize="none" value.bind="typeChildsToShow & debounce" type="number"
                                     autocomplete="off" aria-autocomplete="list" role="combobox" id="'input-'+slug" min="0">
+                                <label>
                             </div>
                         </div>
                         <div class="section-title">
@@ -376,7 +394,7 @@
                         </div>
                         <div class="section-subpart">
                             <div>
-                                <input type="range" min="10" max="500" value.bind="distanceBetweenElements" class="slider">
+                                <input type="range" min="10" max="500" value.bind="distanceBetweenElements" class="slider" style="position: unset;">
                                 <span>${distanceBetweenElements} %</span>
                             </div>
                         </div>
@@ -446,23 +464,20 @@
             <div class="menu-graph mb-0 mt-auto ml-auto mr-0">
                     <div if.bind="selectedNode != null" class="card bg-white px-3 py-2 items-center detailview">
         
-                        <p class="section-title">
-                            ${"ontology.detailview-header" | t}
+                        <p class="detailview-title">
+                            ${selectedNode.name}
                             <button class="button-flat px-2 items-center" click.delegate="unselectNode()"
-                                title='${"ontology.moveLeft" | t}'>
+                                title='${"ontology.moveLeft" | t}' style="float: right;">
                                 <svg-icon icon.bind="'arrow-right'" size.bind="18"></svg-icon>
                             </button>
                         </p>
+                        <p class="detailview-description">
+                            ${selectedNode.description}
+                        </p>
+                        
+
                         <table id="table-info">
                             <tbody>
-                                <tr>
-                                    <td class="table-info-name" title='${"ontology.detailview.name" | t}'>${"ontology.detailview.name" | t}</td>
-                                    <td class="table-info-detail" title="${selectedNode.name}">${selectedNode.name}</td>
-                                </tr>
-                                <tr>
-                                    <td class="table-info-name" title='${"ontology.detailview.description" | t}'>${"ontology.detailview.description" | t}</td>
-                                    <td class="table-info-detail" title="${selectedNode.description}">${selectedNode.description}</td>
-                                </tr>
                                 <tr>
                                     <td class="table-info-name" title='${"ontology.detailview.type" | t}'>${"ontology.detailview.type" | t}</td>
                                     <td class="table-info-detail" title="${selectedNode.itemType}">${selectedNode.itemType}</td>
@@ -536,7 +551,7 @@
                     </div>
                     <div class="buttons card bg-white px-3 py-2 items-center" style="width: fit-content;float: right;">
                         <button class="button-flat px-2 items-center" click.delegate="toggleMenu()"
-                            title='${"ontology.moveLeft" | t}'>
+                            title='${"ontology.moveLeft" | t}' style="float:right;">
                             <svg-icon icon.bind="maximizeMenu ? 'arrow-right' : 'arrow-left'" size.bind="18"></svg-icon>
                         </button>
                         <div if.bind="maximizeMenu">
