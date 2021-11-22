@@ -18,7 +18,7 @@ import { forceSimulation, forceLink, forceCenter, forceManyBody, forceCollide } 
 
 const boundingBoxBorder: number = 20;
 const smallMarkerSize: number = 0.8;
-const largeMarkerSize: number = 2.8;
+const largeMarkerSize: number = 1.8;
 
 interface TypeApiObject extends ApiObject {
     collectionSize: number;
@@ -1260,7 +1260,7 @@ export class OntologyGraph {
                             let path = {
                                 source: source, target: parent.id, markerEnd: {
                                     template: "arrow",
-                                    scale: smallMarkerSize,
+                                    scale: largeMarkerSize,
                                     relativeRotation: 0,
                                 },
                                 id: source + parent.id
@@ -1269,7 +1269,7 @@ export class OntologyGraph {
                             let pathOverview = {
                                 source: parItem.id, target: parent.id, markerEnd: {
                                     template: "arrow",
-                                    scale: smallMarkerSize,
+                                    scale: largeMarkerSize,
                                     relativeRotation: 0,
                                 },
                                 id: parItem.id + parent.id
@@ -1396,7 +1396,7 @@ export class OntologyGraph {
         let path = {
             source: target, target: source, markerEnd: {
                 template: "arrow",
-                scale: smallMarkerSize,
+                scale: largeMarkerSize,
                 relativeRotation: 0,
             }
         }
@@ -1516,7 +1516,11 @@ export class OntologyGraph {
         // highlight links        
         this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
             edge.childNodes[0].classList.remove("highlight-edge")
-            this.highlightMarker(edge.id.substring(5), "arrow", 0.8)
+            if(this.currentEdgeStyleBold){
+                this.highlightMarker(edge.id.substring(5), "arrow", largeMarkerSize)
+            } else {
+                this.highlightMarker(edge.id.substring(5), "small-arrow", smallMarkerSize)
+            }
         });
         if (event.type == 'nodeclick') {
             this.graph.edgeList.forEach(edge => {
@@ -1533,8 +1537,8 @@ export class OntologyGraph {
                     })
                 });
             })
-            this.graph.completeRender();
         }
+        this.graph.completeRender();
     }
 
     private highlightMarker(edgeID, template, scale) {
@@ -1563,7 +1567,11 @@ export class OntologyGraph {
         this.renderMainViewPositionInOverviewGraph();
         this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
             edge.childNodes[0].classList.remove("highlight-edge")
-            this.highlightMarker(edge.id.substring(5), "arrow", 0.8)
+            if(this.currentEdgeStyleBold) {
+                this.highlightMarker(edge.id.substring(5), "arrow", largeMarkerSize)
+            } else {
+                this.highlightMarker(edge.id.substring(5), "small-arrow", smallMarkerSize)
+            }
         });
         this.graph.completeRender();
     }
@@ -1583,14 +1591,15 @@ export class OntologyGraph {
         if (newValue) {
             this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
                 edge.childNodes[0].classList.remove("small-edge")
-                this.highlightMarker(edge.id.substring(5), "arrow", smallMarkerSize)
+                this.highlightMarker(edge.id.substring(5), "arrow", largeMarkerSize)
             });
         } else {
             this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
                 edge.childNodes[0].classList.add("small-edge")
-                this.highlightMarker(edge.id.substring(5), "arrow", smallMarkerSize)
+                this.highlightMarker(edge.id.substring(5), "small-arrow", smallMarkerSize)
             });
         }
+        this.graph.completeRender();
     }
 
     private onZoomChange(event: CustomEvent<{ eventSource: "API" | "USER_INTERACTION" | "INTERNAL", node: Node }>) {
