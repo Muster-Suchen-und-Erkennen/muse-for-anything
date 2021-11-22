@@ -220,8 +220,6 @@ class TypeNodeTemplate implements DynamicNodeTemplate {
             height = 20;
         }
 
-        console.log(g.selectAll("*"))
-
         g.selectAll("rect").attr("width", width)
                             .attr("height", height)
     }
@@ -303,7 +301,6 @@ class TaxonomyNodeTemplate implements DynamicNodeTemplate {
         if (!props.width) {
             props.width = 140;
         }
-        console.log(g.selectAll("*"))
 
         g.selectAll("ellipse").attr("width", props.width + boundingBoxBorder * 2)
             .attr("height", props.height + boundingBoxBorder * 2)
@@ -517,6 +514,7 @@ export class OntologyGraph {
 
     private totalTypes = 0;
     private totalTaxonomies = 0;
+    private taxonomyChildItems:number;
 
     private maximized: boolean = false;
     private isAllowedToShowGraph: boolean = false;
@@ -824,7 +822,7 @@ export class OntologyGraph {
      * @param rootLink root link from the navigation-service
      * @param ignoreCache 
      */
-     private loadDataTaxonomy(rootLink: ApiLink, ignoreCache: boolean) {
+    private loadDataTaxonomy(rootLink: ApiLink, ignoreCache: boolean) {
         this.api.getByApiLink<TaxonomyApiObject>(rootLink, ignoreCache).then(apiResponse => {
             apiResponse.links.forEach(link => {
                 if (link.rel.includes("next")) {
@@ -838,20 +836,34 @@ export class OntologyGraph {
                 promises.push(this.api.getByApiLink<TaxonomyApiObject>(element, ignoreCache).then(apiResponse => {
                     let nodeID = this.createUniqueId(apiResponse.data.self.href);
                     this.dataItems.push(new DataItemModel(nodeID, apiResponse.data.name, false, apiResponse.data.self.href, apiResponse.data.description, DataItemTypeEnum.TaxonomyItem, this.graph))
+                    let taxonomyItems:TaxonomyItemApiObject[] = []
                     apiResponse.data.items.forEach(element => {
-                        promises.push(this.api.getByApiLink<TaxonomyItemApiObject>(element, ignoreCache).then(apiResponse => {
-                            //load taxonomy relations
-                            let parentItemHrefs: string[] = [];
-                            apiResponse.data.children.forEach(childElement => {
-                                promises.push(this.api.getByApiLink<TaxonomyItemRelationApiObject>(childElement, ignoreCache).then(apiResponses => {
-                                    parentItemHrefs.push(apiResponses.data.targetItem.href)
-                                }));
-                            });
-                            this.dataItems.find(p => p.id == nodeID).addChild(this.createUniqueId(apiResponse.data.self.href), apiResponse.data.name, false, apiResponse.data.self.href, apiResponse.data.description, DataItemTypeEnum.TaxonomyItemProperty, parentItemHrefs);
-
-                        }));
+                        this.api.getByApiLink<TaxonomyItemApiObject>(element, ignoreCache).then(apiResponse => {
+                            taxonomyItems.push(apiResponse.data)
+                            
+                        }).then(()=>{
+                            if(taxonomyItems.length==apiResponse.data.items.length){
+                                let relationLinks: ApiLink[] = [];
+                                let relationItems:TaxonomyItemRelationApiObject[] = []
+                                taxonomyItems.forEach(tax => {
+                                    relationLinks.push(...tax.children)
+                                })
+                                relationLinks.forEach(link => {
+                                    this.api.getByApiLink<TaxonomyItemRelationApiObject>(link, ignoreCache).then(apiResponses => {
+                                        relationItems.push(apiResponses.data)
+                                    }).then(() => {
+                                        if(relationItems.length==relationLinks.length) {
+                                            taxonomyItems.filter(item => item.isToplevelItem).forEach(item => {
+                                                let parent = new DataItemModel(this.createUniqueId(item.self.href), item.name, false, item.self.href, item.description, DataItemTypeEnum.TaxonomyItemProperty, this.graph, false);
+                                                this.createTaxonomyHierarchie(parent, item, taxonomyItems, relationItems);
+                                                this.dataItems.find(p => p.id == nodeID).addChildItem(parent);
+                                            })
+                                        }
+                                    })
+                                });
+                            }
+                        });
                     });
-
                 }));
             });
             Promise.all(promises).then(() => {
@@ -860,9 +872,21 @@ export class OntologyGraph {
                     this.preRenderGraph();
                 }
             });
-        });
-
+        })
     }
+
+    private createTaxonomyHierarchie(parent: DataItemModel, item: TaxonomyItemApiObject, allItems: TaxonomyItemApiObject[], allRelations: TaxonomyItemRelationApiObject[]) {
+        item.children.forEach(child => {
+            let targetChild = allRelations.find(item => item.self.href == child.href).targetItem;
+            let targetItem = allItems.find(item => item.self.href == targetChild.href);
+            let childItem = new DataItemModel(this.createUniqueId(targetItem.self.href), targetItem.name, false, targetItem.self.href, targetItem.description, DataItemTypeEnum.TaxonomyItemProperty, this.graph, false);
+            parent.addChildItem(childItem);
+            this.createTaxonomyHierarchie(childItem, targetItem, allItems, allRelations);                       
+        })
+    }
+
+ 
+
 
     /**
      * get the corresponding DataItemTypeEnum from the api response for a given element to store the correct value in the datamodel
@@ -1363,7 +1387,7 @@ export class OntologyGraph {
 
         return this.getLeftBottomPointOfItem(parentItem.node);
     }
-
+    
     private addItemsToTaxonomy(taxonomyParent: DataItemModel, parentBox: { x, y }) {
         if (taxonomyParent == null) {
             throw new Error("No taxonomy parent item available");
@@ -1371,20 +1395,35 @@ export class OntologyGraph {
         // needed to change between upper and lower new taxonomy item
         let taxonomyItemSize = this.getSizeOfStaticTemplateNode('taxonomy-item');
 
-        let childElements: Array<{ href: string, id: string }> = []
-        let itemsPerColumn = Math.max(2, Math.round(Math.sqrt(taxonomyParent.children.length / 2)))
+        this.taxonomyChildItems=0;
+        let itemsPerColumn = Math.max(2, Math.round(Math.sqrt(this.getNumberOfTaxonomieItems(taxonomyParent) / 2)))
         taxonomyParent.children.forEach(childElement => {
-            this.addNodeToGraph({ id: childElement.id, title: childElement.name, type: 'taxonomy-item', x: parentBox.x + 150 + itemsPerColumn * 23 + (Math.floor(childElements.length / itemsPerColumn)) * (Number(taxonomyItemSize.width) + 10), y: parentBox.y + 20 + itemsPerColumn * 15 + (childElements.length % itemsPerColumn) * (Number(taxonomyItemSize.height) + 10) }, false);
-            childElements.push({ href: childElement.href, id: childElement.id });
+            this.addNodeToGraph({ id: childElement.id, title: childElement.name, type: 'taxonomy-item', x: parentBox.x + 150 + itemsPerColumn * 23 + (Math.floor(this.taxonomyChildItems / itemsPerColumn)) * (Number(taxonomyItemSize.width) + 10), y: parentBox.y + 20 + itemsPerColumn * 15 + (this.taxonomyChildItems % itemsPerColumn) * (Number(taxonomyItemSize.height) + 10) }, false);
             this.missingParentConnection.push({ parent: taxonomyParent.id, child: childElement.id, joinTree: false })
+            this.taxonomyChildItems++;
+            this.addRecursiveItemsToTaxonomy(taxonomyParent, childElement, parentBox, itemsPerColumn, taxonomyItemSize)
         });
+    }
 
-        taxonomyParent.children.forEach(source => {
-            source.taxonomyParentRelations.forEach(target => {
+    private getNumberOfTaxonomieItems(element: DataItemModel): number {
+        let value = 0;
+        element.children.forEach(item => value += this.getNumberOfTaxonomieItems(item))
+        return element.children.length + value
+    }
 
-                this.addEdgeToTaxonomy(source.id, taxonomyParent.children.find(f => f.href == target).id);
-            })
-        })
+    private addRecursiveItemsToTaxonomy(rootElement: DataItemModel, element: DataItemModel, parentBox: {x,y}, itemsPerColumn, taxonomyItemSize: {width, height}) {
+        element.children.forEach(childElement => {
+            let node = this.graph.nodeList.find(node => node.id.toString().split("-SPLITTER-")[0]== childElement.id.split("-SPLITTER")[0])
+            if(node!=null) {
+                this.addEdgeToTaxonomy(element.id, node.id);
+            } else {
+                this.addNodeToGraph({ id: childElement.id, title: childElement.name, type: 'taxonomy-item', x: parentBox.x + 150 + itemsPerColumn * 23 + (Math.floor(this.taxonomyChildItems / itemsPerColumn)) * (Number(taxonomyItemSize.width) + 10), y: parentBox.y + 20 + itemsPerColumn * 15 + (this.taxonomyChildItems % itemsPerColumn) * (Number(taxonomyItemSize.height) + 10) }, false);
+                this.taxonomyChildItems++;
+                this.missingParentConnection.push({ parent: rootElement.id, child: childElement.id, joinTree: false })
+                this.addEdgeToTaxonomy(element.id, childElement.id);
+            }
+            this.addRecursiveItemsToTaxonomy(rootElement, childElement, parentBox, itemsPerColumn, taxonomyItemSize);
+        });
     }
 
     /**
@@ -1394,7 +1433,7 @@ export class OntologyGraph {
      */
     private addEdgeToTaxonomy(source: string | number, target: string | number) {
         let path = {
-            source: target, target: source, markerEnd: {
+            source: source, target: target, markerEnd: {
                 template: "arrow",
                 scale: largeMarkerSize,
                 relativeRotation: 0,
@@ -1407,10 +1446,10 @@ export class OntologyGraph {
         nodeID = String(nodeID).replace(RegExp(/\/\/|\/|:| /g), "")
         // add some random number (unix time stamp) to the id, no make it unique
         let nodeIdOrig = nodeID;
-        nodeID = nodeIdOrig + "-" + Math.floor(Math.random() * 100 * Date.now())
+        nodeID = nodeIdOrig + "-SPLITTER-" + Math.floor(Math.random() * 100 * Date.now())
 
         while (this.dataItems.some(element => element.id == nodeID)) {
-            nodeID = nodeIdOrig + "-" + Math.floor(Math.random() * 100 * Date.now())
+            nodeID = nodeIdOrig + "-SPLITTER-" + Math.floor(Math.random() * 100 * Date.now())
         }
         return nodeID;
     }
@@ -1823,9 +1862,7 @@ export class OntologyGraph {
                 (dragbarWidth/total)*100,
                 ((rightColWidth-move)/total)*100
             ];
-            console.log(leftColWidth, rightColWidth)
             let newColDefn = cols.map(c => c.toString() + "%").join(" ");
-            console.log(newColDefn)
             page.style.gridTemplateColumns = newColDefn;
 
             this.startDraggingPosition = event.clientX;
@@ -1848,9 +1885,7 @@ export class OntologyGraph {
                 ((treeHeight-move)/total)*100,
                 ((overviewHeight)/total)*100
             ];
-            console.log(filterHeight, treeHeight, overviewHeight)
             let newColDefn = cols.map(c => c.toString() + "%").join(" ");
-            console.log(newColDefn)
             menusection.style.gridTemplateRows = newColDefn;
 
             this.startDraggingPosition = event.clientY;
@@ -1874,9 +1909,7 @@ export class OntologyGraph {
                 ((treeHeight+move)/total)*100,
                 ((overviewHeight-move)/total)*100
             ];
-            console.log(filterHeight, treeHeight, overviewHeight)
             let newColDefn = cols.map(c => c.toString() + "%").join(" ");
-            console.log(newColDefn)
             menusection.style.gridTemplateRows = newColDefn;
 
             this.startDraggingPosition = event.clientY;
