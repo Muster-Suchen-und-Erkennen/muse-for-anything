@@ -310,7 +310,7 @@
         <h1 t="loading">${"loading" | t}</h1>
     </div>
     <template else>
-        <div id="mainontology-graph" mouseup.delegate="endDrag()" mousemove.delegate="onDrag($event)" mouseleave.delegate="endDrag()">
+        <div id="mainontology-graph">
             <div id="menu-section" class="maindiv card mr-1">
                 <div id="item-filtersection" class="px-1 py-1 border-gray-200 border-b">
                     <div class="section-main-title bg-gray-600">
@@ -322,8 +322,10 @@
                                 placeholder="search" value.from-view="filter & throttle" aria-owns="'datalist-'+slug"
                                 autocapitalize="none" value.bind="searchtext & debounce" type="text" autocomplete="off"
                                 aria-autocomplete="list" role="combobox" id="'input-'+slug"
-                                blur.trigger="searchtextFocusLeft()">
-                            <div class="ontology-algorithm-label" title='${"ontology.keepFocus" | t}'>
+                                blur.trigger="searchtextFocusLeft()"
+                                if.bind="isRendered">
+                            <div class="ontology-algorithm-label" title='${"ontology.keepFocus" | t}'
+                            if.bind="isRendered">
                                 <label class="switch">
                                     <input type="checkbox" checked.bind="keepSearchResultsInFocus">
                                     <span class="slider round"></span>
@@ -331,16 +333,16 @@
                                 ${"ontology.keepFocus" | t}
                             </div>
                         </div>
-                        <div class="section-subpart">
+                        <div class="section-subpart" if.bind="isRendered">
                             <button class="button-outline px-2 items-center button-oneline"
                                 click.delegate="fixallSearchResults()" title='${"ontology.fixallSearchResultsButton" | t}'>
                                 ${"ontology.fixallSearchResultsButton" | t}
                             </button>
                         </div>
-                        <span class="section-title">
+                        <span class="section-title" if.bind="isRendered">
                             ${"ontology.visibleElements" | t}
                         </span>
-                        <div class="section-subpart">
+                        <div class="section-subpart" if.bind="isRendered">
                             <div class="button-oneline" title='${"ontology.taxonomies" | t}'>
                                 <label class="switch">
                                     <input type="checkbox" checked.bind="showTaxonomies">

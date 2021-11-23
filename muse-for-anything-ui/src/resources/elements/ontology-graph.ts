@@ -1095,7 +1095,7 @@ export class OntologyGraph {
             .stop()
             .tick(100);
 
-        let positionDifference = (this.distanceBetweenElements / 100);
+        let positionDifference = 1.3 * (this.distanceBetweenElements / 100);
 
         nodes.forEach(x => {
             if (this.dataItems.find(y => y.id == x.id).positionIsFixed) {
@@ -1844,11 +1844,13 @@ export class OntologyGraph {
         this.startDraggingPosition = event.clientX;
         document.getElementById("graphexportsvg").style.visibility = "hidden";
         document.getElementById("overviewgraph").style.visibility = "hidden";
+        this.addDraggingFunctions();
     }
 
     startLeftUpperDrag(event) {
         this.isLeftUpperDragging = true;
         this.startDraggingPosition = event.clientY;
+        this.addDraggingFunctions();
     }
     
     startLeftLowerDrag(event){
@@ -1856,6 +1858,16 @@ export class OntologyGraph {
         this.startDraggingPosition = event.clientY;
         document.getElementById("overviewgraph").style.visibility = "hidden";
         document.getElementById("graphexportsvg").style.visibility = "hidden";
+        this.addDraggingFunctions();
+    }
+
+    addDraggingFunctions() {
+        //mouseup.delegate="endDrag()" 
+        document.getElementById("mainontology-graph").addEventListener('mouseup', e => this.endDrag());
+        //mousemove.delegate="onDrag($event)" 
+        document.getElementById("mainontology-graph").addEventListener('mousemove', e => this.onDrag(e));
+        //mouseleave.delegate="endDrag()"
+        document.getElementById("mainontology-graph").addEventListener('mouseleave', e => this.endDrag());
     }
     
     onDrag(event) {
