@@ -213,15 +213,17 @@ class TypeNodeTemplate implements DynamicNodeTemplate {
         let width = g.datum().width;
         let height = g.datum().height;
         if (height) {
-            width += + boundingBoxBorder * 2
-            height += + boundingBoxBorder * 2
+            width += boundingBoxBorder * 2
+            height += boundingBoxBorder * 2
         } else {
             width = 120;
-            height = 20;
+            height = 30;
         }
 
         g.selectAll("rect").attr("width", width)
                             .attr("height", height)
+        g.selectAll("text").attr("width", width - 5)
+        g.selectAll("title").attr("width", width - 5)
     }
 
     private calculateRect(g: any, grapheditor: GraphEditor, context: DynamicTemplateContext<Node>, updated?: boolean) {
@@ -251,7 +253,8 @@ class TypeNodeTemplate implements DynamicNodeTemplate {
                 .attr("width", minBox.width + boundingBoxBorder * 2 - 5)
                 .attr('data-content', 'title');
             g.append("title")
-                .attr('data-content', 'title');
+                .attr('data-content', 'title')
+                .attr("width", minBox.width + boundingBoxBorder * 2 - 5);
         }
     }
 }
@@ -840,7 +843,6 @@ export class OntologyGraph {
                     apiResponse.data.items.forEach(element => {
                         this.api.getByApiLink<TaxonomyItemApiObject>(element, ignoreCache).then(apiResponse => {
                             taxonomyItems.push(apiResponse.data)
-                            
                         }).then(()=>{
                             if(taxonomyItems.length==apiResponse.data.items.length){
                                 let relationLinks: ApiLink[] = [];
@@ -853,9 +855,11 @@ export class OntologyGraph {
                                         relationItems.push(apiResponses.data)
                                     }).then(() => {
                                         if(relationItems.length==relationLinks.length) {
-                                            taxonomyItems.filter(item => item.isToplevelItem).forEach(item => {
-                                                let parent = new DataItemModel(this.createUniqueId(item.self.href), item.name, false, item.self.href, item.description, DataItemTypeEnum.TaxonomyItemProperty, this.graph, false);
-                                                this.createTaxonomyHierarchie(parent, item, taxonomyItems, relationItems);
+                                            let taxonomyDataItems: DataItemModel[] = []
+                                            taxonomyItems.forEach(item => taxonomyDataItems.push(new DataItemModel(this.createUniqueId(item.self.href), item.name, false, item.self.href, item.description, DataItemTypeEnum.TaxonomyItemProperty, this.graph, false)))
+                                            taxonomyItems.filter(item => item.deletedOn==null).filter(item => item.isToplevelItem).forEach(item => {
+                                                let parent = taxonomyDataItems.find(dataItem => dataItem.href == item.self.href)
+                                                this.createTaxonomyHierarchie(parent, item, taxonomyItems, relationItems, taxonomyDataItems);
                                                 this.dataItems.find(p => p.id == nodeID).addChildItem(parent);
                                             })
                                         }
@@ -875,13 +879,14 @@ export class OntologyGraph {
         })
     }
 
-    private createTaxonomyHierarchie(parent: DataItemModel, item: TaxonomyItemApiObject, allItems: TaxonomyItemApiObject[], allRelations: TaxonomyItemRelationApiObject[]) {
+    private createTaxonomyHierarchie(parent: DataItemModel, item: TaxonomyItemApiObject, allItems: TaxonomyItemApiObject[], allRelations: TaxonomyItemRelationApiObject[], taxonomyDataItems: DataItemModel[]) {
         item.children.forEach(child => {
             let targetChild = allRelations.find(item => item.self.href == child.href).targetItem;
             let targetItem = allItems.find(item => item.self.href == targetChild.href);
-            let childItem = new DataItemModel(this.createUniqueId(targetItem.self.href), targetItem.name, false, targetItem.self.href, targetItem.description, DataItemTypeEnum.TaxonomyItemProperty, this.graph, false);
+            //let childItem = new DataItemModel(this.createUniqueId(targetItem.self.href), targetItem.name, false, targetItem.self.href, targetItem.description, DataItemTypeEnum.TaxonomyItemProperty, this.graph, false);
+            let childItem = taxonomyDataItems.find(dataItem => dataItem.href == targetItem.self.href)
             parent.addChildItem(childItem);
-            this.createTaxonomyHierarchie(childItem, targetItem, allItems, allRelations);                       
+            this.createTaxonomyHierarchie(childItem, targetItem, allItems, allRelations, taxonomyDataItems);                       
         })
     }
 
@@ -1437,7 +1442,8 @@ export class OntologyGraph {
                 template: "arrow",
                 scale: largeMarkerSize,
                 relativeRotation: 0,
-            }
+            },
+            id: source.toString() + target.toString()
         }
         this.graph.addEdge(path, false)
     }
@@ -1543,25 +1549,18 @@ export class OntologyGraph {
                 this.addItemsToTaxonomy(this.dataItems.find(t => t.id == node.id), this.getLeftBottomPointOfItem(node));
                 this.graph.completeRender();
                 this.addChildnodesToParents();
+                this.setCurrentEdgeStyle(this.currentEdgeStyleBold);
                 this.graph.completeRender();
                 this.graphoverview.completeRender();
             }
         }
 
-        if (event.detail.key == "header") {
+        else if (event.detail.key == "header") {
             this.selectedNode = this.dataItems.find(item => item.id == node.id);
         }
 
-        // highlight links        
-        this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
-            edge.childNodes[0].classList.remove("highlight-edge")
-            if(this.currentEdgeStyleBold){
-                this.highlightMarker(edge.id.substring(5), "arrow", largeMarkerSize)
-            } else {
-                this.highlightMarker(edge.id.substring(5), "small-arrow", smallMarkerSize)
-            }
-        });
-        if (event.type == 'nodeclick') {
+        
+        else if (event.type == 'nodeclick') {
             this.graph.edgeList.forEach(edge => {
                 this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
                     if (edge.id.includes(node.id)) {
@@ -1576,6 +1575,16 @@ export class OntologyGraph {
                     })
                 });
             })
+        }
+        else {   
+            this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
+                edge.childNodes[0].classList.remove("highlight-edge")
+                if(this.currentEdgeStyleBold){
+                    this.highlightMarker(edge.id.substring(5), "arrow", largeMarkerSize)
+                } else {
+                    this.highlightMarker(edge.id.substring(5), "small-arrow", smallMarkerSize)
+                }
+            });
         }
         this.graph.completeRender();
     }
@@ -1627,7 +1636,12 @@ export class OntologyGraph {
 
     currentEdgeStyleBoldChanged(newValue: boolean) {
         if (this.graph == null) return;
-        if (newValue) {
+        this.setCurrentEdgeStyle(newValue);
+        this.graph.completeRender();
+    }
+
+    private setCurrentEdgeStyle(value) {
+        if (value) {
             this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
                 edge.childNodes[0].classList.remove("small-edge")
                 this.highlightMarker(edge.id.substring(5), "arrow", largeMarkerSize)
@@ -1638,7 +1652,6 @@ export class OntologyGraph {
                 this.highlightMarker(edge.id.substring(5), "small-arrow", smallMarkerSize)
             });
         }
-        this.graph.completeRender();
     }
 
     private onZoomChange(event: CustomEvent<{ eventSource: "API" | "USER_INTERACTION" | "INTERNAL", node: Node }>) {

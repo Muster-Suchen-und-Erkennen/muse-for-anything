@@ -49,7 +49,7 @@
             <div class="ont-treeview-item" title="${current.name}"
                 class.bind="current.isSearchResult || current.isSelected ? 'ont-treeview-item-highlight':''"> ${current.name}</div>
 
-            <button class="button-flat items-center button-list-fixed-position"
+            <button if.bind="current.itemType=='taxonomyItem' || current.itemType=='typeItem'" class="button-flat items-center button-list-fixed-position"
                 click.delegate="current.togglePositionFixed()" title='${"ontology.toggleFixedPosition" | t}'
                 style="margin: 0 !important; padding: 0 !important">
                 <svg-icon icon.bind="current.positionIsFixed ? 'unfixed-position' : 'fixed-position'" size.bind="20"></svg-icon>
