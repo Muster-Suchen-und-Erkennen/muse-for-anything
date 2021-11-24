@@ -637,6 +637,11 @@ input[type="checkbox"]:indeterminate {
     opacity: 10%;
 }
 
+.button-list-fixed-position-fixed {
+    opacity: 100%;
+    color: black;
+}
+
 
 .button-list-fixed-position:hover {
     opacity: 100%;

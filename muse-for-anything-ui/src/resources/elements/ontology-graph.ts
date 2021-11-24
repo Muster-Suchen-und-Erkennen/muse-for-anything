@@ -1389,7 +1389,7 @@ export class OntologyGraph {
         let groupManager = this.graph.groupingManager;
         groupManager.markAsTreeRoot(parentItem.id);
         groupManager.setGroupBehaviourOf(parentItem.id, new TaxonomyGroupBehaviour());
-
+        
         return this.getLeftBottomPointOfItem(parentItem.node);
     }
     
@@ -1554,44 +1554,39 @@ export class OntologyGraph {
                 this.graphoverview.completeRender();
             }
         }
-
         else if (event.detail.key == "header") {
             this.selectedNode = this.dataItems.find(item => item.id == node.id);
         }
-
-        
         else if (event.type == 'nodeclick') {
             this.graph.edgeList.forEach(edge => {
                 this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
                     if (edge.id.includes(node.id)) {
-                        edge.childNodes[0].classList.add("highlight-edge")
-                        this.highlightMarker(edge.id.substring(5), "big-arrow", 1.8)
+                        if(this.currentEdgeStyleBold) {
+                            edge.childNodes[0].classList.add("highlight-bold-edge")
+                            this.highlightMarker(edge.id.substring(5), "big-arrow", 2.8)
+                        } else {
+                            edge.childNodes[0].classList.add("highlight-edge")
+                            this.highlightMarker(edge.id.substring(5), "big-arrow", 1.8)
+                        }
                     }
                     this.dataItems.find(p => p.id == node.id)?.children?.forEach(childNode => {
                         if (edge.id.includes(childNode.id)) {
-                            edge.childNodes[0].classList.add("highlight-edge")
-                            this.highlightMarker(edge.id.substring(5), "big-arrow", 1.8)
+                            if(this.currentEdgeStyleBold) {
+                                edge.childNodes[0].classList.add("highlight-bold-edge")
+                                this.highlightMarker(edge.id.substring(5), "big-arrow", 2.8)
+                            } else {
+                                edge.childNodes[0].classList.add("highlight-edge")
+                                this.highlightMarker(edge.id.substring(5), "big-arrow", 1.8)
+                            }
                         }
                     })
                 });
             })
         }
-        else {   
-            this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
-                edge.childNodes[0].classList.remove("highlight-edge")
-                if(this.currentEdgeStyleBold){
-                    this.highlightMarker(edge.id.substring(5), "arrow", largeMarkerSize)
-                } else {
-                    this.highlightMarker(edge.id.substring(5), "small-arrow", smallMarkerSize)
-                }
-            });
-        }
         this.graph.completeRender();
     }
 
     private highlightMarker(edgeID, template, scale) {
-        //let transformsettings = element.getAttribute("transform")
-        //element.setAttribute("transform", transformsettings.split("scale(")[0] + "scale(" + size + transformsettings.split("scale(")[1].substring(transformsettings.split("scale(")[1].indexOf(")")))
         this.graph.getEdge(edgeID).markerEnd = {
             template: template,
             scale: scale,
@@ -1615,6 +1610,7 @@ export class OntologyGraph {
         this.renderMainViewPositionInOverviewGraph();
         this.graph.getSVG().selectAll("g.edge-group").nodes().forEach(edge => {
             edge.childNodes[0].classList.remove("highlight-edge")
+            edge.childNodes[0].classList.remove("highlight-bold-edge")
             if(this.currentEdgeStyleBold) {
                 this.highlightMarker(edge.id.substring(5), "arrow", largeMarkerSize)
             } else {
@@ -1817,7 +1813,6 @@ export class OntologyGraph {
 
         if (this.showTaxonomies) this.renderTaxonomies();
         this.postRender();
-        //this.graph.zoomToBoundingBox();
         this.resetLayout();
 
         this.graphoverview.zoomToBoundingBox();
@@ -1861,6 +1856,9 @@ export class OntologyGraph {
         this.addDraggingFunctions();
     }
 
+    /**
+     * add eventlistener to id=mainontology-graph, because if added directly to html, spinner and number input don't work
+     */
     addDraggingFunctions() {
         //mouseup.delegate="endDrag()" 
         document.getElementById("mainontology-graph").addEventListener('mouseup', e => this.endDrag());

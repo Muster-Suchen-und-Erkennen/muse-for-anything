@@ -156,14 +156,25 @@
                 }
 
                 .edge.highlight-edge {
-                    stroke: var(--line-color);
+                    stroke: var(--highlight-parent-color);
                     opacity: 1;
                     stroke-width: 8px;
+                }
+
+                .edge.highlight-bold-edge {
+                    stroke: var(--highlight-parent-color);
+                    opacity: 1;
+                    stroke-width: 12px;
                 }
 
                 .edge-group .marker {
                     fill: var(--line-color);
                 }
+
+                .edge-group .highlight-bold-edge~.marker, .edge-group .highlight-edge~.marker {
+                    fill: var(--highlight-parent-color);
+                }
+
 
 
                 .position-rect {
@@ -482,10 +493,10 @@
                                     <td class="table-info-name" title='${"ontology.detailview.abstract" | t}'>${"ontology.detailview.abstract" | t}</td>
                                     <td class="table-info-detail" title='${selectedNode.abstract}'>${selectedNode.abstract}</td>
                                 </tr>
-                                <tr>
+                                <!--<tr>
                                     <td class="table-info-name" title='${"ontology.detailview.implementations" | t}'>${"ontology.detailview.implementations" | t}</td>
                                     <td class="table-info-detail"></td>
-                                </tr>
+                                </tr>-->
                                 <tr>
                                     <td class="table-info-name" title='${"ontology.detailview.api-link" | t}'>${"ontology.detailview.api-link" | t}</td>
                                     <td class="table-info-detail" title='${selectedNode.href}'>${selectedNode.href}</td>

@@ -50,6 +50,7 @@
                 class.bind="current.isSearchResult || current.isSelected ? 'ont-treeview-item-highlight':''"> ${current.name}</div>
 
             <button if.bind="current.itemType=='taxonomyItem' || current.itemType=='typeItem'" class="button-flat items-center button-list-fixed-position"
+                class.bind="current.positionIsFixed ? 'button-list-fixed-position-fixed':''"
                 click.delegate="current.togglePositionFixed()" title='${"ontology.toggleFixedPosition" | t}'
                 style="margin: 0 !important; padding: 0 !important">
                 <svg-icon icon.bind="current.positionIsFixed ? 'unfixed-position' : 'fixed-position'" size.bind="20"></svg-icon>
