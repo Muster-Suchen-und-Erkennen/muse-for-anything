@@ -418,3 +418,307 @@ ux-dialog>ux-dialog-footer{
 .ux-dialog-open{
     overflow:hidden
 }
+
+#mainontology-graph {
+    background-color: white;
+    display: grid; 
+    grid-template-columns: 30% 2px 70%; 
+    grid-template-rows: 100%; 
+    grid-template-areas: 
+      "menu-section dragbar menu-graph"; 
+    height: 500px;
+} 
+
+#dragbar {
+    background-color: darkgray;
+	grid-area: dragbar;
+    cursor: ew-resize; 
+    width: 1px;
+}
+
+#dragbar:hover {
+    background-color: rgb(255, 0, 234); 
+    width: 4px;
+}
+
+ontology-graph[data-maximized] {
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    border-radius: 0px;
+    margin-bottom: 0px;
+    grid-template-columns: 30% 2px 70%; 
+    height: 100%; 
+}
+
+#menu-section {
+    display: grid; 
+    grid-template-columns: 100%; 
+    grid-template-rows: 30% 50% 20%; 
+    grid-template-areas: 
+        "item-filtersection"
+        "item-treesection"
+        "item-overview"; 
+    grid-area: menu-section; 
+}
+
+#item-filtersection { grid-area: item-filtersection; }
+#item-treesection { 
+    grid-area: item-treesection;
+	
+}
+#item-overview { grid-area: item-overview; }
+.menu-graph { grid-area: menu-graph; }
+
+.section-title {
+    font-size:small;
+}
+
+.section-main-title {
+    font-size: small;
+    color: white;
+    margin-bottom: 5px;
+    padding-left: 5px;
+}
+
+.detailview-description{
+    font-size: small
+}
+
+.detailview-title {
+    font-size: medium;
+}
+
+.section-main-title-draggable {
+    cursor: ns-resize; 
+}
+
+.section-main-title-draggable:hover {
+    background-color: rgb(255, 0, 234); 
+}
+
+.ontology-move{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ontology-moveBackground{
+    border-radius: 50px;
+    background: #cacaca;
+    width: 102px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.scroll-area {
+    overflow: auto;
+    height: calc(100% - 24px);
+    padding-right: 5px;
+}
+
+.button-oneline {
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+}
+
+ul{
+    list-style-type:none;
+    margin:0;
+}
+
+tree-node  ul:first-child{
+    padding-left:0;
+}
+
+.StartOfTreeNode > tree-node > .StartOfTreeNode{
+    padding-left:30px;
+}
+      
+.left{
+    float:left;
+}
+
+.EachMiniQueueWithOutCollapse {
+    flex-direction: row;
+    display: flex;
+    align-items: center;
+}
+ 
+.eachMinQueueCheckSection{
+    margin-right:10px;
+    width:10px;
+}
+
+.ont-treeview-item {
+    margin-left: 10px;
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+}
+
+.ont-treeview-item-highlight {
+    color:rgb(255, 0, 234);
+}
+
+.detailview-item {
+    display: inline-block;
+    overflow: hidden;
+    margin-bottom: -10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+    border-style: solid;
+    border-bottom: gray;
+    border-top-width: 1px;
+}
+
+table, th, td {
+    border: 1px solid lightgray;
+    border-collapse: collapse;
+  }
+
+#table-info {
+    width: 100%;
+    white-space: nowrap; 
+    table-layout: fixed;
+}
+
+.table-info-detail {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+    padding-left: 5px;
+}
+
+.table-info-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 40%;
+    padding-left: 5px;
+}
+
+.ontology-algorithm-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 95%;
+}
+
+#ontology-loading-indicator {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.section-subpart {
+    margin-left: 20px;
+}
+
+.detailview {
+    max-width: 400px;
+}
+
+input[type="checkbox"]:indeterminate {
+    content: "\f068";
+    color: #2b6daf;
+}
+
+.button-list-fixed-position {
+    opacity: 10%;
+}
+
+.button-list-fixed-position-fixed {
+    opacity: 100%;
+    color: black;
+}
+
+
+.button-list-fixed-position:hover {
+    opacity: 100%;
+}
+
+/* style scrollbar */
+::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+    background: #888;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* toogle switch */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 30px;
+    height: 18px;
+  }
+  
+.switch input { 
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 1px;
+    background-color: #ccc;
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 13px;
+    width: 13px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+    -webkit-transform: translateX(13px);
+    -ms-transform: translateX(13px);
+    transform: translateX(13px);
+}
+
+/* Rounded sliders */
+.slider.round {
+    border-radius: 17px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}

@@ -12,15 +12,21 @@
     "doc": "../docs"
   },
   "dependencies": {
+    "@bmaxtech/aurelia-loaders": "^1.0.3",
     "@ustutt/grapheditor-webcomponent": "^0.6.1",
     "aurelia-animator-css": "^1.0.4",
     "aurelia-bootstrapper": "^2.3.3",
     "aurelia-dialog": "^2.0.0",
     "aurelia-fetch-client": "^1.8.2",
     "aurelia-i18n": "^3.1.4",
+    "d3-force": "^3.0.0",
+    "fs": "0.0.1-security",
     "i18next": "^19.9.2",
     "i18next-xhr-backend": "^3.2.2",
-    "nanoid": "^3.1.22"
+    "nanoid": "^3.1.22",
+    "ngraph.forcelayout": "^3.2.0",
+    "ngraph.graph": "^19.1.0",
+    "svg-to-pdfkit": "^0.1.8"
   },
   "devDependencies": {
     "@fullhuman/postcss-purgecss": "^3.1.3",

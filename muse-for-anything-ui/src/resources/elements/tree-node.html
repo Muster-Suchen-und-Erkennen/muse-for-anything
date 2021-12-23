@@ -1,0 +1,63 @@
+<template>
+    <require from="./svg-icon.html"></require>
+    <div show.bind="current.visible" class="StartOfTreeNode">
+        <div class="EachMiniQueueWithOutCollapse border-gray-200 border-b">
+            <div if.bind="current.hasChildren()" click.trigger="current.toggleNode(current)"
+                class="eachMinQueueCheckSection">
+                <svg-icon icon.bind="current.icon" size.bind="18"></svg-icon>
+            </div>
+            <div class="eachMinQueueCheckSection">
+                <label class="cb_control control--checkbox">
+                    <input type="checkbox" checked.bind="current.isSelected" indeterminate.bind="current.childIsInResult">
+                    <span class="control__indicator"></span>
+                </label>
+            </div>
+            <div if.bind="current.itemType=='typeItem'" title="Item Type: Type">
+                <svg height="16px" width="32px" xmlns="http://www.w3.org/2000/svg">
+                    <rect transform="scale(0.15)" stroke="rgb(189, 189, 189)" rx="10" id="svg_1" height="100 "
+                        width="198" y="3" x="2" fill="rgb(189, 189, 189)" />
+                </svg>
+            </div>
+            <div if.bind="current.itemType=='taxonomyItem'" title="Item Type: Taxonomy">
+                <svg height="16px" width="32px" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse transform="scale(0.15)" stroke="#FABA6F" ry="50" rx="99" id="svg_1" cy="50.5" cx="99"
+                        fill="#FABA6F" />
+                </svg>
+            </div>
+            <div if.bind="current.itemType=='string'" title="Item Type: String">
+                <svg-icon icon.bind="'string'" size.bind="18"></svg-icon>
+            </div>
+            <div if.bind="current.itemType=='number'" title="Item Type: Number">
+                <svg-icon icon.bind="'number'" size.bind="18"></svg-icon>
+            </div>
+            <div if.bind="current.itemType=='integer'" title="Item Type: Integer">
+                <svg-icon icon.bind="'integer'" size.bind="18"></svg-icon>
+            </div>
+            <div if.bind="current.itemType=='enum'" title="Item Type: Enum">
+                <svg-icon icon.bind="'enum'" size.bind="18"></svg-icon>
+            </div>
+            <div if.bind="current.itemType=='boolean'" title="Item Type: Boolean">
+                <svg-icon icon.bind="'boolean'" size.bind="18"></svg-icon>
+            </div>
+            <div if.bind="current.itemType=='type'" title="Item Type: Type-Reference">
+                <svg-icon icon.bind="'typeref'" size.bind="18"></svg-icon>
+            </div>
+            <div if.bind="current.itemType=='taxonomy'" title="Item Type: Taxonomy-Reference">
+                <svg-icon icon.bind="'taxref'" size.bind="18"></svg-icon>
+            </div>
+
+            <div class="ont-treeview-item" title="${current.name}"
+                class.bind="current.isSearchResult || current.isSelected ? 'ont-treeview-item-highlight':''"> ${current.name}</div>
+
+            <button if.bind="current.itemType=='taxonomyItem' || current.itemType=='typeItem'" class="button-flat items-center button-list-fixed-position"
+                class.bind="current.positionIsFixed ? 'button-list-fixed-position-fixed':''"
+                click.delegate="current.togglePositionFixed()" title='${"ontology.toggleFixedPosition" | t}'
+                style="margin: 0 !important; padding: 0 !important">
+                <svg-icon icon.bind="current.positionIsFixed ? 'unfixed-position' : 'fixed-position'" size.bind="20"></svg-icon>
+            </button>
+        </div>
+
+        <tree-node repeat.for="node of current.children" current.bind="node">
+        </tree-node>
+    </div>
+</template>

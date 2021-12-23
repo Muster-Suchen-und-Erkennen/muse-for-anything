@@ -49,6 +49,7 @@ export function configure(aurelia: Aurelia): void {
             config.useDefaults();
             config.useCSS("");
         })
+        .plugin(PLATFORM.moduleName('@bmaxtech/aurelia-loaders'))
         .feature(PLATFORM.moduleName("resources/index"));
 
     aurelia.use.developmentLogging(environment.debug ? "debug" : "warn");

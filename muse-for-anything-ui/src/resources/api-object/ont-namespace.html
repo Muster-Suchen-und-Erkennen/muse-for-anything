@@ -1,6 +1,7 @@
 <template>
     <require from="../elements/api-schema-view"></require>
     <require from="../elements/svg-icon.html"></require>
+    <require from="../elements/ontology-graph"></require>
 
     <div if.bind="!isRoot">
         <a class="link-hover flex items-center" href="/explore/${clientUrl}"
@@ -23,5 +24,9 @@
             ${"namespace" | t}: ${apiObject.name}
         </h3>
         <api-schema-view data.bind="apiObject" schema-url.bind="apiObject.self.schema"></api-schema-view>
+    </div>
+    
+    <div if.bind="isRoot">
+        <ontology-graph id="ontology-graph" class="p-1" api-link.bind="apiObject.self">
     </div>
 </template>
