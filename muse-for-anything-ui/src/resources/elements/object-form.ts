@@ -1,7 +1,6 @@
-import { bindable, bindingMode, observable, autoinject, computedFrom } from "aurelia-framework";
-import { BindingSignaler } from "aurelia-templating-resources";
-import { NormalizedApiSchema, PropertyDescription } from "rest/schema-objects";
+import { autoinject, bindable, bindingMode, observable } from "aurelia-framework";
 import { nanoid } from "nanoid";
+import { NormalizedApiSchema, PropertyDescription } from "rest/schema-objects";
 
 @autoinject
 export class ObjectForm {
@@ -276,6 +275,7 @@ export class ObjectForm {
         this.propertiesValidChanged(this.propertiesValid);
     };
 
+    // eslint-disable-next-line complexity
     propertiesValidChanged(newValue: { [prop: string]: boolean }) {
         if (newValue == null) {
             this.valid = this.isNullable;
@@ -300,7 +300,17 @@ export class ObjectForm {
         }
         const requiredPropKeys = propKeys.filter(key => this.requiredProperties.has(key));
         const allRequiredPresent = this.requiredProperties.size === requiredPropKeys.length;
-        this.valid = allPropertiesValid && allRequiredPresent;
+
+        let passwordFieldsMatch = true;
+        if (this.valueOut?.password != null && this.valueOut?.retypePassword != null) {
+            if (this.propertiesByKey.get("password").propertySchema?.normalized?.password
+                && this.propertiesByKey.get("retypePassword").propertySchema?.normalized?.password) {
+                passwordFieldsMatch = this.valueOut?.password === this.valueOut?.retypePassword;
+                // TODO provide better feedback to user when passwords don't match
+            }
+        }
+
+        this.valid = allPropertiesValid && allRequiredPresent && passwordFieldsMatch;
     }
 
     onPropertyDirtyUpdate = (value, binding) => {

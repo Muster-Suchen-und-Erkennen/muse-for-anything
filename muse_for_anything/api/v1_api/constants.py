@@ -59,6 +59,10 @@ TAXONOMY_ITEM_RELATION_REL_TYPE = "ont-taxonomy-item-relation"
 SOURCE_REL = "source"
 TARGET_REL = "target"
 
+# auth related rels
+
+USER_REL_TYPE = "user"
+
 
 # link to relations ############################################################
 
@@ -130,6 +134,10 @@ TAXONOMY_ITEM_RELATION_EXTRA_LINK_RELATIONS = (
     TAXONOMY_REL_TYPE,
 )
 
+# Auth related
+
+USER_EXTRA_LINK_RELATIONS = tuple()
+
 # key variables ################################################################
 
 # normal keys
@@ -159,6 +167,13 @@ TYPE_EXTRA_ARG = "type"
 ITEM_COUNT_DEFAULT = "25"
 
 
+# Auth related
+
+USER_ID_KEY = "username"
+
+VIEW_ALL_USERS_EXTRA_ARG = "VIEW_ALL_USERS"  # extra argument only for authentication!
+
+
 # schemas ######################################################################
 
 NAMESPACE_SCHEMA = "Namespace"
@@ -170,6 +185,11 @@ TAXONOMY_SCHEMA = "TaxonomySchema"
 TAXONOMY_ITEM_SCHEMA = "TaxonomyItemSchema"
 TAXONOMY_ITEM_RELATION_SCHEMA = "TaxonomyRelationSchema"
 TAXONOMY_ITEM_RELATION_POST_SCHEMA = "TaxonomyItemRelationPostSchema"
+
+# Auth related
+USER_SCHEMA = "UserSchema"
+USER_CREATE_SCHEMA = "UserCreateSchema"
+USER_UPDATE_SCHEMA = "UserUpdateSchema"
 
 
 # endpoints ####################################################################
@@ -207,3 +227,7 @@ TAXONOMY_ITEM_VERSION_RESOURCE = "api-v1.TaxonomyItemVersionView"
 
 TAXONOMY_ITEM_RELATION_PAGE_RESOURCE = "api-v1.TaxonomyItemRelationsView"
 TAXONOMY_ITEM_RELATION_RESOURCE = "api-v1.TaxonomyItemRelationView"
+
+# Auth related
+USER_PAGE_RESOURCE = "api-v1.UsersView"
+USER_RESOURCE = "api-v1.UserView"

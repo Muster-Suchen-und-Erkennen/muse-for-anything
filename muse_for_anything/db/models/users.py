@@ -1,17 +1,17 @@
 """Module containing the namespace table definitions."""
 
 from typing import List, Optional, Set, Union
+
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.elements import literal
 from sqlalchemy.sql.schema import Column, ForeignKey
-from ...password_helpers import FLASK_PASSWORD
-from ..db import DB, MODEL
-from .model_helpers import ExistsMixin, IdMixin, CreateDeleteMixin
 
+from .model_helpers import CreateDeleteMixin, ExistsMixin, IdMixin
 from .namespace import Namespace
-from .ontology_objects import OntologyObjectType, OntologyObject
+from .ontology_objects import OntologyObject, OntologyObjectType
 from .taxonomies import Taxonomy
-
+from ..db import DB, MODEL
+from ...password_helpers import FLASK_PASSWORD
 
 RESOURCE_TYPE = Union[Namespace, OntologyObjectType, OntologyObject, Taxonomy]
 
@@ -65,12 +65,6 @@ class User(MODEL, IdMixin, CreateDeleteMixin, ExistsMixin):
         back_populates="user",
     )
 
-    associated_namespaces: List["AssociatedNamespaces"] = relationship(
-        "AssociatedNamespaces",
-        lazy="joined",
-        back_populates="user",
-    )
-
     grants: List["UserGrant"] = relationship(
         "UserGrant",
         lazy="select",
@@ -101,15 +95,6 @@ class User(MODEL, IdMixin, CreateDeleteMixin, ExistsMixin):
     def has_role(self, role: str) -> bool:
         for user_role in self.roles:
             if user_role.role == role:
-                return True
-        return False
-
-    def is_associated_with_namespace(self, namespace: Namespace) -> bool:
-        for associated_namespace in self.associated_namespaces:
-            if (
-                associated_namespace.namespace is None
-                or associated_namespace.namespace_id == namespace.id
-            ):
                 return True
         return False
 
@@ -175,28 +160,6 @@ class UserRole(MODEL, IdMixin):
             raise ValueError(f"Role '{role}' is not an allowed role!")
         self.user = user
         self.role = role
-
-
-class AssociatedNamespaces(MODEL, IdMixin):  # TODO remove
-    """Maping from Users to associated Namespaces."""
-
-    __tablename__ = "UserNamespace"
-
-    user_id: Column = DB.Column(DB.Integer, ForeignKey(User.id), nullable=False)
-    namespace_id: Column = DB.Column(DB.Integer, ForeignKey(Namespace.id), nullable=True)
-
-    # references
-    user: User = relationship(
-        User,
-        innerjoin=True,
-        lazy="selectin",
-        back_populates="associated_namespaces",
-    )
-    namespace: Namespace = relationship(
-        Namespace,
-        innerjoin=True,
-        lazy="selectin",
-    )
 
 
 def _get_allowed_resource_roles() -> Set[str]:

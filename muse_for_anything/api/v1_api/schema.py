@@ -1,19 +1,23 @@
 """Module containing the schema API of the v1 API."""
 
-from muse_for_anything.api.v1_api.request_helpers import LinkGenerator
+from http import HTTPStatus
 from typing import Any, Callable, Dict, List, Optional, cast
-from flask import request, jsonify, Response
+
+from flask import Response, jsonify, request
 from flask.helpers import url_for
 from flask.views import MethodView
 from flask_babel import gettext
 from flask_smorest import abort
 from marshmallow.base import SchemaABC
 from marshmallow.fields import Field
-from http import HTTPStatus
 
-from .root import API_V1
-from ..util import JSON_SCHEMA, JSON_MIMETYPE, JSON_SCHEMA_MIMETYPE
-from ..base_models import ApiLink, ApiResponse, BaseApiObject, DynamicApiResponseSchema
+from muse_for_anything.api.v1_api.models.auth import (
+    UserCreateSchema,
+    UserSchema,
+    UserUpdateSchema,
+)
+from muse_for_anything.api.v1_api.request_helpers import LinkGenerator
+
 from .models.ontology import (
     NamespaceSchema,
     ObjectTypeSchema,
@@ -22,11 +26,11 @@ from .models.ontology import (
     TaxonomyItemSchema,
     TaxonomySchema,
 )
-from .models.schema import SchemaApiObject, SchemaApiObjectSchema, TYPE_SCHEMA
-
-from ...db.models.ontology_objects import (
-    OntologyObjectTypeVersion,
-)
+from .models.schema import TYPE_SCHEMA, SchemaApiObject, SchemaApiObjectSchema
+from .root import API_V1
+from ..base_models import ApiLink, ApiResponse, BaseApiObject, DynamicApiResponseSchema
+from ..util import JSON_MIMETYPE, JSON_SCHEMA, JSON_SCHEMA_MIMETYPE
+from ...db.models.ontology_objects import OntologyObjectTypeVersion
 
 
 def create_schema_from_model(
@@ -105,6 +109,35 @@ SCHEMAS: Dict[str, Dict[str, Any]] = {
         TaxonomyItemRelationPostSchema(),
         TaxonomyItemRelationPostSchema={
             "propertyOrder": {"namespaceId": 10, "taxonomyId": 20, "taxonomyItemId": 30},
+        },
+    ),
+    # Auth related schemas
+    "UserSchema": create_schema_from_model(
+        UserSchema(),
+        UserSchema={
+            "propertyOrder": {"username": 10, "eMail": 20},
+        },
+    ),
+    "UserCreateSchema": create_schema_from_model(
+        UserCreateSchema(exclude=("self",)),
+        UserCreateSchema={
+            "propertyOrder": {
+                "username": 10,
+                "eMail": 20,
+                "password": 30,
+                "retypePassword": 40,
+            },
+        },
+    ),
+    "UserUpdateSchema": create_schema_from_model(
+        UserUpdateSchema(exclude=("self",)),
+        UserUpdateSchema={
+            "propertyOrder": {
+                "username": 10,
+                "eMail": 20,
+                "password": 30,
+                "retypePassword": 40,
+            },
         },
     ),
 }

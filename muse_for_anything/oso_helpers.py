@@ -1,28 +1,29 @@
 """Module for setting up oso support for flask app."""
 
 from dataclasses import dataclass
-from muse_for_anything.db.models.taxonomies import (
-    Taxonomy,
-    TaxonomyItem,
-    TaxonomyItemRelation,
-    TaxonomyItemVersion,
-)
+from typing import Any, Dict, Optional, Sequence, Type
+
+from flask import Flask
+from flask.globals import g, request
+from flask_oso import FlaskOso
+from oso import Oso
+from polar.exceptions import OsoError
+from sqlalchemy.exc import ArgumentError
+
+from muse_for_anything.db.models.namespace import Namespace
 from muse_for_anything.db.models.ontology_objects import (
     OntologyObject,
     OntologyObjectType,
     OntologyObjectTypeVersion,
     OntologyObjectVersion,
 )
-
-from sqlalchemy.exc import ArgumentError
-from muse_for_anything.db.models.namespace import Namespace
-from typing import Any, Dict, Optional, Sequence, Type
-from flask import Flask
-from flask.globals import g, request
-from flask_oso import FlaskOso
-from oso import Oso
-from polar.exceptions import OsoError
-
+from muse_for_anything.db.models.taxonomies import (
+    Taxonomy,
+    TaxonomyItem,
+    TaxonomyItemRelation,
+    TaxonomyItemVersion,
+)
+from muse_for_anything.db.models.users import User
 
 _RESOURCE_TYPE_TO_RELATION_MAPPING: Dict[Type, str] = {
     Namespace: "ont-namespace",
@@ -34,6 +35,7 @@ _RESOURCE_TYPE_TO_RELATION_MAPPING: Dict[Type, str] = {
     TaxonomyItem: "ont-taxonomy-item",
     TaxonomyItemVersion: "ont-taxonomy-item-version",
     TaxonomyItemRelation: "ont-taxonomy-item-relation",
+    User: "user",
     # TODO add all resources here!
 }
 
@@ -156,20 +158,20 @@ FLASK_OSO = CustomFlaskOso(oso=OSO)
 
 def register_oso(app: Flask):
     """Register oso to enable access management for this app."""
-    from .db.models.users import User, Guest
     from .db.models.namespace import Namespace
     from .db.models.ontology_objects import (
+        OntologyObject,
         OntologyObjectType,
         OntologyObjectTypeVersion,
-        OntologyObject,
         OntologyObjectVersion,
     )
     from .db.models.taxonomies import (
         Taxonomy,
         TaxonomyItem,
-        TaxonomyItemVersion,
         TaxonomyItemRelation,
+        TaxonomyItemVersion,
     )
+    from .db.models.users import Guest, User
 
     FLASK_OSO.init_app(app)
 

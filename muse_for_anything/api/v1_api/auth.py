@@ -1,26 +1,23 @@
 """Module containing the authentication API of the v1 API."""
 
-from typing import Dict
+from dataclasses import dataclass
+from typing import Dict, Optional
+
 from flask.helpers import url_for
 from flask.views import MethodView
 from flask_babel import gettext
-from dataclasses import dataclass
-from flask_jwt_extended import (
-    create_access_token,
-    create_refresh_token,
-    current_user,
-)
+from flask_jwt_extended import create_access_token, create_refresh_token, current_user
 from flask_smorest import abort
 
-from .root import API_V1
-from ..base_models import ApiLink, ApiResponse, DynamicApiResponseSchema
-from .models import (
+from .models.auth import (
+    AccessTokenSchema,
     LoginPostSchema,
     LoginTokensSchema,
-    AccessTokenSchema,
+    UserData,
     UserSchema,
 )
-
+from .root import API_V1
+from ..base_models import ApiLink, ApiResponse, DynamicApiResponseSchema
 from ...db.models.users import User
 
 
@@ -40,13 +37,6 @@ class LoginTokensData:
 class RefreshedTokenData:
     self: ApiLink
     access_token: str
-
-
-@dataclass
-class UserData:
-    self: ApiLink
-    username: str
-    e_mail: str
 
 
 @API_V1.route("/auth/")
@@ -70,7 +60,12 @@ class AuthRootView(MethodView):
                 ),
                 ApiLink(
                     href=url_for("api-v1.WhoamiView", _external=True),
-                    rel=("whoami", "user"),
+                    rel=("user",),
+                    resource_type="whoami",
+                ),
+                ApiLink(
+                    href=url_for("api-v1.UsersView", _external=True),
+                    rel=("collection", "page"),
                     resource_type="user",
                 ),
             ],
@@ -100,19 +95,19 @@ class LoginView(MethodView):
         The access token can be used for all authorized api endpoints.
         The refresh token can only be used with the refresh endpoint to get a new access token.
         """
-        username = credentials.get("username")
+        username = credentials.get("username", "")
         user_query = None
         if "@" in username:
             user_query = User.query.filter(User.e_mail == username)
         else:
             user_query = User.query.filter(User.username == username)
-        user: Optiona[User] = user_query.first()
+        user: Optional[User] = user_query.first()
         error_message = gettext("Username or password invalid!")
         if user is None:
             # call fake_authenticate to not leak usernames through timing difference
-            User.fake_authenticate(credentials.get("password"))
+            User.fake_authenticate(credentials.get("password", ""))
             abort(400, error_message)
-        elif not user.authenticate(credentials.get("password")):
+        elif not user.authenticate(credentials.get("password", "")):
             abort(400, error_message)
         return ApiResponse(
             links=[

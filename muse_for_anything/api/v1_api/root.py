@@ -1,11 +1,13 @@
 """Module containing the root endpoint of the v1 API."""
 
 from dataclasses import dataclass
+
 from flask.helpers import url_for
 from flask.views import MethodView
-from ..util import SecurityBlueprint as SmorestBlueprint, template_url_for
-from ..base_models import ApiResponse, ApiLink, DynamicApiResponseSchema, KeyedApiLink
 
+from ..base_models import ApiLink, ApiResponse, DynamicApiResponseSchema, KeyedApiLink
+from ..util import SecurityBlueprint as SmorestBlueprint
+from ..util import template_url_for
 
 API_V1 = SmorestBlueprint(
     "api-v1", "API v1", description="Version 1 of the API.", url_prefix="/api/v1"
@@ -291,6 +293,27 @@ class RootView(MethodView):
                     rel=tuple(),
                     resource_type="ont-taxonomy-item-relation",
                     key=("namespaceId", "taxonomyId", "taxonomyItemId", "relationId"),
+                ),
+                # auth related
+                KeyedApiLink(
+                    href=template_url_for(
+                        "api-v1.UserView",
+                        {"username": "username"},
+                        _external=True,
+                    ),
+                    rel=tuple(),
+                    resource_type="user",
+                    key=("username",),
+                ),
+                KeyedApiLink(
+                    href=template_url_for(
+                        "api-v1.UsersView",
+                        {},
+                        _external=True,
+                    ),
+                    rel=("collection", "page"),
+                    resource_type="user",
+                    query_key=("item-count", "cursor", "sort"),
                 ),
             ],
             data=RootData(

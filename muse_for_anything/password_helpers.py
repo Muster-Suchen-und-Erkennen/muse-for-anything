@@ -1,3 +1,4 @@
+from os import environ
 from typing import Dict, List, Optional, Tuple, Union
 from flask_babel import gettext
 from werkzeug.exceptions import SecurityError
@@ -111,7 +112,14 @@ class FlaskPassword:
 
         # check settings for security issues
         env = app.config.get("ENV", "production")
-        if app.config.get("CHECK_PASSWORD_HASH_SETTINGS", False) or env == "production":
+        should_skip = environ.get("SKIP_PASSWORD_HASHING_CHECKS", "").lower() == "true"
+        should_skip_all = (
+            environ.get("SKIP_PASSWORD_HASHING_CHECKS", "").lower() == "force"
+        )
+        if not should_skip_all and (
+            app.config.get("CHECK_PASSWORD_HASH_SETTINGS", False)
+            or (env == "production" and not should_skip)
+        ):
             self.settings_ok = self.check_current_settings()
 
     def _log_current_settings(self):

@@ -1,7 +1,7 @@
 allow(_guest: Guest, "GET", _resource: OsoResource{resource_type: "ont-namespace", is_collection: true, arguments: nil});
 allow(_guest: Guest, "GET", _resource: OsoResource{resource_type: "ont-namespace", is_collection: false, arguments: nil});
 allow(_guest: Guest, "GET", _resource: Namespace);
-allow(_user: User, "GET", _resource);
+allow(user: User, "GET", resource) if not is_protected_resource(user, resource);
 
 # namespace
 allow(user: User, "CREATE", resource: OsoResource{resource_type: "ont-namespace", is_collection: false, arguments: nil})

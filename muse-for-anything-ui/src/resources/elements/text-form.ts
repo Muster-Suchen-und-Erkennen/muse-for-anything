@@ -22,6 +22,8 @@ export class TextForm {
 
     slug = nanoid(8);
 
+    inputType: string = "text";
+
     isSingelLine: boolean = false;
     isNullable: boolean = true;
 
@@ -78,6 +80,12 @@ export class TextForm {
             this.isSingelLine = true;
         } else {
             this.isSingelLine = false;
+        }
+        // TODO extend this to more input types
+        if (normalized.password) {
+            this.inputType = "password";
+        } else {
+            this.inputType = "text";
         }
         this.updateValid();
     }

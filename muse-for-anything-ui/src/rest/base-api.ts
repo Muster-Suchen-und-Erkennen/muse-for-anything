@@ -271,9 +271,14 @@ export class BaseApiService {
 
     private async _searchResolveRels(rel: string | string[], root?: ApiResponse<unknown>, apiRel: string | string[] = "api"): Promise<ApiLink> {
         const base = root ?? await this.resolveApiRoot();
-        const link = base.links.find(link => matchesLinkRel(link, rel));
-        if (link != null) {
-            return link;
+        const matchingLinks = base.links.filter(link => matchesLinkRel(link, rel));
+        if (matchingLinks.length > 0) {
+            if (matchingLinks.length === 1) { // only one match
+                return matchingLinks[0];
+            }
+            // prioritise match with resourceType
+            const bestMatch = matchingLinks.find(link => (typeof rel === "string") ? link.resourceType === rel : rel.some(rel => link.resourceType === rel));
+            return bestMatch ?? matchingLinks[0];
         }
         for (const link of base.links) {
             if (matchesLinkRel(link, apiRel)) {
