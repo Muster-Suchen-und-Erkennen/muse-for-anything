@@ -1,6 +1,6 @@
-import { bindable, observable, bindingMode, child, TaskQueue, autoinject } from "aurelia-framework";
-import { NormalizedApiSchema } from "rest/schema-objects";
+import { autoinject, bindable, bindingMode, child, observable, TaskQueue } from "aurelia-framework";
 import { nanoid } from "nanoid";
+import { NormalizedApiSchema } from "rest/schema-objects";
 
 
 @autoinject()
@@ -61,7 +61,7 @@ export class NumberForm {
         const normalized = newValue.normalized;
         this.isNullable = normalized.type.has(null);
         if (!this.isNullable && this.value == null) {
-            this.value = "0";
+            this.queue.queueMicroTask(() => this.value = "0");
         }
 
         if (normalized.mainType === "integer") {
@@ -87,7 +87,7 @@ export class NumberForm {
         }
 
         if (this.formInput != null) {
-            this.updateValid();
+            this.queue.queueMicroTask(() => this.updateValid());
         }
     }
 
@@ -111,7 +111,7 @@ export class NumberForm {
         } else {
             newValueOut = parseFloat(newValue);
         }
-        this.valueOut = newValueOut;
+        this.queue.queueMicroTask(() => this.valueOut = newValueOut);
     }
 
     valueOutChanged(newValue: number) {
