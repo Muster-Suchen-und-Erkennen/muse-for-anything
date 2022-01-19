@@ -131,6 +131,7 @@
         "tree-view": "Treeview",
         "overview": "Overview",
         "node-link-tree": "Node-Link Tree",
+        "showGraph": "Show Ontology Graph",
         "searchGraph": "Search Items in Graph",
         "resetLayout": "Reset Layout to Box",
         "toggleMaximize": "Maximize or minimize graph",

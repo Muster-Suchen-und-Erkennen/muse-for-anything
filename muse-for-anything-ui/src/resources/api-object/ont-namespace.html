@@ -25,8 +25,11 @@
         </h3>
         <api-schema-view data.bind="apiObject" schema-url.bind="apiObject.self.schema"></api-schema-view>
     </div>
-    
-    <div if.bind="isRoot">
-        <ontology-graph id="ontology-graph" class="p-1" api-link.bind="apiObject.self">
-    </div>
+
+    <template if.bind="isRoot">
+        <div class="mt-8 h-36 flex justify-center items-center card" if.bind="!showGraph">
+            <button class="button-outline" click.delegate="showGraph = true">${"ontology.showGraph" | t}</button>
+        </div>
+        <ontology-graph id="ontology-graph" class="p-1" api-link.bind="apiObject.self" if.bind="showGraph">
+    </template>
 </template>
