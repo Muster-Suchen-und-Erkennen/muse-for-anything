@@ -19,72 +19,31 @@
                     --text-highlight-color: black;
                     --fill-color: white;
                     --fill-highlight-color: white;
-                    --highlight-child-color: #fa7bef;
-                    --highlight-parent-color: #ff00ea;
-                    --taxonomy-color: #FABA6F;
                     --type-color: #bdbdbd;
-                    --position-rect-color: #6c28d95d;
+                    --taxonomy-color: #faba6f;
+                    --highlight-parent-color: #c4b5fd;
+                    --highlight-child-color: #ede9fe;
+                    --type-color: #bdbdbd;
+                    --view-window-color: #6d28d95d;
                 }
 
                 svg .zoom-group {
                     will-change: contents, transform;
                 }
 
-                .type-group {
-                    fill: var(--type-color) !important;
-                }
-
-                .node.selected>.type-group {
-                    fill: var(--highlight-parent-color) !important;
-                    opacity: 1;
-                }
-
-                .node.selected>.taxonomy-group {
-                    fill: var(--highlight-parent-color) !important;
-                    opacity: 1;
-                }
-
-                .node.selected>.taxonomy-link-item {
-                    fill: var(--highlight-child-color) !important;
-                    opacity: 1;
-                }
-
-                .node.selected>.type-link-item {
-                    fill: var(--highlight-child-color) !important;
-                    opacity: 1;
-                }
-
-                .node.selected>.type-item {
-                    fill: var(--highlight-child-color) !important;
-                    opacity: 1;
-                }
-
-                .node.selected>.taxonomy-item {
-                    fill: var(--highlight-child-color) !important;
-                    opacity: 1;
-                }
-
-                .node.selected>ellipse {
-                    fill: var(--highlight-parent-color) !important;
-                    opacity: 1;
+                .node {
+                    --base-color: var(--fill-color);
+                    --base-line-color: var(--line-color);
                 }
 
                 .node>rect {
-                    fill: var(--fill-color);
-                    stroke: var(--line-color);
-                }
-
-                .greyedout-node {
-                    opacity: 0.1;
-                }
-
-                .invisible-node {
-                    opacity: 0;
+                    fill: var(--base-color);
+                    stroke: var(--base-line-color);
                 }
 
                 .node>ellipse {
-                    fill: var(--taxonomy-color);
-                    stroke: var(--line-color);
+                    fill: var(--base-color);
+                    stroke: var(--base-line-color);
                 }
 
                 .type-link-item,
@@ -120,66 +79,143 @@
                     text-overflow: ellipsis;
                 }
 
-                .node.hovered:not(.deleted) .link-handle {
-                    display: initial;
+                .node.type-node {
+                    --base-color: var(--type-color);
+                    --base-line-color: var(--line-color);
                 }
 
-                .node.hovered>rect {
-                    fill: var(--fill-highlight-color);
-                    stroke: var(--line-highlight-color);
+                .node.taxonomy-node {
+                    --base-color: var(--taxonomy-color);
+                    --base-line-color: var(--line-color);
                 }
 
-                .node.selected .title {
-                    fill: var(--text-highlight-color);
+                .ghost-node {
+                    opacity: 0.1;
+                }
+
+                .invisible-node {
+                    opacity: 0;
                 }
 
                 .node.deleted {
                     opacity: 0.5;
                 }
 
-                .edge {
-                    stroke: var(--line-color);
-                    opacity: 1;
-                    stroke-width: 5px;
+                .node.search-match>ellipse,
+                .node.search-match>rect {
+                    stroke-width: 6px;
+                    --base-line-color: var(--line-highlight-color)
                 }
 
-                .edge.selected {
-                    stroke: var(--line-color);
-                    opacity: 1;
-                    stroke-width: 5px;
+                .node.group-node.search-match,
+                .node.group-node.selected,
+                .node.group-node.hovered {
+                    --base-color: var(--highlight-parent-color)
                 }
 
-                .edge.small-edge {
-                    stroke: var(--line-color);
-                    opacity: 0.5;
-                    stroke-width: 1px;
+                .node.child-node.search-match,
+                .node.child-node.selected,
+                .node.child-node.hovered {
+                    --base-color: var(--highlight-child-color)
                 }
 
-                .edge.highlight-edge {
-                    stroke: var(--highlight-parent-color);
-                    opacity: 1;
-                    stroke-width: 8px;
+                .node.selected .title {
+                    fill: var(--text-highlight-color);
                 }
 
-                .edge.highlight-bold-edge {
-                    stroke: var(--highlight-parent-color);
+                /*
+                .type-group {
+                    fill: var(--type-color) !important;
+                }
+                
+                .node.selected>.type-group {
+                    fill: var(--highlight-parent-color) !important;
                     opacity: 1;
-                    stroke-width: 12px;
+                }
+
+                .node.selected>.taxonomy-group {
+                    fill: var(--highlight-parent-color) !important;
+                    opacity: 1;
+                }
+
+                .node.selected>.taxonomy-link-item {
+                    fill: var(--highlight-child-color) !important;
+                    opacity: 1;
+                }
+
+                .node.selected>.type-link-item {
+                    fill: var(--highlight-child-color) !important;
+                    opacity: 1;
+                }
+
+                .node.selected>.type-item {
+                    fill: var(--highlight-child-color) !important;
+                    opacity: 1;
+                }
+
+                .node.selected>.taxonomy-item {
+                    fill: var(--highlight-child-color) !important;
+                    opacity: 1;
+                }
+
+                .node.selected>ellipse {
+                    fill: var(--highlight-parent-color) !important;
+                    opacity: 1;
+                }
+                */
+
+                /*
+                .node.hovered>rect {
+                    fill: var(--fill-highlight-color);
+                    stroke: var(--line-highlight-color);
+                }
+                */
+
+                .edge-group {
+                    --edge-color: var(--line-color);
+                    --stroke-width: 1;
+                    --base-opacity: 0.5;
+                }
+
+                .edge-group .edge {
+                    stroke: var(--edge-color);
+                    opacity: var(--base-opacity);
+                    stroke-width: var(--stroke-width);
+                }
+
+                .edge-group.big-edge {
+                    --stroke-width: 5px;
+                    --base-opacity: 1;
+                }
+
+                .edge-group.highlight-incoming,
+                .edge-group.highlight-outgoing {
+                    --edge-color: var(--line-highlight-color);
+                    --base-opacity: 1;
+                }
+
+                .edge-group.highlight-incoming .edge {
+                    stroke-width: calc(var(--stroke-width)*2);
+                }
+
+                .edge-group.highlight-outgoing .edge {
+                    stroke-width: calc(var(--stroke-width)*2);
                 }
 
                 .edge-group .marker {
-                    fill: var(--line-color);
+                    fill: var(--edge-color);
+                    opacity: var(--base-opacity);
                 }
 
-                .edge-group .highlight-bold-edge~.marker, .edge-group .highlight-edge~.marker {
-                    fill: var(--highlight-parent-color);
+                .edge-group.ghost-edge {
+                    --base-opacity: 0.1;
                 }
 
 
 
-                .position-rect {
-                    fill: var(--position-rect-color) !important;
-                    border-style: none !important;
+                rect.view-window {
+                    fill: var(--view-window-color);
+                    border-style: none;
                 }
 
                 .invisible-rect {
@@ -295,7 +331,7 @@
                     </rect>
                     <text class="titleDescription" x="-55" y="-13" width="110" data-content="typedescription"></text>
                     <text class="title" data-content="title" x="-55" y="4" width="110"></text>
-                    <text class="description" data-content="description" x="-55" y="2"
+                    <text class="description" data-content="z" x="-55" y="20"
                         data-wrap-lines="110 70|110 110 70"></text>
                     <text class="sort-key" data-content="sortKey" x="55" y="26" width="35"></text>
                 </g>
@@ -328,112 +364,120 @@
                         ${"ontology.filter-area" | t}
                     </div>
                     <div class="scroll-area" if.bind="!isLoading">
-                        <div class="section-subpart">
-                            <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1"
-                                placeholder="search" value.from-view="filter & throttle" aria-owns="'datalist-'+slug"
-                                autocapitalize="none" value.bind="searchtext & debounce" type="text" autocomplete="off"
-                                aria-autocomplete="list" role="combobox" id="'input-'+slug"
-                                blur.trigger="searchtextFocusLeft()"
-                                if.bind="isRendered">
+                        <div class="control-group">
+                            <label>
+                                ${"ontology.searchGraph" | t}
+                                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1"
+                                    placeholder="search" value.from-view="filter & throttle"
+                                    aria-owns="'datalist-'+slug" autocapitalize="none"
+                                    value.bind="searchtext & debounce" type="text" autocomplete="off"
+                                    aria-autocomplete="list" role="combobox" id="'input-'+slug"
+                                    focus.trigger="searchtextFocusEnter(event)" blur.trigger="searchtextFocusLeft()"
+                                    if.bind="isRendered" disabled.bind="!isRendered">
+                            </label>
                             <div class="ontology-algorithm-label" title='${"ontology.keepFocus" | t}'
-                            if.bind="isRendered">
-                                <label class="switch">
-                                    <input type="checkbox" checked.bind="keepSearchResultsInFocus">
-                                    <span class="slider round"></span>
+                                if.bind="isRendered">
+                                <label class="switch-input">
+                                    <div class="switch">
+                                        <input type="checkbox" checked.bind="keepSearchResultsInFocus"
+                                            disabled.bind="!isRendered">
+                                        <span class="slider round"></span>
+                                    </div>
+                                    <div class="switch-label">
+                                        ${"ontology.keepFocus" | t}
+                                    </div>
                                 </label>
-                                ${"ontology.keepFocus" | t}
                             </div>
-                        </div>
-                        <div class="section-subpart" if.bind="isRendered">
                             <button class="button-outline px-2 items-center button-oneline"
-                                click.delegate="fixallSearchResults()" title='${"ontology.fixallSearchResultsButton" | t}'>
+                                click.delegate="fixallSearchResults()"
+                                title='${"ontology.fixallSearchResultsButton" | t}' disabled.bind="!isRendered">
                                 ${"ontology.fixallSearchResultsButton" | t}
                             </button>
                         </div>
-                        <span class="section-title" if.bind="isRendered">
-                            ${"ontology.visibleElements" | t}
-                        </span>
-                        <div class="section-subpart" if.bind="isRendered">
-                            <div class="button-oneline" title='${"ontology.taxonomies" | t}'>
-                                <label class="switch">
-                                    <input type="checkbox" checked.bind="showTaxonomies">
+                        <div class="control-group">
+                            <label class="switch-input">
+                                <div class="switch">
+                                    <input type="checkbox" checked.bind="showTaxonomies" disabled.bind="!isRendered">
                                     <span class="slider round"></span>
-                                </label>
-                                ${"ontology.taxonomies" | t}
-                            </div>
-                            <div class="button-oneline" title='${"ontology.types" | t}'>
-                                <label class="switch">
-                                    <input type="checkbox" checked.bind="showTypes">
+                                </div>
+                                <div class="switch-label">
+                                    ${"ontology.showTaxonomies" | t}
+                                </div>
+                            </label>
+                            <label class="switch-input">
+                                <div class="switch">
+                                    <input type="checkbox" checked.bind="showTypes" disabled.bind="!isRendered">
                                     <span class="slider round"></span>
-                                </label>
-                                ${"ontology.types" | t}
-                            </div>
-                            <div class="button-oneline" title='${"ontology.showSelectedItems" | t}'>
-                                <label class="switch">
-                                    <input type="checkbox" checked.bind="showSelectedItems">
+                                </div>
+                                <div class="switch-label">
+                                    ${"ontology.showTypes" | t}
+                                </div>
+                            </label>
+                            <label class="switch-input">
+                                <div class="switch">
+                                    <input type="checkbox" checked.bind="showSelectedItems" disabled.bind="!isRendered">
                                     <span class="slider round"></span>
-                                </label>
-                                ${"ontology.showSelectedItems" | t}
-                            </div>
-                            <div class="button-oneline" title='${"ontology.showAllElementsWithoutAnEdgeButton" | t}'>
-                                <label class="switch">
-                                    <input type="checkbox" checked.bind="showElementsWithoutAnEdge">
+                                </div>
+                                <div class="switch-label">
+                                    ${"ontology.showSelectedItems" | t}
+                                </div>
+                            </label>
+                            <label class="switch-input">
+                                <div class="switch">
+                                    <input type="checkbox" checked.bind="showElementsWithoutAnEdge"
+                                        disabled.bind="!isRendered">
                                     <span class="slider round"></span>
-                                </label>
-                                ${"ontology.showAllElementsWithoutAnEdgeButton" | t}
-                            </div>
+                                </div>
+                                <div class="switch-label">
+                                    ${"ontology.showAllElementsWithoutAnEdgeButton" | t}
+                                </div>
+                            </label>
+                            <label class="mt-2 inline-block">
+                                ${"ontology.childsToShow" | t}
+                                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1"
+                                    value.from-view="filter & throttle"
+                                    value.bind="typeChildsToShow | number & debounce" type="number" autocomplete="off"
+                                    min="0" disabled.bind="!isRendered">
+                            </label>
+                            <label class="mt-2 inline-block">
+                                ${"ontology.taxonomyLevelsToShow" | t}
+                                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1"
+                                    value.from-view="filter & throttle"
+                                    value.bind="taxonomyLevelsToShow | number & debounce" type="number"
+                                    autocomplete="off" min="0" disabled.bind="!isRendered">
+                            </label>
                         </div>
-                        <span class="section-title" title='{"ontology.childsToShow" | t}'>
-                            ${"ontology.childsToShow" | t}
-                        </span>
-                        <div class="section-subpart">
-                            <div>
-                                <label>
-                                    <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1"
-                                        placeholder="search" value.from-view="filter & throttle" aria-owns="'datalist-'+slug"
-                                        autocapitalize="none" value.bind="typeChildsToShow & debounce" type="number"
-                                    autocomplete="off" aria-autocomplete="list" role="combobox" id="'input-'+slug" min="0">
-                                <label>
-                            </div>
-                        </div>
-                        <div class="section-title">
-                            ${"ontology.distance-header" | t}
-                        </div>
-                        <div class="section-subpart">
-                            <div>
-                                <input type="range" min="10" max="500" value.bind="distanceBetweenElements" class="slider" style="position: unset;">
-                                <span>${distanceBetweenElements} %</span>
-                            </div>
-                        </div>
-                        <div class="section-title">
-                            ${"ontology.algorithm-header" | t}
-                        </div>
-                        <div class="section-subpart">
+                        <div class="control-group">
+                            <label class="mb-2 inline-block">
+                                ${"ontology.distance-header" | t}
+                                <div class="range-slider">
+                                    <input type="range" min="10" max="500"
+                                        value.bind="distanceBetweenElements & debounce" disabled.bind="!isRendered">
+                                    ${distanceBetweenElements}
+                                    <nbsp />%
+                                </div>
+                            </label>
                             <div repeat.for="algo of layoutAlgorithms" class="ontology-algorithm-label">
-                                <input type="radio" name="group1" model.bind="algo.id"
-                                    checked.bind="selectedLayoutAlgorithmId">
-                                ${algo.name}
+                                <label>
+                                    <input type="radio" name="group1" model.bind="algo.id"
+                                        checked.bind="selectedLayoutAlgorithmId" disabled.bind="!isRendered">
+                                    ${algo.name}
+                                </label>
                             </div>
+                            <button class="button-outline px-2 items-center button-oneline"
+                                click.delegate="repositionNodes()" disabled.bind="!isRendered"
+                                title='${"ontology.repositionVisibleItems" | t}'>
+                                ${"ontology.repositionVisibleItemsButton" | t}
+                            </button>
                         </div>
-                        <span class="section-title" if.bind="isRendered">
-                            ${"ontology.repositionVisibleItems" | t}
-                        </span>
-                        <div class="section-subpart" if.bind="isRendered">
-                            <div>
-                                <button class="button-outline px-2 items-center button-oneline"
-                                    click.delegate="repositionNodes()"
-                                    title='${"ontology.repositionVisibleItemsButton" | t}'>
-                                    ${"ontology.repositionVisibleItemsButton" | t}
-                                </button>
-                            </div>
-                        </div>
-                        <div class="section-title" if.bind="isRendered">
+                        <div class="control-group" if.bind="isRendered">
                             ${"ontology.itemsInGraph" | t}: ${graph.nodeList.length}
                         </div>
                     </div>
                 </div>
 
-                <div id="item-treesection" class=" px-1 border-gray-200 border-b"  mousedown.delegate="startLeftUpperDrag($event)">
+                <div id="item-treesection" class=" px-1 border-gray-200 border-b"
+                    mousedown.delegate="startLeftUpperDrag($event)">
                     <div class="section-main-title bg-gray-600 section-main-title-draggable">
                         ${"ontology.tree-view" | t}
                     </div>
@@ -446,10 +490,13 @@
                     <div class="section-main-title bg-gray-600 section-main-title-draggable">
                         ${"ontology.overview" | t}
                     </div>
-                    <div style="height: calc(100% - 25px);">
-                        <network-graph id="overviewgraph" class="graphoverview" classes="deleted" mode="display" zoom="automatic"
-                            svg-template="#ontologyGraphTemplate">
+                    <div style="height: calc(100% - 25px); position: relative;" aria-hidden="true">
+                        <network-graph id="overviewgraph" class="graphoverview"
+                            classes="deleted search-match type-node taxonomy-node group-node child-node big-edge"
+                            mode="display" zoom="automatic" svg-template="#ontologyGraphTemplate">
                         </network-graph>
+                        <div style="top: 0px; bottom: 0px; left: 0px; right: 0px; position: absolute;">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -457,175 +504,162 @@
             </div>
             <div id="maingraphpart" class="menu-graph card ml-1">
                 <div style="height: 100%;">
-                    <network-graph id="graphexportsvg" class="maingraph" classes="deleted" mode="layout"
-                        zoom="both" svg-template="#ontologyGraphTemplate">
+                    <network-graph id="graphexportsvg" class="maingraph"
+                        classes="deleted search-match type-node taxonomy-node group-node child-node ghost-node ghost-edge big-edge"
+                        mode="layout" zoom="both" svg-template="#ontologyGraphTemplate">
                     </network-graph>
                 </div>
             </div>
             <div class="menu-graph  ml-1" if.bind="isLoading">
-                <div id="ontology-loading-indicator" >
+                <div id="ontology-loading-indicator">
                     ${"loading" | t}
                     <spinner type="S8" size="100" color="default"></spinner>
                 </div>
             </div>
             <div class="menu-graph mb-0 mt-auto ml-auto mr-0">
-                    <div if.bind="selectedNode != null" class="card bg-white px-3 py-2 items-center detailview">
-        
-                        <p class="detailview-title">
-                            ${selectedNode.name}
-                            <button class="button-flat px-2 items-center" click.delegate="unselectNode()"
-                                title='${"ontology.moveLeft" | t}' style="float: right;">
-                                <svg-icon icon.bind="'arrow-right'" size.bind="18"></svg-icon>
-                            </button>
-                        </p>
-                        <p class="detailview-description">
-                            ${selectedNode.description}
-                        </p>
-                        
+                <div if.bind="selectedNode != null" class="card bg-white px-3 py-2 items-center detailview">
 
-                        <table id="table-info">
-                            <tbody>
-                                <tr>
-                                    <td class="table-info-name" title='${"ontology.detailview.type" | t}'>${"ontology.detailview.type" | t}</td>
-                                    <td class="table-info-detail" title="${selectedNode.itemType}">${selectedNode.itemType}</td>
-                                </tr>
-                                <tr>
-                                    <td class="table-info-name" title='${"ontology.detailview.abstract" | t}'>${"ontology.detailview.abstract" | t}</td>
-                                    <td class="table-info-detail" title='${selectedNode.abstract}'>${selectedNode.abstract}</td>
-                                </tr>
-                                <!--<tr>
+                    <p class="detailview-title">
+                        ${selectedNode.name}
+                        <button class="button-flat px-2 items-center" click.delegate="unselectNode()"
+                            title='${"ontology.moveLeft" | t}' style="float: right;">
+                            <svg-icon icon.bind="'arrow-right'" size.bind="18"></svg-icon>
+                        </button>
+                    </p>
+                    <p class="detailview-description">
+                        ${selectedNode.description}
+                    </p>
+
+
+                    <table id="table-info">
+                        <tbody>
+                            <tr>
+                                <td class="table-info-name" title='${"ontology.detailview.type" | t}'>
+                                    ${"ontology.detailview.type" | t}</td>
+                                <td class="table-info-detail" title="${selectedNode.itemType}">${selectedNode.itemType}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="table-info-name" title='${"ontology.detailview.abstract" | t}'>
+                                    ${"ontology.detailview.abstract" | t}</td>
+                                <td class="table-info-detail" title='${selectedNode.abstract}'>${selectedNode.abstract}
+                                </td>
+                            </tr>
+                            <!--<tr>
                                     <td class="table-info-name" title='${"ontology.detailview.implementations" | t}'>${"ontology.detailview.implementations" | t}</td>
                                     <td class="table-info-detail"></td>
                                 </tr>-->
-                                <tr>
-                                    <td class="table-info-name" title='${"ontology.detailview.api-link" | t}'>${"ontology.detailview.api-link" | t}</td>
-                                    <td class="table-info-detail" title='${selectedNode.href}'>${selectedNode.href}</td>
-                                </tr>
-                                <tr>
-                                    <td class="table-info-name" title='${"ontology.detailview.openEdit" | t}'>${"ontology.detailview.openEdit" | t}</td>
-                                    <td class="table-info-detail">
-                                        <a class="button-flat" href="${selectedNode.getLink()}" target="_blank"
+                            <tr>
+                                <td class="table-info-name" title='${"ontology.detailview.api-link" | t}'>
+                                    ${"ontology.detailview.api-link" | t}</td>
+                                <td class="table-info-detail" title='${selectedNode.href}'>${selectedNode.href}</td>
+                            </tr>
+                            <tr>
+                                <td class="table-info-name" title='${"ontology.detailview.openEdit" | t}'>
+                                    ${"ontology.detailview.openEdit" | t}</td>
+                                <td class="table-info-detail">
+                                    <a class="button-flat" href="${selectedNode.getLink()}" target="_blank"
                                         style="margin: 0 !important; padding: 0 !important">
                                         ${"ontology.detailview.openEditButton" | t}
-                                            <svg-icon style="display:inline-block" icon.bind="'open-in-new-tab'" size.bind="20">
-                                            </svg-icon>
-                                        </a>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="table-info-name" title='${"ontology.detailview.children" | t}'>${"ontology.detailview.children" | t}</td>
-                                    <td class="table-info-detail" title='${selectedNode.children.length}'>${selectedNode.children.length}</td>
-                                </tr>
-                                <tr>
-                                    <td class="table-info-name" title='${"ontology.detailview.fixPosition" | t}'>${"ontology.detailview.fixPosition" | t}</td>
-                                    <td class="table-info-detail" title='${"ontology.toggleFixedPosition" | t}'>
-                                        <button class="button-flat items-center" click.delegate="selectedNode.togglePositionFixed()"
-                                            title='${"ontology.toggleFixedPosition" | t}'
-                                            style="margin: 0 !important; padding: 0 !important">
-                                            <svg-icon icon.bind="selectedNode.positionIsFixed ? 'unfixed-position' : 'fixed-position'"
-                                                size.bind="20"></svg-icon>
-                                        </button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <!--<p class="detailview-item" title="${selectedNode.name}">${"ontology.detailview.name" | t}: ${selectedNode.name}</p>
-                        <p class="detailview-item" title="${selectedNode.description}">${"ontology.detailview.description" | t}: ${selectedNode.description}</p>
-                        <p class="detailview-item" title="${selectedNode.itemType}">${"ontology.detailview.type" | t}: ${selectedNode.itemType}</p>
-                        <p class="detailview-item" title="${selectedNode.abstract}">${"ontology.detailview.abstract" | t}: ${selectedNode.abstract}</p>
-                        <p class="detailview-item" title="">${"ontology.detailview.implementations" | t}: t.b.d.</p>
-                        <p class="detailview-item" title="${selectedNode.href}">${"ontology.detailview.api-link" | t}: ${selectedNode.href}</p>
-                        <p class="detailview-item">
-        
-                            <a class="button-flat" href="${selectedNode.getLink()}" target="_blank"
-                                style="margin: 0 !important; padding: 0 !important">
-                                <span>${"ontology.detailview.openEdit" | t}
-                                    <svg-icon style="display:inline-block" icon.bind="'open-in-new-tab'" size.bind="20">
-                                    </svg-icon>
-                                </span>
-                            </a>
-                        </p>
-                        <p class="detailview-item" title="${selectedNode.children.length}">${"ontology.detailview.children" | t}: ${selectedNode.children.length}</p>
-                        <p class="detailview-item">
-                            ${"ontology.detailview.fixPosition" | t}:
-                            <button class="button-flat items-center" click.delegate="selectedNode.togglePositionFixed()"
-                                title='${"ontology.toggleFixedPosition" | t}'
-                                style="margin: 0 !important; padding: 0 !important">
-                                <svg-icon icon.bind="selectedNode.positionIsFixed ? 'unfixed-position' : 'fixed-position'"
-                                    size.bind="20"></svg-icon>
-                            </button>
-                        </p>-->
-                    </div>
-                    <div class="buttons card bg-white px-3 py-2 items-center" style="width: fit-content;float: right;">
-                        <button class="button-flat px-2 items-center" click.delegate="toggleMenu()"
-                            title='${"ontology.moveLeft" | t}' style="float:right;">
-                            <svg-icon icon.bind="maximizeMenu ? 'arrow-right' : 'arrow-left'" size.bind="18"></svg-icon>
-                        </button>
-                        <div if.bind="maximizeMenu">
-                            <div class="ontology-moveBackground">
-                                <div class="ontology-move">
-        
-                                    <button class="button-flat px-2 items-center" click.delegate="moveGraph('up')"
-                                        title='${"ontology.moveUp" | t}'>
-                                        <svg-icon icon.bind="'arrow-up'" size.bind="18"></svg-icon>
+                                        <svg-icon style="display:inline-block" icon.bind="'open-in-new-tab'"
+                                            size.bind="20">
+                                        </svg-icon>
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="table-info-name" title='${"ontology.detailview.children" | t}'>
+                                    ${"ontology.detailview.children" | t}</td>
+                                <td class="table-info-detail" title='${selectedNode.children.length}'>
+                                    ${selectedNode.children.length}</td>
+                            </tr>
+                            <tr>
+                                <td class="table-info-name" title='${"ontology.detailview.fixPosition" | t}'>
+                                    ${"ontology.detailview.fixPosition" | t}</td>
+                                <td class="table-info-detail" title='${"ontology.toggleFixedPosition" | t}'>
+                                    <button class="button-flat items-center"
+                                        click.delegate="selectedNode.togglePositionFixed()"
+                                        title='${"ontology.toggleFixedPosition" | t}'
+                                        style="margin: 0 !important; padding: 0 !important">
+                                        <svg-icon
+                                            icon.bind="selectedNode.positionIsFixed ? 'unfixed-position' : 'fixed-position'"
+                                            size.bind="20"></svg-icon>
                                     </button>
-                                </div>
-                                <div class="ontology-move">
-                                    <button class="button-flat px-2 items-center" click.delegate="moveGraph('left')"
-                                        title='${"ontology.moveLeft" | t}'>
-                                        <svg-icon icon.bind="'arrow-left'" size.bind="18"></svg-icon>
-                                    </button>
-                                    <button class="button-flat px-2 items-center" click.delegate="moveGraph('right')"
-                                        title='${"ontology.moveRight" | t}'>
-                                        <svg-icon icon.bind="'arrow-right'" size.bind="18"></svg-icon>
-        
-                                    </button>
-        
-                                </div>
-                                <div class="ontology-move">
-                                    <button class="button-flat px-2 items-center" click.delegate="moveGraph('down')"
-                                        title='${"ontology.moveDown" | t}'>
-                                        <svg-icon icon.bind="'arrow-down'" size.bind="18"></svg-icon>
-                                    </button>
-        
-                                </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="buttons card bg-white px-3 py-2 items-center" style="width: fit-content;float: right;">
+                    <button class="button-flat px-2 items-center" click.delegate="toggleMenu()"
+                        title='${"ontology.moveLeft" | t}' style="float:right;">
+                        <svg-icon icon.bind="maximizeMenu ? 'arrow-right' : 'arrow-left'" size.bind="18"></svg-icon>
+                    </button>
+                    <div if.bind="maximizeMenu">
+                        <div class="ontology-moveBackground">
+                            <div class="ontology-move">
+
+                                <button class="button-flat px-2 items-center" click.delegate="moveGraph('up')"
+                                    title='${"ontology.moveUp" | t}'>
+                                    <svg-icon icon.bind="'arrow-up'" size.bind="18"></svg-icon>
+                                </button>
                             </div>
-        
-                            <button class="button-flat px-2 items-center" click.delegate="zoomIn()"
-                                title='${"ontology.zoomIn" | t}'>
-                                <svg-icon icon.bind="'plus'" size.bind="18"></svg-icon>
-                            </button>
-                            <button class="button-flat px-2 items-center" click.delegate="zoomOut()"
-                                title='${"ontology.zoomOut" | t}'>
-                                <svg-icon icon.bind="'minus'" size.bind="18"></svg-icon>
-                            </button>
-                            <button class="button-flat px-2 items-center" click.delegate="resetLayout()"
-                                title='${"ontology.resetLayout" | t}'>
-                                <svg-icon icon.bind="'reset'" size.bind="18"></svg-icon>
-                            </button>
-                            <button class="button-flat px-2 items-center" click.delegate="downloadSVG()"
-                                title='${"ontology.toggleMaximize" | t}' hidden>
-                                <svg-icon icon.bind="'download'" size.bind="18"></svg-icon>
-                            </button>
-                            <button class="button-flat px-2 items-center" mousedown.delegate="tempZoomOut('on')" mouseup.delegate="tempZoomOut('off')"
-                                title='${"ontology.temporaryZoomOut" | t}'>
-                                <svg-icon icon.bind="'eye'" size.bind="18"></svg-icon>
-                            </button>
-                            <button class="button-flat px-2 items-center" click.delegate="toggleMaximize()"
-                                title='${"ontology.toggleMaximize" | t}'>
-                                <svg-icon icon.bind="maximized ? 'minimize' : 'maximize'" size.bind="18"></svg-icon>
-                            </button>
+                            <div class="ontology-move">
+                                <button class="button-flat px-2 items-center" click.delegate="moveGraph('left')"
+                                    title='${"ontology.moveLeft" | t}'>
+                                    <svg-icon icon.bind="'arrow-left'" size.bind="18"></svg-icon>
+                                </button>
+                                <button class="button-flat px-2 items-center" click.delegate="moveGraph('right')"
+                                    title='${"ontology.moveRight" | t}'>
+                                    <svg-icon icon.bind="'arrow-right'" size.bind="18"></svg-icon>
+
+                                </button>
+
+                            </div>
+                            <div class="ontology-move">
+                                <button class="button-flat px-2 items-center" click.delegate="moveGraph('down')"
+                                    title='${"ontology.moveDown" | t}'>
+                                    <svg-icon icon.bind="'arrow-down'" size.bind="18"></svg-icon>
+                                </button>
+
+                            </div>
                         </div>
+
+                        <button class="button-flat px-2 items-center" click.delegate="zoomIn()"
+                            title='${"ontology.zoomIn" | t}'>
+                            <svg-icon icon.bind="'plus'" size.bind="18"></svg-icon>
+                        </button>
+                        <button class="button-flat px-2 items-center" click.delegate="zoomOut()"
+                            title='${"ontology.zoomOut" | t}'>
+                            <svg-icon icon.bind="'minus'" size.bind="18"></svg-icon>
+                        </button>
+                        <button class="button-flat px-2 items-center" click.delegate="resetLayout()"
+                            title='${"ontology.resetLayout" | t}'>
+                            <svg-icon icon.bind="'reset'" size.bind="18"></svg-icon>
+                        </button>
+                        <button class="button-flat px-2 items-center" click.delegate="downloadSVG()"
+                            title='${"ontology.toggleMaximize" | t}' hidden>
+                            <svg-icon icon.bind="'download'" size.bind="18"></svg-icon>
+                        </button>
+                        <button class="button-flat px-2 items-center" mousedown.delegate="tempZoomOut('on')"
+                            mouseup.delegate="tempZoomOut('off')" title='${"ontology.temporaryZoomOut" | t}'>
+                            <svg-icon icon.bind="'eye'" size.bind="18"></svg-icon>
+                        </button>
+                        <button class="button-flat px-2 items-center" click.delegate="toggleMaximize()"
+                            title='${"ontology.toggleMaximize" | t}'>
+                            <svg-icon icon.bind="maximized ? 'minimize' : 'maximize'" size.bind="18"></svg-icon>
+                        </button>
+                    </div>
                 </div>
             </div>
-            <div class="menu-graph ml-1" if.bind="!isLoading && !isRendered" >
-                <button  class="button-outline px-2 items-center button-oneline" click.delegate="renderGraph()"
+            <div class="menu-graph ml-1" if.bind="!isLoading && !isRendered">
+                <button class="button-outline px-2 items-center button-oneline" click.delegate="renderGraph()"
                     title='${"ontology.renderGraph" | t}'>
                     ${"ontology.renderGraph" | t}
                 </button>
             </div>
         </div>
-        
+
 
     </template>
 </template>

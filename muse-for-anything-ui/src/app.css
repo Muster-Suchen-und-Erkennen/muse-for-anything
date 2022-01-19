@@ -118,6 +118,7 @@
 :root {
     --primary-color: theme("colors.purple.700");
     --primary-light-color: theme("colors.purple.500");
+    --primary-extra-light-color: theme("colors.purple.300");
     --primary-dark-color: theme("colors.purple.900");
     --accent-color: theme("colors.yellow.600");
     --accent-light-color: theme("colors.yellow.400");
@@ -620,8 +621,12 @@ table, th, td {
     align-items: center;
 }
 
-.section-subpart {
-    margin-left: 20px;
+.control-group {
+    @apply border rounded-lg p-2 mb-1;
+}
+
+.control-group:focus-within {
+    @apply border-primary;
 }
 
 .detailview {
@@ -663,12 +668,24 @@ input[type="checkbox"]:indeterminate {
 }
 
 /* toogle switch */
+.switch-input {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.3em;
+    max-width: 100%;
+}
+
+.switch-label {
+    white-space: normal;
+}
+
 .switch {
     position: relative;
     display: inline-block;
     width: 30px;
     height: 18px;
-  }
+    flex-shrink: 0;
+}
   
 .switch input { 
     opacity: 0;
@@ -679,12 +696,12 @@ input[type="checkbox"]:indeterminate {
 .slider {
     position: absolute;
     cursor: pointer;
-    top: 0;
+    top: 4px;
     left: 0;
     right: 0;
-    bottom: 1px;
+    height: 18px;
     background-color: #ccc;
-    -webkit-transition: .4s;
+    -webkit-transition: .4s; 
     transition: .4s;
 }
 
@@ -694,7 +711,7 @@ input[type="checkbox"]:indeterminate {
     height: 13px;
     width: 13px;
     left: 2px;
-    bottom: 2px;
+    top: 2.5px;
     background-color: white;
     -webkit-transition: .4s;
     transition: .4s;
@@ -721,4 +738,17 @@ input:checked + .slider:before {
 
 .slider.round:before {
     border-radius: 50%;
+}
+
+.range-slider {
+    display: inline-flex;
+    width: 100%;
+    align-items: center;
+    gap: 0.3em;
+}
+
+.range-slider input[type=range] {
+    min-width: 50px;
+    flex-grow: 1;
+    flex-shrink: 1;
 }

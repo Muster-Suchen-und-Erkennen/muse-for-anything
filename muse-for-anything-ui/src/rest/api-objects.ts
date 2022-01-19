@@ -34,6 +34,12 @@ export function isChangedApiObject(obj: any): obj is ChangedApiObject {
     return (obj as ChangedApiObject)?.changed != null && isApiLinkBase((obj as ChangedApiObject)?.changed);
 }
 
+export interface PageApiObject extends ApiObject {
+    collectionSize: number;
+    items: ApiLink[];
+    page: number;
+}
+
 export interface GenericApiObject extends ApiObject {
     [prop: string]: any;
 }
