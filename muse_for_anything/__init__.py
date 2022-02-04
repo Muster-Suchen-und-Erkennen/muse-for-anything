@@ -17,6 +17,7 @@ from . import api, babel, db, oso_helpers, password_helpers
 from .api import jwt
 from .root_routes import register_root_routes
 from .util.config import DebugConfig, ProductionConfig
+from .util.reverse_proxy_fix import apply_reverse_proxy_fix
 
 ENV_PREFIX = "M4A"
 ENV_VAR_SETTINGS = ("SECRET_KEY", "REVERSE_PROXY_COUNT", "DEFAULT_LOG_SEVERITY")
@@ -123,6 +124,8 @@ def create_app(test_config: Optional[Dict[str, Any]] = None):
         pass
 
     # Begin loading extensions and routes
+
+    apply_reverse_proxy_fix(app)
 
     password_helpers.register_password_helper(app)
     oso_helpers.register_oso(app)
