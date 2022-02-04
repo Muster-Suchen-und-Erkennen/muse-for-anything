@@ -8,6 +8,7 @@ Welcome to MUSE4Anything's documentation!
    readme
    api-doc
    cli
+   deployment
    changelog
 
 

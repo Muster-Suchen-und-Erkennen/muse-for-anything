@@ -20,7 +20,7 @@ from .util.config import DebugConfig, ProductionConfig
 from .util.reverse_proxy_fix import apply_reverse_proxy_fix
 
 ENV_PREFIX = "M4A"
-ENV_VAR_SETTINGS = ("SECRET_KEY", "REVERSE_PROXY_COUNT", "DEFAULT_LOG_SEVERITY")
+ENV_VAR_SETTINGS = (("SECRET_KEY", str), ("REVERSE_PROXY_COUNT", int), ("DEFAULT_LOG_SEVERITY", int))
 
 
 def create_app(test_config: Optional[Dict[str, Any]] = None):
@@ -53,12 +53,17 @@ def create_app(test_config: Optional[Dict[str, Any]] = None):
 
     # load settings from env vars
     settings_from_env_var = []
-    for setting in ENV_VAR_SETTINGS:
+    bad_env_var = []
+    for setting, class_ in ENV_VAR_SETTINGS:
         setting_env_var = f"{ENV_PREFIX}_{setting}"
         value = environ.get(setting_env_var, None)
         if value is not None:
-            settings_from_env_var.append((setting_env_var, setting))
-            app.config[setting] = value
+            try:
+                cast_value = class_(value)
+                settings_from_env_var.append((setting_env_var, setting))
+                app.config[setting] = cast_value
+            except:
+                bad_env_var.append((setting_env_var, setting))
 
     # End Loading config #################
 
@@ -103,6 +108,11 @@ def create_app(test_config: Optional[Dict[str, Any]] = None):
         logger.info(
             f"The settings {', '.join(v[1] for v in settings_from_env_var)}"
             f" were loaded from the environment variables {', '.join(v[0] for v in settings_from_env_var)}"
+        )
+    if bad_env_var:
+        logger.warning(
+            f"The settings {', '.join(v[1] for v in bad_env_var)}"
+            f" could not be loaded from the environment variables {', '.join(v[0] for v in settings_from_env_var)}"
         )
 
     if app.config.get("SECRET_KEY") == "debug_secret":

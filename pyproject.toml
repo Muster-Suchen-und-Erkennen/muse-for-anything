@@ -62,6 +62,7 @@ include-readme = true
 
 [tool.sphinx.intersphinx-mapping]
 python = ["https://docs.python.org/3"]
+gunicorn = ["https://docs.gunicorn.org/en/latest/"]
 
 [tool.sphinx.recommonmark]
 auto-toc-tree-section = "Contents"
