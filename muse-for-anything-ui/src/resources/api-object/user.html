@@ -6,12 +6,13 @@
         <a class="link-hover flex items-center" href="/explore/${clientUrl}"
             data-router-ignore.bind="skipNavigation & empty" aria-disabled.bind="clientUrl == null ? true : null">
             <svg-icon class="mr-1" icon.bind="'user'"></svg-icon>
-            <p class="my-1 font-bold">
+            <p class="my-1 font-bold block-max-3l overflow-y-hidden overflow-ellipsis">
                 ${apiObject.username}
             </p>
             <svg-icon class="ml-1" icon.bind="'link'" size.bind="19"></svg-icon>
         </a>
-        <p class="my-1"><span class="mr-1 font-semibold">E-Mail:</span> ${apiObject.eMail}</p>
+        <p class="my-1 block-max-3l overflow-y-hidden overflow-ellipsis"><span class="mr-1 font-semibold">E-Mail:</span>
+            ${apiObject.eMail}</p>
     </div>
 
 

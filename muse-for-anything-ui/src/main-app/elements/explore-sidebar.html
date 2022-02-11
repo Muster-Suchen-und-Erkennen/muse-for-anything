@@ -5,37 +5,46 @@
     <div class="sticky top-0">
         <p if.bind="isEmpty">Explore Sidebar!</p>
         <div else class="flex flex-col">
-            <a class="sidebar-head flex items-center" if.bind="navLinks.self != null && navLinks.up == null"
-                href.bind="navLinks.self.clientUrl">
-                <svg-icon class="mr-1" icon.bind="navLinks.self.icon" if.bind="navLinks.self.icon"></svg-icon>
-                ${navLinks.self.title | t} ${navLinks.self.name ? '"' + navLinks.self.name + '"' : ""}
-            </a>
-            <a class="sidebar-head flex items-center" if.bind="navLinks.self != null && navLinks.up != null"
-                href.bind="navLinks.up.clientUrl">
-                <svg-icon class="mr-1" icon.bind="'chevron-left'"></svg-icon>
-                <svg-icon class="mr-1" icon.bind="navLinks.self.icon" if.bind="navLinks.self.icon"></svg-icon>
-                ${navLinks.self.title | t} ${navLinks.self.name ? '"' + navLinks.self.name + '"' : ""}
-            </a>
-            <a class="sidebar-head" if.bind="navLinks.self == null && navLinks.up != null"
-                href.bind="navLinks.up.clientUrl">
-                <svg-icon class="mr-1" icon.bind="'chevron-left'"></svg-icon>
-                ${navLinks.up.title | t}
-            </a>
+            <div class="sidebar-expandable border-b border-gray-400 shadow-md mb-2"
+                if.bind="navLinks.self != null && navLinks.up == null">
+                <a class="sidebar-head flex items-start" href.bind="navLinks.self.clientUrl">
+                    <svg-icon class="mr-1" icon.bind="navLinks.self.icon" if.bind="navLinks.self.icon"></svg-icon>
+                    ${navLinks.self.title | t} ${navLinks.self.name ? '"' + navLinks.self.name + '"' : ""}
+                </a>
+            </div>
+            <div class="sidebar-expandable border-b border-gray-400 shadow-md mb-2"
+                if.bind="navLinks.self != null && navLinks.up != null">
+                <a class="sidebar-head flex items-start" href.bind="navLinks.up.clientUrl">
+                    <svg-icon class="mr-1" icon.bind="'chevron-left'"></svg-icon>
+                    <svg-icon class="mr-1" icon.bind="navLinks.self.icon" if.bind="navLinks.self.icon"></svg-icon>
+                    ${navLinks.self.title | t} ${navLinks.self.name ? '"' + navLinks.self.name + '"' : ""}
+                </a>
+            </div>
+            <div class="sidebar-expandable border-b border-gray-400 shadow-md mb-2"
+                if.bind="navLinks.self == null && navLinks.up != null">
+                <a class="sidebar-head flex items-start" href.bind="navLinks.up.clientUrl">
+                    <svg-icon class="mr-1" icon.bind="'chevron-left'"></svg-icon>
+                    ${navLinks.up.title | t}
+                </a>
+            </div>
 
             <!-- Actions -->
             <template if.bind="navLinks.actions != null && navLinks.actions.length > 0">
                 <h4 class="sidebar-item font-light mt-0 mb-1" t="nav.actions"></h4>
-                <action-link class="contents" repeat.for="action of navLinks.actions" action.bind="action">
-                </action-link>
+                <div class="sidebar-expandable border-b border-gray-200" repeat.for="action of navLinks.actions">
+                    <action-link class="contents" action.bind="action"></action-link>
+                </div>
             </template>
 
             <!-- Navigations -->
             <template if.bind="navLinks.nav != null && navLinks.nav.length > 0">
                 <h4 class="sidebar-item font-light mt-9 mb-1" t="nav.navigations"></h4>
-                <a class="sidebar-link flex items-center" repeat.for="nav of navLinks.nav" href.bind="nav.clientUrl">
-                    <svg-icon class="mr-1" icon.bind="nav.icon" if.bind="nav.icon"></svg-icon>
-                    ${nav.title | t} ${nav.name ? '"' + nav.name + '"' : ""}
-                </a>
+                <div class="sidebar-expandable border-b border-gray-200" repeat.for="nav of navLinks.nav">
+                    <a class="sidebar-link flex items-start border-b border-gray-200" href.bind="nav.clientUrl">
+                        <svg-icon class="mr-1" icon.bind="nav.icon" if.bind="nav.icon"></svg-icon>
+                        ${nav.title | t} ${nav.name ? '"' + nav.name + '"' : ""}
+                    </a>
+                </div>
             </template>
 
         </div>

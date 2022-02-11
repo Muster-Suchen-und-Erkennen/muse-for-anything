@@ -250,6 +250,34 @@ details summary::-webkit-details-marker {
     display:none;
 }
 
+/* Utitlities for limiting block height */
+.block-max-3l {
+    max-height: 4.5em;
+}
+.block-max-5l {
+    max-height: 7em;
+}
+.block-max-3l:where(:not(.overflow-y-hidden)) {
+    overflow-y: scroll;
+}
+.block-max-5l:where(:not(.overflow-y-hidden)) {
+    overflow-y: scroll;
+}
+.block-max-3l:where(.overflow-y-hidden) {
+    -webkit-line-clamp: 3;
+}
+.block-max-5l:where(.overflow-y-hidden) {
+    -webkit-line-clamp: 5;
+}
+
+p:where(.block-max-3l:not(.overflow-y-hidden),.block-max-5l:not(.overflow-y-hidden)) {
+    display: inline-block;
+}
+.overflow-y-hidden:where(.block-max-3l,.block-max-5l) {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+}
+
 /* Tailwind CSS styles (ignore css errors...) */
 
 /* form styles */
@@ -275,8 +303,35 @@ details summary::-webkit-details-marker {
     @apply px-3 py-3 mb-2 font-bold text-xl;
 }
 
+.sidebar-expandable {
+    max-height: 3.8em;
+    overflow-y: hidden;
+}
+
+.sidebar-expandable:hover,.sidebar-expandable:focus,.sidebar-expandable:focus-within {
+    overflow-y: visible;
+    z-index: 1;
+    border: none;
+    box-shadow: none;
+}
+
+.sidebar-expandable .sidebar-action, .sidebar-expandable .sidebar-link {
+    @apply bg-gray-50;
+}
+
+.sidebar-expandable .sidebar-head {
+    margin-bottom: 0px;
+}
+.sidebar-expandable:not(:hover,:focus,:focus-within) .sidebar-head {
+    border: none;
+    box-shadow: none;
+}
+.sidebar-expandable:not(:hover,:focus,:focus-within) .sidebar-action, .sidebar-expandable:not(:hover,:focus,:focus-within) .sidebar-link {
+    border: none;
+}
+
 .sidebar-head {
-    @apply px-3 py-2 mb-2 bg-gray-200 font-semibold shadow-md border-b border-gray-400 hover:text-primary;
+    @apply px-3 py-2 bg-gray-200 font-semibold border-b border-gray-400 hover:text-primary shadow-md mb-2;
 }
 
 .sidebar-item {
@@ -654,17 +709,19 @@ input[type="checkbox"]:indeterminate {
 
 /* style scrollbar */
 ::-webkit-scrollbar {
-    width: 5px;
-    height: 5px;
+    width: max(0.35rem, 8px);
+    height: max(0.35rem, 8px);
 }
 ::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: rgba(241, 241, 241, 0);
 }
 ::-webkit-scrollbar-thumb {
-    background: #888;
+    background: #666;
+    border-radius: calc(max(0.35rem, 8px)/2);
+    border: 2px solid #f1f1f101;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: #555;
+    background: #111;
 }
 
 /* toogle switch */
