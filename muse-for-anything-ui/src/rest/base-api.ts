@@ -20,11 +20,13 @@ export class BaseApiService {
     static CACHE_VERSION = 1;
     static CURRENT_CACHES = {
         api: `api-cache-v${BaseApiService.CACHE_VERSION}`,
+        apiEmbedded: `api-embedded-cache-v${BaseApiService.CACHE_VERSION}`,
     };
 
     private http: HttpClient;
     private apiRoot: Promise<ApiResponse<GenericApiObject>>;
     private apiCache: Cache;
+    private apiEmbeddedCache: Cache;
 
     private clientUrlToApiLink: Map<string, ApiLink> = new Map();
     private keyedLinksByKey: Map<string, KeyedApiLink> = new Map();
@@ -64,6 +66,30 @@ export class BaseApiService {
         return `${resourceType}/${key.join("/")}`;
     }
 
+    private extractLastModified(data: any): string {
+        if (data != null) {
+            if (data.deletedOn != null) {
+                try {
+                    Date.parse(data.deletedOn);
+                    return data.deletedOn;
+                } catch {/* ignore errors */ }
+            }
+            if (data.updatedOn != null) {
+                try {
+                    Date.parse(data.updatedOn);
+                    return data.updatedOn;
+                } catch {/* ignore errors */ }
+            }
+            if (data.createdOn != null) {
+                try {
+                    Date.parse(data.createdOn);
+                    return data.createdOn;
+                } catch {/* ignore errors */ }
+            }
+        }
+        return (new Date()).toUTCString();
+    }
+
     private async cacheResults(request: RequestInfo, responseData: ApiResponse<unknown>) {
         if (this.apiCache == null) {
             return;
@@ -73,9 +99,11 @@ export class BaseApiService {
         const embedded = responseData?.embedded;
         delete responseData.embedded; // nothing outside of caching must depend on this!
 
+        const date = this.extractLastModified(responseData?.data);
+
         if (isGet) {
             // only cache the whole response for get requests
-            this.apiCache.put(request, new Response(JSON.stringify(responseData)));
+            this.apiCache.put(request, new Response(JSON.stringify(responseData), { headers: { "last-modified": date } }));
         }
 
         if (embedded != null) {
@@ -85,7 +113,9 @@ export class BaseApiService {
                 if (selfLink == null) {
                     continue;
                 }
-                promises.push(this.apiCache.put(selfLink, new Response(JSON.stringify(response))));
+                const date = this.extractLastModified(response?.data);
+                const cache = this.apiEmbeddedCache ?? this.apiCache;
+                promises.push(cache.put(selfLink, new Response(JSON.stringify(response), { headers: { "last-modified": date } })));
             }
             await Promise.all(promises);
         }
@@ -159,16 +189,51 @@ export class BaseApiService {
         return init;
     }
 
-    private async _fetch<T>(input: RequestInfo, ignoreCache = false, init: RequestInit = null): Promise<T> {
+    // eslint-disable-next-line complexity
+    private async _fetchCached(input: Request, ignoreCache: boolean | "ignore-embedded" = false): Promise<Response | null> {
+        if (this.apiCache == null || ignoreCache === true) {
+            return null;
+        }
+        const directCached = await this.apiCache.match(input);
+        if (this.apiEmbeddedCache != null) {
+            const embeddedCached = await this.apiEmbeddedCache.match(input);
+            if (directCached == null) {
+                if (ignoreCache === "ignore-embedded") {
+                    return null;
+                }
+                return embeddedCached;
+            }
+            if (embeddedCached != null) {
+                const dateDirect = directCached.headers.get("last-modified");
+                const dateEmbedded = embeddedCached.headers.get("last-modified");
+                if (dateDirect && dateEmbedded) {
+                    try {
+                        const timeDirect = Date.parse(dateDirect);
+                        const timeEmbedded = Date.parse(dateEmbedded);
+                        if (timeDirect >= timeEmbedded) {
+                            return directCached;
+                        }
+                        if (ignoreCache === "ignore-embedded") {
+                            return null; // direct cached is stale but embedded cache result is to be ignored
+                        }
+                    } catch {/* ignore errors */ }
+                }
+            }
+        }
+        return directCached;
+    }
+
+    private async _fetch<T>(input: RequestInfo, ignoreCache: boolean | "ignore-embedded" = false, init: RequestInit = null): Promise<T> {
         if (init != null && Boolean(init)) {
             input = new Request(input, this.applyDefaultAuthorization(init));
         }
         if (typeof input === "string") {
             input = new Request(input, this.applyDefaultAuthorization({ headers: { Accept: "application/json" } }));
         }
+        // FIXME caching
         const isGet = typeof input === "string" || input.method === "GET";
-        if (isGet && !ignoreCache && this.apiCache != null) {
-            const response = await this.apiCache.match(input);
+        if (isGet) {
+            const response = await this._fetchCached(input, ignoreCache);
             if (response != null) {
                 const responseData = await response.json();
                 if (input.url === responseData.data.self.href) {
@@ -189,6 +254,7 @@ export class BaseApiService {
 
             // remove refenrence to cache that should be deleted
             this.apiCache = null;
+            this.apiEmbeddedCache = null;
 
             // delete all! caches
             const cacheNames = await caches.keys();
@@ -219,6 +285,7 @@ export class BaseApiService {
 
             // open known cache
             this.apiCache = await caches.open(BaseApiService.CURRENT_CACHES.api);
+            this.apiEmbeddedCache = await caches.open(BaseApiService.CURRENT_CACHES.apiEmbedded);
         }
     }
 
@@ -559,7 +626,7 @@ export class BaseApiService {
         return await this.resolveApiLinkKey(linkKey, resourceType, queryParams);
     }
 
-    private async prefetchRelsRecursive(rel: string | string[] = "api", root?: ApiResponse<unknown>, ignoreCache: boolean = true) {
+    private async prefetchRelsRecursive(rel: string | string[] = "api", root?: ApiResponse<unknown>, ignoreCache: boolean | "ignore-embedded" = true) {
         const base = root ?? await this.resolveApiRoot();
         base.links.forEach(async (link) => {
             if (matchesLinkRel(link, rel)) {
@@ -579,12 +646,12 @@ export class BaseApiService {
         return await this.apiRoot;
     }
 
-    public async getByRel<T>(rel: string | string[] | string[][], ignoreCache: boolean = false): Promise<ApiResponse<T>> {
+    public async getByRel<T>(rel: string | string[] | string[][], ignoreCache: boolean | "ignore-embedded" = false): Promise<ApiResponse<T>> {
         const link: ApiLink = await this.resolveRecursiveRels(rel);
         return await this._fetch<ApiResponse<T>>(link.href, ignoreCache);
     }
 
-    public async getByApiLink<T>(link: ApiLink, ignoreCache: boolean = false): Promise<ApiResponse<T>> {
+    public async getByApiLink<T>(link: ApiLink, ignoreCache: boolean | "ignore-embedded" = false): Promise<ApiResponse<T>> {
         return await this._fetch<ApiResponse<T>>(link.href, ignoreCache);
     }
 
@@ -607,7 +674,7 @@ export class BaseApiService {
         return await this._fetch<ApiResponse<T>>(link.href, true, init);
     }
 
-    public async fetch<T>(input: RequestInfo, init?: RequestInit, ignoreCache: boolean = false): Promise<T> {
+    public async fetch<T>(input: RequestInfo, init?: RequestInit, ignoreCache: boolean | "ignore-embedded" = false): Promise<T> {
         return await this._fetch<T>(input, ignoreCache, init);
     }
 }
