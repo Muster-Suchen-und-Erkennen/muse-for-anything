@@ -3,6 +3,8 @@ import { Node } from "@ustutt/grapheditor-webcomponent/lib/node";
 import { observable } from "aurelia-framework";
 import { ApiLink, ApiObject, ApiResponse, PageApiObject } from "rest/api-objects";
 import { BaseApiService } from "rest/base-api";
+import { NormalizedApiSchema } from "rest/schema-objects";
+import { SchemaService } from "rest/schema-service";
 import { TaxonomyApiObject, TaxonomyItemApiObject, TaxonomyItemRelationApiObject } from "../taxonomy-graph";
 
 export const smallMarkerSize: number = 0.8;
@@ -42,11 +44,14 @@ export enum DataItemTypeEnum {
     TaxonomyProperty = "taxonomy",
     TypeItem = "typeItem",
     TypeProperty = "type",
+    ObjectProperty = "object",
+    ArrayProperty = "array",
     StringProperty = "string",
     NumberProperty = "number",
     IntegerProperty = "integer",
     EnumProperty = "enum",
     BooleanProperty = "boolean",
+    EllipsisProperty = "ellipsis",
     Undefined = "undefined",
 }
 
@@ -68,6 +73,9 @@ export const CHILD_ITEM_TYPE_SET = new Set([
 
 export const TYPE_DATA_ITEM_TYPE_SET = new Set([
     DataItemTypeEnum.TypeItem,
+    DataItemTypeEnum.ObjectProperty,
+    DataItemTypeEnum.ArrayProperty,
+    DataItemTypeEnum.EllipsisProperty,
     DataItemTypeEnum.TaxonomyProperty,
     DataItemTypeEnum.TypeProperty,
     DataItemTypeEnum.StringProperty,
@@ -100,6 +108,7 @@ export class DataItemModel {
     public expanded: boolean;
     public visible: boolean;
     public abstract: boolean;
+    @observable() childrenLoaded: boolean = false;
     @observable() isSelected: boolean;
     @observable() isVisibleInGraph: boolean;
     @observable() isSearchResult: boolean;
@@ -175,13 +184,14 @@ export class DataItemModel {
 
     }
 
-    addChild(id: string, name: string, abstract: boolean, href: string, description: string, itemType: DataItemTypeEnum, sortKey: number | null = null, referenceTargetId: string | null = null): void {
+    addChild(id: string, name: string, abstract: boolean, href: string, description: string, itemType: DataItemTypeEnum, sortKey: number | null = null, referenceTargetId: string | null = null): DataItemModel {
         const childItem = new DataItemModel(this.graph, id, name, abstract, href, description, itemType, sortKey, false, referenceTargetId);
         childItem.rootId = this.rootId ?? this.id;
         childItem.parentIds.add(this.id);
         this.children.push(childItem);
         this.icon = "arrow-right";
         this.expanded = false;
+        return childItem;
     }
 
     addChildItem(item: DataItemModel): void {
@@ -269,6 +279,9 @@ export function mapDataItemToGraphNode(item: DataItemModel): Node | null {
         item.itemType === DataItemTypeEnum.IntegerProperty ||
         item.itemType === DataItemTypeEnum.NumberProperty ||
         item.itemType === DataItemTypeEnum.StringProperty ||
+        item.itemType === DataItemTypeEnum.ObjectProperty ||
+        item.itemType === DataItemTypeEnum.ArrayProperty ||
+        item.itemType === DataItemTypeEnum.EllipsisProperty ||
         item.itemType === DataItemTypeEnum.Undefined) {
         return {
             id: item.id,
@@ -300,32 +313,36 @@ export function mapDataItemToGraphNode(item: DataItemModel): Node | null {
  * @param type type from the api response
  * @returns the corresponding DataItemTypeEnum
  */
-function mapTypeEnums(type: { type: string[], referenceType?: string, enum: unknown[], const: unknown[] }): DataItemTypeEnum {
+// eslint-disable-next-line complexity
+function mapTypeEnums(type: { type: Set<string>, referenceType?: string, enum?: unknown[], const?: unknown }): DataItemTypeEnum {
     if (type.enum != null || type.const !== undefined) {
         return DataItemTypeEnum.EnumProperty;
     }
     if (type.type == null) {
         return DataItemTypeEnum.Undefined;
     }
-    if (type.type.includes("object")) {
+    if (type.type.has("object")) {
         if (type.referenceType === "ont-taxonomy") {
             return DataItemTypeEnum.TaxonomyProperty;
         }
         if (type.referenceType === "ont-type") {
             return DataItemTypeEnum.TypeProperty;
         }
-        return DataItemTypeEnum.Undefined;
+        return DataItemTypeEnum.ObjectProperty;
     }
-    if (type.type.includes("string")) {
+    if (type.type.has("array")) {
+        return DataItemTypeEnum.ArrayProperty;
+    }
+    if (type.type.has("string")) {
         return DataItemTypeEnum.StringProperty;
     }
-    if (type.type.includes("integer")) {
+    if (type.type.has("integer")) {
         return DataItemTypeEnum.IntegerProperty;
     }
-    if (type.type.includes("boolean")) {
+    if (type.type.has("boolean")) {
         return DataItemTypeEnum.BooleanProperty;
     }
-    if (type.type.includes("number")) {
+    if (type.type.has("number")) {
         return DataItemTypeEnum.NumberProperty;
     }
     return DataItemTypeEnum.Undefined;
@@ -367,36 +384,61 @@ export function typeApiResponseToDataItemModel(apiResponse: ApiResponse<TypeApiO
     return new DataItemModel(graph, nodeID, data.name, data.abstract, data.self.href, data.schema.description, DataItemTypeEnum.TypeItem, null);
 }
 
-export async function addTypeChildrenToDataItem(apiResponse: ApiResponse<TypeApiObject>, dataItem: DataItemModel, api: BaseApiService) {
-    // TODO reuse schema service for this?
-    const properties = apiResponse.data.schema.definitions?.root?.properties;
-    const sortKeys: { [prop: string]: number } = apiResponse.data.schema.definitions?.root?.propertyOrder ?? {};
+export async function addTypeChildrenToDataItem(apiResponse: ApiResponse<TypeApiObject>, dataItem: DataItemModel, api: BaseApiService, apiSchemas: SchemaService) {
+    const objectCreate = apiResponse.links.find(link => link.resourceType === "ont-object" && link.rel.some(rel => rel === "create"));
 
-    if (properties != null) {
-        const nestedPromises = Object.keys(properties).map(async (propertyName) => {
-            const property = properties[propertyName];
-            const typeEnum = mapTypeEnums(properties[propertyName]);
-            let href = apiResponse.data.self.href;
-            let referenceTarget: string | null = null;
-            if (property.referenceKey != null && property.referenceType != null) {
-                const links = await api.resolveLinkKey(property.referenceKey, property.referenceType);
-                links.forEach(link => {
-                    if (!link.rel.some(rel => rel === "collection")) {
-                        referenceTarget = resourceLinkToNodeId(link);
-                        href = link.href;
-                    }
-                });
-            }
+    const schema = await apiSchemas.getSchema(objectCreate.schema).then((schema) => schema.getNormalizedApiSchema());
 
-            const childID = `${dataItem.id}___${propertyName}`;
+    // eslint-disable-next-line complexity
+    const visitor = async (schema: NormalizedApiSchema, parentSchemas: NormalizedApiSchema[], key: string, path: string, sortKey, parent: DataItemModel, root: DataItemModel) => {
+        if (parentSchemas.includes(schema) || parentSchemas.length > 15) {
+            parent.addChild(`${root.id}___${path}---ellipsis`, "...", false, root.href, "recursion / nesting too deep", DataItemTypeEnum.EllipsisProperty, 0);
+            return; // detected cycle! or nesting too deep
+        }
+        const normalized = schema.normalized;
+        const typeEnum: DataItemTypeEnum = mapTypeEnums(normalized);
 
-            const sortKey = sortKeys[propertyName] ?? null;
+        let href = apiResponse.data.self.href;
+        let referenceTarget: string | null = null;
 
-            dataItem.addChild(childID, property.title ?? propertyName, false, href, property.description ?? "", typeEnum, sortKey, referenceTarget);
-        });
+        const isReference = normalized.referenceKey != null && normalized.referenceType != null;
+        if (isReference) {
+            const links = await api.resolveLinkKey(normalized.referenceKey, normalized.referenceType);
+            links.forEach(link => {
+                if (!link.rel.some(rel => rel === "collection")) {
+                    referenceTarget = resourceLinkToNodeId(link);
+                    href = link.href;
+                }
+            });
+        }
+        const childId = `${root.id}___${path}--${key}`;
+        const childItem = parent.addChild(childId, normalized.title ?? key, false, href, normalized.description ?? "", typeEnum, sortKey, referenceTarget);
 
-        await Promise.all(nestedPromises);
-    }
+        const newPath = (path ? `${path}--` : "") + key;
+
+        const nested: Array<Promise<unknown>> = [];
+
+        if (normalized.mainType === "object" && !isReference) {
+            schema.getPropertyList().forEach((prop) => {
+                nested.push(visitor(prop.propertySchema, [...parentSchemas, schema], prop.propertyName, newPath, prop.sortKey, childItem, root));
+            });
+        }
+        if (normalized.mainType === "array") {
+            schema.getItemList(1).forEach((prop) => {
+                nested.push(visitor(prop.itemSchema, [...parentSchemas, schema], prop.itemIndex.toString(), newPath, prop.itemIndex, childItem, root));
+            });
+        }
+
+        await Promise.all(nested);
+    };
+
+    const nested: Array<Promise<unknown>> = [];
+
+    schema.getPropertyList().forEach((prop) => {
+        nested.push(visitor(prop.propertySchema, [], prop.propertyName, "", prop.sortKey, dataItem, dataItem));
+    });
+
+    await Promise.all(nested);
 }
 
 
@@ -415,7 +457,7 @@ export async function loadTaxonomies(api: BaseApiService, rootLink: ApiLink, ign
     // load each type of the namespace
     const typeApiResponses = apiResponse.data.items?.map(element => {
         // always load taxonomy resources fresh from source to get embedded taxonomy items and item-relations into the cache
-        return api.getByApiLink<TaxonomyApiObject>(element, true); // FIXME find a better workaround for efficient cache handling here
+        return api.getByApiLink<TaxonomyApiObject>(element, "ignore-embedded"); // FIXME find a better workaround for efficient cache handling here
     });
 
     const extraPages = await Promise.all(apiResponse.links.filter(link => link.rel.includes("next")).map(link => {

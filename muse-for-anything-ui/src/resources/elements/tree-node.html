@@ -8,7 +8,8 @@
             </div>
             <div class="eachMinQueueCheckSection">
                 <label class="cb_control control--checkbox">
-                    <input type="checkbox" checked.bind="current.isSelected" indeterminate.bind="current.childIsInResult">
+                    <input type="checkbox" checked.bind="current.isSelected"
+                        indeterminate.bind="current.childIsInResult">
                     <span class="control__indicator"></span>
                 </label>
             </div>
@@ -45,15 +46,24 @@
             <div if.bind="current.itemType=='taxonomy'" title="Item Type: Taxonomy-Reference">
                 <svg-icon icon.bind="'taxref'" size.bind="18"></svg-icon>
             </div>
+            <div if.bind="current.itemType=='array'" title="Item Type: Array">
+                <svg-icon icon.bind="'array'" size.bind="18"></svg-icon>
+            </div>
+            <div if.bind="current.itemType=='object'" title="Item Type: Object">
+                <svg-icon icon.bind="'object'" size.bind="18"></svg-icon>
+            </div>
 
             <div class="ont-treeview-item" title="${current.name}"
-                class.bind="current.isSearchResult || current.isSelected ? 'ont-treeview-item-highlight':''"> ${current.name}</div>
+                class.bind="current.isSearchResult || current.isSelected ? 'ont-treeview-item-highlight':''">
+                ${current.name}</div>
 
-            <button if.bind="current.itemType=='taxonomyItem' || current.itemType=='typeItem'" class="button-flat items-center button-list-fixed-position"
+            <button if.bind="current.itemType=='taxonomyItem' || current.itemType=='typeItem'"
+                class="button-flat items-center button-list-fixed-position"
                 class.bind="current.positionIsFixed ? 'button-list-fixed-position-fixed':''"
                 click.delegate="current.togglePositionFixed()" title='${"ontology.toggleFixedPosition" | t}'
                 style="margin: 0 !important; padding: 0 !important">
-                <svg-icon icon.bind="current.positionIsFixed ? 'unfixed-position' : 'fixed-position'" size.bind="20"></svg-icon>
+                <svg-icon icon.bind="current.positionIsFixed ? 'unfixed-position' : 'fixed-position'" size.bind="20">
+                </svg-icon>
             </button>
         </div>
 

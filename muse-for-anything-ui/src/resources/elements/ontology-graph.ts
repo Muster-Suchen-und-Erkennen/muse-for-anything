@@ -1,18 +1,20 @@
+import { SmoothedEdgePathGenerator } from "@ustutt/grapheditor-webcomponent/lib/dynamic-templates/edge-path-generators";
 import { edgeId } from "@ustutt/grapheditor-webcomponent/lib/edge";
 import GraphEditor from "@ustutt/grapheditor-webcomponent/lib/grapheditor";
 import { Node } from "@ustutt/grapheditor-webcomponent/lib/node";
 import { Rect } from "@ustutt/grapheditor-webcomponent/lib/util";
 import { EventAggregator, Subscription } from "aurelia-event-aggregator";
 import { autoinject, bindable, child, observable, TaskQueue } from "aurelia-framework";
+import { curveLinear } from "d3-shape";
 import { NAV_LINKS_CHANNEL } from "resources/events";
 import { ApiLink } from "rest/api-objects";
 import { BaseApiService } from "rest/base-api";
+import { SchemaService } from "rest/schema-service";
 import { NavigationLinksService, NavLinks } from "services/navigation-links";
 import { TaxonomyGroupBehaviour, TypeGroupBehaviour } from "./ontology-graph-util/group-behaviours";
 import { calculateNodePositionsd3, calculateNodePositionsNgraph } from "./ontology-graph-util/layouts";
 import { OverviewGraphNode, TaxonomyNodeTemplate, TypeNodeTemplate } from "./ontology-graph-util/node-templates";
 import { addTaxonomyChildrenToDataItem, addTypeChildrenToDataItem, CHILD_ITEM_TYPE_SET, compareDataItems, DataItemModel, DataItemTypeEnum, GROUP_DATA_ITEM_TYPE_SET, loadTaxonomies, loadTypes, mapDataItemToGraphNode, taxonomyApiResponseToDataItemModel, TAXONOMY_DATA_ITEM_TYPE_SET, typeApiResponseToDataItemModel, TYPE_DATA_ITEM_TYPE_SET } from "./ontology-graph-util/util";
-
 
 
 @autoinject
@@ -26,7 +28,7 @@ export class OntologyGraph {
     @observable() searchtext: string = "";
     @observable() keepSearchResultsInFocus: boolean = false;
 
-    @observable() typeChildsToShow: number = 3;
+    @observable() typeChildLevelsToShow: number = 0;
     @observable() taxonomyLevelsToShow: number = 0;
 
     @observable() showTaxonomies: boolean = true;
@@ -41,9 +43,11 @@ export class OntologyGraph {
 
     @observable() currentEdgeStyleBold: boolean = true;
 
-    @observable graph: GraphEditor;
-    @observable graphoverview: GraphEditor;
+    graph: GraphEditor;
+    graphoverview: GraphEditor;
     @child("div#mainontology-graph") maindiv: any;
+
+    private onGraphAvailable: (unknown) => void | null = null;
 
     private layoutAlgorithms = [
         { id: 0, name: "ngraph.forcedirected" },
@@ -64,18 +68,22 @@ export class OntologyGraph {
     dataItemChildrenMap: Map<string, Set<string>> = new Map();
     dataItemsWithEdges: Set<string> = new Set();
 
+    nrOfNodesInGraph: number = 0;
+
     currentSearchMatches: Set<string> | null = null;
     maskSearchMisses: boolean = false;
     searchHasFocus: boolean = false;
 
     private api: BaseApiService;
+    private apiSchemas: SchemaService;
     private navService: NavigationLinksService;
     private events: EventAggregator;
     private queue: TaskQueue;
     private subscription: Subscription;
 
-    constructor(baseApi: BaseApiService, navService: NavigationLinksService, events: EventAggregator, queue: TaskQueue) {
+    constructor(baseApi: BaseApiService, apiSchemas: SchemaService, navService: NavigationLinksService, events: EventAggregator, queue: TaskQueue) {
         this.api = baseApi;
+        this.apiSchemas = apiSchemas;
         this.navService = navService;
         this.checkNavigationLinks();
         this.events = events;
@@ -112,11 +120,13 @@ export class OntologyGraph {
     maindivChanged(newValue: any) {
         if (newValue.getElementsByClassName("graphoverview").length > 0) {
             this.graphoverview = newValue.getElementsByClassName("graphoverview")[0];
+            this.graphoverviewChanged(this.graphoverview);
         } else {
             throw new Error("No graphoverview element in DOM found");
         }
         if (newValue.getElementsByClassName("maingraph").length > 0) {
             this.graph = newValue.getElementsByClassName("maingraph")[0];
+            this.graphChanged(this.graph);
         } else {
             throw new Error("No graph element in DOM found");
         }
@@ -168,6 +178,10 @@ export class OntologyGraph {
 
         newGraph.setNodeClass = this.setNodeClass;
         newGraph.setEdgeClass = this.setEdgeClass;
+
+        if (this.onGraphAvailable != null) {
+            this.onGraphAvailable(true);
+        }
     }
 
     graphoverviewChanged(newGraph: GraphEditor): void {
@@ -180,6 +194,13 @@ export class OntologyGraph {
 
         newGraph.setNodeClass = this.setNodeClass;
         newGraph.setEdgeClass = this.setEdgeClass;
+
+        // disable edge path smoothing in preview graph
+        const edgePathReg = newGraph.edgePathGeneratorRegistry;
+        if (edgePathReg.getEdgePathGenerator("default")) {
+            edgePathReg.removePathGenerator("default");
+        }
+        edgePathReg.addEdgePathGenerator("default", new SmoothedEdgePathGenerator(curveLinear, true, 10));
 
         newGraph.addEventListener("svginitialized", () => {
             newGraph.getSVG()
@@ -283,7 +304,7 @@ export class OntologyGraph {
         this.updateSearchFilter(this.searchtext);
     }
 
-    typeChildsToShowChanged(newValue: number): void {
+    typeChildLevelsToShowChanged(newValue: number): void {
         if (!this.isRendered) {
             return;
         }
@@ -332,6 +353,7 @@ export class OntologyGraph {
     private loadData(ignoreCache: boolean) {
         // TODO load data in batches!
         const promises: Array<Promise<DataItemModel[]>> = [];
+        const childPromises: Array<Promise<unknown>> = [];
         if (this.navService.getCurrentNavLinks().nav.some(link => link.apiLink.resourceType == "ont-type")) {
             const firstTypePage = this.navService.getCurrentNavLinks().nav.find(link => link.apiLink.resourceType === "ont-type").apiLink;
             const typesPromise = loadTypes(this.api, firstTypePage, this.ignoreCache) // load types
@@ -343,23 +365,29 @@ export class OntologyGraph {
                     // map api responses to DataItemModels
                     return Promise.all(apiResponses.map(response => {
                         const dataModel = typeApiResponseToDataItemModel(response, this.graph);
-                        return addTypeChildrenToDataItem(response, dataModel, this.api).then(() => dataModel);
+                        childPromises.push(addTypeChildrenToDataItem(response, dataModel, this.api, this.apiSchemas).then(() => {
+                            dataModel.childrenLoaded = true;
+                        }));
+                        return dataModel;
                     }));
                 });
             promises.push(typesPromise);
         }
-        if (this.navService.getCurrentNavLinks().nav.some(link => link.apiLink.resourceType == "ont-taxonomy")) {
+        if (this.navService.getCurrentNavLinks().nav.some(link => link.apiLink.resourceType === "ont-taxonomy")) {
             const firstTaxonomyPage = this.navService.getCurrentNavLinks().nav.find(link => link.apiLink.resourceType === "ont-taxonomy").apiLink;
             const taxonomyPromise = loadTaxonomies(this.api, firstTaxonomyPage, this.ignoreCache) // load taxonomies
                 .then(results => {
                     this.totalTaxonomies = results.totalTaxonomies;
-                    return Promise.all(results.taxonomyApiResponses); // wait for all type promises
+                    return Promise.all(results.taxonomyApiResponses); // wait for all taxonomy promises
                 })
                 .then(apiResponses => {
                     // map api responses to DataItemModels
                     return Promise.all(apiResponses.map(response => {
                         const dataModel = taxonomyApiResponseToDataItemModel(response, this.graph);
-                        return addTaxonomyChildrenToDataItem(response, dataModel, this.graph, this.api).then(() => dataModel);
+                        childPromises.push(addTaxonomyChildrenToDataItem(response, dataModel, this.graph, this.api).then(() => {
+                            dataModel.childrenLoaded = true;
+                        }));
+                        return dataModel;
                     }));
                 });
             promises.push(taxonomyPromise);
@@ -371,57 +399,89 @@ export class OntologyGraph {
                 .then((dataItemLists) => {
                     const dataItems: DataItemModel[] = [].concat(...dataItemLists);
                     dataItems.sort(compareDataItems);
-                    const dataItemsMap = new Map<string, DataItemModel>();
-                    const dataItemChildrenMap = new Map<string, Set<string>>();
-                    const dataItemsWithEdges = new Set<string>();
-
-                    let z = 0;
-
-                    const addItems = (item: DataItemModel, index, depth = 0) => {
-                        item.node = mapDataItemToGraphNode(item); // create node objects for data items
-                        if (item.node.z == null) {
-                            // only set and increase z for new nodes that have no z value
-                            item.node.z = z;
-                            z++;
-                        }
-                        if (item.node.index == null) {
-                            item.node.index = index;
-                        }
-                        if (item.node.depth == null) {
-                            item.node.depth = depth;
-                        }
-                        dataItemsMap.set(item.id, item); // sort data items in a map for fast access
-
-                        // gather a set of child ids for all root ids
-                        if (item.rootId) {
-                            if (!dataItemChildrenMap.has(item.rootId)) {
-                                dataItemChildrenMap.set(item.rootId, new Set([item.id]));
-                            } else {
-                                dataItemChildrenMap.get(item.rootId).add(item.id);
-                            }
-                        }
-
-                        // check edges to fill out dataItemsWithEdges
-                        if (item.referenceTargetId != null && item.rootId != null) {
-                            dataItemsWithEdges.add(item.rootId); // only group roots are considered edge targets
-                            dataItemsWithEdges.add(item.referenceTargetId); // reference target can only point to group roots
-                        }
-
-                        // handle children
-                        if (item.hasChildren()) {
-                            item.children.sort(compareDataItems); // also sort children
-                            item.children.forEach((child, index) => addItems(child, index, depth + 1));
-                        }
-                    };
-                    dataItems.forEach((item, index) => addItems(item, index));
-                    this.dataItems = dataItems;
-                    this.dataItemsMap = dataItemsMap;
-                    this.dataItemsWithEdges = dataItemsWithEdges;
-                    this.isLoading = false;
-                    this.prepareGroups();
-                    this.renderGraph(true);
+                    if (this.graph == null) {
+                        return new Promise((resolve) => {
+                            this.onGraphAvailable = resolve;
+                        }).then(
+                            () => {
+                                this.prepareGraph(dataItems);
+                            },
+                        );
+                    } else {
+                        this.prepareGraph(dataItems);
+                    }
+                })
+                .then((p) => {
+                    return Promise.all(childPromises);
+                })
+                .then(() => {
+                    if (this.graph == null) {
+                        new Promise((resolve) => {
+                            this.onGraphAvailable = resolve;
+                        }).then(
+                            () => {
+                                const dataItems = [...this.dataItems];
+                                this.prepareGraph(dataItems, true);
+                            },
+                        );
+                    } else {
+                        const dataItems = [...this.dataItems];
+                        this.prepareGraph(dataItems, true);
+                    }
                 });
         }
+    }
+
+    private prepareGraph(dataItems: DataItemModel[], forceRecalculateZ: boolean = false) {
+        const dataItemsMap = new Map<string, DataItemModel>();
+        const dataItemChildrenMap = new Map<string, Set<string>>();
+        const dataItemsWithEdges = new Set<string>();
+
+        let z = 0;
+
+        const addItems = (item: DataItemModel, index, depth = 0) => {
+            item.node = mapDataItemToGraphNode(item); // create node objects for data items
+            if (item.node.z == null || forceRecalculateZ) {
+                // only set and increase z for new nodes that have no z value
+                item.node.z = z;
+                z++;
+            }
+            if (item.node.index == null) {
+                item.node.index = index;
+            }
+            if (item.node.depth == null) {
+                item.node.depth = depth;
+            }
+            dataItemsMap.set(item.id, item); // sort data items in a map for fast access
+
+            // gather a set of child ids for all root ids
+            if (item.rootId) {
+                if (!dataItemChildrenMap.has(item.rootId)) {
+                    dataItemChildrenMap.set(item.rootId, new Set([item.id]));
+                } else {
+                    dataItemChildrenMap.get(item.rootId).add(item.id);
+                }
+            }
+
+            // check edges to fill out dataItemsWithEdges
+            if (item.referenceTargetId != null && item.rootId != null) {
+                dataItemsWithEdges.add(item.rootId); // only group roots are considered edge targets
+                dataItemsWithEdges.add(item.referenceTargetId); // reference target can only point to group roots
+            }
+
+            // handle children
+            if (item.hasChildren()) {
+                item.children.sort(compareDataItems); // also sort children
+                item.children.forEach((child, index) => addItems(child, index, depth + 1));
+            }
+        };
+        dataItems.forEach((item, index) => addItems(item, index));
+        this.dataItems = dataItems;
+        this.dataItemsMap = dataItemsMap;
+        this.dataItemsWithEdges = dataItemsWithEdges;
+        this.isLoading = false;
+        this.prepareGroups();
+        this.renderGraph(true);
     }
 
     private prepareGroups() {
@@ -467,7 +527,7 @@ export class OntologyGraph {
             return true; // group nodes are always in bounds
         }
         if (TYPE_DATA_ITEM_TYPE_SET.has(item.itemType)) {
-            return item.node.index < this.typeChildsToShow;
+            return item.node.depth < (this.typeChildLevelsToShow + 1);
         }
         if (TAXONOMY_DATA_ITEM_TYPE_SET.has(item.itemType)) {
             return item.node.depth < (this.taxonomyLevelsToShow + 1);
@@ -634,6 +694,7 @@ export class OntologyGraph {
                 }
             }
         });
+        this.nrOfNodesInGraph = this.graph.nodeList.length;
         this.graph.nodeList.sort((a, b) => (a?.z ?? Infinity) - (b?.z ?? Infinity));
         if (isFirstRender) {
             this.calculateNodePositions();

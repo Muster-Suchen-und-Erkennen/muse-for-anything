@@ -113,12 +113,21 @@ export class TypeGroupBehaviour implements GroupBehaviour {
         const childNodeHeight = 60;
         const extraTextPadding = 16;
 
-        const x = groupNode.x;
+        let x = groupNode.x;
         let startY = groupNode.y + extraTextPadding;
 
         const childNodes: Node[] = [];
         graphEditor.groupingManager.getAllChildrenOf(group).forEach(childId => childNodes.push(graphEditor.getNode(childId)));
         childNodes.sort((a, b) => (a?.z ?? Infinity) - (b?.z ?? Infinity));
+
+        const maxDepth = Math.max(...childNodes.map(n => n.depth ?? 0)) - 1;
+
+        let extraWidth = 0;
+
+        if (maxDepth > 0) {
+            extraWidth = 20 * maxDepth;
+            x -= extraWidth / 2;
+        }
 
         if (childNodes.length === 0) {
             groupNode.width = null;
@@ -128,7 +137,7 @@ export class TypeGroupBehaviour implements GroupBehaviour {
 
         const count = childNodes.length;
 
-        const width: number = childNodeWidth;
+        const width: number = childNodeWidth + extraWidth;
         const height: number = (childNodeHeight * count) + (BOUNDING_BOX_PADDING * count);
 
         startY -= height / 2;
@@ -136,6 +145,9 @@ export class TypeGroupBehaviour implements GroupBehaviour {
         childNodes.forEach(child => {
             child.x = x;
             child.y = startY + (childNodeHeight / 2);
+            if (child.depth > 1) {
+                child.x = x + (20 * (child.depth - 1));
+            }
 
             // handle updates to pinned coordinates
             if (child.fx != null) {

@@ -149,6 +149,7 @@
         "showSelectedItems": "show only selected items",
         "showAllElementsWithoutAnEdgeButton": "show only elements without an edge",
         "childsToShow": "number of type properties to be displayed:",
+        "childLevelsToShow": "depth of type proprties to show:",
         "taxonomyLevelsToShow": "depth of taxonomy items to show:",
         "itemsInGraph": "Items in graph",
         "detailview-header": "Detailview",

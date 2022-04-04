@@ -159,7 +159,7 @@ export class TaxonomyNodeTemplate implements DynamicNodeTemplate {
                 .classed("title", true)
                 .attr("data-click", "header")
                 .attr("data-text-center-y", 0)
-                .attr("width", TaxonomyNodeTemplate.MIN_WIDTH)
+                .attr("data-width", TaxonomyNodeTemplate.MIN_WIDTH - 10)
                 .attr("data-content", "title");
             g.append("title")
                 .attr("data-content", "title");
@@ -185,61 +185,6 @@ export class TaxonomyNodeTemplate implements DynamicNodeTemplate {
 
         g.select("text.title")
             .attr("x", (-width / 2) + BOUNDING_BOX_PADDING);
-    }
-
-    private calculateRect(g: any, grapheditor: GraphEditor, context: DynamicTemplateContext<Node>, updated?: boolean) {
-        const isOverviewGraph = grapheditor.className.includes("graphoverview");
-        const props = g.datum();
-        if (!props.height) {
-            props.height = 20;
-        }
-        if (!props.width) {
-            props.width = 140;
-        }
-        if (!props.childVisible) {
-            props.childVisible = false;
-        }
-        this.drawRect(g, { x: 0, y: 0, width: props.width, height: props.height }, props, props.childVisible, isOverviewGraph);
-    }
-
-    private drawRect(g: any, minBox: any, props: any, childsVisible: boolean, isOverviewGraph: boolean) {
-        g.selectAll("*").remove();
-        g.append("ellipse")
-            .attr("width", minBox.width + BOUNDING_BOX_PADDING * 2)
-            .attr("height", minBox.height + BOUNDING_BOX_PADDING * 2)
-            .attr("cx", (minBox.width + BOUNDING_BOX_PADDING * 2) / 2)
-            .attr("cy", (minBox.height + BOUNDING_BOX_PADDING * 2) / 2)
-            .attr("rx", (minBox.width + BOUNDING_BOX_PADDING * 2) / 2)
-            .attr("ry", (minBox.height + BOUNDING_BOX_PADDING * 2) / 2)
-            .attr("class", "taxonomy-group");
-        if (!isOverviewGraph) {
-            g.append("text")
-                .attr("x", 15)
-                .attr("y", (minBox.height + BOUNDING_BOX_PADDING * 2) / 2 + 5)
-                .attr("class", "title")
-                .attr("width", 150)
-                .attr("data-click", "header")
-                .attr("data-content", "title");
-            g.append("title")
-                .attr("data-content", "title");
-
-            // add + or - to node for collapsing details or not
-            const collapseIconElement = g.append("g")
-                .attr("transform", `translate(${minBox.width / 2},5)`)
-                .attr("data-click", "expandNode")
-                .attr("fill", "white")
-                .attr("fill-rule", "evenodd")
-                .attr("stroke", "currentColor")
-                .attr("stroke-linecap", "round")
-                .attr("stroke-linejoin", "round");
-            collapseIconElement.append("path").attr("d", "m12.5 10.5v-8c0-1.1045695-.8954305-2-2-2h-8c-1.1045695 0-2 .8954305-2 2v8c0 1.1045695.8954305 2 2 2h8c1.1045695 0 2-.8954305 2-2z");
-            collapseIconElement.append("path").attr("d", "m6.5 3.5v6")
-                .attr("transform", "matrix(0 1 -1 0 13 0)");
-
-            if (!childsVisible) {
-                collapseIconElement.append("path").attr("d", "m6.5 3.5v6.056");
-            }
-        }
     }
 }
 

@@ -275,11 +275,31 @@
                     <ellipse ry="7.33333" rx="7.33333" cy="80.43137" cx="20.66667" stroke-width="0" stroke="#000000"
                         fill="#000000" />
                 </g>
+                <g id="array">
+                    <rect stroke="currentColor" fill="#fff" rx="1" height="10" width="10" y="0" x="0"
+                        stroke-width="0.3" />
+                    <g transform="translate(0.8 1.6) scale(0.6)" stroke="currentColor" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="m11.5 5.5h-7" />
+                        <path d="m11.5 9.5h-7" />
+                        <path d="m11.5 1.5h-7" />
+                    </g>
+                    <path transform="translate(0.8 1.6) scale(0.6)"
+                        d="m1.49884033 2.5c.5 0 1-.5 1-1s-.5-1-1-1-.99884033.5-.99884033 1 .49884033 1 .99884033 1zm0 4c.5 0 1-.5 1-1s-.5-1-1-1-.99884033.5-.99884033 1 .49884033 1 .99884033 1zm0 4c.5 0 1-.5 1-1s-.5-1-1-1-.99884033.5-.99884033 1 .49884033 1 .99884033 1z"
+                        fill="currentColor" />
+                </g>
+                <g id="object">
+                    <rect stroke="currentColor" fill="#fff" rx="1" height="10" width="10" y="0" x="0"
+                        stroke-width="0.3" />
+                    <path
+                        d="M4.4 1.8 c -2 0, -2 0, -2 2 v 0.2 c 0 1, 0 1, -1 1 c 1 0, 1 0, 1 1 v 0.2 c 0 2, 0 2, 2 2 m 1.2 0 c 2 0, 2 0, 2 -2 v -0.2 c 0 -1, 0 -1, 1 -1 c -1 0, -1 0, -1 -1 v -0.2 c 0 -2, 0 -2, -2 -2"
+                        stroke="currentColor" fill="none" />
+                </g>
 
 
                 <g id="taxonomy-link-item" data-template-type="node">
-                    <rect width="120" height="60" x="-60" y="-30" rx="5" data-link-handles="edges"
-                        class="taxonomy-link-item">
+                    <rect width="120" height="60" x="-60" y="-30" rx="5"
+                        data-link-handles='[{"x":-60,"y":0},{"x":60,"y":0}]' class="taxonomy-link-item">
                         <title data-content="title"></title>
                     </rect>
 
@@ -297,8 +317,8 @@
                     </g>
                 </g>
                 <g id="type-link-item" data-template-type="node">
-                    <rect width="120" height="60" x="-60" y="-30" rx="5" data-link-handles="edges"
-                        class="type-link-item">
+                    <rect width="120" height="60" x="-60" y="-30" rx="5"
+                        data-link-handles='[{"x":-60,"y":0},{"x":60,"y":0}]' class="type-link-item">
                         <title data-content="title"></title>
                     </rect>
                     <text class="titleDescription" x="-45" y="-13" width="110" data-content="typedescription"></text>
@@ -314,7 +334,8 @@
                     </g>
                 </g>
                 <g id="type-item" data-template-type="node">
-                    <rect width="120" height="60" x="-60" y="-30" rx="5" data-link-handles="edges" class="type-item">
+                    <rect width="120" height="60" x="-60" y="-30" rx="5"
+                        data-link-handles='[{"x":-60,"y":0},{"x":60,"y":0}]' class="type-item">
                         <title data-content="title"></title>
                     </rect>
                     <text class="titleDescription" x="-45" y="-13" width="110" data-content="typedescription"></text>
@@ -433,11 +454,11 @@
                                 </div>
                             </label>
                             <label class="mt-2 inline-block">
-                                ${"ontology.childsToShow" | t}
+                                ${"ontology.childLevelsToShow" | t}
                                 <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1"
                                     value.from-view="filter & throttle"
-                                    value.bind="typeChildsToShow | number & debounce" type="number" autocomplete="off"
-                                    min="0" disabled.bind="!isRendered">
+                                    value.bind="typeChildLevelsToShow | number & debounce" type="number"
+                                    autocomplete="off" min="0" disabled.bind="!isRendered">
                             </label>
                             <label class="mt-2 inline-block">
                                 ${"ontology.taxonomyLevelsToShow" | t}
@@ -471,7 +492,7 @@
                             </button>
                         </div>
                         <div class="control-group" if.bind="isRendered">
-                            ${"ontology.itemsInGraph" | t}: ${graph.nodeList.length}
+                            ${"ontology.itemsInGraph" | t}: ${nrOfNodesInGraph}
                         </div>
                     </div>
                 </div>
