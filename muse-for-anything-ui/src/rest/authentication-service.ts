@@ -1,6 +1,8 @@
+import { DialogService } from "aurelia-dialog";
 import { EventAggregator } from "aurelia-event-aggregator";
 import { autoinject } from "aurelia-framework";
-import { AUTH_EVENTS_CHANNEL } from "resources/events";
+import { LoginDialog } from "resources/elements/login-dialog";
+import { AUTH_EVENTS_CHANNEL, REQUEST_FRESH_LOGIN_CHANNEL, REQUEST_LOGOUT_CHANNEL } from "resources/events";
 import { ApiLink, ApiObject, isApiObject } from "./api-objects";
 import { BaseApiService } from "./base-api";
 
@@ -27,19 +29,24 @@ export class AuthenticationService {
     private ACCESS_TOKEN_KEY: string = "MUSE4Anything_JWT";
     private REFRESH_TOKEN_KEY: string = "MUSE4Anything_JWT_REFRESH";
     private currentApiToken: string;
+    private keepLogin: boolean = false;
 
     private isLoggedInStatus: boolean = false;
     private userStatus: any = null;
 
     private api: BaseApiService;
     private events: EventAggregator;
+    private dialogService: DialogService;
 
-    constructor(baseApi: BaseApiService, eventAggregator: EventAggregator) {
+    constructor(baseApi: BaseApiService, eventAggregator: EventAggregator, dialogService: DialogService) {
         this.api = baseApi;
         this.events = eventAggregator;
+        this.dialogService = dialogService;
         this.recoverLogin();
         this.checkTokenExpiration();
         window.setInterval(() => this.checkTokenExpiration(), 60000);
+        this.events.subscribe(REQUEST_FRESH_LOGIN_CHANNEL, (callbacks) => this.ensureFreshLogin(callbacks.resolve, callbacks.reject));
+        this.events.subscribe(REQUEST_LOGOUT_CHANNEL, () => this.logout());
     }
 
     public get currentStatus(): { isLoggedIn: boolean, user: any } {
@@ -78,20 +85,60 @@ export class AuthenticationService {
         }
     }
 
-    public login(username_or_email: string, password: string, keepLogin: boolean = false) {
+    public login(username_or_email: string, password: string, keepLogin: boolean = false): void {
         localStorage.removeItem(this.REFRESH_TOKEN_KEY);
         sessionStorage.removeItem(this.REFRESH_TOKEN_KEY);
-        this.api.searchResolveRels("login").then((loginLink: ApiLink) => {
-            return this.api.submitByApiLink(loginLink, {
-                username: username_or_email,
-                password: password,
-            });
-        }).then(response => {
-            if (!isApiObject(response.data) || !isApiTokenApiObject(response.data)) {
-                return; // TODO show error
-            }
+        this.api.searchResolveRels("login")
+            .then((loginLink: ApiLink) => {
+                return this.api.submitByApiLink(loginLink, {
+                    username: username_or_email,
+                    password: password,
+                });
+            })
+            .then(response => {
+                if (!isApiObject(response.data) || !isApiTokenApiObject(response.data)) {
+                    return; // TODO show error
+                }
+                this.keepLogin = keepLogin;
 
-            this.updateCredentials(response.data.accessToken, response.data.refreshToken, keepLogin);
+                this.updateCredentials(response.data.accessToken, response.data.refreshToken, keepLogin);
+            });
+    }
+
+    public freshLogin(password: string): Promise<string> {
+        return this.api.searchResolveRels("fresh-login")
+            .then((loginLink: ApiLink) => {
+                return this.api.submitByApiLink(loginLink, {
+                    password: password,
+                });
+            })
+            .then(response => {
+                if (!isApiObject(response.data) || !isApiTokenApiObject(response.data)) {
+                    // TODO show error
+                    throw new Error("Login failed!");
+                }
+
+                this.updateCredentials(response.data.accessToken, response.data.refreshToken, this.keepLogin);
+                return response.data.accessToken;
+            });
+    }
+
+
+    public ensureFreshLogin(resolve: (value: string) => void, reject?: (value: unknown) => void): void {
+        if (this.tokenIsFresh()) {
+            resolve(this.currentApiToken);
+            return;
+        }
+        this.dialogService.open({
+            viewModel: LoginDialog,
+            model: { isPasswordOnly: true, title: "titles.fresh-login" },
+            lock: false,
+        }).whenClosed((result) => {
+            if (!result.wasCancelled && result.output?.password) {
+                this.freshLogin(result.output?.password).then(resolve, reject);
+            } else {
+                reject("cancelled by user");
+            }
         });
     }
 
@@ -114,15 +161,17 @@ export class AuthenticationService {
         if (refreshToken == null || this.expiration(refreshToken) < new Date()) {
             this.events.publish(AUTH_EVENTS_CHANNEL, LOGIN_EXPIRED);
         }
-        this.api.searchResolveRels("refresh").then((refreshLink: ApiLink) => {
-            return this.api.submitByApiLink(refreshLink, undefined, undefined, `Bearer ${refreshToken}`);
-        }).then(response => {
-            if (!isApiObject(response.data) || !isApiTokenApiObject(response.data)) {
-                return; // TODO show error
-            }
+        this.api.searchResolveRels("refresh")
+            .then((refreshLink: ApiLink) => {
+                return this.api.submitByApiLink(refreshLink, undefined, undefined, `Bearer ${refreshToken}`);
+            })
+            .then(response => {
+                if (!isApiObject(response.data) || !isApiTokenApiObject(response.data)) {
+                    return; // TODO show error
+                }
 
-            this.updateCredentials(response.data.accessToken);
-        });
+                this.updateCredentials(response.data.accessToken, null, this.keepLogin);
+            });
     }
 
     private recoverLogin() {
@@ -139,7 +188,7 @@ export class AuthenticationService {
         const oldApiToken = this.currentApiToken;
         this.currentApiToken = accessToken;
         this.apiTokenChanged(this.currentApiToken, oldApiToken);
-        console.log("recovered login");
+        console.log("recovered login")
     }
 
     private updateCredentials(apiToken: string, apiRefreshToken?: string, keepLogin: boolean = false) {
@@ -196,7 +245,7 @@ export class AuthenticationService {
 
     private expiresSoon(token: string, timedeltaInMinutes: number = 3): boolean {
         let future = new Date();
-        future = new Date(future.getTime() + (timedeltaInMinutes * 60 * 1000))
+        future = new Date(future.getTime() + (timedeltaInMinutes * 60 * 1000));
         return this.expiration(token) < future;
     }
 

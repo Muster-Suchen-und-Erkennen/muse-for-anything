@@ -1,7 +1,5 @@
-import { bindable, autoinject, observable } from "aurelia-framework";
+import { autoinject, observable } from "aurelia-framework";
 import { DialogController } from "aurelia-dialog";
-import { ApiLink } from "rest/api-objects";
-import { AuthenticationService } from "rest/authentication-service";
 
 @autoinject
 export class LoginDialog {
@@ -20,11 +18,9 @@ export class LoginDialog {
     confirmTitle: string = "login.confirm-login";
     isPasswordOnly: boolean = false;
 
-    private auth: AuthenticationService;
     private controller: DialogController;
 
-    constructor(authService: AuthenticationService, controller: DialogController) {
-        this.auth = authService;
+    constructor(controller: DialogController) {
         this.controller = controller;
     }
 
@@ -40,7 +36,7 @@ export class LoginDialog {
         if (model?.isPasswordOnly) {
             this.isPasswordOnly = true;
             if (model.username != null) {
-                this.username = this.username;
+                this.username = model.username;
             }
             this.usernameValid = true;
         }

@@ -1,30 +1,30 @@
 """Generators for all user management resources."""
 
-from typing import Dict, Iterable, Optional
+from typing import Dict, Iterable, Optional, Tuple
 
 from flask import url_for
+from flask.globals import g
 
 from muse_for_anything.api.base_models import ApiLink, ApiResponse
 from muse_for_anything.api.v1_api.constants import (
     COLLECTION_REL,
     CREATE,
     CREATE_REL,
+    DANGER_REL,
     DELETE,
     DELETE_REL,
+    EDIT,
     GET,
     ITEM_COUNT_DEFAULT,
     ITEM_COUNT_QUERY_KEY,
-    NAMESPACE_REL_TYPE,
+    LOGOUT_REL,
     NAV_REL,
-    OBJECT_REL_TYPE,
     PAGE_REL,
+    PERMANENT_REL,
     POST_REL,
     PUT_REL,
-    RESTORE,
-    RESTORE_REL,
+    REQUIRES_FRESH_LOGIN_REL,
     SCHEMA_RESOURCE,
-    TAXONOMY_REL_TYPE,
-    TYPE_REL_TYPE,
     UP_REL,
     UPDATE,
     UPDATE_REL,
@@ -35,6 +35,7 @@ from muse_for_anything.api.v1_api.constants import (
     USER_REL_TYPE,
     USER_RESOURCE,
     USER_SCHEMA,
+    USER_UPDATE_SCHEMA,
 )
 from muse_for_anything.api.v1_api.models.auth import UserData
 from muse_for_anything.api.v1_api.request_helpers import (
@@ -80,7 +81,7 @@ class UsersPageLinkGenerator(LinkGenerator, resource_type=User, page=True):
         )
 
 
-class UsersPageCreateNamespaceLinkGenerator(
+class UsersPageCreateUserLinkGenerator(
     LinkGenerator, resource_type=User, page=True, relation=CREATE_REL
 ):
     def generate_link(
@@ -91,10 +92,9 @@ class UsersPageCreateNamespaceLinkGenerator(
         ignore_deleted: bool = False,
     ) -> Optional[ApiLink]:
         if not FLASK_OSO.is_allowed(OsoResource(USER_REL_TYPE), action=CREATE):
-            print(">> No create user allowed!")
             return
         link = LinkGenerator.get_link_of(resource, query_params=query_params)
-        link.rel = (CREATE_REL, POST_REL)
+        link.rel = (CREATE_REL, POST_REL, REQUIRES_FRESH_LOGIN_REL)
         link.schema = url_for(
             SCHEMA_RESOURCE, schema_id=USER_CREATE_SCHEMA, _external=True
         )
@@ -141,6 +141,67 @@ class UserUpLinkGenerator(LinkGenerator, resource_type=User, relation=UP_REL):
             PageResource(User, page_number=1),
             extra_relations=(UP_REL,),
         )
+
+
+class UpdateUserLinkGenerator(LinkGenerator, resource_type=User, relation=UPDATE_REL):
+    def generate_link(
+        self,
+        resource: User,
+        *,
+        query_params: Optional[Dict[str, str]] = None,
+        ignore_deleted: bool = False,
+    ) -> Optional[ApiLink]:
+        if not LinkGenerator.skip_slow_policy_checks:
+            # skip policy check for embedded resources
+            if not FLASK_OSO.is_allowed(resource, action=EDIT):
+                print("\n\n", "Editing User is not allowed!", resource, "\n\n")
+                return  # not allowed
+
+        link = LinkGenerator.get_link_of(resource)
+
+        link.schema = url_for(
+            SCHEMA_RESOURCE, schema_id=USER_UPDATE_SCHEMA, _external=True
+        )
+
+        link.rel = (
+            UPDATE_REL,
+            POST_REL,
+            DANGER_REL,
+            REQUIRES_FRESH_LOGIN_REL,
+        )
+
+        return link
+
+
+class DeleteUserLinkGenerator(LinkGenerator, resource_type=User, relation=DELETE_REL):
+    def generate_link(
+        self,
+        resource: User,
+        *,
+        query_params: Optional[Dict[str, str]] = None,
+        ignore_deleted: bool = False,
+    ) -> Optional[ApiLink]:
+        if not LinkGenerator.skip_slow_policy_checks:
+            # skip policy check for embedded resources
+            if not FLASK_OSO.is_allowed(resource, action=DELETE):
+                print("\n\n", "Deleting User is not allowed!", resource, "\n\n")
+                return  # not allowed
+
+        link = LinkGenerator.get_link_of(resource)
+
+        # deleting the user which is logged in is also a logout operation
+        extra_rels: Tuple[str, ...] = (
+            (LOGOUT_REL,) if resource == g.current_user else tuple()
+        )
+        link.rel = (
+            DELETE_REL,
+            DANGER_REL,
+            PERMANENT_REL,
+            REQUIRES_FRESH_LOGIN_REL,
+            *extra_rels,
+        )
+
+        return link
 
 
 class UserApiObjectGenerator(ApiObjectGenerator, resource_type=User):

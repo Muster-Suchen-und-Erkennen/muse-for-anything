@@ -36,6 +36,17 @@ RESTORE_REL = "restore"
 
 NEW_REL = "new"
 CHANGED_REL = "changed"
+DELETED_REL = "deleted"
+
+DANGER_REL = "danger"
+PERMANENT_REL = "permanent"
+
+LOGIN_REL = "login"
+REFRESH_TOKEN_REL = "refresh"
+FRESH_LOGIN_REL = "fresh-login"
+LOGOUT_REL = "logout"
+
+REQUIRES_FRESH_LOGIN_REL = "requires-fresh-login"
 
 
 # relation types ###############################################################

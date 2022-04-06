@@ -8,7 +8,8 @@
         </a>
     </template>
     <template if.bind="action.actionType === 'delete' || action.actionType === 'restore'">
-        <button class="sidebar-action text-left flex items-start" click.delegate="performAction()">
+        <button class="sidebar-action ${dangerous ? 'danger' : ''} w-full text-left flex items-start"
+            click.delegate="performAction()">
             <svg-icon class="mr-1" icon.bind="'trash'" if.bind="action.actionType === 'delete'"></svg-icon>
             <svg-icon class="mr-1" icon.bind="'reset'" if.bind="action.actionType === 'restore'"></svg-icon>
             ${action.title | t} ${action.name ? '"' + action.name + '"' : ""}

@@ -19,8 +19,14 @@ allow(user: User, "GET", resource: User)
 allow(user: User, "CREATE", _resource: OsoResource{resource_type: "user", is_collection: false, arguments: nil})
     if print(user.has_role("admin"))  and is_admin(user);
 
+allow(user: User, "EDIT", resource: OsoResource{resource_type: "user", is_collection: false})
+    if user.username == resource.arguments.get("username") or is_admin(user);
+
 allow(user: User, "EDIT", resource: User)
     if is_admin(user) or user == resource;
 
-allow(user: User, "DELETE", resource: Namespace)
+allow(user: User, "DELETE", resource: OsoResource{resource_type: "user", is_collection: false})
+    if user.username == resource.arguments.get("username") or is_admin(user);
+
+allow(user: User, "DELETE", resource: User)
     if is_admin(user) or user == resource;

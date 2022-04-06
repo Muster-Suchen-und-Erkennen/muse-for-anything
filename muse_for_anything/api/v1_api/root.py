@@ -40,8 +40,13 @@ class RootView(MethodView):
                 ),
                 ApiLink(
                     href=url_for("api-v1.NamespacesView", _external=True),
-                    rel=("first", "page", "collection"),
+                    rel=("first", "page", "collection", "nav"),
                     resource_type="ont-namespace",
+                ),
+                ApiLink(
+                    href=url_for("api-v1.UsersView", _external=True),
+                    rel=("first", "page", "collection", "nav", "authenticated"),
+                    resource_type="user",
                 ),
             ],
             embedded=[],

@@ -90,7 +90,7 @@ export class ApiSchemaForm {
                     this.navigateToNewResource(response.data.new);
                 }
                 if (isChangedApiObject(response.data)) {
-                    this.navigateToNewResource(response.data.changed);
+                    this.navigateToChangedResource(response.data.changed);
                     this.events.publish(API_RESOURCE_CHANGES_CHANNEL, response.data.changed.resourceKey);
                 }
             })

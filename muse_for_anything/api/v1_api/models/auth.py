@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 
 import marshmallow as ma
+from marshmallow.validate import Email, Regexp
 
 from ...base_models import ApiLink, ApiObjectSchema, ApiResponseSchema, MaBaseSchema
 from ....util.import_helpers import get_all_classes_of_module
@@ -12,6 +13,10 @@ __all__ = ["UserData"]  # extended later
 
 class LoginPostSchema(MaBaseSchema):
     username = ma.fields.String(required=True, allow_none=False)
+    password = ma.fields.String(required=True, allow_none=False, load_only=True)
+
+
+class FreshLoginPostSchema(MaBaseSchema):
     password = ma.fields.String(required=True, allow_none=False, load_only=True)
 
 
@@ -27,11 +32,13 @@ class UserSchema(ApiObjectSchema):
     username = ma.fields.String(
         required=True,
         allow_none=False,
+        validate=Regexp(r"[^@\s]+"),
         metadata={"singleLine": True, "title": "Username"},
     )
     e_mail = ma.fields.String(
         required=False,
         allow_none=True,
+        validate=Email(),
         metadata={"singleLine": True, "title": "E-Mail (optional)"},
     )
 

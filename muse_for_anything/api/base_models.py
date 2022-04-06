@@ -104,6 +104,11 @@ class ChangedApiObjectSchema(ApiObjectSchema):
     changed = ma.fields.Nested(ApiLinkSchema, allow_none=False, dump_only=True)
 
 
+class DeletedApiObjectSchema(ApiObjectSchema):
+    deleted = ma.fields.Nested(ApiLinkSchema, allow_none=False, dump_only=True)
+    redirect_to = ma.fields.Nested(ApiLinkSchema, allow_none=False, dump_only=True)
+
+
 class ApiResponseSchema(MaBaseSchema):
     links = ma.fields.Nested(
         ApiLinkSchema, many=True, reqired=True, allow_none=False, dump_only=True
@@ -286,6 +291,12 @@ class NewApiObject(BaseApiObject):
 @dataclass
 class ChangedApiObject(BaseApiObject):
     changed: ApiLink
+
+
+@dataclass
+class DeletedApiObject(BaseApiObject):
+    deleted: ApiLink
+    redirect_to: ApiLink
 
 
 @dataclass

@@ -79,6 +79,20 @@ class User(MODEL, IdMixin, CreateDeleteMixin, ExistsMixin):
         if e_mail:
             self.e_mail = e_mail
 
+    def update(
+        self,
+        username: str,
+        e_mail: Optional[str] = None,
+        password: Optional[str] = None,
+        **kwargs,
+    ):
+        if username != self.username:
+            self.username = username
+        if self.e_mail != e_mail:
+            self.e_mail = e_mail
+        if password:
+            self.set_new_password(password=password)
+
     def set_new_password(self, password: str):
         self.password = FLASK_PASSWORD.generate_bcrypt_password_hash(password)
 

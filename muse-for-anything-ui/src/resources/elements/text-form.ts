@@ -76,7 +76,7 @@ export class TextForm {
         if (normalized.contentMediaType != null) {
             // TODO
         }
-        if ((normalized.maxLength != null && normalized.maxLength <= 500) || normalized.singleLine) {
+        if ((normalized.maxLength != null && normalized.maxLength <= 500) || normalized.singleLine || normalized.password) {
             this.isSingelLine = true;
         } else {
             this.isSingelLine = false;
@@ -87,7 +87,7 @@ export class TextForm {
         } else {
             this.inputType = "text";
         }
-        this.updateValid();
+        this.queue.queueMicroTask(() => this.updateValid());
     }
 
     valueInChanged(newValue, oldValue) {
@@ -109,7 +109,7 @@ export class TextForm {
         } else {
             this.dirty = this.initialData !== newValue;
         }
-        this.updateValid();
+        this.queue.queueMicroTask(() => this.updateValid());
     }
 
     formInputChanged() {

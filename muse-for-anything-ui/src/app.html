@@ -18,6 +18,14 @@
                         ${nav.title | t}
                     </a>
                 </div>
+                <div class="w-full p-2" repeat.for="navLink of rootNavLinks">
+                    <a class="text-white hover:text-primary-light ${(navLink == activeNavLink) ? 'font-bold' : ''} flex flex-col items-center"
+                        href.bind="navLink.clientUrl">
+                        <svg-icon icon.bind="navLink.icon" size.bind="'big'" if.bind="navLink.icon">
+                        </svg-icon>
+                        ${navLink.title | t}
+                    </a>
+                </div>
             </div>
         </nav>
         <div class="sidebar bg-gray-50" role="navigation" aria-label="Navigation links of the current page.">

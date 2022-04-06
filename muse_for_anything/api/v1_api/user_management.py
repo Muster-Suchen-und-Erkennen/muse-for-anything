@@ -1,16 +1,15 @@
 """Module containing the user management endpoints of the api."""
 
 from dataclasses import dataclass
+from email.policy import HTTP
 from http import HTTPStatus
 from typing import Any, Dict, List, Optional
 
 from flask.globals import g
-from flask.helpers import url_for
 from flask.views import MethodView
 from flask_babel import gettext
-from flask_jwt_extended import create_access_token, create_refresh_token, current_user
 from flask_smorest import abort
-from sqlalchemy.sql.expression import true
+from sqlalchemy.sql.expression import literal
 
 from muse_for_anything.api.pagination_util import (
     PaginationOptions,
@@ -19,7 +18,6 @@ from muse_for_anything.api.pagination_util import (
     generate_page_links,
     prepare_pagination_query_args,
 )
-from muse_for_anything.api.v1_api.constants import NAMESPACE_REL_TYPE, USER_REL_TYPE
 from muse_for_anything.db.models.users import User
 from muse_for_anything.db.pagination import PaginationInfo
 from muse_for_anything.oso_helpers import FLASK_OSO, OsoResource
@@ -29,23 +27,17 @@ from .constants import (
     CREATE,
     CREATE_REL,
     DELETE_REL,
-    NAMESPACE_EXTRA_LINK_RELATIONS,
-    NAMESPACE_REL_TYPE,
+    DELETED_REL,
+    EDIT,
+    LOGOUT_REL,
     NEW_REL,
-    RESTORE,
-    RESTORE_REL,
     UPDATE,
     UPDATE_REL,
     USER_EXTRA_LINK_RELATIONS,
+    USER_REL_TYPE,
     VIEW_ALL_USERS_EXTRA_ARG,
 )
-from .models.auth import (
-    AccessTokenSchema,
-    LoginPostSchema,
-    LoginTokensSchema,
-    UserCreateSchema,
-    UserSchema,
-)
+from .models.auth import UserCreateSchema, UserSchema, UserUpdateSchema
 from .request_helpers import ApiResponseGenerator, LinkGenerator, PageResource
 from .root import API_V1
 from ..base_models import (
@@ -55,6 +47,8 @@ from ..base_models import (
     ChangedApiObjectSchema,
     CursorPageArgumentsSchema,
     CursorPageSchema,
+    DeletedApiObject,
+    DeletedApiObjectSchema,
     DynamicApiResponseSchema,
     NewApiObject,
     NewApiObjectSchema,
@@ -147,51 +141,65 @@ class UsersView(MethodView):
 
     @API_V1.arguments(UserCreateSchema())
     @API_V1.response(DynamicApiResponseSchema(NewApiObjectSchema()))
-    @API_V1.require_jwt("jwt")
-    def post(self, namespace_data):
-        FLASK_OSO.authorize_and_set_resource(
-            OsoResource(NAMESPACE_REL_TYPE), action=CREATE
-        )
+    @API_V1.require_jwt("jwt", fresh=True)
+    def post(self, user_data):
+        FLASK_OSO.authorize_and_set_resource(OsoResource(USER_REL_TYPE), action=CREATE)
 
-        existing: bool = (
+        email_in_use: bool = (
             DB.session.query(literal(True))
-            .filter(
-                Namespace.query.filter(Namespace.name == namespace_data["name"]).exists()
-            )
+            .filter(User.query.filter(User.username == user_data["username"]).exists())
             .scalar()
         )
-        if existing:
+        if email_in_use:
             abort(
-                400,
-                f"Name {namespace_data['name']} is already used for another Namespace!",
+                HTTPStatus.BAD_REQUEST,
+                f"Username {user_data['username']} is already used for another User!",
             )
-        namespace = Namespace(**namespace_data)
-        DB.session.add(namespace)
+
+        if user_data.get("e_mail"):
+            email_in_use: bool = (
+                DB.session.query(literal(True))
+                .filter(User.query.filter(User.e_mail == user_data["e_mail"]).exists())
+                .scalar()
+            )
+            if email_in_use:
+                abort(
+                    HTTPStatus.BAD_REQUEST,
+                    f"E-Mail {user_data['e_mail']} is already used for another User!",
+                )
+
+        retype_password = user_data.pop("retype_password", None)
+        password = user_data["password"]
+        if len(password) < 4:
+            abort(HTTPStatus.BAD_REQUEST, "Passwords must have at least 4 characters!")
+        if password != retype_password:
+            abort(HTTPStatus.BAD_REQUEST, "Passwords did not match, please retry.")
+
+        user = User(**user_data)
+        DB.session.add(user)
         DB.session.flush()
-        user: User = g.current_user
-        user.set_role_for_resource("owner", namespace)
         DB.session.commit()
 
-        namespace_response = ApiResponseGenerator.get_api_response(
-            namespace, link_to_relations=NAMESPACE_EXTRA_LINK_RELATIONS
+        user_response = ApiResponseGenerator.get_api_response(
+            user, link_to_relations=USER_EXTRA_LINK_RELATIONS
         )
-        namespace_link = namespace_response.data.self
-        namespace_response.data = NamespaceSchema().dump(namespace_response.data)
+        user_link = user_response.data.self
+        user_response.data = UserSchema().dump(user_response.data)
 
         self_link = LinkGenerator.get_link_of(
-            PageResource(Namespace),
+            PageResource(User),
             for_relation=CREATE_REL,
-            extra_relations=(NAMESPACE_REL_TYPE,),
+            extra_relations=(USER_REL_TYPE,),
             ignore_deleted=True,
         )
         self_link.resource_type = NEW_REL
 
         return ApiResponse(
-            links=[namespace_link],
-            embedded=[namespace_response],
+            links=[user_link],
+            embedded=[user_response],
             data=NewApiObject(
                 self=self_link,
-                new=namespace_link,
+                new=user_link,
             ),
         )
 
@@ -220,4 +228,137 @@ class UserView(MethodView):
 
         return ApiResponseGenerator.get_api_response(
             found_user, link_to_relations=USER_EXTRA_LINK_RELATIONS
+        )
+
+    @API_V1.arguments(UserUpdateSchema())
+    @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.require_jwt("jwt", fresh=True)
+    def post(self, user_data, username: str):
+        if not username:
+            abort(
+                HTTPStatus.BAD_REQUEST,
+                message=gettext("The requested username has the wrong format!"),
+            )
+
+        FLASK_OSO.authorize(
+            OsoResource(USER_REL_TYPE, arguments={"username": username}), action=EDIT
+        )
+
+        found_user: Optional[User] = User.query.filter(User.username == username).first()
+
+        if found_user is None:
+            abort(HTTPStatus.NOT_FOUND, message=gettext("User not found."))
+
+        FLASK_OSO.authorize_and_set_resource(found_user, action=EDIT)
+
+        if found_user.username != user_data.get("username"):
+            existing: bool = (
+                DB.session.query(literal(True))
+                .filter(
+                    User.query.filter(User.username == user_data["username"]).exists()
+                )
+                .scalar()
+            )
+            if existing:
+                abort(
+                    400,
+                    f"Username {user_data['name']} is already taken!",
+                )
+
+        if (
+            found_user.e_mail != user_data.get("e_mail")
+            and user_data.get("e_mail", None) is not None
+        ):
+            existing: bool = (
+                DB.session.query(literal(True))
+                .filter(User.query.filter(User.e_mail == user_data["e_mail"]).exists())
+                .scalar()
+            )
+            if existing:
+                abort(
+                    400,
+                    f"E-Mail {user_data['name']} is already use by another user!",
+                )
+
+        retype_password = user_data.pop("retype_password", None)
+        password = user_data.get("password", None)
+        if password and len(password) < 4:
+            abort(HTTPStatus.BAD_REQUEST, "Passwords must have at least 4 characters!")
+        if password != retype_password:
+            abort(HTTPStatus.BAD_REQUEST, "Passwords did not match, please retry.")
+
+        found_user.update(**user_data)
+        DB.session.add(found_user)
+        DB.session.commit()
+
+        user_response = ApiResponseGenerator.get_api_response(
+            found_user, link_to_relations=USER_EXTRA_LINK_RELATIONS
+        )
+        user_link = user_response.data.self
+        user_response.data = UserSchema().dump(user_response.data)
+
+        self_link = LinkGenerator.get_link_of(
+            found_user,
+            for_relation=UPDATE_REL,
+            extra_relations=(USER_REL_TYPE,),
+            ignore_deleted=True,
+        )
+        self_link.resource_type = CHANGED_REL
+
+        return ApiResponse(
+            links=[user_link],
+            embedded=[user_response],
+            data=ChangedApiObject(
+                self=self_link,
+                changed=user_link,
+            ),
+        )
+
+    @API_V1.response(DynamicApiResponseSchema(DeletedApiObjectSchema()))
+    @API_V1.require_jwt("jwt", fresh=True)
+    def delete(self, username: str):
+        if not username:
+            abort(
+                HTTPStatus.BAD_REQUEST,
+                message=gettext("The requested username has the wrong format!"),
+            )
+
+        FLASK_OSO.authorize(OsoResource(USER_REL_TYPE, arguments={"username": username}))
+
+        found_user: Optional[User] = User.query.filter(User.username == username).first()
+
+        deleted_self = False
+
+        if found_user is not None:
+            FLASK_OSO.authorize_and_set_resource(found_user)
+            deleted_self = found_user == g.current_user
+            for role in found_user.roles:
+                DB.session.delete(role)
+            for grant in found_user.grants:
+                DB.session.delete(grant)
+            DB.session.delete(found_user)
+            DB.session.commit()
+        else:
+            found_user = User(username, "")
+
+        deleted_resource_link = LinkGenerator.get_link_of(found_user)
+        redirect_to_link = LinkGenerator.get_link_of(PageResource(User, page_number=1))
+
+        self_link = LinkGenerator.get_link_of(
+            found_user,
+            for_relation=DELETE_REL,
+            extra_relations=(USER_REL_TYPE,)
+            if deleted_self
+            else (USER_REL_TYPE, LOGOUT_REL),
+            ignore_deleted=True,
+        )
+        self_link.resource_type = DELETED_REL
+
+        return ApiResponse(
+            links=[],
+            data=DeletedApiObject(
+                self=self_link,
+                deleted=deleted_resource_link,
+                redirect_to=redirect_to_link,
+            ),
         )

@@ -1,6 +1,8 @@
+import { EventAggregator } from "aurelia-event-aggregator";
 import { HttpClient } from "aurelia-fetch-client";
 import { autoinject } from "aurelia-framework";
-import { ApiLink, ApiLinkKey, ApiObject, ApiResponse, applyKeyToLinkedKey, checkKeyCompatibleWithKeyedLink, checkKeyMatchesKeyedLink, checkKeyMatchesKeyedLinkExact, GenericApiObject, isApiResponse, KeyedApiLink, matchesLinkRel } from "./api-objects";
+import { REQUEST_FRESH_LOGIN_CHANNEL, REQUEST_LOGOUT_CHANNEL } from "resources/events";
+import { ApiLink, ApiLinkKey, ApiObject, ApiResponse, applyKeyToLinkedKey, checkKeyCompatibleWithKeyedLink, checkKeyMatchesKeyedLink, checkKeyMatchesKeyedLinkExact, GenericApiObject, isApiObject, isApiResponse, isDeletedApiObject, KeyedApiLink, matchesLinkRel } from "./api-objects";
 
 export class ResponseError extends Error {
     readonly status: number;
@@ -24,6 +26,8 @@ export class BaseApiService {
     };
 
     private http: HttpClient;
+    private events: EventAggregator;
+
     private apiRoot: Promise<ApiResponse<GenericApiObject>>;
     private apiCache: Cache;
     private apiEmbeddedCache: Cache;
@@ -31,11 +35,13 @@ export class BaseApiService {
     private clientUrlToApiLink: Map<string, ApiLink> = new Map();
     private keyedLinksByKey: Map<string, KeyedApiLink> = new Map();
     private keyedLinkyByResourceType: Map<string, KeyedApiLink[]> = new Map();
+    private rootNavigationLinks: ApiLink[] = [];
 
     private _defaultAuthorization: string;
 
-    constructor(http: HttpClient) {
+    constructor(http: HttpClient, eventAggregator: EventAggregator) {
         this.http = http;
+        this.events = eventAggregator;
     }
 
     public set defaultAuthorization(authorization: string) {
@@ -104,6 +110,15 @@ export class BaseApiService {
         if (isGet) {
             // only cache the whole response for get requests
             this.apiCache.put(request, new Response(JSON.stringify(responseData), { headers: { "last-modified": date } }));
+        } else {
+            // if method could have deleted things
+            const apiObject = (responseData?.data as ApiResponse<ApiObject>)?.data;
+            if (isDeletedApiObject(apiObject)) {
+                // Remove cache entries of deleted object
+                // FIXME also delete related deleted resources in cache!!!
+                this.apiCache.delete(apiObject.deleted.href);
+                this.apiEmbeddedCache.delete(apiObject.deleted.href);
+            }
         }
 
         if (embedded != null) {
@@ -633,6 +648,9 @@ export class BaseApiService {
                 const new_base = await this._fetch<ApiResponse<unknown>>(link.href, ignoreCache);
                 this.prefetchRelsRecursive(rel, new_base, ignoreCache);
             }
+            if (matchesLinkRel(link, "nav")) {
+                this.rootNavigationLinks.push(link);
+            }
         });
     }
 
@@ -644,6 +662,11 @@ export class BaseApiService {
             this.resolveApiRootPromise<GenericApiObject>(resolve, reject);
         });
         return await this.apiRoot;
+    }
+
+    public async getRootNavigationLinks(): Promise<ApiLink[]> {
+        await this.resolveApiRoot(); // await root links beeing resolved
+        return this.rootNavigationLinks;
     }
 
     public async getByRel<T>(rel: string | string[] | string[][], ignoreCache: boolean | "ignore-embedded" = false): Promise<ApiResponse<T>> {
@@ -671,7 +694,23 @@ export class BaseApiService {
         if (signal != null) {
             init.signal = signal;
         }
-        return await this._fetch<ApiResponse<T>>(link.href, true, init);
+        if (link.rel.some(rel => rel === "requires-fresh-login")) {
+            // wait for a fresh login to happen
+            const authToken = await new Promise<string>((resolve, reject) => {
+                this.events.publish(REQUEST_FRESH_LOGIN_CHANNEL, { resolve, reject });
+            });
+            init.headers["Authorization"] = `Bearer ${authToken}`;
+        }
+        const result = await this._fetch<ApiResponse<T>>(link.href, true, init);
+
+        // check for logout handling
+        if (isApiObject(result.data)) {
+            if (matchesLinkRel(result.data.self, "logout")) {
+                // result contains logout command
+                this.events.publish(REQUEST_LOGOUT_CHANNEL);
+            }
+        }
+        return result;
     }
 
     public async fetch<T>(input: RequestInfo, init?: RequestInit, ignoreCache: boolean | "ignore-embedded" = false): Promise<T> {

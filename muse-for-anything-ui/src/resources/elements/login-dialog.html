@@ -9,12 +9,13 @@
         </ux-dialog-header>
         <ux-dialog-body class="p-4">
             <form class="max-w-sm" submit.bind="confirm()">
-                <label class="font-semibold form-title" for="username" t="login.username"></label>
+                <label class="font-semibold form-title" for="username" t="login.username"
+                    show.bind="!isPasswordOnly"></label>
                 <input
                     class="input-valid-check border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1 ${(usernameDirty) ? 'dirty' : ''} ${(!usernameValid) ? 'error' : ''}"
                     id="username" name="username" type="text" value.bind="username & throttle"
                     blur.trigger="usernameDirty=(username != null)" minlength="3" disabled.bind="isPasswordOnly & empty"
-                    required>
+                    required show.bind="!isPasswordOnly">
                 <label class="mt-3 font-semibold form-title" for="password" t="login.password"></label>
                 <input
                     class="input-valid-check border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1 ${(passwordDirty) ? 'dirty' : ''} ${(!passwordValid) ? 'error' : ''}"
