@@ -346,6 +346,10 @@ p:where(.block-max-3l:not(.overflow-y-hidden),.block-max-5l:not(.overflow-y-hidd
     @apply px-3 py-2 border-b border-gray-200 hover:text-primary;
 }
 
+.sidebar-action.danger {
+    @apply text-red-600 hover:text-white hover:bg-red-600;
+}
+
 /* element styles */
 
 .card {
@@ -358,13 +362,26 @@ p:where(.block-max-3l:not(.overflow-y-hidden),.block-max-5l:not(.overflow-y-hidd
     @apply p-1 m-1 rounded-sm hover:bg-gray-100 hover:shadow-sm hover:text-primary;
 }
 
+.button-flat.danger {
+    @apply text-red-600 hover:bg-red-600 hover:text-white;
+}
+
 .button-outline {
     @apply p-1 mt-1 mb-1 rounded-md border-2 text-primary border-primary hover:bg-gray-200;
+}
+
+.button-outline.danger {
+    @apply text-red-600 border-red-600 hover:bg-red-600 hover:text-white;
 }
 
 .button-outline:disabled {
     @apply text-gray-400 border-gray-400;
 }
+
+.button-outline.danger:disabled {
+    @apply text-gray-400 border-gray-400;
+}
+
 
 /* link styles */
 
