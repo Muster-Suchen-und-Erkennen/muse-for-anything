@@ -6,7 +6,7 @@
         <p class="mr-2 font-semibold ${isObjectProperty(item.itemSchema) ? 'text-lg' : ''}">
             ${item.itemIndex}:
         </p>
-        <schema-view class="flex-grow" style.bind="propertyStyle(item.itemSchema)" data.bind="data[item.itemIndex]"
-            schema.bind="item.itemSchema"></schema-view>
+        <schema-view class="flex-grow flex items-baseline" style.bind="propertyStyle(item.itemSchema)"
+            data.bind="data[item.itemIndex]" schema.bind="item.itemSchema"></schema-view>
     </div>
 </template>

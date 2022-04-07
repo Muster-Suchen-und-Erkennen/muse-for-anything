@@ -14,7 +14,7 @@
             <p class="mr-2 font-semibold">
                 ${prop.propertyTitle}:
             </p>
-            <schema-view class="flex-grow" style.bind="propertyStyle(prop.propertySchema)"
+            <schema-view class="flex-grow flex items-baseline" style.bind="propertyStyle(prop.propertySchema)"
                 data.bind="data[prop.propertyName]" schema.bind="prop.propertySchema"></schema-view>
         </div>
     </template>
