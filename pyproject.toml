@@ -9,6 +9,8 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.7"
 flask = { extras = ["dotenv"], version = "^1.1.2" }
+# newer markupsafe has removed a deprecated property! (remove again once dependencies are all up to date)
+markupsafe = "~2.0.1"
 invoke = "^1.4.1"
 Flask-JWT-Extended = "^3.24.1"
 Flask-Cors = "^3.0.9"
@@ -21,6 +23,8 @@ marshmallow-jsonschema = "^0.12.0"
 jsonschema = "^3.2.0"
 flask-oso = "^0.9.0"
 bcrypt = "^3.2.0"
+psycopg2 = {version = "^2.9.3", optional = true}
+PyMySQL = {version = "^1.0.2", optional = true}
 
 [tool.poetry.dev-dependencies]
 black = "^20.8b1"
@@ -33,6 +37,10 @@ tomlkit = "^0.7.0"
 recommonmark = "^0.6.0"
 sphinxcontrib-redoc = "^1.6.0"
 sphinx-click = "^2.5.0"
+
+[tool.poetry.extras]
+psycopg2 = ["psycopg2"]
+PyMySQL = ["PyMySQL"]
 
 [tool.poetry.scripts]
 #flask = 'flask.cli:main'
