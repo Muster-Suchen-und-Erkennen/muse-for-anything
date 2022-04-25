@@ -8,6 +8,9 @@
         "fresh-login": "Refresh Log-In",
         "logout": "Log-Out",
         "create": {
+            "user": "Create New User",
+            "user-role": "Add a User-Role",
+            "user-grant": "Create New User-Grant",
             "ont-namespace": "Create New Namespace",
             "ont-type": "Create New Type",
             "ont-object": "Create New Object",
@@ -42,6 +45,9 @@
         }
     },
     "noItems": {
+        "user": "No Users, create one!",
+        "user-role": "No User-Roles, add one!",
+        "user-grant": "No User-Grants, add one!",
         "ont-namespace": "No Namespaces, create one!",
         "ont-type": "No Types, create one!",
         "ont-object": "No Objects, create one!",
@@ -61,6 +67,8 @@
     "children": "Children",
     "resource-type": {
         "user": "User",
+        "user-role": "User-Role",
+        "user-grant": "User-Grant",
         "ont-namespace": "Namespace",
         "ont-type": "Type",
         "ont-type-version": "Type Version",
@@ -77,6 +85,8 @@
         "navigations": "Navigation",
         "collection": {
             "user": "Users",
+            "user-role": "User-Roles",
+            "user-grant": "User-Grants",
             "ont-namespace": "Namespaces",
             "ont-type": "Types",
             "ont-type-version": "Type Versions",
@@ -89,6 +99,8 @@
         },
         "create": {
             "user": "Create User",
+            "user-role": "Give Role to User",
+            "user-grant": "Create User-Grant",
             "ont-namespace": "Create Namespace",
             "ont-type": "Create Type",
             "ont-object": "Create Object",
@@ -106,6 +118,8 @@
         },
         "delete": {
             "user": "Delete User",
+            "user-role": "Remove User-Role",
+            "user-grant": "Remove User-Grant",
             "ont-namespace": "Delete Namespace",
             "ont-type": "Delete Type",
             "ont-object": "Delete Object",
@@ -121,6 +135,8 @@
             "ont-taxonomy-item": "Restore Taxonomy-Item"
         },
         "user": "User",
+        "user-role": "User-Role",
+        "user-grant": "User-Grant",
         "ont-namespace": "Namespace",
         "ont-type": "Type",
         "ont-type-version": "Type Version",
@@ -150,6 +166,8 @@
     "type": "Type",
     "object": "Object",
     "user": "User",
+    "user-role": "User-Role",
+    "user-grant": "User-Grant",
     "cancel": "cancel",
     "back": "back",
     "ontology": {

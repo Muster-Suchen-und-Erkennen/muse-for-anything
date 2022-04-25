@@ -26,6 +26,8 @@ const ACTION_RELS: Set<string> = new Set<string>(["create", "update", "delete", 
 
 export const RESOURCE_TYPE_ICONS: Map<string, string> = new Map([
     ["user", "user"],
+    ["user-role", "user-role"],
+    ["user-grant", "user-grant"],
     ["ont-namespace", "ont-namespace"],
     ["ont-object", "ont-object"],
     ["ont-object-version", "ont-object"],
@@ -39,6 +41,8 @@ export const RESOURCE_TYPE_ICONS: Map<string, string> = new Map([
 
 export const COLLECTION_RESOURCE_TYPE_ICONS: Map<string, string> = new Map([
     ["user", "users"],
+    ["user-role", "user-roles"],
+    ["user-grant", "user-grants"],
 ]);
 
 

@@ -1,4 +1,5 @@
 <template>
+    <require from="../elements/api-resource"></require>
     <require from="../elements/api-schema-view"></require>
     <require from="../elements/svg-icon.html"></require>
 
@@ -22,5 +23,10 @@
             ${"user" | t}: ${apiObject.username}
         </h3>
         <p class="my-1"><span class="mr-1 font-semibold">E-Mail:</span> ${apiObject.eMail}</p>
+        <div if.bind="userRoles != null">
+            <p class="my-1 font-semibold">Roles:</span></p>
+            <api-resource class="" api-link.bind="userRoles" is-root.one-time="false"
+                skip-navigation.bind="skipNavigation"></api-resource>
+        </div>
     </div>
 </template>
