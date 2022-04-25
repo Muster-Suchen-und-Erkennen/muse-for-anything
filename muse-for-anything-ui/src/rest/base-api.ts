@@ -2,7 +2,7 @@ import { EventAggregator } from "aurelia-event-aggregator";
 import { HttpClient } from "aurelia-fetch-client";
 import { autoinject } from "aurelia-framework";
 import { REQUEST_FRESH_LOGIN_CHANNEL, REQUEST_LOGOUT_CHANNEL } from "resources/events";
-import { ApiLink, ApiLinkKey, ApiObject, ApiResponse, applyKeyToLinkedKey, checkKeyCompatibleWithKeyedLink, checkKeyMatchesKeyedLink, checkKeyMatchesKeyedLinkExact, GenericApiObject, isApiObject, isApiResponse, isDeletedApiObject, KeyedApiLink, matchesLinkRel } from "./api-objects";
+import { ApiLink, ApiLinkKey, ApiObject, ApiResponse, applyKeyToLinkedKey, checkKeyCompatibleWithKeyedLink, checkKeyMatchesKeyedLink, checkKeyMatchesKeyedLinkExact, GenericApiObject, isApiObject, isApiResponse, isChangedApiObject, isDeletedApiObject, KeyedApiLink, matchesLinkRel } from "./api-objects";
 
 export class ResponseError extends Error {
     readonly status: number;
@@ -112,12 +112,27 @@ export class BaseApiService {
             this.apiCache.put(request, new Response(JSON.stringify(responseData), { headers: { "last-modified": date } }));
         } else {
             // if method could have deleted things
-            const apiObject = (responseData?.data as ApiResponse<ApiObject>)?.data;
+            const apiObject = responseData?.data as ApiObject;
+            if (isChangedApiObject(apiObject)) {
+                // invalidate changed object
+                this.apiCache.delete(apiObject.changed.href);
+                this.apiEmbeddedCache.delete(apiObject.changed.href);
+                responseData.links.forEach(link => {
+                    // invalidate all related changes
+                    this.apiCache.delete(link.href);
+                    this.apiEmbeddedCache.delete(link.href);
+                });
+            }
             if (isDeletedApiObject(apiObject)) {
                 // Remove cache entries of deleted object
                 // FIXME also delete related deleted resources in cache!!!
                 this.apiCache.delete(apiObject.deleted.href);
                 this.apiEmbeddedCache.delete(apiObject.deleted.href);
+                responseData.links.forEach(link => {
+                    // invalidate all related changes
+                    this.apiCache.delete(link.href);
+                    this.apiEmbeddedCache.delete(link.href);
+                });
             }
         }
 
