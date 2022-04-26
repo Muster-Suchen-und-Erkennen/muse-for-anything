@@ -13,6 +13,8 @@ from marshmallow.fields import Field
 
 from muse_for_anything.api.v1_api.models.auth import (
     UserCreateSchema,
+    UserRolePostSchema,
+    UserRoleSchema,
     UserSchema,
     UserUpdateSchema,
 )
@@ -140,6 +142,18 @@ SCHEMAS: Dict[str, Dict[str, Any]] = {
             },
         },
     ),
+    "UserRolePostSchema": create_schema_from_model(
+        UserRolePostSchema(),
+        UserRolePostSchema={
+            "propertyOrder": {"role": 10},
+        },
+    ),
+    "UserRoleSchema": create_schema_from_model(
+        UserRoleSchema(),
+        UserRoleSchema={
+            "propertyOrder": {"role": 10, "description": 20},
+        },
+    ),
 }
 
 
@@ -161,7 +175,7 @@ RELATED_SCHEMA: Dict[str, List[str]] = {"OntologyType": ["TypeSchema"]}
 class SchemaRootView(MethodView):
     """Root endpoint for all schemas."""
 
-    @API_V1.response(DynamicApiResponseSchema())
+    @API_V1.response(200, DynamicApiResponseSchema())
     def get(self):
         """Get the urls for the schema api."""
         return ApiResponse(
@@ -191,7 +205,7 @@ class SchemaRootView(MethodView):
 class ApiSchemaRootView(MethodView):
     """Root endpoint for all api schemas."""
 
-    @API_V1.response(DynamicApiResponseSchema())
+    @API_V1.response(200, DynamicApiResponseSchema())
     def get(self):
         """Get the urls for the schema api."""
         # TODO add data
@@ -211,7 +225,8 @@ class ApiSchemaRootView(MethodView):
 class ApiSchemaView(MethodView):
     """Endpoint for api schemas."""
 
-    @API_V1.response(DynamicApiResponseSchema(SchemaApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(SchemaApiObjectSchema()))
+    @API_V1.alt_response(200, content_type=JSON_SCHEMA_MIMETYPE, success=True)
     def get(self, schema_id: str):
         """Get the urls for the schema api."""
         schema: Optional[Dict[str, Any]] = SCHEMAS.get(schema_id)
@@ -270,7 +285,7 @@ class ApiSchemaView(MethodView):
 class TypeSchemaRootView(MethodView):
     """Root endpoint for all ontology type schemas."""
 
-    @API_V1.response(DynamicApiResponseSchema())
+    @API_V1.response(200, DynamicApiResponseSchema())
     def get(self):
         """TODO"""
         # TODO add data
@@ -308,7 +323,7 @@ class TypeSchemaView(MethodView):
             abort(HTTPStatus.NOT_FOUND, message=gettext("Schema id not found."))
         return found_object_type_version  # is not None because abort raises exception
 
-    @API_V1.response(DynamicApiResponseSchema(SchemaApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(SchemaApiObjectSchema()))
     def get(self, schema_id: str):
         """TODO"""
         found_type_version = self._get_object_type_version(schema_id=schema_id)

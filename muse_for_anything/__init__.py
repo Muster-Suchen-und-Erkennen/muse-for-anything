@@ -1,5 +1,6 @@
 """Root module containing the flask app factory."""
 
+from json import load as load_json
 from logging import WARNING, Formatter, Logger, getLogger
 from logging.config import dictConfig
 from os import environ, makedirs
@@ -12,15 +13,22 @@ from flask.cli import FlaskGroup
 from flask.logging import default_handler
 from flask_cors import CORS
 from flask_static_digest import FlaskStaticDigest
+from tomli import load as load_toml
 
-from . import api, babel, db, oso_helpers, password_helpers
+from . import api, babel, db, licenses, oso_helpers, password_helpers
 from .api import jwt
 from .root_routes import register_root_routes
 from .util.config import DebugConfig, ProductionConfig
+
+# from .util.gc_settings import register_gc_handler
 from .util.reverse_proxy_fix import apply_reverse_proxy_fix
 
 ENV_PREFIX = "M4A"
-ENV_VAR_SETTINGS = (("SECRET_KEY", str), ("REVERSE_PROXY_COUNT", int), ("DEFAULT_LOG_SEVERITY", int))
+ENV_VAR_SETTINGS = (
+    ("SECRET_KEY", str),
+    ("REVERSE_PROXY_COUNT", int),
+    ("DEFAULT_LOG_SEVERITY", int),
+)
 
 
 def create_app(test_config: Optional[Dict[str, Any]] = None):
@@ -43,7 +51,9 @@ def create_app(test_config: Optional[Dict[str, Any]] = None):
         # load the instance config, if it exists, when not testing
         app.config.from_pyfile("config.py", silent=True)
         # also try to load json config
-        app.config.from_json("config.json", silent=True)
+        app.config.from_file("config.json", load=load_json, silent=True)
+        # also try to load toml config
+        app.config.from_file("config.toml", load=load_toml, silent=True)
         # load config from file specified in env var
         app.config.from_envvar(f"{__name__}_SETTINGS", silent=True)
         # TODO load some config keys directly from env vars
@@ -142,10 +152,14 @@ def create_app(test_config: Optional[Dict[str, Any]] = None):
 
     babel.register_babel(app)
 
+    licenses.register_licenses(app)
+
     db.register_db(app)
 
     jwt.register_jwt(app)
     api.register_root_api(app)
+
+    # register_gc_handler(app)
 
     # allow cors requests everywhere
     CORS(app)

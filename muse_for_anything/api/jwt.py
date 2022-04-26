@@ -2,29 +2,26 @@
 
 from copy import deepcopy
 from dataclasses import dataclass
+from functools import partial, wraps
 from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
+from warnings import warn
+
 from apispec.core import APISpec
 from apispec.utils import deepupdate
 from flask.app import Flask
 from flask.globals import current_app, g
-from flask_jwt_extended import JWTManager, current_user
+from flask_babel import gettext
 from flask_jwt_extended.exceptions import (
     InvalidHeaderError,
     JWTExtendedException,
     NoAuthorizationError,
 )
-from flask_jwt_extended.view_decorators import (
-    verify_jwt_in_request,
-    verify_fresh_jwt_in_request,
-    verify_jwt_refresh_token_in_request,
-    jwt_optional,
-)
-from flask_smorest import abort
-from flask_babel import gettext
-from warnings import warn
-from functools import wraps
+from flask_jwt_extended.jwt_manager import JWTManager
+from flask_jwt_extended.utils import current_user
+from flask_jwt_extended.view_decorators import verify_jwt_in_request
+from flask_smorest import Api, abort
 
-from ..db.models.users import User, Guest
+from ..db.models.users import Guest, User
 
 JWT = JWTManager()
 
@@ -61,8 +58,8 @@ class JWTMixin:
         self,
         security_scheme: Union[str, Dict[str, List[Any]]],
         *,
-        optional: bool = False,
         fresh: bool = False,
+        optional: bool = False,
         refresh_token: bool = False,
     ) -> Callable[[Callable[..., RT]], Callable[..., RT]]:
         """Decorator validating jwt tokens and documenting them for openapi specification (only version 3...)."""
@@ -71,52 +68,58 @@ class JWTMixin:
 
         def decorator(func: Callable[..., RT]) -> Callable[..., RT]:
 
-            verify: Callable[..., None]
-            if refresh_token:
-                verify = verify_jwt_refresh_token_in_request
-            else:
-                if fresh:
-                    verify = verify_fresh_jwt_in_request
-                else:
-                    verify = verify_jwt_in_request
-            is_optional = optional
-
-            def handle_exception(exc: JWTExtendedException):
-                """Emulate flask exception handling manually for jwt exceptions.
-
-                Flask only handles one exception per request. This method emulates
-                Flask exception handling.
-
-                Args:
-                    exc (JWTExtendedException): The exception to be handled
-                """
-                current_app.handle_user_exception(exc)
+            # map to names that are less likely to have collisions with user defined arguments!
+            _jwt_optional = optional
+            _jwt_fresh = fresh
+            _jwt_refresh_token = refresh_token
 
             @wraps(func)
             def wrapper(*args: Any, **kwargs) -> RT:
                 try:
-                    verify()
+                    verify_jwt_in_request(
+                        fresh=_jwt_fresh,
+                        optional=_jwt_optional,
+                        refresh=_jwt_refresh_token,
+                    )
                     g.current_user = current_user._get_current_object()
                 except (NoAuthorizationError, InvalidHeaderError) as exc:
-                    if is_optional:
+                    if _jwt_optional:
                         g.current_user = Guest()
                     else:
-                        handle_exception(exc)
+                        # trap exception and emulate flask exception handling
+                        # as flask only handles one exception per request
+                        # but we want to raise a custom exception for jwt exceptions
+                        current_app.handle_user_exception(exc)
                 except JWTExtendedException as exc:
-                    handle_exception(exc)
+                    # trap exception and emulate flask exception handling
+                    # as flask only handles one exception per request
+                    # but we want to raise a custom exception for jwt exceptions
+                    current_app.handle_user_exception(exc)
                 return func(*args, **kwargs)
 
             # Store doc in wrapper function
             # The deepcopy avoids modifying the wrapped function doc
             wrapper._apidoc = deepcopy(getattr(func, "_apidoc", {}))
-            wrapper._apidoc.setdefault("security", []).append(security_scheme)
+            security_schemes = wrapper._apidoc.setdefault("security", [])
+            if _jwt_optional:
+                # also add empty security scheme for optional jwt tokens
+                security_schemes.append({})
+            security_schemes.append(security_scheme)
 
             return wrapper
 
         return decorator
 
     def _prepare_security_doc(
-        self, doc: Dict[str, Any], doc_info: Dict[str, Any], *, spec: APISpec, **kwargs
+        self,
+        doc: Dict[str, Any],
+        doc_info: Dict[str, Any],
+        *,
+        api: Api,
+        app: Flask,
+        spec: APISpec,
+        method: str,
+        **kwargs,
     ):
         """Actually prepare the documentation."""
         operation: Optional[List[Dict[str, List[Any]]]] = doc_info.get("security")
@@ -125,6 +128,8 @@ class JWTMixin:
                 spec.to_dict().get("components").get("securitySchemes")
             )
             for scheme in operation:
+                if not scheme:
+                    continue  # encountered empty schema for optional security
                 schema_name = next(iter(scheme.keys()))
                 if schema_name not in available_schemas:
                     warn(
@@ -143,17 +148,21 @@ def load_user_identity(user: User):
     return user.id
 
 
-@JWT.user_loader_callback_loader
-def loadUserObject(identity: int):
+@JWT.user_lookup_loader
+def loadUserObject(jwt_header: dict, jwt_payload: dict):
     # load the actual user object from the user identity here
-    return User.query.filter(User.id == identity).first()
+    identity: Optional[str] = jwt_payload.get("sub")
+    if not identity:
+        raise KeyError("Could not find user Identity!")
+    return User.query.filter(User.id == int(identity)).first()
 
 
 # JWT errors
 
 
-@JWT.user_loader_error_loader
-def on_user_load_error(identity: str):
+@JWT.user_lookup_error_loader
+def on_user_load_error(jwt_header: dict, jwt_payload: dict):
+    identity: Optional[str] = jwt_payload.get("sub")
     abort(
         401,
         message=gettext(
@@ -163,7 +172,7 @@ def on_user_load_error(identity: str):
 
 
 @JWT.expired_token_loader
-def on_expired_token(expired_token):
+def on_expired_token(jwt_header: dict, jwt_payload: dict):
     abort(401, message=gettext("Your authentication token has expired."))
 
 
@@ -183,7 +192,7 @@ def on_unauthorized(message: str):
 
 
 @JWT.needs_fresh_token_loader
-def on_stale_token():
+def on_stale_token(jwt_header: dict, jwt_payload: dict):
     abort(
         401,
         message=gettext(
@@ -194,7 +203,7 @@ def on_stale_token():
 
 
 @JWT.revoked_token_loader
-def on_revoked_token():
+def on_revoked_token(jwt_header: dict, jwt_payload: dict):
     abort(401, message=gettext("Your authentication token has expired."))
 
 

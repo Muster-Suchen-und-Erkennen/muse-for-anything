@@ -23,7 +23,7 @@ from muse_for_anything.db.models.taxonomies import (
     TaxonomyItemRelation,
     TaxonomyItemVersion,
 )
-from muse_for_anything.db.models.users import User
+from muse_for_anything.db.models.users import User, UserGrant, UserRole
 
 _RESOURCE_TYPE_TO_RELATION_MAPPING: Dict[Type, str] = {
     Namespace: "ont-namespace",
@@ -36,6 +36,8 @@ _RESOURCE_TYPE_TO_RELATION_MAPPING: Dict[Type, str] = {
     TaxonomyItemVersion: "ont-taxonomy-item-version",
     TaxonomyItemRelation: "ont-taxonomy-item-relation",
     User: "user",
+    UserRole: "user-role",
+    UserGrant: "user-grant",
     # TODO add all resources here!
 }
 
@@ -182,6 +184,8 @@ def register_oso(app: Flask):
         OsoResource,
         User,
         Guest,
+        UserRole,
+        UserGrant,
         Namespace,
         OntologyObjectType,
         OntologyObjectTypeVersion,
@@ -195,6 +199,4 @@ def register_oso(app: Flask):
     for class_to_register in oso_classes:
         OSO.register_class(class_to_register)
 
-    for policy in app.config.get("OSO_POLICY_FILES", []):
-        app.logger.info(f"Loading policy file '{policy}'")
-        OSO.load_file(policy)
+    OSO.load_files(app.config.get("OSO_POLICY_FILES", []))

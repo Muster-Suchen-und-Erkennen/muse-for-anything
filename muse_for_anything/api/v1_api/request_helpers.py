@@ -11,8 +11,17 @@ from muse_for_anything.api.base_models import (
     ApiLink,
     ApiResponse,
     BaseApiObject,
+    CollectionResource as CollectionResponse,
     CursorPage,
 )
+
+
+@dataclass()
+class CollectionResource:
+    resource_type: Type
+    resource: Optional[Any] = None
+    collection_size: int = 0
+    item_links: Optional[Sequence[ApiLink]] = None
 
 
 @dataclass()
@@ -93,7 +102,7 @@ class KeyGenerator:
             key = query_params_to_api_key(query_params=query_params)
         else:
             key = {}
-        if isinstance(resource, PageResource):
+        if isinstance(resource, (PageResource, CollectionResource)):
             generator = KeyGenerator.__generators_for_page_resources.get(
                 resource.resource_type
             )
@@ -153,7 +162,7 @@ class LinkGenerator:
 
     @staticmethod
     def _get_generators_and_resource_type(resource):
-        is_page = isinstance(resource, PageResource)
+        is_page = isinstance(resource, (PageResource, CollectionResource))
 
         generators = (
             LinkGenerator.__generators_for_page_resources
@@ -291,6 +300,34 @@ class ApiObjectGenerator:
         query_params: Optional[Dict[str, str]] = None,
     ) -> Optional[BaseApiObject]:
         raise NotImplementedError()
+
+
+class CollectionResourceApiObjectGenerator(
+    ApiObjectGenerator, resource_type=CollectionResource
+):
+    def generate_api_object(
+        self,
+        resource: CollectionResource,
+        *,
+        query_params: Optional[Dict[str, str]] = None,
+    ) -> Optional[BaseApiObject]:
+        assert isinstance(resource, CollectionResource)
+
+        if not FLASK_OSO.is_allowed(
+            OsoResource(
+                get_oso_resource_type(resource.resource_type),
+                is_collection=True,
+                parent_resource=resource.resource,
+            ),
+            action="GET",
+        ):
+            return
+
+        return CollectionResponse(
+            self=LinkGenerator.get_link_of(resource, query_params=query_params),
+            collection_size=resource.collection_size,
+            items=(resource.item_links if resource.item_links else []),
+        )
 
 
 class CursorPageApiObjectGenerator(ApiObjectGenerator, resource_type=PageResource):

@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 
 import marshmallow as ma
-from marshmallow.validate import Email, Regexp
+from marshmallow.validate import Email, OneOf, Regexp
 
 from ...base_models import ApiLink, ApiObjectSchema, ApiResponseSchema, MaBaseSchema
 from ....util.import_helpers import get_all_classes_of_module
@@ -78,6 +78,48 @@ class UserData:
     self: ApiLink
     username: str
     e_mail: str
+
+
+class UserRolePostSchema(ApiObjectSchema):
+    role = ma.fields.String(
+        required=True,
+        allow_none=False,
+        metadata={"singleLine": True},
+        validate=OneOf(
+            choices=(
+                "admin",
+                "creator",
+                "editor",
+                "ont-namepsace_admin",
+                "ont-namepsace_creator",
+                "ont-namepsace_editor",
+                "ont-object_admin",
+                "ont-object_creator",
+                "ont-object_editor",
+                "ont-taxonomy_admin",
+                "ont-taxonomy_creator",
+                "ont-taxonomy_editor",
+                "ont-type_admin",
+                "ont-type_creator",
+                "ont-type_editor",
+            )
+        ),
+    )
+
+
+class UserRoleSchema(UserRolePostSchema):
+    description = ma.fields.String(
+        required=False,
+        allow_none=False,
+        dump_only=True,
+    )
+
+
+@dataclass
+class UserRoleData:
+    self: ApiLink
+    role: str
+    description: str
 
 
 __all__.extend(get_all_classes_of_module(__name__, MaBaseSchema))

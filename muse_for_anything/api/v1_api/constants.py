@@ -73,6 +73,8 @@ TARGET_REL = "target"
 # auth related rels
 
 USER_REL_TYPE = "user"
+USER_ROLE_REL_TYPE = "user-role"
+USER_GRANT_REL_TYPE = "user-grant"
 
 
 # link to relations ############################################################
@@ -147,7 +149,13 @@ TAXONOMY_ITEM_RELATION_EXTRA_LINK_RELATIONS = (
 
 # Auth related
 
-USER_EXTRA_LINK_RELATIONS = tuple()
+USER_EXTRA_LINK_RELATIONS = (
+    USER_ROLE_REL_TYPE,
+    # USER_GRANT_REL_TYPE,
+    f"{CREATE_REL}_{USER_ROLE_REL_TYPE}",
+)
+USER_ROLE_EXTRA_LINK_RELATIONS = tuple()
+USER_GRANT_EXTRA_LINK_RELATIONS = tuple()
 
 # key variables ################################################################
 
@@ -182,6 +190,9 @@ ITEM_COUNT_DEFAULT = "25"
 
 USER_ID_KEY = "username"
 
+USER_ROLE_ID_KEY = "userRole"
+USER_GRANT_ID_KEY = "userGrantId"
+
 VIEW_ALL_USERS_EXTRA_ARG = "VIEW_ALL_USERS"  # extra argument only for authentication!
 
 
@@ -201,6 +212,10 @@ TAXONOMY_ITEM_RELATION_POST_SCHEMA = "TaxonomyItemRelationPostSchema"
 USER_SCHEMA = "UserSchema"
 USER_CREATE_SCHEMA = "UserCreateSchema"
 USER_UPDATE_SCHEMA = "UserUpdateSchema"
+
+USER_ROLE_SCHEMA = "UserRoleSchema"
+USER_ROLE_POST_SCHEMA = "UserRolePostSchema"
+USER_GRANT_SCHEMA = "UserGrantSchema"
 
 
 # endpoints ####################################################################
@@ -242,3 +257,9 @@ TAXONOMY_ITEM_RELATION_RESOURCE = "api-v1.TaxonomyItemRelationView"
 # Auth related
 USER_PAGE_RESOURCE = "api-v1.UsersView"
 USER_RESOURCE = "api-v1.UserView"
+
+USER_ROLE_COLLECTION_RESOURCE = "api-v1.UserRolesView"
+USER_ROLE_RESOURCE = "api-v1.UserRoleView"
+
+USER_GRANT_PAGE_RESOURCE = "api-v1.UserGrantsView"
+USER_GRANT_RESOURCE = "api-v1.UserGrantView"

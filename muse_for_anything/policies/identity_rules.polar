@@ -76,17 +76,17 @@ is_creator(user: User, resource) if
     has_resource_role(user, "creator", resource);
 
 # type specific resource roles
-is_admin(user: User, type: String, resource) if
-    is_admin(user, resource) or is_owner(user, type, resource);
+is_admin(user: User, resource_type: String, resource) if
+    is_admin(user, resource) or is_owner(user, resource_type, resource);
 
-is_owner(user: User, type: String, resource) if
-    is_owner(user, resource) or has_resource_role(user, "owner", type, resource);
+is_owner(user: User, resource_type: String, resource) if
+    is_owner(user, resource) or has_resource_role(user, "owner", resource_type, resource);
 
-is_editor(user: User, type: String, resource) if
-    is_editor(user, resource) or has_resource_role(user, "editor", type, resource);
+is_editor(user: User, resource_type: String, resource) if
+    is_editor(user, resource) or has_resource_role(user, "editor", resource_type, resource);
 
-is_creator(user: User, type: String, resource) if
-    is_creator(user, resource) or has_resource_role(user, "creator", type, resource);
+is_creator(user: User, resource_type: String, resource) if
+    is_creator(user, resource) or has_resource_role(user, "creator", resource_type, resource);
 
 
 # actual resource roles

@@ -26,14 +26,16 @@ from muse_for_anything.api.v1_api.constants import (
     REQUIRES_FRESH_LOGIN_REL,
     SCHEMA_RESOURCE,
     UP_REL,
-    UPDATE,
     UPDATE_REL,
     USER_CREATE_SCHEMA,
     USER_EXTRA_LINK_RELATIONS,
+    USER_GRANT_REL_TYPE,
     USER_ID_KEY,
     USER_PAGE_RESOURCE,
     USER_REL_TYPE,
     USER_RESOURCE,
+    USER_ROLE_POST_SCHEMA,
+    USER_ROLE_REL_TYPE,
     USER_SCHEMA,
     USER_UPDATE_SCHEMA,
 )
@@ -41,11 +43,12 @@ from muse_for_anything.api.v1_api.models.auth import UserData
 from muse_for_anything.api.v1_api.request_helpers import (
     ApiObjectGenerator,
     ApiResponseGenerator,
+    CollectionResource,
     KeyGenerator,
     LinkGenerator,
     PageResource,
 )
-from muse_for_anything.db.models.users import User
+from muse_for_anything.db.models.users import User, UserGrant, UserRole
 from muse_for_anything.oso_helpers import FLASK_OSO, OsoResource
 
 # Users Page ###################################################################
@@ -143,6 +146,38 @@ class UserUpLinkGenerator(LinkGenerator, resource_type=User, relation=UP_REL):
         )
 
 
+class UserUserRolesNavLinkGenerator(
+    LinkGenerator, resource_type=User, relation=USER_ROLE_REL_TYPE
+):
+    def generate_link(
+        self,
+        resource: User,
+        *,
+        query_params: Optional[Dict[str, str]] = None,
+        ignore_deleted: bool = False,
+    ) -> Optional[ApiLink]:
+        return LinkGenerator.get_link_of(
+            CollectionResource(UserRole, resource=resource),
+            extra_relations=(NAV_REL,),
+        )
+
+
+class UserUserGrantsNavLinkGenerator(
+    LinkGenerator, resource_type=User, relation=USER_GRANT_REL_TYPE
+):
+    def generate_link(
+        self,
+        resource: User,
+        *,
+        query_params: Optional[Dict[str, str]] = None,
+        ignore_deleted: bool = False,
+    ) -> Optional[ApiLink]:
+        return LinkGenerator.get_link_of(
+            PageResource(UserGrant, resource=resource, page_number=1),
+            extra_relations=(NAV_REL,),
+        )
+
+
 class UpdateUserLinkGenerator(LinkGenerator, resource_type=User, relation=UPDATE_REL):
     def generate_link(
         self,
@@ -201,6 +236,24 @@ class DeleteUserLinkGenerator(LinkGenerator, resource_type=User, relation=DELETE
             *extra_rels,
         )
 
+        return link
+
+
+class UserCreateUserRoleLinkGenerator(
+    LinkGenerator, resource_type=User, relation=f"{CREATE_REL}_{USER_ROLE_REL_TYPE}"
+):
+    def generate_link(
+        self,
+        resource: User,
+        *,
+        query_params: Optional[Dict[str, str]] = None,
+        ignore_deleted: bool = False,
+    ) -> Optional[ApiLink]:
+        if not FLASK_OSO.is_allowed(OsoResource(USER_ROLE_REL_TYPE), action=CREATE):
+            return
+        link = LinkGenerator.get_link_of(CollectionResource(UserRole, resource=resource))
+        link.rel = (CREATE_REL, POST_REL, REQUIRES_FRESH_LOGIN_REL)
+        link.schema = url_for(SCHEMA_RESOURCE, schema_id=USER_ROLE_POST_SCHEMA, _external=True)
         return link
 
 

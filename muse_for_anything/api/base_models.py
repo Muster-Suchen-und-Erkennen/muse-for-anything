@@ -159,15 +159,27 @@ class DynamicApiResponseSchema(ApiResponseSchema):
 
     def load_data(self, value: Dict[str, Any]) -> Any:
         many: bool = is_collection(value)
-        print(value, many)
         return self._data_schema.load(value, many=many)
+
+
+class CollectionResourceSchema(ApiObjectSchema):
+    collection_size = ma.fields.Integer(required=True, allow_none=False, dump_only=True)
+    items = ma.fields.List(
+        ma.fields.Nested(ApiLinkSchema),
+        dump_default=tuple(),
+        required=True,
+        dump_only=True,
+    )
 
 
 class CursorPageSchema(ApiObjectSchema):
     collection_size = ma.fields.Integer(required=True, allow_none=False, dump_only=True)
     page = ma.fields.Integer(required=True, allow_none=False, dump_only=True)
     items = ma.fields.List(
-        ma.fields.Nested(ApiLinkSchema), default=tuple(), required=True, dump_only=True
+        ma.fields.Nested(ApiLinkSchema),
+        dump_default=tuple(),
+        required=True,
+        dump_only=True,
     )
 
 
@@ -177,7 +189,7 @@ class CursorPageArgumentsSchema(MaBaseSchema):
         data_key="item-count",
         allow_none=True,
         load_only=True,
-        missing=25,
+        load_default=25,
         validate=Range(1, MAX_PAGE_ITEM_COUNT, min_inclusive=True, max_inclusive=True),
     )
     sort = ma.fields.String(allow_none=True, load_only=True)
@@ -305,6 +317,12 @@ class ApiResponse:
     data: Any
     embedded: Optional[Sequence[Any]] = None
     keyed_links: Optional[Sequence[KeyedApiLink]] = None
+
+
+@dataclass
+class CollectionResource(BaseApiObject):
+    collection_size: int
+    items: Sequence[ApiLink]
 
 
 @dataclass

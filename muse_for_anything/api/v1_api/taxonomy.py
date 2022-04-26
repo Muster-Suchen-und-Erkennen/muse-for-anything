@@ -91,7 +91,7 @@ class TaxonomiesView(MethodView):
         return found_namespace  # is not None because abort raises exception
 
     @API_V1.arguments(CursorPageArgumentsSchema, location="query", as_kwargs=True)
-    @API_V1.response(DynamicApiResponseSchema(CursorPageSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(CursorPageSchema()))
     @API_V1.require_jwt("jwt")
     def get(self, namespace: str, **kwargs: Any):
         """Get the page of taxonomies."""
@@ -155,7 +155,7 @@ class TaxonomiesView(MethodView):
         )
 
     @API_V1.arguments(TaxonomySchema())
-    @API_V1.response(DynamicApiResponseSchema(NewApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(NewApiObjectSchema()))
     @API_V1.require_jwt("jwt")
     def post(self, data, namespace: str):
         """Create a new taxonomy."""
@@ -279,7 +279,7 @@ class TaxonomyView(MethodView):
                 ),
             )
 
-    @API_V1.response(DynamicApiResponseSchema(TaxonomySchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(TaxonomySchema()))
     @API_V1.require_jwt("jwt")
     def get(self, namespace: str, taxonomy: str):
         """Get a single taxonomy."""
@@ -315,7 +315,7 @@ class TaxonomyView(MethodView):
         )
 
     @API_V1.arguments(TaxonomySchema())
-    @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ChangedApiObjectSchema()))
     @API_V1.require_jwt("jwt")
     def put(self, data, namespace: str, taxonomy: str):
         """Update taxonomy in place."""
@@ -375,7 +375,7 @@ class TaxonomyView(MethodView):
             ),
         )
 
-    @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ChangedApiObjectSchema()))
     @API_V1.require_jwt("jwt")
     def post(self, namespace: str, taxonomy: str):  # restore action
         """Restore a deleted taxonomy."""
@@ -417,7 +417,7 @@ class TaxonomyView(MethodView):
             ),
         )
 
-    @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ChangedApiObjectSchema()))
     @API_V1.require_jwt("jwt")
     def delete(self, namespace: str, taxonomy: str):
         """Delete a taxonomy."""
@@ -510,7 +510,7 @@ class TaxonomyItemsView(MethodView):
             )
 
     @API_V1.arguments(CursorPageArgumentsSchema, location="query", as_kwargs=True)
-    @API_V1.response(DynamicApiResponseSchema(CursorPageSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(CursorPageSchema()))
     @API_V1.require_jwt("jwt")
     def get(self, namespace: str, taxonomy: str, **kwargs):
         """Get all items of a taxonomy."""
@@ -580,7 +580,7 @@ class TaxonomyItemsView(MethodView):
         )
 
     @API_V1.arguments(TaxonomyItemSchema())
-    @API_V1.response(DynamicApiResponseSchema(NewApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(NewApiObjectSchema()))
     @API_V1.require_jwt("jwt")
     def post(self, data, namespace: str, taxonomy: str):
         """Create a new taxonomy item."""

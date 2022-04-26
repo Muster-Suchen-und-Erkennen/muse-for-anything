@@ -88,7 +88,7 @@ class TypesView(MethodView):
         return found_namespace  # is not None because abort raises exception
 
     @API_V1.arguments(CursorPageArgumentsSchema, location="query", as_kwargs=True)
-    @API_V1.response(DynamicApiResponseSchema(CursorPageSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(CursorPageSchema()))
     @API_V1.require_jwt("jwt")
     def get(self, namespace: str, **kwargs: Any):
         """Get the page of types."""
@@ -155,7 +155,7 @@ class TypesView(MethodView):
         )
 
     @API_V1.arguments(JSONSchemaSchema(unknown=INCLUDE))
-    @API_V1.response(DynamicApiResponseSchema(NewApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(NewApiObjectSchema()))
     @API_V1.require_jwt("jwt")
     def post(self, data, namespace: str):
         """Create a new type."""
@@ -296,7 +296,7 @@ class TypeView(MethodView):
                 ),
             )
 
-    @API_V1.response(DynamicApiResponseSchema(ObjectTypeSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ObjectTypeSchema()))
     @API_V1.require_jwt("jwt")
     def get(self, namespace: str, object_type: str, **kwargs: Any):
         """Get a single type."""
@@ -313,7 +313,7 @@ class TypeView(MethodView):
         )
 
     @API_V1.arguments(JSONSchemaSchema(unknown=INCLUDE))
-    @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ChangedApiObjectSchema()))
     @API_V1.require_jwt("jwt")
     def put(self, data, namespace: str, object_type: str):
         """Update type (creates a new version)."""
@@ -385,7 +385,7 @@ class TypeView(MethodView):
             ),
         )
 
-    @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ChangedApiObjectSchema()))
     @API_V1.require_jwt("jwt")
     def post(self, namespace: str, object_type: str):  # restore action
         """Restore a deleted type."""
@@ -427,7 +427,7 @@ class TypeView(MethodView):
             ),
         )
 
-    @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ChangedApiObjectSchema()))
     @API_V1.require_jwt("jwt")
     def delete(self, namespace: str, object_type: str):
         """Delete a type."""

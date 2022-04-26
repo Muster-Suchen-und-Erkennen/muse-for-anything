@@ -55,7 +55,7 @@ class RefreshedTokenData:
 class AuthRootView(MethodView):
     """Root endpoint for all authentication resources."""
 
-    @API_V1.response(DynamicApiResponseSchema())
+    @API_V1.response(200, DynamicApiResponseSchema())
     def get(self):
         """Get the urls for the authentication api."""
         return ApiResponse(
@@ -105,7 +105,7 @@ class LoginView(MethodView):
         location="json",
         description="The login credentials of the user.",
     )
-    @API_V1.response(DynamicApiResponseSchema(data_schema=LoginTokensSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(data_schema=LoginTokensSchema()))
     def post(self, credentials: Dict[str, str]):
         """Login with the user credentials to receive a access and refresh token pair.
 
@@ -165,7 +165,7 @@ class FreshLoginView(MethodView):
         location="json",
         description="The login credentials of the user.",
     )
-    @API_V1.response(DynamicApiResponseSchema(data_schema=LoginTokensSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(data_schema=LoginTokensSchema()))
     @API_V1.require_jwt("jwt")
     def post(self, credentials: Dict[str, str]):
         """Login with the user credentials to receive fresh access token.
@@ -210,7 +210,7 @@ class FreshLoginView(MethodView):
 class RefreshView(MethodView):
     """Refresh endpoint to retrieve new api access tokens."""
 
-    @API_V1.response(DynamicApiResponseSchema(AccessTokenSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(AccessTokenSchema()))
     @API_V1.require_jwt("jwt-refresh-token", refresh_token=True)
     def post(self):
         """Get a new access token.
@@ -246,7 +246,7 @@ class RefreshView(MethodView):
 class WhoamiView(MethodView):
     """Whoami endpoint to test the api token and get the current user info."""
 
-    @API_V1.response(DynamicApiResponseSchema(UserSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(UserSchema()))
     @API_V1.require_jwt("jwt")
     def get(self):
         """Get the user object of the current user."""

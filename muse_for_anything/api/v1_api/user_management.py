@@ -1,7 +1,5 @@
 """Module containing the user management endpoints of the api."""
 
-from dataclasses import dataclass
-from email.policy import HTTP
 from http import HTTPStatus
 from typing import Any, Dict, List, Optional
 
@@ -55,7 +53,7 @@ from ..base_models import (
 )
 from ...db.db import DB
 
-# import namespace specific generators to load them
+# import user management specific generators to load them
 from .generators import user_management  # noqa
 
 
@@ -64,7 +62,7 @@ class UsersView(MethodView):
     """Endpoint for the users collection resource."""
 
     @API_V1.arguments(CursorPageArgumentsSchema, location="query", as_kwargs=True)
-    @API_V1.response(DynamicApiResponseSchema(CursorPageSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(CursorPageSchema()))
     @API_V1.require_jwt("jwt")
     def get(self, **kwargs: Any):
         """Get the page of users."""
@@ -140,7 +138,7 @@ class UsersView(MethodView):
         )
 
     @API_V1.arguments(UserCreateSchema())
-    @API_V1.response(DynamicApiResponseSchema(NewApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(NewApiObjectSchema()))
     @API_V1.require_jwt("jwt", fresh=True)
     def post(self, user_data):
         FLASK_OSO.authorize_and_set_resource(OsoResource(USER_REL_TYPE), action=CREATE)
@@ -208,7 +206,7 @@ class UsersView(MethodView):
 class UserView(MethodView):
     """Endpoint for a single user resource."""
 
-    @API_V1.response(DynamicApiResponseSchema(UserSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(UserSchema()))
     @API_V1.require_jwt("jwt", optional=True)
     def get(self, username: str, **kwargs: Any):
         if not username:
@@ -231,7 +229,7 @@ class UserView(MethodView):
         )
 
     @API_V1.arguments(UserUpdateSchema())
-    @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ChangedApiObjectSchema()))
     @API_V1.require_jwt("jwt", fresh=True)
     def post(self, user_data, username: str):
         if not username:
@@ -314,7 +312,7 @@ class UserView(MethodView):
             ),
         )
 
-    @API_V1.response(DynamicApiResponseSchema(DeletedApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(DeletedApiObjectSchema()))
     @API_V1.require_jwt("jwt", fresh=True)
     def delete(self, username: str):
         if not username:

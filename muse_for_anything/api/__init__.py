@@ -39,7 +39,7 @@ ROOT_ENDPOINT = SmorestBlueprint(
 
 @ROOT_ENDPOINT.route("/")
 class RootView(MethodView):
-    @ROOT_ENDPOINT.response(DynamicApiResponseSchema(RootDataSchema()))
+    @ROOT_ENDPOINT.response(200, DynamicApiResponseSchema(RootDataSchema()))
     def get(self) -> ApiResponse:
         """Get the Root API information containing the links to all versions of this api."""
         api_data = {

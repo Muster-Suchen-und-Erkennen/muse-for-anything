@@ -23,7 +23,7 @@ class RootData:
 class RootView(MethodView):
     """Root endpoint of the v1 api."""
 
-    @API_V1.response(DynamicApiResponseSchema())
+    @API_V1.response(200, DynamicApiResponseSchema())
     def get(self):
         """Get the urls of the next endpoints of the v1 api to call."""
         return ApiResponse(
@@ -319,6 +319,29 @@ class RootView(MethodView):
                     rel=("collection", "page"),
                     resource_type="user",
                     query_key=("item-count", "cursor", "sort"),
+                ),
+                KeyedApiLink(
+                    href=template_url_for(
+                        "api-v1.UserRolesView",
+                        {"username": "username"},
+                        _external=True,
+                    ),
+                    rel=("collection",),
+                    resource_type="user-role",
+                    key=("username",),
+                ),
+                KeyedApiLink(
+                    href=template_url_for(
+                        "api-v1.UserRoleView",
+                        {"username": "username", "role": "userRole"},
+                        _external=True,
+                    ),
+                    rel=tuple(),
+                    resource_type="user-role",
+                    key=(
+                        "username",
+                        "userRole",
+                    ),
                 ),
             ],
             data=RootData(

@@ -48,7 +48,7 @@ class JSONSchemaSchema(MaBaseSchema):
     definitions = ma.fields.Mapping(
         ma.fields.String(), SchemaField(allow_none=False), required=True, allow_none=False
     )
-    abstract = ma.fields.Boolean(required=False, missing=False)
+    abstract = ma.fields.Boolean(required=False, load_default=False)
 
 
 JSON_SCHEMA_ROOT_SCHEMA_REF = {"$ref": "#/definitions/root"}

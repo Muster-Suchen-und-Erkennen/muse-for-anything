@@ -8,12 +8,13 @@ RUN mkdir --parents /muse_for_anything/static \
     && npx browserslist@latest --update-db \
     && npm run build
 
-FROM python:3.9
+FROM python:3.9-slim
 
 # Upgrade dependencies
-RUN apt-get update && apt-get upgrade -y
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get upgrade -y && apt-get install -y gcc python-dev libpq-dev && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN python -m pip install --upgrade pip
+#RUN python -m pip install --upgrade pip
 
 RUN python -m pip install gunicorn poetry
 
@@ -21,9 +22,12 @@ ENV POETRY_VIRTUALENVS_CREATE=false
 
 RUN useradd gunicorn
 
-COPY --chown=gunicorn ./poetry.lock ./pyproject.toml ./start-docker.sh /app/
+ENV FLASK_APP=muse_for_anything
+ENV FLASK_ENV=production
+ENV CONCURRENCY=2
 
-RUN chmod +x /app/start-docker.sh
+COPY --chown=gunicorn ./poetry.lock ./pyproject.toml ./tasks.py /app/
+
 
 COPY --chown=gunicorn ./migrations /app/migrations
 COPY --chown=gunicorn ./muse_for_anything /app/muse_for_anything
@@ -31,13 +35,7 @@ COPY --chown=gunicorn ./translations /app/translations
 
 WORKDIR /app
 
-ENV FLASK_APP=muse_for_anything
-ENV FLASK_ENV=production
-
 COPY --chown=gunicorn --from=builder ./muse_for_anything/static /app/muse_for_anything/static
-
-RUN ls /app
-
 RUN python -m poetry export --extras=psycopg2 --extras=PyMySQL --format=requirements.txt -o requirements.txt && python -m pip install -r requirements.txt
 
 ARG SKIP_PASSWORD_HASHING_CHECKS=force
@@ -58,4 +56,4 @@ RUN chmod +x /wait
 
 USER gunicorn
 
-CMD /app/start-docker.sh
+CMD ["python", "-m", "invoke", "start-docker"]

@@ -46,7 +46,7 @@ class NamespaceSchema(ChangesSchemaMixin, ApiObjectSchema):
     name = ma.fields.String(
         required=True, allow_none=False, validate=Length(1, MAX_STRING_LENGTH)
     )
-    description = ma.fields.String(missing="")
+    description = ma.fields.String(load_default="")
 
 
 @dataclass
@@ -77,7 +77,7 @@ class ObjectTypeSchema(ChangesSchemaMixin, ApiObjectSchema):
     )
     description = ma.fields.String(allow_none=False, dump_only=True)
     version = ma.fields.Integer(allow_none=False, dump_only=True)
-    abstract = ma.fields.Boolean(required=False, missing=False, default=False)
+    abstract = ma.fields.Boolean(required=False, load_default=False, dump_default=False)
     schema = ma.fields.Raw(allow_none=False, dump_only=True)
 
 
@@ -127,7 +127,7 @@ class TaxonomyItemSchema(ChangesSchemaMixin, ApiObjectSchema):
     name = ma.fields.String(
         allow_none=False, required=True, validate=Length(1, MAX_STRING_LENGTH)
     )
-    description = ma.fields.String(missing="", required=False)
+    description = ma.fields.String(load_default="", required=False)
     sort_key = ma.fields.Float(allow_nan=False, allow_none=True, required=False)
     is_toplevel_item = ma.fields.Boolean(allow_none=False, dump_only=True)
     version = ma.fields.Integer(allow_none=False, dump_only=True)

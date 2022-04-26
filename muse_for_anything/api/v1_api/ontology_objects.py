@@ -110,7 +110,7 @@ class ObjectsView(MethodView):
         return found_type  # is not None because abort raises exception
 
     @API_V1.arguments(ObjectsCursorPageArgumentsSchema, location="query", as_kwargs=True)
-    @API_V1.response(DynamicApiResponseSchema(CursorPageSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(CursorPageSchema()))
     @API_V1.require_jwt("jwt")
     def get(self, namespace: str, **kwargs: Any):
         """Get the page of objects."""
@@ -199,7 +199,7 @@ class ObjectsView(MethodView):
 
     @API_V1.arguments(ObjectsCursorPageArgumentsSchema, location="query", as_kwargs=True)
     @API_V1.arguments(ObjectSchema())
-    @API_V1.response(DynamicApiResponseSchema(NewApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(NewApiObjectSchema()))
     @API_V1.require_jwt("jwt")
     def post(self, data, namespace: str, **kwargs):
         """Create a new object."""
@@ -376,7 +376,7 @@ class ObjectView(MethodView):
                 ),
             )
 
-    @API_V1.response(DynamicApiResponseSchema(ObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ObjectSchema()))
     @API_V1.require_jwt("jwt")
     def get(self, namespace: str, object_id: str, **kwargs: Any):
         """Get a single object."""
@@ -393,7 +393,7 @@ class ObjectView(MethodView):
         )
 
     @API_V1.arguments(ObjectSchema())
-    @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ChangedApiObjectSchema()))
     @API_V1.require_jwt("jwt")
     def put(self, data, namespace: str, object_id: str):
         """Update object (creates a new version)."""
@@ -468,7 +468,7 @@ class ObjectView(MethodView):
             ),
         )
 
-    @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ChangedApiObjectSchema()))
     @API_V1.require_jwt("jwt")
     def post(self, namespace: str, object_id: str):  # restore action
         """Restore a deleted object."""
@@ -510,7 +510,7 @@ class ObjectView(MethodView):
             ),
         )
 
-    @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ChangedApiObjectSchema()))
     @API_V1.require_jwt("jwt")
     def delete(self, namespace: str, object_id: str):
         """Delete an object."""

@@ -58,7 +58,7 @@ class NamespacesView(MethodView):
     """Endpoint for all namespaces collection resource."""
 
     @API_V1.arguments(CursorPageArgumentsSchema, location="query", as_kwargs=True)
-    @API_V1.response(DynamicApiResponseSchema(CursorPageSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(CursorPageSchema()))
     @API_V1.require_jwt("jwt", optional=True)
     def get(self, **kwargs: Any):
         """Get the page of namespaces."""
@@ -113,7 +113,7 @@ class NamespacesView(MethodView):
         )
 
     @API_V1.arguments(NamespaceSchema(only=("name", "description")))
-    @API_V1.response(DynamicApiResponseSchema(NewApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(NewApiObjectSchema()))
     @API_V1.require_jwt("jwt")
     def post(self, namespace_data):
         FLASK_OSO.authorize_and_set_resource(
@@ -167,7 +167,7 @@ class NamespacesView(MethodView):
 class NamespaceView(MethodView):
     """Endpoint a single namespace resource."""
 
-    @API_V1.response(DynamicApiResponseSchema(NamespaceSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(NamespaceSchema()))
     @API_V1.require_jwt("jwt", optional=True)
     def get(self, namespace: str, **kwargs: Any):
         if not namespace or not namespace.isdigit():
@@ -191,7 +191,7 @@ class NamespaceView(MethodView):
         )
 
     @API_V1.arguments(NamespaceSchema(only=("name", "description")))
-    @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ChangedApiObjectSchema()))
     @API_V1.require_jwt("jwt")
     def put(self, namespace_data, namespace: str):
         if not namespace or not namespace.isdigit():
@@ -260,7 +260,7 @@ class NamespaceView(MethodView):
             ),
         )
 
-    @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ChangedApiObjectSchema()))
     @API_V1.require_jwt("jwt")
     def post(self, namespace: str):  # restore action
         if not namespace or not namespace.isdigit():
@@ -308,7 +308,7 @@ class NamespaceView(MethodView):
             ),
         )
 
-    @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ChangedApiObjectSchema()))
     @API_V1.require_jwt("jwt")
     def delete(self, namespace: str):
         if not namespace or not namespace.isdigit():

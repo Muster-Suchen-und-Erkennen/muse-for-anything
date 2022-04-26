@@ -68,7 +68,7 @@ class ObjectVersionsView(MethodView):
         return found_object  # is not None because abort raises exception
 
     @API_V1.arguments(CursorPageArgumentsSchema, location="query", as_kwargs=True)
-    @API_V1.response(DynamicApiResponseSchema(CursorPageSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(CursorPageSchema()))
     @API_V1.require_jwt("jwt")
     def get(self, namespace: str, object_id: str, **kwargs: Any):
         """Get all versions of an object."""
@@ -185,7 +185,7 @@ class ObjectVersionView(MethodView):
             abort(HTTPStatus.NOT_FOUND, message=gettext("Object version not found."))
         return found_object_version  # is not None because abort raises exception
 
-    @API_V1.response(DynamicApiResponseSchema(ObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ObjectSchema()))
     @API_V1.require_jwt("jwt")
     def get(self, namespace: str, object_id: str, version: str, **kwargs: Any):
         """Get a specific version of an object."""
