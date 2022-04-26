@@ -2,6 +2,7 @@
 
 from typing import List, Optional, Set, Union
 
+from flask_babel import gettext
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.elements import literal
 from sqlalchemy.sql.schema import Column, ForeignKey
@@ -174,6 +175,57 @@ class UserRole(MODEL, IdMixin):
             raise ValueError(f"Role '{role}' is not an allowed role!")
         self.user = user
         self.role = role
+
+    @property
+    def description(self) -> str:
+        # FIXME provide a description for all possible roles!
+        if self.role == "admin":
+            return gettext("The 'admin' role gives the user all rights to do everything.")
+        elif self.role == "editor":
+            return gettext(
+                "The 'editor' role gives the user the rights to do anything with objects but no rights to user management."
+            )
+        elif self.role == "creator":
+            return gettext(
+                "The 'creator' role gives the user the rights to create new objects. The creator of an object is granted owner rights of that object."
+            )
+        if self.role.startswith("ont-namespace"):
+            if self.role.endswith("admin"):
+                return gettext("The user has all rights concerning namespaces.")
+            if self.role.endswith("editor"):
+                return gettext("The user has the rights to edit namespaces.")
+            if self.role.endswith("creator"):
+                return gettext(
+                    "The user has the rights to create namespaces. The creator of a namespace is granted owner rights of that namespace."
+                )
+        if self.role.startswith("ont-type"):
+            if self.role.endswith("admin"):
+                return gettext("The user has all rights concerning types.")
+            if self.role.endswith("editor"):
+                return gettext("The user has the rights to edit types.")
+            if self.role.endswith("creator"):
+                return gettext(
+                    "The user has the rights to create types. The creator of a type is granted owner rights of that type."
+                )
+        if self.role.startswith("ont-object"):
+            if self.role.endswith("admin"):
+                return gettext("The user has all rights concerning objects.")
+            if self.role.endswith("editor"):
+                return gettext("The user has the rights to edit objects.")
+            if self.role.endswith("creator"):
+                return gettext(
+                    "The user has the rights to create objects. The creator of an object is granted owner rights of that object."
+                )
+        if self.role.startswith("ont-taxonomy"):
+            if self.role.endswith("admin"):
+                return gettext("The user has all rights concerning taxonomies.")
+            if self.role.endswith("editor"):
+                return gettext("The user has the rights to edit taxonomies.")
+            if self.role.endswith("creator"):
+                return gettext(
+                    "The user has the rights to create taxonomies. The creator of a taxonomy is granted owner rights of that taxonomy."
+                )
+        return gettext("A user role with no further description.")
 
 
 def _get_allowed_resource_roles() -> Set[str]:
