@@ -20,7 +20,7 @@ Flask-Static-Digest = "^0.2.1"
 flask-oso = "^0.26.0"
 tomli = "^2.0.0"
 marshmallow-jsonschema = "^0.13.0"
-jsonschema = "^4.4.0"
+jsonschema = "3.2.0"
 bcrypt = "^3.2.0"
 psycopg2 = {version = "^2.9.3", optional = true}
 PyMySQL = {version = "^1.0.2", optional = true}
