@@ -1,10 +1,30 @@
 import { EventAggregator, Subscription } from "aurelia-event-aggregator";
 import { autoinject, bindable } from "aurelia-framework";
+import { PLATFORM } from "aurelia-pal";
 import { API_RESOURCE_CHANGES_CHANNEL, AUTH_EVENTS_CHANNEL } from "resources/events";
 import { ApiLink, ApiLinkKey, ApiObject, ApiResponse } from "rest/api-objects";
 import { LOGIN, LOGIN_TOKEN_REFRESHED, LOGOUT } from "rest/authentication-service";
 import { BaseApiService } from "rest/base-api";
 import { NavigationLinksService } from "services/navigation-links";
+
+// A resource map mapping from resource type relation to aurelia component
+// Also update the imports in the HTML part!
+const RESOURCE_MAP = {
+    "collection": PLATFORM.moduleName("../api-object/collection"),
+    "ont-namespace": PLATFORM.moduleName("../api-object/ont-namespace"),
+    "ont-object-version": PLATFORM.moduleName("../api-object/ont-object-version"),
+    "ont-object": PLATFORM.moduleName("../api-object/ont-object"),
+    "ont-taxonomy-item-relation": PLATFORM.moduleName("../api-object/ont-taxonomy-item-relation"),
+    "ont-taxonomy-item-version": PLATFORM.moduleName("../api-object/ont-taxonomy-item-version"),
+    "ont-taxonomy-item": PLATFORM.moduleName("../api-object/ont-taxonomy-item"),
+    "ont-taxonomy": PLATFORM.moduleName("../api-object/ont-taxonomy"),
+    "ont-type-version": PLATFORM.moduleName("../api-object/ont-type-version"),
+    "ont-type": PLATFORM.moduleName("../api-object/ont-type"),
+    "page": PLATFORM.moduleName("../api-object/page"),
+    "user-grant": PLATFORM.moduleName("../api-object/user-grant"),
+    "user-role": PLATFORM.moduleName("../api-object/user-role"),
+    "user": PLATFORM.moduleName("../api-object/user"),
+};
 
 @autoinject
 export class ApiResource {
@@ -94,14 +114,16 @@ export class ApiResource {
             }
             const rels = apiResponse.data.self.rel;
             if (rels.some(rel => rel === "page")) {
-                this.objectType = "page";
+                this.objectType = RESOURCE_MAP["page"];
                 return;
             }
             if (rels.some(rel => rel === "collection")) {
-                this.objectType = "collection";
+                this.objectType = RESOURCE_MAP["collection"];
                 return;
             }
-            this.objectType = apiResponse.data.self.resourceType;
+            const resourceView = RESOURCE_MAP[apiResponse.data.self.resourceType];
+            // FIXME display some default component for unknown resources
+            this.objectType = resourceView;
         }, err => {
             this.lastStatus = err.status ?? 500;
         });

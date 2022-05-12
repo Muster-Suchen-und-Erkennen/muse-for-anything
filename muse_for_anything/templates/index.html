@@ -12,12 +12,12 @@
     <!-- Content Security Policy -->
     <meta http-equiv="Content-Security-Policy"
         content="script-src 'strict-dynamic' 'nonce-{{nonce}}' {{extra_script_sources}};">
+    {% for skript in skripts %}
+    <script defer src="{{ static_url_for('static', filename=skript) | bustcache }}" nonce="{{nonce}}"></script>
+    {% endfor %}
 </head>
 
 <body aurelia-app="main">
-    {% for skript in skripts %}
-    <script src="{{ static_url_for('static', filename=skript) | bustcache }}" nonce="{{nonce}}"></script>
-    {% endfor %}
 </body>
 
 </html>

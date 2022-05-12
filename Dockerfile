@@ -36,7 +36,7 @@ COPY --chown=gunicorn ./translations /app/translations
 WORKDIR /app
 
 COPY --chown=gunicorn --from=builder ./muse_for_anything/static /app/muse_for_anything/static
-RUN python -m poetry export --extras=psycopg2 --extras=PyMySQL --format=requirements.txt -o requirements.txt && python -m pip install -r requirements.txt
+RUN python -m poetry export --without-hashes --extras=psycopg2 --extras=PyMySQL --format=requirements.txt -o requirements.txt && python -m pip install -r requirements.txt
 
 ARG SKIP_PASSWORD_HASHING_CHECKS=force
 ARG M4A_SECRET_KEY="build-time-only-secret"

@@ -1,16 +1,17 @@
-from pathlib import Path
 import re
+from http import HTTPStatus
+from pathlib import Path
 from secrets import token_urlsafe
 from typing import Any, List
-from flask import Flask, render_template, redirect, Blueprint, g, abort, request
+from warnings import warn
+
+from flask import Blueprint, Flask, abort, g, redirect, render_template, request
 from flask.globals import current_app
 from flask.views import MethodView
 from flask_static_digest import FlaskStaticDigest
 from werkzeug.utils import cached_property
-from warnings import warn
-from http import HTTPStatus
 
-from .db.models.users import User, DB, UserRole
+from .db.models.users import DB, User, UserRole
 
 ROOT_BLP = Blueprint("Root Routes", __name__)
 
@@ -33,8 +34,8 @@ def asset(file):
 
 class SPA(MethodView):
 
-    _BODY_REGEX = re.compile(
-        r".*<body[^>]*>(?P<body>.*)</body>.*", flags=re.MULTILINE | re.DOTALL
+    _HEAD_REGEX = re.compile(
+        r".*<head[^>]*>(?P<head>.*)</head>.*", flags=re.MULTILINE | re.DOTALL
     )
     _SKRIPT_REGEX = re.compile(
         r'<script[^>]*src="/static/(?P<source>[^"]*)"[^>]*>\s*</script>'
@@ -62,9 +63,9 @@ class SPA(MethodView):
         if index.exists():
             with index.open() as _file:
                 html = "".join(_file.readlines())
-                matches = self._BODY_REGEX.match(html)
-                body = matches.group("body") if matches else ""
-                skripts = self._SKRIPT_REGEX.findall(body)
+                matches = self._HEAD_REGEX.match(html)
+                head = matches.group("head") if matches else ""
+                skripts = self._SKRIPT_REGEX.findall(head)
                 return skripts
         else:
             # when in watch mode webpack does not compile the index.html...

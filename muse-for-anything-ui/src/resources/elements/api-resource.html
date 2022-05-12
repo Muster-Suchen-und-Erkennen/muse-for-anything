@@ -1,8 +1,25 @@
 <template>
+    <!-- All components in api-object must be required here for webpack to include them! Also update the ts part! -->
+    <require from="../api-object/collection"></require>
+    <require from="../api-object/ont-namespace"></require>
+    <require from="../api-object/ont-object-version"></require>
+    <require from="../api-object/ont-object"></require>
+    <require from="../api-object/ont-taxonomy-item-relation"></require>
+    <require from="../api-object/ont-taxonomy-item-version"></require>
+    <require from="../api-object/ont-taxonomy-item"></require>
+    <require from="../api-object/ont-taxonomy"></require>
+    <require from="../api-object/ont-type-version"></require>
+    <require from="../api-object/ont-type"></require>
+    <require from="../api-object/page"></require>
+    <require from="../api-object/user-grant"></require>
+    <require from="../api-object/user-role"></require>
+    <require from="../api-object/user"></require>
+
     <div if.bind="objectType == null">
         <h1 t="loading">Loading</h1>
     </div>
     <div if.bind="objectType != null" style="max-width: 48rem; margin-left: auto; margin-right: auto;">
-        <compose view-model="resources/api-object/${objectType}" model.bind="modelData"></compose>
+        <!-- The default path for compose is resources/elements -->
+        <compose view-model="../api-object/${objectType}" model.bind="modelData"></compose>
     </div>
 </template>

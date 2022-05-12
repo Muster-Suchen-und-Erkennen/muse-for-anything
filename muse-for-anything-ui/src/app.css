@@ -4,114 +4,112 @@
 
 
 @layer utilities {
-    @variants responsive, dark, visited, hover, focus, focus-within, active, disabled {
-        /* card shadow */
-        .shadow-card {
-            --tw-shadow: 0 1px 6px 0px rgba(0, 0, 0, 0.25), 0 2px 4px -1px rgba(0, 1, 0, 0.1);
-            box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
-        }
-        /* default primary */
-        .bg-primary {
-            background-color: var(--primary-color);
-        }
-        .text-primary {
-            color: var(--primary-color);
-        }
-        .border-primary {
-            border-color: var(--primary-color);
-        }
-        .from-primary {
-            --tw-gradient-from: var(--primary-color);
-            --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(0, 0, 0, 0));
-        } 
-        .to-primary {
-            --tw-gradient-to: var(--primary-color);
-        }
-        /* light primary */
-        .bg-primary-light {
-            background-color: var(--primary-light-color, var(--primary-color));
-        }
-        .text-primary-light {
-            color: var(--primary-light-color, var(--primary-color));
-        }
-        .border-primary-light {
-            border-color: var(--primary-light-color, var(--primary-color));
-        }
-        .from-primary-light {
-            --tw-gradient-from: var(--primary-light-color, var(--primary-color));
-            --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(0, 0, 0, 0));
-        } 
-        .to-primary-light {
-            --tw-gradient-to: var(--primary-light-color, var(--primary-color));
-        }
-        /* dark primary */
-        .bg-primary-dark {
-            background-color: var(--primary-dark-color, var(--primary-color));
-        }
-        .text-primary-dark {
-            color: var(--primary-dark-color, var(--primary-color));
-        }
-        .border-primary-dark {
-            border-color: var(--primary-dark-color, var(--primary-color));
-        }
-        .from-primary-dark {
-            --tw-gradient-from: var(--primary-dark-color, var(--primary-color));
-            --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(0, 0, 0, 0));
-        } 
-        .to-primary-dark {
-            --tw-gradient-to: var(--primary-dark-color, var(--primary-color));
-        }
-        /* default accent */
-        .bg-accent {
-            background-color: var(--accent-color);
-        }
-        .text-accent {
-            color: var(--accent-color);
-        }
-        .border-accent {
-            border-color: var(--accent-color);
-        }
-        .from-accent {
-            --tw-gradient-from: var(--accent-color);
-            --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(0, 0, 0, 0));
-        }
-        .to-accent {
-            --tw-gradient-to: var(--accent-color);
-        }
-        /* light accent */
-        .bg-accent-light {
-            background-color: var(--accent-light-color, var(--accent-color));
-        }
-        .text-accent-light {
-            color: var(--accent-light-color, var(--accent-color));
-        }
-        .border-accent-light {
-            border-color: var(--accent-light-color, var(--accent-color));
-        }
-        .from-accent-light {
-            --tw-gradient-from: var(--accent-light-color, var(--accent-color));
-            --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(0, 0, 0, 0));
-        }
-        .to-accent-light {
-            --tw-gradient-to: var(--accent-light-color, var(--accent-color));
-        }
-        /* dark accent */
-        .bg-accent-dark {
-            background-color: var(--accent-dark-color, var(--accent-color));
-        }
-        .text-accent-dark {
-            color: var(--accent-dark-color, var(--accent-color));
-        }
-        .border-accent-dark {
-            border-color: var(--accent-dark-color, var(--accent-color));
-        }
-        .from-accent-dark {
-            --tw-gradient-from: var(--accent-dark-color, var(--accent-color));
-            --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(0, 0, 0, 0));
-        }
-        .to-accent-dark {
-            --tw-gradient-to: var(--accent-dark-color, var(--accent-color));
-        }
+    /* card shadow */
+    .shadow-card {
+        --tw-shadow: 0 1px 6px 0px rgba(0, 0, 0, 0.25), 0 2px 4px -1px rgba(0, 1, 0, 0.1);
+        box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+    }
+    /* default primary */
+    .bg-primary {
+        background-color: var(--primary-color);
+    }
+    .text-primary {
+        color: var(--primary-color);
+    }
+    .border-primary {
+        border-color: var(--primary-color);
+    }
+    .from-primary {
+        --tw-gradient-from: var(--primary-color);
+        --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(0, 0, 0, 0));
+    } 
+    .to-primary {
+        --tw-gradient-to: var(--primary-color);
+    }
+    /* light primary */
+    .bg-primary-light {
+        background-color: var(--primary-light-color, var(--primary-color));
+    }
+    .text-primary-light {
+        color: var(--primary-light-color, var(--primary-color));
+    }
+    .border-primary-light {
+        border-color: var(--primary-light-color, var(--primary-color));
+    }
+    .from-primary-light {
+        --tw-gradient-from: var(--primary-light-color, var(--primary-color));
+        --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(0, 0, 0, 0));
+    } 
+    .to-primary-light {
+        --tw-gradient-to: var(--primary-light-color, var(--primary-color));
+    }
+    /* dark primary */
+    .bg-primary-dark {
+        background-color: var(--primary-dark-color, var(--primary-color));
+    }
+    .text-primary-dark {
+        color: var(--primary-dark-color, var(--primary-color));
+    }
+    .border-primary-dark {
+        border-color: var(--primary-dark-color, var(--primary-color));
+    }
+    .from-primary-dark {
+        --tw-gradient-from: var(--primary-dark-color, var(--primary-color));
+        --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(0, 0, 0, 0));
+    } 
+    .to-primary-dark {
+        --tw-gradient-to: var(--primary-dark-color, var(--primary-color));
+    }
+    /* default accent */
+    .bg-accent {
+        background-color: var(--accent-color);
+    }
+    .text-accent {
+        color: var(--accent-color);
+    }
+    .border-accent {
+        border-color: var(--accent-color);
+    }
+    .from-accent {
+        --tw-gradient-from: var(--accent-color);
+        --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(0, 0, 0, 0));
+    }
+    .to-accent {
+        --tw-gradient-to: var(--accent-color);
+    }
+    /* light accent */
+    .bg-accent-light {
+        background-color: var(--accent-light-color, var(--accent-color));
+    }
+    .text-accent-light {
+        color: var(--accent-light-color, var(--accent-color));
+    }
+    .border-accent-light {
+        border-color: var(--accent-light-color, var(--accent-color));
+    }
+    .from-accent-light {
+        --tw-gradient-from: var(--accent-light-color, var(--accent-color));
+        --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(0, 0, 0, 0));
+    }
+    .to-accent-light {
+        --tw-gradient-to: var(--accent-light-color, var(--accent-color));
+    }
+    /* dark accent */
+    .bg-accent-dark {
+        background-color: var(--accent-dark-color, var(--accent-color));
+    }
+    .text-accent-dark {
+        color: var(--accent-dark-color, var(--accent-color));
+    }
+    .border-accent-dark {
+        border-color: var(--accent-dark-color, var(--accent-color));
+    }
+    .from-accent-dark {
+        --tw-gradient-from: var(--accent-dark-color, var(--accent-color));
+        --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(0, 0, 0, 0));
+    }
+    .to-accent-dark {
+        --tw-gradient-to: var(--accent-dark-color, var(--accent-color));
     }
 }
 
