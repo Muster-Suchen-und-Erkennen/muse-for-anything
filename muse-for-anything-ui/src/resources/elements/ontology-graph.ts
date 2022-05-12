@@ -202,12 +202,17 @@ export class OntologyGraph {
         }
         edgePathReg.addEdgePathGenerator("default", new SmoothedEdgePathGenerator(curveLinear, true, 10));
 
-        newGraph.addEventListener("svginitialized", () => {
-            newGraph.getSVG()
-                ?.select("g.zoom-group")
-                ?.append("rect")
+        const addCurrentViewWindow = () => {
+            const zoomGroup = newGraph.getSVG()
+                ?.select("g.zoom-group");
+            zoomGroup?.selectAll("rect.view-window")
+                ?.remove(); // remove any duplicate rects
+            zoomGroup?.append("rect")
                 ?.classed("view-window", true);
-        });
+        };
+
+        newGraph.addEventListener("svginitialized", addCurrentViewWindow);
+        addCurrentViewWindow(); // always call function in case svg is already initialized
     }
 
     selectedLayoutAlgorithmIdChanged(): void {
