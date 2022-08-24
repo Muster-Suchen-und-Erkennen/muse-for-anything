@@ -46,7 +46,7 @@ class NamespaceSchema(ChangesSchemaMixin, ApiObjectSchema):
     name = ma.fields.String(
         required=True, allow_none=False, validate=Length(1, MAX_STRING_LENGTH)
     )
-    description = ma.fields.String(load_default="")
+    description = ma.fields.String(load_default="", metadata={"format": "markdown"})
 
 
 @dataclass
@@ -75,7 +75,7 @@ class ObjectTypeSchema(ChangesSchemaMixin, ApiObjectSchema):
     name = ma.fields.String(
         allow_none=False, dump_only=True, validate=Length(1, MAX_STRING_LENGTH)
     )
-    description = ma.fields.String(allow_none=False, dump_only=True)
+    description = ma.fields.String(allow_none=False, dump_only=True, metadata={"format": "markdown"})
     version = ma.fields.Integer(allow_none=False, dump_only=True)
     abstract = ma.fields.Boolean(required=False, load_default=False, dump_default=False)
     schema = ma.fields.Raw(allow_none=False, dump_only=True)
@@ -93,7 +93,7 @@ class ObjectSchema(ChangesSchemaMixin, ApiObjectSchema):
     name = ma.fields.String(
         allow_none=False, required=True, validate=Length(1, MAX_STRING_LENGTH)
     )
-    description = ma.fields.String(allow_none=True)
+    description = ma.fields.String(allow_none=True, metadata={"format": "markdown"})
     version = ma.fields.Integer(allow_none=False, dump_only=True)
     data = ma.fields.Raw(allow_none=True, required=True)
 
@@ -112,7 +112,7 @@ class TaxonomySchema(ChangesSchemaMixin, ApiObjectSchema):
     name = ma.fields.String(
         allow_none=False, required=True, validate=Length(1, MAX_STRING_LENGTH)
     )
-    description = ma.fields.String(allow_none=True, required=False)
+    description = ma.fields.String(allow_none=True, required=False, metadata={"format": "markdown"})
     items = ma.fields.List(
         ma.fields.Nested(ApiLinkSchema()), allow_none=False, dump_only=True
     )
@@ -127,7 +127,7 @@ class TaxonomyItemSchema(ChangesSchemaMixin, ApiObjectSchema):
     name = ma.fields.String(
         allow_none=False, required=True, validate=Length(1, MAX_STRING_LENGTH)
     )
-    description = ma.fields.String(load_default="", required=False)
+    description = ma.fields.String(load_default="", required=False, metadata={"format": "markdown"})
     sort_key = ma.fields.Float(allow_nan=False, allow_none=True, required=False)
     is_toplevel_item = ma.fields.Boolean(allow_none=False, dump_only=True)
     version = ma.fields.Integer(allow_none=False, dump_only=True)

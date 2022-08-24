@@ -4,6 +4,7 @@
         "app": "MUSE4Anything",
         "home": "Home",
         "explore": "Explore",
+        "reload": "Reload",
         "login": "Log-In",
         "fresh-login": "Refresh Log-In",
         "logout": "Log-Out",

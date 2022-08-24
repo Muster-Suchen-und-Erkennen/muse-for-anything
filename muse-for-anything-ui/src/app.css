@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url("/node_modules/prosemirror-view/style/prosemirror.css");
+@import url("/node_modules/prosemirror-gapcursor/style/gapcursor.css");
+@import url("/node_modules/katex/dist/katex.min.css");
+
 
 @layer utilities {
     /* card shadow */
@@ -121,6 +125,13 @@
     --accent-color: theme("colors.yellow.600");
     --accent-light-color: theme("colors.yellow.400");
     --accent-dark-color: theme("colors.yellow.800");
+    --text-color: theme("colors.black");
+    --text-alt-color: theme("colors.neutral.800");
+    --background-color: theme("colors.white");
+    --background-alt-color: theme("colors.neutral.200");
+    --font: theme("fontFamily.serif");
+    --font-mono: theme("fontFamily.mono");
+    --font-size: theme("fontSize.base");
 }
 
 body {
@@ -275,6 +286,199 @@ p:where(.block-max-3l:not(.overflow-y-hidden),.block-max-5l:not(.overflow-y-hidd
     display: -webkit-box;
     -webkit-box-orient: vertical;
 }
+
+/* Milkdown Styles */
+.milkdown .hide {
+    display: none;
+}
+
+.markdown-container .milkdown {
+    margin-inline: 0px;
+}
+
+.milkdown-menu-wrapper {
+    padding-top: max(0.35rem, 8px);
+    max-width: 100%;
+    @apply p-2 flex flex-col relative;
+}
+
+.milkdown-menu-wrapper > .milkdown {
+    overflow-y: auto;
+}
+
+.milkdown-menu {
+    padding-top: max(0.35rem, 8px);
+    @apply rounded-md mb-2 shrink-0;
+}
+.milkdown-menu .menu-selector-wrapper {
+    border: none;
+}
+
+.milkdown-menu .menu-selector-list {
+    left: unset !important;
+}
+
+.milkdown-cell-point > * {
+    padding: 0px;
+    transform: translate(-2px, -2px);
+}
+
+.milkdown .tooltip > * {
+    min-width: 2rem;
+    min-height: 2rem;
+    @apply flex items-center justify-center
+}
+
+.milkdown .tooltip > *:hover {
+    background-color: var(--background-color);
+}
+
+.milkdown .tooltip > *.active {
+    background-color: var(--primary-extra-light-color);
+}
+
+.milkdown hr {
+    @apply my-2;
+}
+
+.milkdown h1 {
+    @apply font-extrabold text-3xl mt-2 mb-3;
+}
+
+.milkdown h2 {
+    @apply font-bold text-2xl mt-2 mb-3;
+}
+
+.milkdown h3 {
+    @apply font-bold text-xl mt-2 mb-2;
+}
+
+.milkdown h4 {
+    @apply font-semibold mt-2 mb-2;
+}
+
+.milkdown h5 {
+    @apply font-light mt-2 mb-2;
+}
+
+.milkdown h6 {
+    @apply font-extralight mt-2 mb-2;
+}
+
+.milkdown .code-inline {
+    background-color: var(--background-alt-color);
+    @apply p-1 rounded-md;
+}
+
+.milkdown .katex::before, .milkdown .katex::after {
+    /* TODO use better selector */
+    @apply mx-1 opacity-25;
+    color: var(--text-color);
+    content: "$";
+}
+
+.milkdown .math-block .katex::before, .milkdown .math-block .katex::after {
+    content: "";
+}
+
+.milkdown .code-fence {
+    @apply border rounded-md;
+}
+
+.milkdown .code-fence:focus-within, .milkdown .code-fence:focus {
+    border-color: var(--primary-color);
+    background-color: var(--background-alt-color);
+}
+
+.milkdown .code-fence pre {
+    @apply ml-6;
+}
+
+.milkdown .code-fence_selector-list {
+    @apply border border-gray-700 rounded-b-md;
+}
+
+.milkdown .ProseMirror-selectednode {
+    outline: none;
+}
+
+.milkdown .math-block.ProseMirror-selectednode > :first-child {
+    @apply mt-2 border rounded-md;
+    border-color: var(--primary-color);
+}
+
+.milkdown .blockquote {
+    @apply ml-7 my-2 pl-2 border-l-4 border-primary;
+}
+
+.milkdown .bullet-list {
+    list-style-type: none;
+}
+
+.milkdown .bullet-list .list-item {
+    display: flex;
+}
+
+.milkdown .bullet-list .list-item_label {
+    display: inline-flex;
+    justify-content: end;
+    @apply w-8 mr-2;
+}
+
+.milkdown .ordered-list {
+    list-style-type: none;
+}
+
+.milkdown .ordered-list .list-item {
+    display: flex;
+}
+
+.milkdown .ordered-list .list-item_label {
+    display: inline-flex;
+    justify-content: end;
+    @apply w-8 mr-2;
+}
+
+.milkdown .bullet-list .task-list-item {
+    display: flex;
+    position: revert;
+}
+
+.milkdown .bullet-list .task-list-item label {
+    display: inline-flex;
+    justify-content: end;
+    align-items: center;
+    @apply w-8 mr-2;
+}
+
+.milkdown .bullet-list .task-list-item label > div {
+    padding: 0px;
+}
+
+.milkdown .bullet-list .task-list-item label > input {
+    width: 0px;
+}
+
+.milkdown .bullet-list .task-list-item > div > .paragraph {
+    margin: 0px;
+}
+
+.milkdown .footnote-definition {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.milkdown .footnote-definition_content {
+    flex-grow: 1;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.milkdown .footnote-definition dt {
+    @apply w-8;
+}
+
+/* end milkdown styles */
 
 /* Tailwind CSS styles (ignore css errors...) */
 
@@ -544,7 +748,7 @@ ontology-graph[data-maximized] {
 .menu-graph { grid-area: menu-graph; }
 
 .section-title {
-    font-size:small;
+    font-size: small;
 }
 
 .section-main-title {

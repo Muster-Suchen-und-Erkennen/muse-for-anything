@@ -1,6 +1,7 @@
 <template>
     <require from="../elements/api-schema-view"></require>
     <require from="../elements/svg-icon.html"></require>
+    <require from="../elements/markdown"></require>
 
     <div if.bind="!isRoot">
         <div class="w-full flex justify-between items-baseline">
@@ -15,9 +16,8 @@
             </a>
             <card-nav-icons api-object.bind="apiObject" main.one-time="'user-grant'"></card-nav-icons>
         </div>
-        <p class="my-1 block-max-3l overflow-y-hidden overflow-ellipsis"><span
-                class="mr-1 font-semibold">Description:</span>
-            ${apiObject.description}</p>
+        <markdown class="my-1 block block-max-3l overflow-y-hidden overflow-ellipsis"
+            markdown-in.bind="apiObject.description"></markdown>
     </div>
 
 
@@ -30,6 +30,7 @@
             </h3>
             <card-nav-icons api-object.bind="apiObject" main.one-time="'user-grant'"></card-nav-icons>
         </div>
-        <p class="my-1"><span class="mr-1 font-semibold">Description:</span> ${apiObject.description}</p>
+        <markdown class="my-1 block block-max-3l overflow-y-hidden overflow-ellipsis"
+            markdown-in.bind="apiObject.description"></markdown>
     </div>
 </template>

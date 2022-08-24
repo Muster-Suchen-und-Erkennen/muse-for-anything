@@ -112,6 +112,7 @@ class UserRoleSchema(UserRolePostSchema):
         required=False,
         allow_none=False,
         dump_only=True,
+        metadata={"format": "markdown"},
     )
 
 

@@ -4,6 +4,7 @@
     <require from="./resource-reference-view"></require>
     <require from="./type-definition-view"></require>
     <require from="./array-view"></require>
+    <require from="./markdown"></require>
 
     <template if.bind="schemaType === 'object'">
         <object-view class="w-full" data.bind="data" schema.bind="schema"></object-view>
@@ -26,6 +27,9 @@
     </template>
     <template if.bind="schemaType === 'text'">
         <p class="m-0 w-full whitespace-pre-line block-max-5l">${data != null ? data : '–'}</p>
+    </template>
+    <template if.bind="schemaType === 'markdown'">
+        <markdown class="m-0 block-max-5l" markdown-in.bind="data"></markdown>
     </template>
     <template if.bind="schemaType === 'number'">
         <p class="m-0">${data != null ? data : '–'}</p>

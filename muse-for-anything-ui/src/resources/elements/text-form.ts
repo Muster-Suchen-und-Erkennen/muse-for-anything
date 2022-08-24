@@ -27,7 +27,7 @@ export class TextForm {
     isSingelLine: boolean = false;
     isNullable: boolean = true;
 
-    format: string;
+    format: string | null = null;
 
     minLength: number = null;
     maxLength: number = null;
@@ -46,9 +46,9 @@ export class TextForm {
     initialDataChanged(newValue, oldValue) {
         if (newValue !== undefined) {
             if (this.isNullable) {
-                this.value = newValue;
+                this.valueIn = newValue;
             } else {
-                this.value = newValue ?? "";
+                this.valueIn = newValue ?? "";
             }
             // schedule update for later to give input element time to catch up
             this.queue.queueMicroTask(() => this.updateValid());
@@ -127,13 +127,19 @@ export class TextForm {
 
         const value = this.valueOut;
 
+        const isNativeForm = this.format == null;
+
         const formIsValid = (this.formInput as HTMLInputElement)?.validity?.valid ?? false;
+
+        const requiredValid = value != null && value !== "" || !this.required || this.isNullable;
+
+        const fastChecksValid = isNativeForm ? formIsValid : requiredValid;
 
         let extraIsValid = true;
         if (this.extraPatterns) {
             extraIsValid = this.extraPatterns.every(pattern => pattern.test(value));
         }
 
-        this.valid = formIsValid && extraIsValid;
+        this.valid = fastChecksValid && extraIsValid;
     }
 }

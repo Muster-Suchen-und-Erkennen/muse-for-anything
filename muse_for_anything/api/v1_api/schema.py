@@ -377,6 +377,7 @@ class TypeSchemaView(MethodView):
                         "description": {
                             "title": "description",
                             "type": "string",
+                            "format": "markdown",
                         },
                         "name": {
                             "title": "name",
