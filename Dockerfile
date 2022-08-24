@@ -10,6 +10,8 @@ RUN mkdir --parents /muse_for_anything/static \
 
 FROM python:3.9-slim
 
+LABEL org.opencontainers.image.source="https://github.com/Muster-Suchen-und-Erkennen/muse-for-anything"
+
 # Upgrade dependencies
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get upgrade -y && apt-get install -y gcc python-dev libpq-dev && apt-get clean && rm -rf /var/lib/apt/lists/*
