@@ -1,8 +1,9 @@
-import { bindable, observable, bindingMode, child } from "aurelia-framework";
-import { NormalizedApiSchema } from "rest/schema-objects";
+import { autoinject, bindable, bindingMode, child, observable, TaskQueue } from "aurelia-framework";
 import { nanoid } from "nanoid";
+import { NormalizedApiSchema } from "rest/schema-objects";
 
 
+@autoinject()
 export class TextForm {
     @bindable key: string;
     @bindable label: string;
@@ -21,10 +22,12 @@ export class TextForm {
 
     slug = nanoid(8);
 
+    inputType: string = "text";
+
     isSingelLine: boolean = false;
     isNullable: boolean = true;
 
-    format: string;
+    format: string | null = null;
 
     minLength: number = null;
     maxLength: number = null;
@@ -34,15 +37,21 @@ export class TextForm {
 
     @child(".input-valid-check") formInput: Element;
 
+    private queue: TaskQueue;
+
+    constructor(queue: TaskQueue) {
+        this.queue = queue;
+    }
+
     initialDataChanged(newValue, oldValue) {
         if (newValue !== undefined) {
             if (this.isNullable) {
-                this.value = newValue;
+                this.valueIn = newValue;
             } else {
-                this.value = newValue ?? "";
+                this.valueIn = newValue ?? "";
             }
             // schedule update for later to give input element time to catch up
-            window.setTimeout(() => this.updateValid(), 3);
+            this.queue.queueMicroTask(() => this.updateValid());
         }
     }
 
@@ -67,12 +76,18 @@ export class TextForm {
         if (normalized.contentMediaType != null) {
             // TODO
         }
-        if ((normalized.maxLength != null && normalized.maxLength <= 500) || normalized.singleLine) {
+        if ((normalized.maxLength != null && normalized.maxLength <= 500) || normalized.singleLine || normalized.password) {
             this.isSingelLine = true;
         } else {
             this.isSingelLine = false;
         }
-        this.updateValid();
+        // TODO extend this to more input types
+        if (normalized.password) {
+            this.inputType = "password";
+        } else {
+            this.inputType = "text";
+        }
+        this.queue.queueMicroTask(() => this.updateValid());
     }
 
     valueInChanged(newValue, oldValue) {
@@ -88,19 +103,19 @@ export class TextForm {
         this.valueOut = newValue;
     }
 
-    valueOutChanged(newValue){
+    valueOutChanged(newValue) {
         if (this.initialData === undefined) {
             this.dirty = !(newValue == null || (!this.isNullable && newValue === ""));
         } else {
             this.dirty = this.initialData !== newValue;
         }
-        this.updateValid();
-    } 
+        this.queue.queueMicroTask(() => this.updateValid());
+    }
 
     formInputChanged() {
         if (this.formInput != null) {
             // update valid again after value settles
-            window.setTimeout(() => this.updateValid(), 3);
+            this.queue.queueMicroTask(() => this.updateValid());
         }
     }
 
@@ -112,13 +127,19 @@ export class TextForm {
 
         const value = this.valueOut;
 
+        const isNativeForm = this.format == null;
+
         const formIsValid = (this.formInput as HTMLInputElement)?.validity?.valid ?? false;
-        
+
+        const requiredValid = value != null && value !== "" || !this.required || this.isNullable;
+
+        const fastChecksValid = isNativeForm ? formIsValid : requiredValid;
+
         let extraIsValid = true;
         if (this.extraPatterns) {
             extraIsValid = this.extraPatterns.every(pattern => pattern.test(value));
         }
-        
-        this.valid = formIsValid && extraIsValid;
+
+        this.valid = fastChecksValid && extraIsValid;
     }
 }

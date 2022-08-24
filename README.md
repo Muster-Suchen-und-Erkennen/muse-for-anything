@@ -13,7 +13,7 @@ This package builds on the flask template https://github.com/buehlefs/flask-temp
 
 ## VSCode
 
-For vscode install the python extension and add the poetry venv path to the folders the python extension searches vor venvs.
+For vscode install the python extension and add the poetry venv path to the folders the python extension searches for venvs.
 
 On linux:
 
@@ -29,12 +29,10 @@ On linux:
 
 Run `poetry install` to install dependencies.
 
-Add `.env` file with the following content into the repository root.
-
-```bash
-FLASK_APP=muse_for_anything
-FLASK_ENV=development # set to production of in production!
-```
+The flask dev server loads environment variables from `.flaskenv` and `.env`.
+To override any variable create a `.env` file.
+Environment variables in `.env` take precedence over `.flaskenv`.
+See the content of the `.flaskenv` file for the default environment variables.
 
 Run the development server with
 
@@ -57,7 +55,7 @@ npm run build
 
 This package uses the following libraries to build a rest app with a database on top of flask.
 
- *  Flask ([documentation](https://flask.palletsprojects.com/en/1.1.x/))
+ *  Flask ([documentation](https://flask.palletsprojects.com/en/2.0.x/))
  *  Flask-Cors ([documentation](https://flask-cors.readthedocs.io/en/latest/))\
     Used to provide cors headers.\
     Can be configured or removed in `muse_for_anything/__init__.py`.
@@ -65,7 +63,7 @@ This package uses the following libraries to build a rest app with a database on
     Used to provide translations.\
     Can be configured in `muse_for_anything/babel.py` and `babel.cfg`.\
     Translation files and Folders: `translations` (and `messages.pot` currently in .gitignore)
- *  Flask-SQLAlchemy ([documentation](https://flask-sqlalchemy.palletsprojects.com/en/2.x/), [SQLAlchemy documentation](https://docs.sqlalchemy.org/en/13/))\
+ *  Flask-SQLAlchemy ([documentation](https://flask-sqlalchemy.palletsprojects.com/en/2.x/), [SQLAlchemy documentation](https://docs.sqlalchemy.org/en/14/))\
     ORM Mapper for many SQL databases.\
     Models: `muse_for_anything/db/models`\
     Config: `muse_for_anything/util/config/sqlalchemy_config.py` and `muse_for_anything/db/db.py`
@@ -86,6 +84,9 @@ This package uses the following libraries to build a rest app with a database on
  *  sphinxcontrib-redoc ([documantation](https://sphinxcontrib-redoc.readthedocs.io/en/stable/))
     Renders the OpenAPI spec with redoc in sphinx html output.
     Config: `docs/conf.py` (API title is read from spec)
+ *  invoke ([documentation](http://www.pyinvoke.org))\
+    tool for scripting cli tasks in python
+    Tasks: `tasks.py`
  *  flask-static-digest ([documentation](https://github.com/nickjj/flask-static-digest))\
     For serving the resources of a javascript SPA
 
@@ -97,6 +98,8 @@ Additional files and folders:
     For use with the [nix](https://nixos.org) ecosystem.
  *  `pyproject.toml`\
     Poetry package config and config for the [black](https://github.com/psf/black) formatter.
+ *  `.flaskenv`\
+    Environment variables loaded by the `flask` command and the flask dev server.
  *  `.flake8`\
     Config for the [flake8](https://flake8.pycqa.org/en/latest/) linter
  *  `.editorconfig`
@@ -110,12 +113,53 @@ Additional files and folders:
  *  `typings`\
     Python typing stubs for libraries that have no type information.
     Mostly generated with the pylance extension of vscode.
+ *  `tasks.py`\
+    Tasks that can be executed with `invoke` (see [invoke tasks](#invoke-tasks))
 
 
 Library alternatives or recommendations:
 
  *  For scripting tasks: invoke ([documentation](http://www.pyinvoke.org)) (is already in `pyproject.toml`)
  *  For hashing passwords: flask-bcrypt ([documentation](https://flask-bcrypt.readthedocs.io/en/latest/))
+
+
+## Poetry Commands
+
+```bash
+# install dependencies from lock file in a virtualenv
+poetry install
+
+# open a shell in the virtualenv
+poetry shell
+
+# update dependencies
+poetry update
+poetry run invoke update-dependencies # to update other dependencies in the repository
+
+# run a command in the virtualenv (replace cmd with the command to run without quotes)
+poetry run cmd
+```
+
+## Invoke Tasks
+
+[Invoke](http://www.pyinvoke.org) is a python tool for scripting cli commands.
+It allows to define complex commands in simple python functions in the `tasks.py` file.
+
+:warning: Make sure to update the module name in `tasks.py` after renaming the `flask_template` module!
+
+```bash
+# list available commands
+poetry run invoke --list
+
+# update dependencies (requirements.txt in ./docs and licenses template)
+poetry run invoke update-dependencies
+
+# Compile the documentation
+poetry run invoke doc
+
+# Open the documentation in the default browser
+poetry run invoke browse-doc
+```
  
 
 ## Babel
@@ -136,6 +180,8 @@ poetry run pybabel update -i messages.pot -d translations
 ```bash
 # create dev db (this will NOT run migrations!)
 poetry run flask create-db
+# create an admin user
+poetry run flask create-admin-user
 # drop dev db
 poetry run flask drop-db
 ```
@@ -145,10 +191,26 @@ This tool uses `select IN` eager loading which is incompatible with SQL Server a
 ## Migrations
 
 ```bash
-# create a new migration after changes in the db
+# create a new migration after changes in the db (Always manually review the created migration!)
 poetry run flask db migrate -m "Initial migration."
 # upgrade db to the newest migration
 poetry run flask db upgrade
 # help
 poetry run flask db --help
+```
+
+## Compiling the Documentation
+
+```bash
+# compile documentation
+poetry run invoke doc
+
+# Open the documentation in the default browser
+poetry run invoke browse-doc
+
+# Find reference targets defined in the documentation
+poetry run invoke doc-index --filter=searchtext
+
+# export/update requirements.txt from poetry dependencies (for readthedocs build)
+poetry run invoke update-dependencies
 ```

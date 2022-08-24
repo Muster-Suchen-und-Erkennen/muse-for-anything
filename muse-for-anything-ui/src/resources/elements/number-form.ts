@@ -1,8 +1,9 @@
-import { bindable, observable, bindingMode, child } from "aurelia-framework";
-import { NormalizedApiSchema } from "rest/schema-objects";
+import { autoinject, bindable, bindingMode, child, observable, TaskQueue } from "aurelia-framework";
 import { nanoid } from "nanoid";
+import { NormalizedApiSchema } from "rest/schema-objects";
 
 
+@autoinject()
 export class NumberForm {
     @bindable key: string;
     @bindable label: string;
@@ -37,6 +38,12 @@ export class NumberForm {
 
     @child(".input-valid-check") formInput: Element;
 
+    private queue: TaskQueue;
+
+    constructor(queue: TaskQueue) {
+        this.queue = queue;
+    }
+
     initialDataChanged(newValue, oldValue) {
         if (newValue !== undefined) {
             if (this.isNullable) {
@@ -45,7 +52,7 @@ export class NumberForm {
                 this.value = newValue?.toString() ?? "0";
             }
             // schedule update for later to give input element time to catch up
-            window.setTimeout(() => this.updateValid(), 3);
+            this.queue.queueMicroTask(() => this.updateValid());
         }
     }
 
@@ -54,7 +61,7 @@ export class NumberForm {
         const normalized = newValue.normalized;
         this.isNullable = normalized.type.has(null);
         if (!this.isNullable && this.value == null) {
-            this.value = "0";
+            this.queue.queueMicroTask(() => this.value = "0");
         }
 
         if (normalized.mainType === "integer") {
@@ -80,7 +87,7 @@ export class NumberForm {
         }
 
         if (this.formInput != null) {
-            this.updateValid();
+            this.queue.queueMicroTask(() => this.updateValid());
         }
     }
 
@@ -104,7 +111,7 @@ export class NumberForm {
         } else {
             newValueOut = parseFloat(newValue);
         }
-        this.valueOut = newValueOut;
+        this.queue.queueMicroTask(() => this.valueOut = newValueOut);
     }
 
     valueOutChanged(newValue: number) {
@@ -120,29 +127,34 @@ export class NumberForm {
 
     formInputChanged() {
         if (this.formInput != null) {
-            this.updateValid();
+            // update valid again after value settles
+            this.queue.queueMicroTask(() => this.updateValid());
         }
     }
 
+    // eslint-disable-next-line complexity
     updateValid() {
+        if (this.formInput == null) {
+            return; // delays actually setting the value
+        }
         if (this.valueOut == null) {
             this.valid = this.isNullable;
             return;
         }
         const value = this.valueOut;
-        let formIsValid = (this.formInput as HTMLInputElement)?.validity?.valid ?? false;
+        const formIsValid = (this.formInput as HTMLInputElement)?.validity?.valid ?? false;
 
         let boundsValid = true;
         if (this.exclusiveMinimum != null) {
             boundsValid &&= this.exclusiveMinimum < value;
         } else if (this.minimum != null) {
             boundsValid &&= this.minimum <= value;
-        } 
+        }
         if (this.exclusiveMaximum != null) {
             boundsValid &&= this.exclusiveMaximum > value;
         } else if (this.maximum != null) {
             boundsValid &&= this.maximum >= value;
-        } 
+        }
 
         let stepValid = true;
         if (this.extraMultiples) {

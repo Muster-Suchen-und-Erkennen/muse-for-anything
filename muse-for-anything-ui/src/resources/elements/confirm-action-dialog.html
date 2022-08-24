@@ -1,0 +1,25 @@
+<template>
+    <require from="./api-resource"></require>
+
+    <!-- TODO translations -->
+
+    <ux-dialog>
+        <ux-dialog-header>
+            <h2 class="font-bold" t="dialog.confirm.title">Confirm</h2>
+        </ux-dialog-header>
+        <ux-dialog-body class="p-4">
+            <p t.bind="'dialog.confirm.body.' + actionType + (isPermanent ? 'Permanent' : '')">Confirmation required to
+                proceed.</p>
+        </ux-dialog-body>
+
+        <ux-dialog-footer>
+            <div class="flex-grow">
+                <!-- spacer -->
+            </div>
+            <button class="button-flat danger mr-2" click.trigger="confirm()"
+                t.bind="'dialog.confirm.button.' + actionType + (isPermanent ? 'Permanent' : '')">confirm</button>
+            <button class="button-outline w-1/3" click.trigger="cancel()"
+                t="dialog.confirm.button.cancel">cancel</button>
+        </ux-dialog-footer>
+    </ux-dialog>
+</template>

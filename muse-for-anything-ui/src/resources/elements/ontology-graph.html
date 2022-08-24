@@ -1,0 +1,686 @@
+<template data-maximized.bind="maximized & empty">
+    <require from="./schema-form"></require>
+    <require from="./validity-indicator"></require>
+    <require from="./svg-icon.html"></require>
+    <require from='./tree-node'></require>
+
+    <template id="ontologyGraphTemplate">
+        <svg>
+            <style>
+                svg {
+                    display: block;
+                    width: 100%;
+                    height: 100%;
+                    border-radius: 0.375rem;
+                    background-color: var(--fill-color);
+                    --line-color: black;
+                    --line-highlight-color: #6d28d9;
+                    --text-color: black;
+                    --text-highlight-color: black;
+                    --fill-color: white;
+                    --fill-highlight-color: white;
+                    --type-color: #bdbdbd;
+                    --taxonomy-color: #faba6f;
+                    --highlight-parent-color: #c4b5fd;
+                    --highlight-child-color: #ede9fe;
+                    --type-color: #bdbdbd;
+                    --view-window-color: #6d28d95d;
+                }
+
+                svg .zoom-group {
+                    will-change: contents, transform;
+                }
+
+                .node {
+                    --base-color: var(--fill-color);
+                    --base-line-color: var(--line-color);
+                }
+
+                .node>rect {
+                    fill: var(--base-color);
+                    stroke: var(--base-line-color);
+                }
+
+                .node>ellipse {
+                    fill: var(--base-color);
+                    stroke: var(--base-line-color);
+                }
+
+                .type-link-item,
+                .taxonomy-link-item {
+                    stroke-dasharray: 5px;
+                }
+
+                .link-handle {
+                    display: none;
+                    visibility: hidden;
+                }
+
+                .title {
+                    fill: var(--text-color);
+                    font-size: initial;
+                    text-overflow: ellipsis;
+                    word-break: break-all;
+                    border-bottom: double;
+                }
+
+                .titleDescription {
+                    fill: var(--text-color);
+                    font-size: small;
+                    text-overflow: ellipsis;
+                    word-break: break-all;
+                    border-bottom: double;
+
+                }
+
+                .description {
+                    fill: var(--text-color);
+                    font-size: 6pt;
+                    text-overflow: ellipsis;
+                }
+
+                .node.type-node {
+                    --base-color: var(--type-color);
+                    --base-line-color: var(--line-color);
+                }
+
+                .node.taxonomy-node {
+                    --base-color: var(--taxonomy-color);
+                    --base-line-color: var(--line-color);
+                }
+
+                .ghost-node {
+                    opacity: 0.1;
+                }
+
+                .invisible-node {
+                    opacity: 0;
+                }
+
+                .node.deleted {
+                    opacity: 0.5;
+                }
+
+                .node.search-match>ellipse,
+                .node.search-match>rect {
+                    stroke-width: 6px;
+                    --base-line-color: var(--line-highlight-color)
+                }
+
+                .node.group-node.search-match,
+                .node.group-node.selected,
+                .node.group-node.hovered {
+                    --base-color: var(--highlight-parent-color)
+                }
+
+                .node.child-node.search-match,
+                .node.child-node.selected,
+                .node.child-node.hovered {
+                    --base-color: var(--highlight-child-color)
+                }
+
+                .node.selected .title {
+                    fill: var(--text-highlight-color);
+                }
+
+                /*
+                .type-group {
+                    fill: var(--type-color) !important;
+                }
+                
+                .node.selected>.type-group {
+                    fill: var(--highlight-parent-color) !important;
+                    opacity: 1;
+                }
+
+                .node.selected>.taxonomy-group {
+                    fill: var(--highlight-parent-color) !important;
+                    opacity: 1;
+                }
+
+                .node.selected>.taxonomy-link-item {
+                    fill: var(--highlight-child-color) !important;
+                    opacity: 1;
+                }
+
+                .node.selected>.type-link-item {
+                    fill: var(--highlight-child-color) !important;
+                    opacity: 1;
+                }
+
+                .node.selected>.type-item {
+                    fill: var(--highlight-child-color) !important;
+                    opacity: 1;
+                }
+
+                .node.selected>.taxonomy-item {
+                    fill: var(--highlight-child-color) !important;
+                    opacity: 1;
+                }
+
+                .node.selected>ellipse {
+                    fill: var(--highlight-parent-color) !important;
+                    opacity: 1;
+                }
+                */
+
+                /*
+                .node.hovered>rect {
+                    fill: var(--fill-highlight-color);
+                    stroke: var(--line-highlight-color);
+                }
+                */
+
+                .edge-group {
+                    --edge-color: var(--line-color);
+                    --stroke-width: 1;
+                    --base-opacity: 0.5;
+                }
+
+                .edge-group .edge {
+                    stroke: var(--edge-color);
+                    opacity: var(--base-opacity);
+                    stroke-width: var(--stroke-width);
+                }
+
+                .edge-group.big-edge {
+                    --stroke-width: 5px;
+                    --base-opacity: 1;
+                }
+
+                .edge-group.highlight-incoming,
+                .edge-group.highlight-outgoing {
+                    --edge-color: var(--line-highlight-color);
+                    --base-opacity: 1;
+                }
+
+                .edge-group.highlight-incoming .edge {
+                    stroke-width: calc(var(--stroke-width)*2);
+                }
+
+                .edge-group.highlight-outgoing .edge {
+                    stroke-width: calc(var(--stroke-width)*2);
+                }
+
+                .edge-group .marker {
+                    fill: var(--edge-color);
+                    opacity: var(--base-opacity);
+                }
+
+                .edge-group.ghost-edge {
+                    --base-opacity: 0.1;
+                }
+
+
+
+                rect.view-window {
+                    fill: var(--view-window-color);
+                    border-style: none;
+                }
+
+                .invisible-rect {
+                    fill: #ffffff00 !important;
+                    stroke: none !important;
+                }
+            </style>
+            <defs class="templates">
+                <g transform="scale(0.1)" id="string">
+                    <rect stroke-width="3" fill="#ffffff" x="2.5" y="2.5" width="95" height="95" id="svg_1" rx="10"
+                        stroke="#000000" />
+                    <rect fill="#BBBBBB" stroke="#C48157" x="265" y="23" width="0" height="1" id="svg_2" />
+                    <text transform="matrix(1 0 0 1 0 0)" font-style="normal" font-weight="normal" xml:space="preserve"
+                        text-anchor="start" font-family="sans-serif" font-size="51" id="svg_3" y="67.6246" x="6.20247"
+                        stroke-width="0" stroke="#000000" fill="#000000">Abc</text>
+                </g>
+                <g transform="scale(0.1)" id="integer">
+                    <rect stroke-width="3" fill="#ffffff" x="2.5" y="2.5" width="95" height="95" id="svg_1" rx="10"
+                        stroke="#000000" />
+                    <rect fill="#BBBBBB" stroke="#C48157" x="265" y="23" width="0" height="1" id="svg_2" />
+                    <text transform="matrix(1 0 0 1 0 0)" font-style="normal" font-weight="normal" xml:space="preserve"
+                        text-anchor="start" font-family="sans-serif" font-size="51" id="svg_3" y="67.6246" x="7.46028"
+                        stroke-width="0" stroke="#000000" fill="#000000">123</text>
+                </g>
+                <g transform="scale(0.1)" id="boolean">
+                    <rect stroke="#000000" rx="10" id="svg_1" height="95" width="95" y="2.5" x="2.5" fill="#ffffff"
+                        stroke-width="3" />
+                    <rect id="svg_2" height="1" width="0" y="23" x="265" stroke="#C48157" fill="#BBBBBB" />
+                    <text transform="matrix(1 0 0 1 0 0)" style="cursor: move;" fill="#000000" stroke="#000000"
+                        stroke-width="0" x="12.22591" y="67.6246" id="svg_3" font-size="51" font-family="sans-serif"
+                        text-anchor="start" xml:space="preserve" font-weight="normal" font-style="normal">T|F</text>
+                </g>
+                <g transform="scale(0.1)" id="number">
+                    <rect stroke-width="3" fill="#ffffff" x="2.5" y="2.5" width="95" height="95" id="svg_1" rx="10"
+                        stroke="#000000" />
+                    <rect fill="#BBBBBB" stroke="#C48157" x="265" y="23" width="0" height="1" id="svg_2" />
+                    <text transform="matrix(1 0 0 1 0 0)" style="cursor: move;" font-style="normal" font-weight="normal"
+                        xml:space="preserve" text-anchor="start" font-family="sans-serif" font-size="51" id="svg_3"
+                        y="67.50741" x="14.55404" stroke-width="0" stroke="#000000" fill="#000000">1.2</text>
+                </g>
+                <g transform="scale(0.1)" id="enum">
+                    <rect stroke="#000000" rx="10" id="svg_1" height="95" width="95" y="2.93137" x="3.16667"
+                        fill="#ffffff" stroke-width="3" />
+                    <text transform="matrix(0.676311 0 0 0.69423 9.06328 19.6744)" stroke="#000000" xml:space="preserve"
+                        text-anchor="start" font-family="sans-serif" font-size="51" y="27.39974" x="34.5811"
+                        stroke-width="0" fill="#000000">Abc</text>
+                    <text transform="matrix(0.676311 0 0 0.69423 9.06328 19.6744)" stroke="#000000" xml:space="preserve"
+                        text-anchor="start" font-family="sans-serif" font-size="51" y="67.39974" x="34.5811"
+                        stroke-width="0" fill="#000000">Abc</text>
+                    <text transform="matrix(0.676311 0 0 0.69423 9.06328 19.6744)" stroke="#000000" xml:space="preserve"
+                        text-anchor="start" font-family="sans-serif" font-size="51" y="107.39974" x="34.5811"
+                        stroke-width="0" fill="#000000">Abc</text>
+                    <ellipse ry="7.33333" rx="7.33333" cy="29.43137" cx="20.66667" stroke-width="0" stroke="#000000"
+                        fill="#000000" />
+                    <ellipse ry="7.33333" rx="7.33333" cy="55.43137" cx="20.66667" stroke-width="0" stroke="#000000"
+                        fill="#000000" />
+                    <ellipse ry="7.33333" rx="7.33333" cy="80.43137" cx="20.66667" stroke-width="0" stroke="#000000"
+                        fill="#000000" />
+                </g>
+                <g id="array">
+                    <rect stroke="currentColor" fill="#fff" rx="1" height="10" width="10" y="0" x="0"
+                        stroke-width="0.3" />
+                    <g transform="translate(0.8 1.6) scale(0.6)" stroke="currentColor" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="m11.5 5.5h-7" />
+                        <path d="m11.5 9.5h-7" />
+                        <path d="m11.5 1.5h-7" />
+                    </g>
+                    <path transform="translate(0.8 1.6) scale(0.6)"
+                        d="m1.49884033 2.5c.5 0 1-.5 1-1s-.5-1-1-1-.99884033.5-.99884033 1 .49884033 1 .99884033 1zm0 4c.5 0 1-.5 1-1s-.5-1-1-1-.99884033.5-.99884033 1 .49884033 1 .99884033 1zm0 4c.5 0 1-.5 1-1s-.5-1-1-1-.99884033.5-.99884033 1 .49884033 1 .99884033 1z"
+                        fill="currentColor" />
+                </g>
+                <g id="object">
+                    <rect stroke="currentColor" fill="#fff" rx="1" height="10" width="10" y="0" x="0"
+                        stroke-width="0.3" />
+                    <path
+                        d="M4.4 1.8 c -2 0, -2 0, -2 2 v 0.2 c 0 1, 0 1, -1 1 c 1 0, 1 0, 1 1 v 0.2 c 0 2, 0 2, 2 2 m 1.2 0 c 2 0, 2 0, 2 -2 v -0.2 c 0 -1, 0 -1, 1 -1 c -1 0, -1 0, -1 -1 v -0.2 c 0 -2, 0 -2, -2 -2"
+                        stroke="currentColor" fill="none" />
+                </g>
+
+
+                <g id="taxonomy-link-item" data-template-type="node">
+                    <rect width="120" height="60" x="-60" y="-30" rx="5"
+                        data-link-handles='[{"x":-60,"y":0},{"x":60,"y":0}]' class="taxonomy-link-item">
+                        <title data-content="title"></title>
+                    </rect>
+
+                    <text class="titleDescription" x="-45" y="-13" width="110" data-content="typedescription"></text>
+                    <text class="title" data-content="title" x="-55" y="4" width="110">
+                    </text>
+                    <text class="description" data-content="description" x="-55" y="2"
+                        data-wrap-lines="110 70|110 110 70"></text>
+                    <g transform="scale(0.1), translate(-570,-225)">
+                        <rect stroke-width="3" fill="#ffffff" x="2.5" y="2.5" width="95" height="95" id="svg_1" rx="10"
+                            stroke="#000000" />
+                        <rect fill="#BBBBBB" stroke="#C48157" x="265" y="23" width="0" height="1" id="svg_2" />
+                        <ellipse ry="40" rx="40" id="svg_3" cy="50" cx="50" stroke-width="0" stroke="#FABA6F"
+                            fill="#FABA6F" />
+                    </g>
+                </g>
+                <g id="type-link-item" data-template-type="node">
+                    <rect width="120" height="60" x="-60" y="-30" rx="5"
+                        data-link-handles='[{"x":-60,"y":0},{"x":60,"y":0}]' class="type-link-item">
+                        <title data-content="title"></title>
+                    </rect>
+                    <text class="titleDescription" x="-45" y="-13" width="110" data-content="typedescription"></text>
+                    <text class="title" data-content="title" x="-55" y="4" width="110"></text>
+                    <text class="description" data-content="description" x="-55" y="2"
+                        data-wrap-lines="110 70|110 110 70"></text>
+                    <g transform="scale(0.1), translate(-570,-225)">
+                        <rect stroke-width="3" fill="#ffffff" x="2.5" y="2.5" width="95" height="95" id="svg_1" rx="10"
+                            stroke="#000000" />
+                        <rect fill="#BBBBBB" stroke="#C48157" x="265" y="23" width="0" height="1" id="svg_2" />
+                        <ellipse ry="40" rx="40" id="svg_3" cy="50" cx="50" stroke-width="0" stroke="#dddddd"
+                            fill="#dddddd" />
+                    </g>
+                </g>
+                <g id="type-item" data-template-type="node">
+                    <rect width="120" height="60" x="-60" y="-30" rx="5"
+                        data-link-handles='[{"x":-60,"y":0},{"x":60,"y":0}]' class="type-item">
+                        <title data-content="title"></title>
+                    </rect>
+                    <text class="titleDescription" x="-45" y="-13" width="110" data-content="typedescription"></text>
+                    <text class="title" data-content="title" x="-55" y="4" width="110"></text>
+                    <text class="description" data-content="description" x="-55" y="2"
+                        data-wrap-lines="110 70|110 110 70"></text>
+                    <text class="sort-key" data-content="sortKey" x="55" y="26" width="35"></text>
+                    <use data-href="typedescriptionHref" x="-56" y="-23" />
+                </g>
+                <g id="taxonomy-item" data-template-type="node">
+                    <rect width="120" height="60" x="-60" y="-30" rx="5" data-link-handles="edges"
+                        class="taxonomy-item">
+                        <title data-content="title"></title>
+                    </rect>
+                    <text class="titleDescription" x="-55" y="-13" width="110" data-content="typedescription"></text>
+                    <text class="title" data-content="title" x="-55" y="4" width="110"></text>
+                    <text class="description" data-content="z" x="-55" y="20"
+                        data-wrap-lines="110 70|110 110 70"></text>
+                    <text class="sort-key" data-content="sortKey" x="55" y="26" width="35"></text>
+                </g>
+                <g id="small-arrow" data-template-type="marker" data-line-attachement-point="-9 0">
+                    <path d="M -9 -4 L 0 0 L -9 4 z" />
+                </g>
+                <g id="arrow" data-template-type="marker" data-line-attachement-point="-13.5 0">
+                    <path d="M -13.5 -6 L 0 0 L -13.5 6 z" />
+                </g>
+                <g id="big-arrow" data-template-type="marker" data-line-attachement-point="-20 0">
+                    <path d="M -20 -8 L 0 0 L -20 8 z" />
+                </g>
+            </defs>
+            <g class="zoom-group">
+                <!-- the zoom-groop is used for the pan and zoom transormations -->
+                <g class="nodes"></g> <!-- the first group will be rendered below the following groups-->
+                <g class="edges"></g>
+            </g>
+        </svg>
+    </template>
+
+    <div if.bind=" !isAllowedToShowGraph">
+        <h1 t="loading">${"loading" | t}</h1>
+    </div>
+    <template else>
+        <div id="mainontology-graph">
+            <div id="menu-section" class="maindiv card mr-1">
+                <div id="item-filtersection" class="px-1 py-1 border-gray-200 border-b">
+                    <div class="section-main-title bg-gray-600">
+                        ${"ontology.filter-area" | t}
+                    </div>
+                    <div class="scroll-area" if.bind="!isLoading">
+                        <div class="control-group">
+                            <label>
+                                ${"ontology.searchGraph" | t}
+                                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1"
+                                    placeholder="search" value.from-view="filter & throttle"
+                                    aria-owns="'datalist-'+slug" autocapitalize="none"
+                                    value.bind="searchtext & debounce" type="text" autocomplete="off"
+                                    aria-autocomplete="list" role="combobox" id="'input-'+slug"
+                                    focus.trigger="searchtextFocusEnter(event)" blur.trigger="searchtextFocusLeft()"
+                                    if.bind="isRendered" disabled.bind="!isRendered">
+                            </label>
+                            <div class="ontology-algorithm-label" title='${"ontology.keepFocus" | t}'
+                                if.bind="isRendered">
+                                <label class="switch-input">
+                                    <div class="switch">
+                                        <input type="checkbox" checked.bind="keepSearchResultsInFocus"
+                                            disabled.bind="!isRendered">
+                                        <span class="slider round"></span>
+                                    </div>
+                                    <div class="switch-label">
+                                        ${"ontology.keepFocus" | t}
+                                    </div>
+                                </label>
+                            </div>
+                            <button class="button-outline px-2 items-center button-oneline"
+                                click.delegate="fixallSearchResults()"
+                                title='${"ontology.fixallSearchResultsButton" | t}' disabled.bind="!isRendered">
+                                ${"ontology.fixallSearchResultsButton" | t}
+                            </button>
+                        </div>
+                        <div class="control-group">
+                            <label class="switch-input">
+                                <div class="switch">
+                                    <input type="checkbox" checked.bind="showTaxonomies" disabled.bind="!isRendered">
+                                    <span class="slider round"></span>
+                                </div>
+                                <div class="switch-label">
+                                    ${"ontology.showTaxonomies" | t}
+                                </div>
+                            </label>
+                            <label class="switch-input">
+                                <div class="switch">
+                                    <input type="checkbox" checked.bind="showTypes" disabled.bind="!isRendered">
+                                    <span class="slider round"></span>
+                                </div>
+                                <div class="switch-label">
+                                    ${"ontology.showTypes" | t}
+                                </div>
+                            </label>
+                            <label class="switch-input">
+                                <div class="switch">
+                                    <input type="checkbox" checked.bind="showSelectedItems" disabled.bind="!isRendered">
+                                    <span class="slider round"></span>
+                                </div>
+                                <div class="switch-label">
+                                    ${"ontology.showSelectedItems" | t}
+                                </div>
+                            </label>
+                            <label class="switch-input">
+                                <div class="switch">
+                                    <input type="checkbox" checked.bind="showElementsWithoutAnEdge"
+                                        disabled.bind="!isRendered">
+                                    <span class="slider round"></span>
+                                </div>
+                                <div class="switch-label">
+                                    ${"ontology.showAllElementsWithoutAnEdgeButton" | t}
+                                </div>
+                            </label>
+                            <label class="mt-2 inline-block">
+                                ${"ontology.childLevelsToShow" | t}
+                                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1"
+                                    value.from-view="filter & throttle"
+                                    value.bind="typeChildLevelsToShow | number & debounce" type="number"
+                                    autocomplete="off" min="0" disabled.bind="!isRendered">
+                            </label>
+                            <label class="mt-2 inline-block">
+                                ${"ontology.taxonomyLevelsToShow" | t}
+                                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1"
+                                    value.from-view="filter & throttle"
+                                    value.bind="taxonomyLevelsToShow | number & debounce" type="number"
+                                    autocomplete="off" min="0" disabled.bind="!isRendered">
+                            </label>
+                        </div>
+                        <div class="control-group">
+                            <label class="mb-2 inline-block">
+                                ${"ontology.distance-header" | t}
+                                <div class="range-slider">
+                                    <input type="range" min="10" max="500"
+                                        value.bind="distanceBetweenElements & debounce" disabled.bind="!isRendered">
+                                    ${distanceBetweenElements}
+                                    <nbsp />%
+                                </div>
+                            </label>
+                            <div repeat.for="algo of layoutAlgorithms" class="ontology-algorithm-label">
+                                <label>
+                                    <input type="radio" name="group1" model.bind="algo.id"
+                                        checked.bind="selectedLayoutAlgorithmId" disabled.bind="!isRendered">
+                                    ${algo.name}
+                                </label>
+                            </div>
+                            <button class="button-outline px-2 items-center button-oneline"
+                                click.delegate="repositionNodes()" disabled.bind="!isRendered"
+                                title='${"ontology.repositionVisibleItems" | t}'>
+                                ${"ontology.repositionVisibleItemsButton" | t}
+                            </button>
+                        </div>
+                        <div class="control-group" if.bind="isRendered">
+                            ${"ontology.itemsInGraph" | t}: ${nrOfNodesInGraph}
+                        </div>
+                    </div>
+                </div>
+
+                <div id="item-treesection" class=" px-1 border-gray-200 border-b"
+                    mousedown.delegate="startLeftUpperDrag($event)">
+                    <div class="section-main-title bg-gray-600 section-main-title-draggable">
+                        ${"ontology.tree-view" | t}
+                    </div>
+                    <div class=" scroll-area">
+                        <tree-node repeat.for="node of dataItems" current.bind="node"></tree-node>
+                    </div>
+                </div>
+                <div id="item-overview" mousedown.delegate="startLeftLowerDrag($event)">
+
+                    <div class="section-main-title bg-gray-600 section-main-title-draggable">
+                        ${"ontology.overview" | t}
+                    </div>
+                    <div style="height: calc(100% - 25px); position: relative;" aria-hidden="true">
+                        <network-graph id="overviewgraph" class="graphoverview"
+                            classes="deleted search-match type-node taxonomy-node group-node child-node big-edge"
+                            mode="display" zoom="automatic" svg-template="#ontologyGraphTemplate">
+                        </network-graph>
+                        <div style="top: 0px; bottom: 0px; left: 0px; right: 0px; position: absolute;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="dragbar" class="mb-2" mousedown.delegate="startMainDrag($event)">
+            </div>
+            <div id="maingraphpart" class="menu-graph card ml-1">
+                <div style="height: 100%;">
+                    <network-graph id="graphexportsvg" class="maingraph"
+                        classes="deleted search-match type-node taxonomy-node group-node child-node ghost-node ghost-edge big-edge"
+                        mode="layout" zoom="both" svg-template="#ontologyGraphTemplate">
+                    </network-graph>
+                </div>
+            </div>
+            <div class="menu-graph  ml-1" if.bind="isLoading">
+                <div id="ontology-loading-indicator">
+                    ${"loading" | t}
+                    <spinner type="S8" size="100" color="default"></spinner>
+                </div>
+            </div>
+            <div class="menu-graph mb-0 mt-auto ml-auto mr-0">
+                <div if.bind="selectedNode != null" class="card bg-white px-3 py-2 items-center detailview">
+
+                    <p class="detailview-title">
+                        ${selectedNode.name}
+                        <button class="button-flat px-2 items-center" click.delegate="unselectNode()"
+                            title='${"ontology.moveLeft" | t}' style="float: right;">
+                            <svg-icon icon.bind="'arrow-right'" size.bind="18"></svg-icon>
+                        </button>
+                    </p>
+                    <p class="detailview-description">
+                        ${selectedNode.description}
+                    </p>
+
+
+                    <table id="table-info">
+                        <tbody>
+                            <tr>
+                                <td class="table-info-name" title='${"ontology.detailview.type" | t}'>
+                                    ${"ontology.detailview.type" | t}</td>
+                                <td class="table-info-detail" title="${selectedNode.itemType}">${selectedNode.itemType}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="table-info-name" title='${"ontology.detailview.abstract" | t}'>
+                                    ${"ontology.detailview.abstract" | t}</td>
+                                <td class="table-info-detail" title='${selectedNode.abstract}'>${selectedNode.abstract}
+                                </td>
+                            </tr>
+                            <!--<tr>
+                                    <td class="table-info-name" title='${"ontology.detailview.implementations" | t}'>${"ontology.detailview.implementations" | t}</td>
+                                    <td class="table-info-detail"></td>
+                                </tr>-->
+                            <tr>
+                                <td class="table-info-name" title='${"ontology.detailview.api-link" | t}'>
+                                    ${"ontology.detailview.api-link" | t}</td>
+                                <td class="table-info-detail" title='${selectedNode.href}'>${selectedNode.href}</td>
+                            </tr>
+                            <tr>
+                                <td class="table-info-name" title='${"ontology.detailview.openEdit" | t}'>
+                                    ${"ontology.detailview.openEdit" | t}</td>
+                                <td class="table-info-detail">
+                                    <a class="button-flat" href="${selectedNode.getLink()}" target="_blank"
+                                        style="margin: 0 !important; padding: 0 !important">
+                                        ${"ontology.detailview.openEditButton" | t}
+                                        <svg-icon style="display:inline-block" icon.bind="'open-in-new-tab'"
+                                            size.bind="20">
+                                        </svg-icon>
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="table-info-name" title='${"ontology.detailview.children" | t}'>
+                                    ${"ontology.detailview.children" | t}</td>
+                                <td class="table-info-detail" title='${selectedNode.children.length}'>
+                                    ${selectedNode.children.length}</td>
+                            </tr>
+                            <tr>
+                                <td class="table-info-name" title='${"ontology.detailview.fixPosition" | t}'>
+                                    ${"ontology.detailview.fixPosition" | t}</td>
+                                <td class="table-info-detail" title='${"ontology.toggleFixedPosition" | t}'>
+                                    <button class="button-flat items-center"
+                                        click.delegate="selectedNode.togglePositionFixed()"
+                                        title='${"ontology.toggleFixedPosition" | t}'
+                                        style="margin: 0 !important; padding: 0 !important">
+                                        <svg-icon
+                                            icon.bind="selectedNode.positionIsFixed ? 'unfixed-position' : 'fixed-position'"
+                                            size.bind="20"></svg-icon>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="buttons card bg-white px-3 py-2 items-center" style="width: fit-content;float: right;">
+                    <button class="button-flat px-2 items-center" click.delegate="toggleMenu()"
+                        title='${"ontology.moveLeft" | t}' style="float:right;">
+                        <svg-icon icon.bind="maximizeMenu ? 'arrow-right' : 'arrow-left'" size.bind="18"></svg-icon>
+                    </button>
+                    <div if.bind="maximizeMenu">
+                        <div class="ontology-moveBackground">
+                            <div class="ontology-move">
+
+                                <button class="button-flat px-2 items-center" click.delegate="moveGraph('up')"
+                                    title='${"ontology.moveUp" | t}'>
+                                    <svg-icon icon.bind="'arrow-up'" size.bind="18"></svg-icon>
+                                </button>
+                            </div>
+                            <div class="ontology-move">
+                                <button class="button-flat px-2 items-center" click.delegate="moveGraph('left')"
+                                    title='${"ontology.moveLeft" | t}'>
+                                    <svg-icon icon.bind="'arrow-left'" size.bind="18"></svg-icon>
+                                </button>
+                                <button class="button-flat px-2 items-center" click.delegate="moveGraph('right')"
+                                    title='${"ontology.moveRight" | t}'>
+                                    <svg-icon icon.bind="'arrow-right'" size.bind="18"></svg-icon>
+
+                                </button>
+
+                            </div>
+                            <div class="ontology-move">
+                                <button class="button-flat px-2 items-center" click.delegate="moveGraph('down')"
+                                    title='${"ontology.moveDown" | t}'>
+                                    <svg-icon icon.bind="'arrow-down'" size.bind="18"></svg-icon>
+                                </button>
+
+                            </div>
+                        </div>
+
+                        <button class="button-flat px-2 items-center" click.delegate="zoomIn()"
+                            title='${"ontology.zoomIn" | t}'>
+                            <svg-icon icon.bind="'plus'" size.bind="18"></svg-icon>
+                        </button>
+                        <button class="button-flat px-2 items-center" click.delegate="zoomOut()"
+                            title='${"ontology.zoomOut" | t}'>
+                            <svg-icon icon.bind="'minus'" size.bind="18"></svg-icon>
+                        </button>
+                        <button class="button-flat px-2 items-center" click.delegate="resetLayout()"
+                            title='${"ontology.resetLayout" | t}'>
+                            <svg-icon icon.bind="'reset'" size.bind="18"></svg-icon>
+                        </button>
+                        <button class="button-flat px-2 items-center" click.delegate="downloadSVG()"
+                            title='${"ontology.toggleMaximize" | t}' hidden>
+                            <svg-icon icon.bind="'download'" size.bind="18"></svg-icon>
+                        </button>
+                        <button class="button-flat px-2 items-center" mousedown.delegate="tempZoomOut('on')"
+                            mouseup.delegate="tempZoomOut('off')" title='${"ontology.temporaryZoomOut" | t}'>
+                            <svg-icon icon.bind="'eye'" size.bind="18"></svg-icon>
+                        </button>
+                        <button class="button-flat px-2 items-center" click.delegate="toggleMaximize()"
+                            title='${"ontology.toggleMaximize" | t}'>
+                            <svg-icon icon.bind="maximized ? 'minimize' : 'maximize'" size.bind="18"></svg-icon>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="menu-graph ml-1" if.bind="!isLoading && !isRendered">
+                <button class="button-outline px-2 items-center button-oneline" click.delegate="renderGraph()"
+                    title='${"ontology.renderGraph" | t}'>
+                    ${"ontology.renderGraph" | t}
+                </button>
+            </div>
+        </div>
+
+
+    </template>
+</template>

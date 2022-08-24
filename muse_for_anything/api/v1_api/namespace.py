@@ -1,42 +1,56 @@
 """Module containing the namespace API endpoints of the v1 API."""
 
 from datetime import datetime
-from flask_babel import gettext
-from muse_for_anything.api.util import template_url_for
-from typing import Any, Callable, Dict, List, Optional, Union, cast
-from flask.helpers import url_for
-from flask.views import MethodView
-from sqlalchemy.sql.expression import asc, desc, literal
-from sqlalchemy.orm.query import Query
-from flask_smorest import abort
 from http import HTTPStatus
+from typing import Any, List, Optional
 
+from flask.globals import g
+from flask.views import MethodView
+from flask_babel import gettext
+from flask_smorest import abort
+from sqlalchemy.sql.expression import literal
+
+from muse_for_anything.api.pagination_util import (
+    PaginationOptions,
+    default_get_page_info,
+    dump_embedded_page_items,
+    generate_page_links,
+    prepare_pagination_query_args,
+)
+from muse_for_anything.db.models.users import User
+
+from .constants import (
+    CHANGED_REL,
+    CREATE,
+    CREATE_REL,
+    DELETE_REL,
+    NAMESPACE_EXTRA_LINK_RELATIONS,
+    NAMESPACE_REL_TYPE,
+    NEW_REL,
+    RESTORE,
+    RESTORE_REL,
+    UPDATE,
+    UPDATE_REL,
+)
+from .models.ontology import NamespaceSchema
+from .request_helpers import ApiResponseGenerator, LinkGenerator, PageResource
 from .root import API_V1
 from ..base_models import (
-    ApiLink,
     ApiResponse,
     ChangedApiObject,
     ChangedApiObjectSchema,
-    CursorPage,
     CursorPageArgumentsSchema,
     CursorPageSchema,
     DynamicApiResponseSchema,
-    KeyedApiLink,
     NewApiObject,
     NewApiObjectSchema,
 )
-from .models.ontology import NamespaceSchema
 from ...db.db import DB
-from ...db.pagination import get_page_info
 from ...db.models.namespace import Namespace
+from ...oso_helpers import FLASK_OSO, OsoResource
 
-from .namespace_helpers import (
-    namespace_to_namespace_data,
-    namespace_to_api_response,
-    action_links_for_namespace,
-    nav_links_for_namespace,
-    query_params_to_api_key,
-)
+# import namespace specific generators to load them
+from .generators import namespace  # noqa
 
 
 @API_V1.route("/namespaces/")
@@ -44,185 +58,68 @@ class NamespacesView(MethodView):
     """Endpoint for all namespaces collection resource."""
 
     @API_V1.arguments(CursorPageArgumentsSchema, location="query", as_kwargs=True)
-    @API_V1.response(DynamicApiResponseSchema(CursorPageSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(CursorPageSchema()))
+    @API_V1.require_jwt("jwt", optional=True)
     def get(self, **kwargs: Any):
         """Get the page of namespaces."""
-        cursor: Optional[str] = kwargs.get("cursor", None)
-        item_count: int = cast(int, kwargs.get("item_count", 25))
-        sort: str = cast(str, kwargs.get("sort", "name").lstrip("+"))
-        sort_function: Callable[..., Any] = (
-            desc if sort is not None and sort.startswith("-") else asc
+        FLASK_OSO.authorize_and_set_resource(
+            OsoResource(NAMESPACE_REL_TYPE, is_collection=True)
         )
-        sort_key: str = sort.lstrip("+-") if sort is not None else "name"
+
+        pagination_options: PaginationOptions = prepare_pagination_query_args(
+            **kwargs, _sort_default="name"
+        )
 
         namespace_filter = (Namespace.deleted_on == None,)
 
-        pagination_info = get_page_info(
-            Namespace,
-            Namespace.id,
-            [Namespace.name],
-            cursor,
-            sort,
-            item_count,
-            filter_criteria=namespace_filter,
+        pagination_info = default_get_page_info(
+            Namespace, namespace_filter, pagination_options, [Namespace.name]
         )
 
         namespaces: List[Namespace] = pagination_info.page_items_query.all()
 
-        embedded_items: List[ApiResponse] = [
-            namespace_to_api_response(namespace) for namespace in namespaces
-        ]
-        items: List[ApiLink] = [item.data.get("self") for item in embedded_items]
-
-        query_params = {
-            "item-count": item_count,
-            "sort": sort,
-        }
-
-        self_query_params = dict(query_params)
-
-        if cursor:
-            self_query_params["cursor"] = cursor
-
-        self_rels = []
-        if pagination_info.cursor_page == 1:
-            self_rels.append("first")
-        if (
-            pagination_info.last_page
-            and pagination_info.cursor_page == pagination_info.last_page.page
-        ):
-            self_rels.append("last")
-
-        self_link = ApiLink(
-            href=url_for("api-v1.NamespacesView", _external=True, **self_query_params),
-            rel=(
-                *self_rels,
-                "page",
-                f"page-{pagination_info.cursor_page}",
-                "collection",
-                "ont-namespace",
-            ),
-            resource_type="ont-namespace",
-            resource_key=query_params_to_api_key(self_query_params),
-            schema=url_for("api-v1.ApiSchemaView", schema_id="Namespace", _external=True),
+        embedded_items, items = dump_embedded_page_items(
+            namespaces, NamespaceSchema(), NAMESPACE_EXTRA_LINK_RELATIONS
         )
 
-        extra_links: List[ApiLink] = [self_link]
+        page_resource = PageResource(
+            Namespace,
+            page_number=pagination_info.cursor_page,
+            active_page=pagination_info.cursor_page,
+            last_page=pagination_info.last_page.page,
+            collection_size=pagination_info.collection_size,
+            item_links=items,
+        )
+        self_link = LinkGenerator.get_link_of(
+            page_resource, query_params=pagination_options.to_query_params()
+        )
 
-        if pagination_info.last_page is not None:
-            if pagination_info.cursor_page != pagination_info.last_page.page:
-                # only if current page is not last page
-                last_query_params = dict(query_params)
-                last_query_params["cursor"] = str(pagination_info.last_page.cursor)
+        extra_links = generate_page_links(
+            page_resource, pagination_info, pagination_options
+        )
 
-                extra_links.append(
-                    ApiLink(
-                        href=url_for(
-                            "api-v1.NamespacesView", _external=True, **last_query_params
-                        ),
-                        rel=(
-                            "last",
-                            "page",
-                            f"page-{pagination_info.last_page.page}",
-                            "collection",
-                            "ont-namespace",
-                        ),
-                        resource_type="ont-namespace",
-                        resource_key=query_params_to_api_key(last_query_params),
-                        schema=url_for(
-                            "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
-                        ),
-                    )
-                )
-
-        for page in pagination_info.surrounding_pages:
-            if page == pagination_info.last_page:
-                continue  # link already included
-            page_query_params = dict(query_params)
-            page_query_params["cursor"] = str(page.cursor)
-
-            extra_rels = []
-            if page.page + 1 == pagination_info.cursor_page:
-                extra_rels.append("prev")
-            if page.page - 1 == pagination_info.cursor_page:
-                extra_rels.append("next")
-
-            extra_links.append(
-                ApiLink(
-                    href=url_for(
-                        "api-v1.NamespacesView", _external=True, **page_query_params
-                    ),
-                    rel=(
-                        *extra_rels,
-                        "page",
-                        f"page-{page.page}",
-                        "collection",
-                        "ont-namespace",
-                    ),
-                    resource_type="ont-namespace",
-                    resource_key=query_params_to_api_key(page_query_params),
-                    schema=url_for(
-                        "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
-                    ),
-                )
-            )
-
-        return ApiResponse(
-            links=[
-                ApiLink(
-                    href=url_for("api-v1.NamespacesView", _external=True, **query_params),
-                    rel=("first", "page", "page-1", "collection", "ont-namespace"),
-                    resource_type="ont-namespace",
-                    resource_key=query_params_to_api_key(query_params),
-                    schema=url_for(
-                        "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
-                    ),
+        return ApiResponseGenerator.get_api_response(
+            page_resource,
+            query_params=pagination_options.to_query_params(),
+            extra_links=[
+                LinkGenerator.get_link_of(
+                    page_resource.get_page(1),
+                    query_params=pagination_options.to_query_params(cursor=None),
                 ),
-                ApiLink(
-                    href=url_for("api-v1.NamespacesView", _external=True),
-                    rel=("create", "post", "ont-namespace"),
-                    resource_type="ont-namespace",
-                    schema=url_for(
-                        "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
-                    ),
-                ),
+                self_link,
                 *extra_links,
             ],
-            embedded=embedded_items,
-            keyed_links=[
-                KeyedApiLink(
-                    href=template_url_for(
-                        "api-v1.NamespaceView",
-                        {"namespace": "namespaceId"},
-                        _external=True,
-                    ),
-                    rel=("ont-namespace",),
-                    resource_type="ont-namespace",
-                    key=("namespaceId",),
-                ),
-                KeyedApiLink(
-                    href=template_url_for(
-                        "api-v1.NamespacesView",
-                        {"item-count": "item-count", "sort": "sort", "cursor": "cursor"},
-                        _external=True,
-                    ),
-                    rel=("collection", "ont-namespace"),
-                    resource_type="ont-namespace",
-                    key=("item-count", "cursor", "sort"),
-                ),
-            ],
-            data=CursorPage(
-                self=self_link,
-                collection_size=pagination_info.collection_size,
-                page=pagination_info.cursor_page,
-                first_row=pagination_info.cursor_row + 1,
-                items=items,
-            ),
+            extra_embedded=embedded_items,
         )
 
     @API_V1.arguments(NamespaceSchema(only=("name", "description")))
-    @API_V1.response(DynamicApiResponseSchema(NewApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(NewApiObjectSchema()))
+    @API_V1.require_jwt("jwt")
     def post(self, namespace_data):
+        FLASK_OSO.authorize_and_set_resource(
+            OsoResource(NAMESPACE_REL_TYPE), action=CREATE
+        )
+
         existing: bool = (
             DB.session.query(literal(True))
             .filter(
@@ -237,24 +134,30 @@ class NamespacesView(MethodView):
             )
         namespace = Namespace(**namespace_data)
         DB.session.add(namespace)
+        DB.session.flush()
+        user: User = g.current_user
+        user.set_role_for_resource("owner", namespace)
         DB.session.commit()
 
-        namespace_link = namespace_to_namespace_data(namespace).self
-        namespace_data = namespace_to_api_response(namespace)
+        namespace_response = ApiResponseGenerator.get_api_response(
+            namespace, link_to_relations=NAMESPACE_EXTRA_LINK_RELATIONS
+        )
+        namespace_link = namespace_response.data.self
+        namespace_response.data = NamespaceSchema().dump(namespace_response.data)
+
+        self_link = LinkGenerator.get_link_of(
+            PageResource(Namespace),
+            for_relation=CREATE_REL,
+            extra_relations=(NAMESPACE_REL_TYPE,),
+            ignore_deleted=True,
+        )
+        self_link.resource_type = NEW_REL
 
         return ApiResponse(
             links=[namespace_link],
-            embedded=[namespace_data],
+            embedded=[namespace_response],
             data=NewApiObject(
-                self=ApiLink(
-                    href=url_for("api-v1.NamespacesView", _external=True),
-                    rel=(
-                        "create",
-                        "post",
-                        "ont-namespace",
-                    ),
-                    resource_type="new",
-                ),
+                self=self_link,
                 new=namespace_link,
             ),
         )
@@ -264,7 +167,8 @@ class NamespacesView(MethodView):
 class NamespaceView(MethodView):
     """Endpoint a single namespace resource."""
 
-    @API_V1.response(DynamicApiResponseSchema(NamespaceSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(NamespaceSchema()))
+    @API_V1.require_jwt("jwt", optional=True)
     def get(self, namespace: str, **kwargs: Any):
         if not namespace or not namespace.isdigit():
             abort(
@@ -279,29 +183,16 @@ class NamespaceView(MethodView):
         if found_namespace is None:
             abort(HTTPStatus.NOT_FOUND, message=gettext("Namespace not found."))
 
-        return ApiResponse(
-            links=[
-                ApiLink(
-                    href=url_for(
-                        "api-v1.NamespacesView",
-                        _external=True,
-                        **{"item-count": 50},
-                        sort="name",
-                    ),
-                    rel=("first", "page", "up", "collection", "ont-namespace"),
-                    resource_type="ont-namespace",
-                    schema=url_for(
-                        "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
-                    ),
-                ),
-                *nav_links_for_namespace(found_namespace),
-                *action_links_for_namespace(found_namespace),
-            ],
-            data=namespace_to_namespace_data(found_namespace),
+        FLASK_OSO.set_current_resource(found_namespace)
+        FLASK_OSO.authorize()
+
+        return ApiResponseGenerator.get_api_response(
+            found_namespace, link_to_relations=NAMESPACE_EXTRA_LINK_RELATIONS
         )
 
     @API_V1.arguments(NamespaceSchema(only=("name", "description")))
-    @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.require_jwt("jwt")
     def put(self, namespace_data, namespace: str):
         if not namespace or not namespace.isdigit():
             abort(
@@ -324,6 +215,8 @@ class NamespaceView(MethodView):
                 ),
             )
 
+        FLASK_OSO.authorize_and_set_resource(found_namespace, action=UPDATE)
+
         if found_namespace.name != namespace_data.get("name"):
             existing: bool = (
                 DB.session.query(literal(True))
@@ -344,27 +237,31 @@ class NamespaceView(MethodView):
         DB.session.add(found_namespace)
         DB.session.commit()
 
-        namespace_link = namespace_to_namespace_data(found_namespace).self
-        namespace_rsponse_data = namespace_to_api_response(found_namespace)
+        namespace_response = ApiResponseGenerator.get_api_response(
+            found_namespace, link_to_relations=NAMESPACE_EXTRA_LINK_RELATIONS
+        )
+        namespace_link = namespace_response.data.self
+        namespace_response.data = NamespaceSchema().dump(namespace_response.data)
+
+        self_link = LinkGenerator.get_link_of(
+            found_namespace,
+            for_relation=UPDATE_REL,
+            extra_relations=(NAMESPACE_REL_TYPE,),
+            ignore_deleted=True,
+        )
+        self_link.resource_type = CHANGED_REL
 
         return ApiResponse(
             links=[namespace_link],
-            embedded=[namespace_rsponse_data],
+            embedded=[namespace_response],
             data=ChangedApiObject(
-                self=ApiLink(
-                    href=url_for("api-v1.NamespacesView", _external=True),
-                    rel=(
-                        "create",
-                        "post",
-                        "ont-namespace",
-                    ),
-                    resource_type="changed",
-                ),
+                self=self_link,
                 changed=namespace_link,
             ),
         )
 
-    @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.require_jwt("jwt")
     def post(self, namespace: str):  # restore action
         if not namespace or not namespace.isdigit():
             abort(
@@ -379,6 +276,8 @@ class NamespaceView(MethodView):
         if found_namespace is None:
             abort(HTTPStatus.NOT_FOUND, message=gettext("Namespace not found."))
 
+        FLASK_OSO.authorize_and_set_resource(found_namespace, action=RESTORE)
+
         # only actually restore when not already restored
         if found_namespace.deleted_on is not None:
             # restore namespace
@@ -386,29 +285,31 @@ class NamespaceView(MethodView):
             DB.session.add(found_namespace)
             DB.session.commit()
 
-        namespace_link = namespace_to_namespace_data(found_namespace).self
-        namespace_data = namespace_to_api_response(found_namespace)
+        namespace_response = ApiResponseGenerator.get_api_response(
+            found_namespace, link_to_relations=NAMESPACE_EXTRA_LINK_RELATIONS
+        )
+        namespace_link = namespace_response.data.self
+        namespace_response.data = NamespaceSchema().dump(namespace_response.data)
+
+        self_link = LinkGenerator.get_link_of(
+            found_namespace,
+            for_relation=RESTORE_REL,
+            extra_relations=(NAMESPACE_REL_TYPE,),
+            ignore_deleted=True,
+        )
+        self_link.resource_type = CHANGED_REL
 
         return ApiResponse(
             links=[namespace_link],
-            embedded=[namespace_data],
+            embedded=[namespace_response],
             data=ChangedApiObject(
-                self=ApiLink(
-                    href=url_for(
-                        "api-v1.NamespaceView", namespace=namespace, _external=True
-                    ),
-                    rel=(
-                        "restore",
-                        "post",
-                        "ont-namespace",
-                    ),
-                    resource_type="changed",
-                ),
+                self=self_link,
                 changed=namespace_link,
             ),
         )
 
-    @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.require_jwt("jwt")
     def delete(self, namespace: str):
         if not namespace or not namespace.isdigit():
             abort(
@@ -423,6 +324,8 @@ class NamespaceView(MethodView):
         if found_namespace is None:
             abort(HTTPStatus.NOT_FOUND, message=gettext("Namespace not found."))
 
+        FLASK_OSO.authorize_and_set_resource(found_namespace)
+
         # only actually delete when not already deleted
         if found_namespace.deleted_on is None:
             # soft delete namespace
@@ -430,23 +333,25 @@ class NamespaceView(MethodView):
             DB.session.add(found_namespace)
             DB.session.commit()
 
-        namespace_link = namespace_to_namespace_data(found_namespace).self
-        namespace_data = namespace_to_api_response(found_namespace)
+        namespace_response = ApiResponseGenerator.get_api_response(
+            found_namespace, link_to_relations=NAMESPACE_EXTRA_LINK_RELATIONS
+        )
+        namespace_link = namespace_response.data.self
+        namespace_response.data = NamespaceSchema().dump(namespace_response.data)
+
+        self_link = LinkGenerator.get_link_of(
+            found_namespace,
+            for_relation=DELETE_REL,
+            extra_relations=(NAMESPACE_REL_TYPE,),
+            ignore_deleted=True,
+        )
+        self_link.resource_type = CHANGED_REL
 
         return ApiResponse(
             links=[namespace_link],
-            embedded=[namespace_data],
+            embedded=[namespace_response],
             data=ChangedApiObject(
-                self=ApiLink(
-                    href=url_for(
-                        "api-v1.NamespaceView", namespace=namespace, _external=True
-                    ),
-                    rel=(
-                        "delete",
-                        "ont-namespace",
-                    ),
-                    resource_type="changed",
-                ),
+                self=self_link,
                 changed=namespace_link,
             ),
         )

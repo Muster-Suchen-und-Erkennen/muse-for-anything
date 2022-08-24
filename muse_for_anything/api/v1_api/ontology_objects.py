@@ -1,41 +1,63 @@
 """Module containing the object API endpoints of the v1 API."""
 
 from datetime import datetime
+from http import HTTPStatus
+from typing import Any, List, Optional
+
+from flask.globals import g
+from flask.views import MethodView
+from flask_babel import gettext
+from flask_smorest import abort
+from marshmallow.utils import INCLUDE
+
+from muse_for_anything.api.pagination_util import (
+    PaginationOptions,
+    default_get_page_info,
+    dump_embedded_page_items,
+    generate_page_links,
+    prepare_pagination_query_args,
+)
+from muse_for_anything.api.v1_api.constants import (
+    CHANGED_REL,
+    CREATE,
+    CREATE_REL,
+    DELETE_REL,
+    NEW_REL,
+    OBJECT_EXTRA_LINK_RELATIONS,
+    OBJECT_PAGE_EXTRA_LINK_RELATIONS,
+    OBJECT_REL_TYPE,
+    RESTORE,
+    RESTORE_REL,
+    TYPE_EXTRA_ARG,
+    TYPE_ID_QUERY_KEY,
+    UPDATE,
+    UPDATE_REL,
+)
+from muse_for_anything.api.v1_api.ontology_object_validation import validate_object
+from muse_for_anything.api.v1_api.request_helpers import (
+    ApiResponseGenerator,
+    LinkGenerator,
+    PageResource,
+)
 from muse_for_anything.db.models.object_relation_tables import (
     OntologyObjectVersionToObject,
     OntologyObjectVersionToTaxonomyItem,
 )
-from muse_for_anything.api.v1_api.ontology_object_validation import validate_object
+from muse_for_anything.db.models.users import User
+from muse_for_anything.oso_helpers import FLASK_OSO, OsoResource
 
-from marshmallow.utils import INCLUDE
-from muse_for_anything.api.v1_api.ontology_types_helpers import (
-    create_action_link_for_type_page,
-)
-from flask_babel import gettext
-from typing import Any, Callable, Dict, List, Optional, Union, cast
-from flask.helpers import url_for
-from flask.views import MethodView
-from flask_smorest import abort
-from http import HTTPStatus
-
+from .models.ontology import ObjectSchema, ObjectsCursorPageArgumentsSchema
 from .root import API_V1
 from ..base_models import (
-    ApiLink,
     ApiResponse,
     ChangedApiObject,
     ChangedApiObjectSchema,
-    CursorPage,
     CursorPageSchema,
     DynamicApiResponseSchema,
     NewApiObject,
     NewApiObjectSchema,
 )
-from .models.ontology import (
-    ObjectSchema,
-    ObjectsCursorPageArgumentsSchema,
-)
 from ...db.db import DB
-from ...db.pagination import get_page_info
 from ...db.models.namespace import Namespace
 from ...db.models.ontology_objects import (
     OntologyObject,
@@ -43,19 +65,8 @@ from ...db.models.ontology_objects import (
     OntologyObjectVersion,
 )
 
-from .namespace_helpers import (
-    query_params_to_api_key,
-)
-
-from muse_for_anything.api.v1_api.ontology_object_helpers import (
-    action_links_for_object,
-    action_links_for_object_page,
-    nav_links_for_object,
-    object_page_params_to_key,
-    object_to_api_response,
-    nav_links_for_object_page,
-    object_to_object_data,
-)
+# import object specific generators to load them
+from .generators import object as object_, object_version  # noqa
 
 
 @API_V1.route("/namespaces/<string:namespace>/objects/")
@@ -79,7 +90,7 @@ class ObjectsView(MethodView):
             abort(HTTPStatus.NOT_FOUND, message=gettext("Namespace not found."))
         return found_namespace  # is not None because abort raises exception
 
-    def _check_type_param(self, type_id: str):
+    def _check_type_param(self, type_id: Optional[str]):
         if not type_id or not type_id.isdigit():
             abort(
                 HTTPStatus.BAD_REQUEST,
@@ -99,188 +110,97 @@ class ObjectsView(MethodView):
         return found_type  # is not None because abort raises exception
 
     @API_V1.arguments(ObjectsCursorPageArgumentsSchema, location="query", as_kwargs=True)
-    @API_V1.response(DynamicApiResponseSchema(CursorPageSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(CursorPageSchema()))
+    @API_V1.require_jwt("jwt")
     def get(self, namespace: str, **kwargs: Any):
         """Get the page of objects."""
         self._check_path_params(namespace=namespace)
         found_namespace = self._get_namespace(namespace=namespace)
 
-        cursor: Optional[str] = kwargs.get("cursor", None)
-        item_count: int = cast(int, kwargs.get("item_count", 25))
-        sort: str = cast(str, kwargs.get("sort", "name").lstrip("+"))
+        found_type: Optional[OntologyObjectType] = None
+
+        if "type_id" in kwargs:
+            type_id: Optional[str] = kwargs.pop("type_id")
+            self._check_type_param(type_id=type_id)
+            found_type = self._get_ontology_type(namespace=namespace, type_id=type_id)
+
+        FLASK_OSO.authorize_and_set_resource(
+            OsoResource(
+                OBJECT_REL_TYPE,
+                is_collection=True,
+                parent_resource=found_namespace,
+                arguments={TYPE_EXTRA_ARG: found_type} if found_type else None,
+            )
+        )
+
+        pagination_options: PaginationOptions = prepare_pagination_query_args(
+            **kwargs, _sort_default="name"
+        )
 
         ontology_object_filter = (
             OntologyObject.deleted_on == None,
             OntologyObject.namespace_id == int(namespace),
         )
 
-        found_type: Optional[OntologyObjectType] = None
-        if "type_id" in kwargs:
-            type_id: str = kwargs.get("type_id")
-            self._check_type_param(type_id=type_id)
-            found_type = self._get_ontology_type(namespace=namespace, type_id=type_id)
+        if found_type:
             ontology_object_filter = (
                 *ontology_object_filter,
                 OntologyObject.object_type_id == found_type.id,
             )
+            pagination_options.extra_query_params = {
+                TYPE_ID_QUERY_KEY: str(found_type.id),
+            }
 
-        pagination_info = get_page_info(
+        pagination_info = default_get_page_info(
             OntologyObject,
-            OntologyObject.id,
+            ontology_object_filter,
+            pagination_options,
             [OntologyObject.name],
-            cursor,
-            sort,
-            item_count,
-            filter_criteria=ontology_object_filter,
         )
 
         objects: List[OntologyObject] = pagination_info.page_items_query.all()
 
-        embedded_items: List[ApiResponse] = [
-            object_to_api_response(object) for object in objects
-        ]
-        items: List[ApiLink] = [item.data.get("self") for item in embedded_items]
-
-        query_params = {
-            "item-count": item_count,
-            "sort": sort,
-        }
-
-        if found_type is not None:
-            query_params["type-id"] = str(found_type.id)
-
-        self_query_params = dict(query_params)
-
-        if cursor:
-            self_query_params["cursor"] = cursor
-
-        self_rels = []
-        if pagination_info.cursor_page == 1:
-            self_rels.append("first")
-        if (
-            pagination_info.last_page
-            and pagination_info.cursor_page == pagination_info.last_page.page
-        ):
-            self_rels.append("last")
-
-        self_link = ApiLink(
-            href=url_for(
-                "api-v1.ObjectsView",
-                namespace=namespace,
-                _external=True,
-                **self_query_params,
-            ),
-            rel=(
-                *self_rels,
-                "page",
-                f"page-{pagination_info.cursor_page}",
-                "collection",
-            ),
-            resource_type="ont-object",
-            resource_key=object_page_params_to_key(namespace, self_query_params),
+        embedded_items, items = dump_embedded_page_items(
+            objects, ObjectSchema(), OBJECT_EXTRA_LINK_RELATIONS
         )
 
-        extra_links: List[ApiLink] = [self_link]
+        page_resource = PageResource(
+            OntologyObject,
+            resource=found_namespace,
+            page_number=pagination_info.cursor_page,
+            active_page=pagination_info.cursor_page,
+            last_page=pagination_info.last_page.page,
+            collection_size=pagination_info.collection_size,
+            item_links=items,
+            extra_arguments={TYPE_EXTRA_ARG: found_type} if found_type else {},
+        )
+        self_link = LinkGenerator.get_link_of(
+            page_resource, query_params=pagination_options.to_query_params()
+        )
 
-        if pagination_info.last_page is not None:
-            if pagination_info.cursor_page != pagination_info.last_page.page:
-                # only if current page is not last page
-                last_query_params = dict(query_params)
-                last_query_params["cursor"] = str(pagination_info.last_page.cursor)
+        extra_links = generate_page_links(
+            page_resource, pagination_info, pagination_options
+        )
 
-                extra_links.append(
-                    ApiLink(
-                        href=url_for(
-                            "api-v1.ObjectsView",
-                            namespace=namespace,
-                            _external=True,
-                            **last_query_params,
-                        ),
-                        rel=(
-                            "last",
-                            "page",
-                            f"page-{pagination_info.last_page.page}",
-                            "collection",
-                        ),
-                        resource_type="ont-object",
-                        resource_key=object_page_params_to_key(
-                            namespace, last_query_params
-                        ),
-                    )
-                )
-
-        for page in pagination_info.surrounding_pages:
-            if page == pagination_info.last_page:
-                continue  # link already included
-            page_query_params = dict(query_params)
-            page_query_params["cursor"] = str(page.cursor)
-
-            extra_rels = []
-            if page.page + 1 == pagination_info.cursor_page:
-                extra_rels.append("prev")
-            if page.page - 1 == pagination_info.cursor_page:
-                extra_rels.append("next")
-
-            extra_links.append(
-                ApiLink(
-                    href=url_for(
-                        "api-v1.ObjectsView",
-                        namespace=namespace,
-                        _external=True,
-                        **page_query_params,
-                    ),
-                    rel=(
-                        *extra_rels,
-                        "page",
-                        f"page-{page.page}",
-                        "collection",
-                    ),
-                    resource_type="ont-object",
-                    resource_key=object_page_params_to_key(namespace, page_query_params),
-                )
-            )
-
-        extra_links.extend(nav_links_for_object_page(found_namespace))
-
-        extra_links.extend(action_links_for_object_page(found_namespace, type=found_type))
-
-        return ApiResponse(
-            links=[
-                ApiLink(
-                    href=url_for("api-v1.NamespacesView", _external=True, **query_params),
-                    rel=("first", "page", "page-1", "collection", "nav"),
-                    resource_type="ont-namespace",
-                    resource_key=query_params_to_api_key({"item-count": item_count}),
-                    schema=url_for(
-                        "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
-                    ),
+        return ApiResponseGenerator.get_api_response(
+            page_resource,
+            query_params=pagination_options.to_query_params(),
+            extra_links=[
+                LinkGenerator.get_link_of(
+                    page_resource.get_page(1),
+                    query_params=pagination_options.to_query_params(cursor=None),
                 ),
-                ApiLink(
-                    href=url_for(
-                        "api-v1.ObjectsView",
-                        namespace=namespace,
-                        _external=True,
-                        **query_params,
-                    ),
-                    rel=("first", "page", "page-1", "collection"),
-                    resource_type="ont-object",
-                    resource_key=object_page_params_to_key(namespace, query_params),
-                ),
+                self_link,
                 *extra_links,
             ],
-            embedded=embedded_items,
-            data=CursorPage(
-                self=self_link,
-                collection_size=pagination_info.collection_size,
-                page=pagination_info.cursor_page,
-                first_row=pagination_info.cursor_row + 1,
-                items=items,
-            ),
+            extra_embedded=embedded_items,
+            link_to_relations=OBJECT_PAGE_EXTRA_LINK_RELATIONS,
         )
 
     @API_V1.arguments(ObjectsCursorPageArgumentsSchema, location="query", as_kwargs=True)
     @API_V1.arguments(ObjectSchema())
-    @API_V1.response(DynamicApiResponseSchema(NewApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(NewApiObjectSchema()))
+    @API_V1.require_jwt("jwt")
     def post(self, data, namespace: str, **kwargs):
         """Create a new object."""
         self._check_path_params(namespace=namespace)
@@ -316,17 +236,26 @@ class ObjectsView(MethodView):
                 ),
             )
 
+        FLASK_OSO.authorize_and_set_resource(
+            OsoResource(
+                OBJECT_REL_TYPE,
+                parent_resource=found_namespace,
+                arguments={TYPE_EXTRA_ARG: found_object_type},
+            ),
+            action=CREATE,
+        )
+
         name = data.get("name")
         description = data.get("description", "")
 
-        object = OntologyObject(
+        object_ = OntologyObject(
             namespace=found_namespace,
             ontology_type=found_object_type,
             name=name,
             description=description,
         )
         object_version = OntologyObjectVersion(
-            object=object,
+            object=object_,
             type_version=found_object_type.current_version,
             version=1,
             name=name,
@@ -340,12 +269,16 @@ class ObjectsView(MethodView):
         )
 
         # add object to session and flush to prevent circular references
-        DB.session.add(object)
+        DB.session.add(object_)
         DB.session.flush()
 
-        object.current_version = object_version
+        object_.current_version = object_version
 
-        DB.session.add(object)
+        # object is flushed, safe to add user rights here
+        user: User = g.current_user
+        user.set_role_for_resource("owner", object_)
+
+        DB.session.add(object_)
         DB.session.add(object_version)
 
         # add references
@@ -362,16 +295,23 @@ class ObjectsView(MethodView):
 
         DB.session.commit()
 
-        object_link = object_to_object_data(object).self
-        object_data = object_to_api_response(object)
+        object_response = ApiResponseGenerator.get_api_response(
+            object_, link_to_relations=OBJECT_EXTRA_LINK_RELATIONS
+        )
+        object_link = object_response.data.self
+        object_response.data = ObjectSchema().dump(object_response.data)
 
-        self_link = create_action_link_for_type_page(namespace=found_namespace)
-        self_link.rel = (*self_link.rel, "ont-object")
-        self_link.resource_type = "new"
+        self_link = LinkGenerator.get_link_of(
+            PageResource(OntologyObjectType, resource=found_namespace),
+            for_relation=CREATE_REL,
+            extra_relations=(OBJECT_REL_TYPE,),
+            ignore_deleted=True,
+        )
+        self_link.resource_type = NEW_REL
 
         return ApiResponse(
             links=[object_link],
-            embedded=[object_data],
+            embedded=[object_response],
             data=NewApiObject(
                 self=self_link,
                 new=object_link,
@@ -436,37 +376,25 @@ class ObjectView(MethodView):
                 ),
             )
 
-    @API_V1.response(DynamicApiResponseSchema(ObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ObjectSchema()))
+    @API_V1.require_jwt("jwt")
     def get(self, namespace: str, object_id: str, **kwargs: Any):
         """Get a single object."""
         self._check_path_params(namespace=namespace, object_id=object_id)
         found_object: OntologyObject = self._get_object(
             namespace=namespace, object_id=object_id
         )
+        FLASK_OSO.authorize_and_set_resource(found_object)
 
-        return ApiResponse(
-            links=[
-                ApiLink(
-                    href=url_for(
-                        "api-v1.NamespacesView",
-                        _external=True,
-                        **{"item-count": 50},
-                        sort="name",
-                    ),
-                    rel=("first", "page", "collection", "nav"),
-                    resource_type="ont-namespace",
-                    schema=url_for(
-                        "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
-                    ),
-                ),
-                *nav_links_for_object(found_object),
-                *action_links_for_object(found_object),
-            ],
-            data=object_to_object_data(found_object),
+        # TODO embed referenced objects, types and taxonomies?
+
+        return ApiResponseGenerator.get_api_response(
+            found_object, link_to_relations=OBJECT_EXTRA_LINK_RELATIONS
         )
 
     @API_V1.arguments(ObjectSchema())
-    @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.require_jwt("jwt")
     def put(self, data, namespace: str, object_id: str):
         """Update object (creates a new version)."""
         self._check_path_params(namespace=namespace, object_id=object_id)
@@ -474,6 +402,8 @@ class ObjectView(MethodView):
             namespace=namespace, object_id=object_id
         )
         self._check_if_modifiable(found_object)
+
+        FLASK_OSO.authorize_and_set_resource(found_object, action=UPDATE)
 
         name = data.get("name")
         description = data.get("description", "")
@@ -515,32 +445,31 @@ class ObjectView(MethodView):
         DB.session.add(found_object)
         DB.session.commit()
 
-        object_link = object_to_object_data(found_object).self
-        object_data = object_to_api_response(found_object)
+        object_response = ApiResponseGenerator.get_api_response(
+            found_object, link_to_relations=OBJECT_EXTRA_LINK_RELATIONS
+        )
+        object_link = object_response.data.self
+        object_response.data = ObjectSchema().dump(object_response.data)
+
+        self_link = LinkGenerator.get_link_of(
+            found_object,
+            for_relation=UPDATE_REL,
+            extra_relations=(OBJECT_REL_TYPE,),
+            ignore_deleted=True,
+        )
+        self_link.resource_type = CHANGED_REL
 
         return ApiResponse(
             links=[object_link],
-            embedded=[object_data],
+            embedded=[object_response],
             data=ChangedApiObject(
-                self=ApiLink(
-                    href=url_for(
-                        "api-v1.ObjectView",
-                        namespace=namespace,
-                        object_id=object_id,
-                        _external=True,
-                    ),
-                    rel=(
-                        "update",
-                        "put",
-                        "ont-object",
-                    ),
-                    resource_type="changed",
-                ),
+                self=self_link,
                 changed=object_link,
             ),
         )
 
-    @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.require_jwt("jwt")
     def post(self, namespace: str, object_id: str):  # restore action
         """Restore a deleted object."""
         self._check_path_params(namespace=namespace, object_id=object_id)
@@ -549,6 +478,8 @@ class ObjectView(MethodView):
         )
         self._check_if_namespace_and_type_modifiable(object=found_object)
 
+        FLASK_OSO.authorize_and_set_resource(found_object, action=RESTORE)
+
         # only actually restore when not already restored
         if found_object.deleted_on is not None:
             # restore object
@@ -556,32 +487,31 @@ class ObjectView(MethodView):
             DB.session.add(found_object)
             DB.session.commit()
 
-        object_link = object_to_object_data(found_object).self
-        object_data = object_to_api_response(found_object)
+        object_response = ApiResponseGenerator.get_api_response(
+            found_object, link_to_relations=OBJECT_EXTRA_LINK_RELATIONS
+        )
+        object_link = object_response.data.self
+        object_response.data = ObjectSchema().dump(object_response.data)
+
+        self_link = LinkGenerator.get_link_of(
+            found_object,
+            for_relation=RESTORE_REL,
+            extra_relations=(OBJECT_REL_TYPE,),
+            ignore_deleted=True,
+        )
+        self_link.resource_type = CHANGED_REL
 
         return ApiResponse(
             links=[object_link],
-            embedded=[object_data],
+            embedded=[object_response],
             data=ChangedApiObject(
-                self=ApiLink(
-                    href=url_for(
-                        "api-v1.ObjectView",
-                        namespace=namespace,
-                        object_id=object_id,
-                        _external=True,
-                    ),
-                    rel=(
-                        "restore",
-                        "post",
-                        "ont-object",
-                    ),
-                    resource_type="changed",
-                ),
+                self=self_link,
                 changed=object_link,
             ),
         )
 
-    @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.require_jwt("jwt")
     def delete(self, namespace: str, object_id: str):
         """Delete an object."""
         self._check_path_params(namespace=namespace, object_id=object_id)
@@ -598,26 +528,25 @@ class ObjectView(MethodView):
             DB.session.add(found_object)
             DB.session.commit()
 
-        object_link = object_to_object_data(found_object).self
-        object_data = object_to_api_response(found_object)
+        object_response = ApiResponseGenerator.get_api_response(
+            found_object, link_to_relations=OBJECT_EXTRA_LINK_RELATIONS
+        )
+        object_link = object_response.data.self
+        object_response.data = ObjectSchema().dump(object_response.data)
+
+        self_link = LinkGenerator.get_link_of(
+            found_object,
+            for_relation=DELETE_REL,
+            extra_relations=(OBJECT_REL_TYPE,),
+            ignore_deleted=True,
+        )
+        self_link.resource_type = CHANGED_REL
 
         return ApiResponse(
             links=[object_link],
-            embedded=[object_data],
+            embedded=[object_response],
             data=ChangedApiObject(
-                self=ApiLink(
-                    href=url_for(
-                        "api-v1.ObjectView",
-                        namespace=namespace,
-                        object_id=object_id,
-                        _external=True,
-                    ),
-                    rel=(
-                        "delete",
-                        "ont-object",
-                    ),
-                    resource_type="changed",
-                ),
+                self=self_link,
                 changed=object_link,
             ),
         )

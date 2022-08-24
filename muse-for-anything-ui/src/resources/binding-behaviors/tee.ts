@@ -1,10 +1,15 @@
-import { autoinject, bindingMode } from "aurelia-framework";
-import { SignalBindingBehavior } from "aurelia-templating-resources";
+import { autoinject, TaskQueue } from "aurelia-framework";
 
 const INTERCEPT_METHOD = "updateSource";
 
 @autoinject
 export class TeeBindingBehavior {
+
+    private queue: TaskQueue;
+
+    constructor(queue: TaskQueue) {
+        this.queue = queue;
+    }
 
     bind(binding, source, updateInterceptor) {
         // intercept updates to also call method
@@ -16,7 +21,7 @@ export class TeeBindingBehavior {
         const update = binding[method].bind(binding);
         binding[method] = (value) => {
             update(value);
-            updateInterceptor(value, binding);
+            this.queue.queueMicroTask(() => updateInterceptor(value, binding));
         };
     }
 

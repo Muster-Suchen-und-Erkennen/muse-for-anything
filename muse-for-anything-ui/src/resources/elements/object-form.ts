@@ -1,7 +1,6 @@
-import { bindable, bindingMode, observable, autoinject, computedFrom } from "aurelia-framework";
-import { BindingSignaler } from "aurelia-templating-resources";
-import { NormalizedApiSchema, PropertyDescription } from "rest/schema-objects";
+import { autoinject, bindable, bindingMode, observable, TaskQueue } from "aurelia-framework";
 import { nanoid } from "nanoid";
+import { NormalizedApiSchema, PropertyDescription } from "rest/schema-objects";
 
 @autoinject
 export class ObjectForm {
@@ -31,6 +30,8 @@ export class ObjectForm {
 
     updateCount = 100;
 
+    deletedProperties = new Set<string>();
+
     @observable() propertiesValid = {};
     @observable() propertiesDirty = {};
 
@@ -43,11 +44,18 @@ export class ObjectForm {
 
     invalidProps: string[];
 
+    private queue: TaskQueue;
+
+    constructor(queue: TaskQueue) {
+        this.queue = queue;
+    }
+
 
     initialDataChanged(newValue, oldValue) {
         if (newValue != null && !this.value) {
             this.value = {}; // prime empty value for children to fill
         }
+        this.deletedProperties.clear();
         this.reloadProperties();
     }
 
@@ -89,11 +97,16 @@ export class ObjectForm {
         this.hasExtraProperties = hasAdditionalProperties || hasPatternProperties;
 
         // setup properties
-        const currentData = { // TODO refactor to be less costly (maybe use set?)
-            ...this.initialData,
-            ...(this.value ?? {}),
-        };
-        const properties = this.schema.getPropertyList(Object.keys(currentData));
+        const setProperties = new Set<string>();
+        Object.keys(this.initialData ?? {}).forEach(key => {
+            if (!this.deletedProperties.has(key)) {
+                setProperties.add(key);
+            }
+        });
+        if (this.value != null) {
+            Object.keys(this.value).forEach(key => setProperties.add(key));
+        }
+        const properties = this.schema.getPropertyList(Array.from(setProperties.keys()));
         const propertiesByKey = new Map<string, PropertyDescription>();
         const propertyState: { [prop: string]: "readonly" | "editable" | "missing" } = {};
         const requiredProperties: Set<string> = this.schema.normalized.required ?? new Set();
@@ -125,6 +138,9 @@ export class ObjectForm {
             const newValue = { ...this.value };
             delete newValue[action.key];
             this.value = newValue;
+            // FIXME does not work correctly if iniial data still contains a value for te deleted property...
+            this.deletedProperties.add(action.key);
+            this.propertyState[action.key] = "missing";
             this.reloadProperties();
         } else {
             this.propertyState[action.key] = "missing";
@@ -151,7 +167,7 @@ export class ObjectForm {
     }
 
     onPropertyValueUpdate = (value, binding) => {
-        this.valueChanged(this.value);
+        this.queue.queueMicroTask(() => this.valueChanged(this.value));
     };
 
     valueChanged(newValue) {
@@ -184,9 +200,16 @@ export class ObjectForm {
         }
     }
 
-    valueOutChanged() {
-        this.propertiesValidChanged(this.propertiesValid);
-        this.propertiesDirtyChanged(this.propertiesDirty);
+    valueOutChanged(newValueOut) {
+        Object.keys(newValueOut ?? {}).forEach(key => {
+            if (newValueOut[key] != null) {
+                this.deletedProperties.delete(key);
+            }
+        });
+        this.queue.queueMicroTask(() => {
+            this.propertiesValidChanged(this.propertiesValid);
+            this.propertiesDirtyChanged(this.propertiesDirty);
+        });
     }
 
     extraPropertyNameChanged(newValue) {
@@ -273,9 +296,10 @@ export class ObjectForm {
     }
 
     onPropertyValidUpdate = (value, binding) => {
-        this.propertiesValidChanged(this.propertiesValid);
+        this.queue.queueMicroTask(() => this.propertiesValidChanged(this.propertiesValid));
     };
 
+    // eslint-disable-next-line complexity
     propertiesValidChanged(newValue: { [prop: string]: boolean }) {
         if (newValue == null) {
             this.valid = this.isNullable;
@@ -300,11 +324,21 @@ export class ObjectForm {
         }
         const requiredPropKeys = propKeys.filter(key => this.requiredProperties.has(key));
         const allRequiredPresent = this.requiredProperties.size === requiredPropKeys.length;
-        this.valid = allPropertiesValid && allRequiredPresent;
+
+        let passwordFieldsMatch = true;
+        if (this.valueOut?.password != null || this.valueOut?.retypePassword != null) {
+            if (this.propertiesByKey.get("password").propertySchema?.normalized?.password
+                && this.propertiesByKey.get("retypePassword").propertySchema?.normalized?.password) {
+                passwordFieldsMatch = this.valueOut?.password === this.valueOut?.retypePassword;
+                // TODO provide better feedback to user when passwords don't match
+            }
+        }
+
+        this.valid = allPropertiesValid && allRequiredPresent && passwordFieldsMatch;
     }
 
     onPropertyDirtyUpdate = (value, binding) => {
-        this.propertiesDirtyChanged(this.propertiesDirty);
+        this.queue.queueMicroTask(() => this.propertiesDirtyChanged(this.propertiesDirty));
     };
 
     propertiesDirtyChanged(newValue: { [prop: string]: boolean }) {

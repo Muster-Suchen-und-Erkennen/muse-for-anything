@@ -45,7 +45,8 @@ class ApiLinkBaseSchema(MaBaseSchema):
     ):
         """Remove empty attributes from serialized links for a smaller and more readable output."""
         for key in ("doc", "schema", "resourceKey", "name"):
-            if data.get(key, False) is None:
+            value = data.get(key, False)
+            if value is None or key == "resourceKey" and not value and value is not False:
                 del data[key]
         if not data.get("queryKey", True):  # return True if not in dict
             del data["queryKey"]
@@ -103,6 +104,11 @@ class ChangedApiObjectSchema(ApiObjectSchema):
     changed = ma.fields.Nested(ApiLinkSchema, allow_none=False, dump_only=True)
 
 
+class DeletedApiObjectSchema(ApiObjectSchema):
+    deleted = ma.fields.Nested(ApiLinkSchema, allow_none=False, dump_only=True)
+    redirect_to = ma.fields.Nested(ApiLinkSchema, allow_none=False, dump_only=True)
+
+
 class ApiResponseSchema(MaBaseSchema):
     links = ma.fields.Nested(
         ApiLinkSchema, many=True, reqired=True, allow_none=False, dump_only=True
@@ -153,16 +159,27 @@ class DynamicApiResponseSchema(ApiResponseSchema):
 
     def load_data(self, value: Dict[str, Any]) -> Any:
         many: bool = is_collection(value)
-        print(value, many)
         return self._data_schema.load(value, many=many)
+
+
+class CollectionResourceSchema(ApiObjectSchema):
+    collection_size = ma.fields.Integer(required=True, allow_none=False, dump_only=True)
+    items = ma.fields.List(
+        ma.fields.Nested(ApiLinkSchema),
+        dump_default=tuple(),
+        required=True,
+        dump_only=True,
+    )
 
 
 class CursorPageSchema(ApiObjectSchema):
     collection_size = ma.fields.Integer(required=True, allow_none=False, dump_only=True)
     page = ma.fields.Integer(required=True, allow_none=False, dump_only=True)
-    first_row = ma.fields.Integer(required=True, allow_none=False, dump_only=True)
     items = ma.fields.List(
-        ma.fields.Nested(ApiLinkSchema), default=tuple(), required=True, dump_only=True
+        ma.fields.Nested(ApiLinkSchema),
+        dump_default=tuple(),
+        required=True,
+        dump_only=True,
     )
 
 
@@ -172,31 +189,105 @@ class CursorPageArgumentsSchema(MaBaseSchema):
         data_key="item-count",
         allow_none=True,
         load_only=True,
-        missing=25,
+        load_default=25,
         validate=Range(1, MAX_PAGE_ITEM_COUNT, min_inclusive=True, max_inclusive=True),
     )
     sort = ma.fields.String(allow_none=True, load_only=True)
 
 
-@dataclass
+@dataclass(init=False)
 class ApiLinkBase:
+    # manual slots (and init) for smaller instances (links are used a lot)
+    __slots__ = ("href", "rel", "resource_type", "doc", "schema", "name")
+
     href: str
     rel: Sequence[str]
     resource_type: str
-    doc: Optional[str] = None
-    schema: Optional[str] = None
-    name: Optional[str] = None
+    doc: Optional[str]
+    schema: Optional[str]
+    name: Optional[str]
+
+    def __init__(
+        self,
+        href: str,
+        rel: Sequence[str],
+        resource_type: str,
+        doc: Optional[str] = None,
+        schema: Optional[str] = None,
+        name: Optional[str] = None,
+    ) -> None:
+        self.href = href
+        self.rel = rel
+        self.resource_type = resource_type
+        self.doc = doc
+        self.schema = schema
+        self.name = name
 
 
-@dataclass
+@dataclass(init=False)
 class ApiLink(ApiLinkBase):
-    resource_key: Optional[Dict[str, str]] = None
+    # manual slots (and init) for smaller instances (links are used a lot)
+    __slots__ = ("resource_key",)
+
+    resource_key: Optional[Dict[str, str]]
+
+    def __init__(
+        self,
+        href: str,
+        rel: Sequence[str],
+        resource_type: str,
+        doc: Optional[str] = None,
+        schema: Optional[str] = None,
+        name: Optional[str] = None,
+        resource_key: Optional[Dict[str, str]] = None,
+    ) -> None:
+        super().__init__(
+            href=href,
+            rel=rel,
+            resource_type=resource_type,
+            doc=doc,
+            schema=schema,
+            name=name,
+        )
+        self.resource_key = resource_key
+
+    def copy_with(self, **kwargs):
+        new_kwargs = {
+            k: (kwargs[k] if k in kwargs else getattr(self, k))
+            for k in self.__dataclass_fields__.keys()
+        }
+        return ApiLink(**new_kwargs)
 
 
-@dataclass
+@dataclass(init=False)
 class KeyedApiLink(ApiLinkBase):
-    key: Sequence[str] = tuple()
-    query_key: Sequence[str] = tuple()
+    # manual slots (and init) for smaller instances (links are used a lot)
+    __slots__ = ("key", "query_key")
+
+    key: Sequence[str]
+    query_key: Sequence[str]
+
+    def __init__(
+        self,
+        href: str,
+        rel: Sequence[str],
+        resource_type: str,
+        doc: Optional[str] = None,
+        schema: Optional[str] = None,
+        name: Optional[str] = None,
+        key: Sequence[str] = tuple(),
+        query_key: Sequence[str] = tuple(),
+    ) -> None:
+        super().__init__(
+            href=href,
+            rel=rel,
+            resource_type=resource_type,
+            doc=doc,
+            schema=schema,
+            name=name,
+        )
+        self.key = key
+        self.query_key = query_key
 
 
 @dataclass
@@ -215,6 +306,12 @@ class ChangedApiObject(BaseApiObject):
 
 
 @dataclass
+class DeletedApiObject(BaseApiObject):
+    deleted: ApiLink
+    redirect_to: ApiLink
+
+
+@dataclass
 class ApiResponse:
     links: Sequence[ApiLink]
     data: Any
@@ -223,12 +320,17 @@ class ApiResponse:
 
 
 @dataclass
-class CursorPage:
-    self: ApiLink
+class CollectionResource(BaseApiObject):
+    collection_size: int
+    items: Sequence[ApiLink]
+
+
+@dataclass
+class CursorPage(BaseApiObject):
     collection_size: int
     page: int
-    first_row: int
-    items: List[ApiLink]
+    items: Sequence[ApiLink]
+    first_row: Optional[int] = None  # TODO remove later, kept for compatibility
 
 
 __all__ = list(get_all_classes_of_module(__name__, MaBaseSchema))

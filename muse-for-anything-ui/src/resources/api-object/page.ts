@@ -1,7 +1,9 @@
-import { autoinject } from "aurelia-framework";
+import { autoinject, customElement } from "aurelia-framework";
+import { ApiObject, ApiResponse } from "rest/api-objects";
 import { BaseApiService } from "rest/base-api";
-import { ApiLink, ApiObject, ApiResponse } from "rest/api-objects";
 
+
+@customElement("page-view")
 @autoinject
 export class Page {
 

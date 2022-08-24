@@ -10,7 +10,7 @@
             <a class="link-hover flex items-center" href="/explore/${clientUrl}"
                 aria-disabled.bind="clientUrl == null ? true : null">
                 <svg-icon class="mr-1" icon.bind="'ont-taxonomy-item-relation'"></svg-icon>
-                <p class="my-1 font-bold">
+                <p class="my-1 font-bold block-max-3l overflow-y-hidden overflow-ellipsis">
                     <span class="mr-2 uppercase" if.bind="apiObject.deletedOn != null" t="deleted">
                     </span>
                     ${"resource-type.ont-taxonomy-item-relation" | t}

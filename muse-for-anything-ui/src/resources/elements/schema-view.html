@@ -4,27 +4,32 @@
     <require from="./resource-reference-view"></require>
     <require from="./type-definition-view"></require>
     <require from="./array-view"></require>
+    <require from="./markdown"></require>
 
     <template if.bind="schemaType === 'object'">
-        <object-view data.bind="data" schema.bind="schema"></object-view>
+        <object-view class="w-full" data.bind="data" schema.bind="schema"></object-view>
     </template>
     <template if.bind="schemaType === 'resourceReferenceDefinition'">
-        <resource-reference-definition-view data.bind="data" schema.bind="schema"></resource-reference-definition-view>
+        <resource-reference-definition-view class="w-full" data.bind="data" schema.bind="schema">
+        </resource-reference-definition-view>
     </template>
     <template if.bind="schemaType === 'resourceReference'">
-        <resource-reference-view data.bind="data" schema.bind="schema"></resource-reference-view>
+        <resource-reference-view class="w-full" data.bind="data" schema.bind="schema"></resource-reference-view>
     </template>
     <template if.bind="schemaType === 'typeDefinition'">
-        <type-definition-view data.bind="data" schema.bind="schema"></type-definition-view>
+        <type-definition-view class="w-full" data.bind="data" schema.bind="schema"></type-definition-view>
     </template>
     <template if.bind="schemaType === 'array'">
-        <array-view data.bind="data" schema.bind="schema"></array-view>
+        <array-view class="w-full" data.bind="data" schema.bind="schema"></array-view>
     </template>
     <template if.bind="schemaType === 'string'">
         <p class="m-0 whitespace-pre-line">${data != null ? data : ''}</p>
     </template>
     <template if.bind="schemaType === 'text'">
-        <p class="m-0 w100 whitespace-pre-line">${data != null ? data : '–'}</p>
+        <p class="m-0 w-full whitespace-pre-line block-max-5l">${data != null ? data : '–'}</p>
+    </template>
+    <template if.bind="schemaType === 'markdown'">
+        <markdown class="m-0 block-max-5l" markdown-in.bind="data"></markdown>
     </template>
     <template if.bind="schemaType === 'number'">
         <p class="m-0">${data != null ? data : '–'}</p>

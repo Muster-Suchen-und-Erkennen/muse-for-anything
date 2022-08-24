@@ -40,6 +40,17 @@ export class TypeRootForm {
 
     initialDataChanged(newValue, oldValue) {
         this.reloadProperties();
+
+        const defs = newValue?.definitions;
+        const containedTypes = Object.keys(defs).filter(t => t !== "root");
+        containedTypes.sort();
+        if (containedTypes.length !== this.containedTypes.length) {
+            // different lengths
+            this.containedTypes = containedTypes;
+        } else if (containedTypes.some((t, i) => this.containedTypes[i] !== t)) {
+            // different contents
+            this.containedTypes = containedTypes;
+        }
     }
 
     schemaChanged(newValue: NormalizedApiSchema, oldValue) {

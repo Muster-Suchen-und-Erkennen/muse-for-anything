@@ -11,6 +11,10 @@ muse_for_anything/static/favicon.ico
 muse_for_anything/static/index.html
 muse_for_anything/static/*.js
 muse_for_anything/static/*.map
+muse_for_anything/static/*.js.LICENSE.txt
+muse_for_anything/static/*.ttf
+muse_for_anything/static/*.woff
+muse_for_anything/static/*.woff2
 
 
 # Ignores from Template:

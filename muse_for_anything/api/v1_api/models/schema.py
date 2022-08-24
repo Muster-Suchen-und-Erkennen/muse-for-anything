@@ -48,7 +48,7 @@ class JSONSchemaSchema(MaBaseSchema):
     definitions = ma.fields.Mapping(
         ma.fields.String(), SchemaField(allow_none=False), required=True, allow_none=False
     )
-    abstract = ma.fields.Boolean(required=False, missing=False)
+    abstract = ma.fields.Boolean(required=False, load_default=False)
 
 
 JSON_SCHEMA_ROOT_SCHEMA_REF = {"$ref": "#/definitions/root"}
@@ -102,7 +102,7 @@ JSON_MINIMAL_META_PROPERTIES_SCHEMA = {
     "properties": {
         "$id": {"type": "string", "format": "uri-reference"},
         "title": {"type": "string", "maxLength": 300},
-        "description": {"type": "string"},
+        "description": {"type": "string", "format": "markdown"},
         "$comment": {"title": "comment", "type": "string"},
         "deprecated": {"type": "boolean", "default": False},
         "readOnly": {"type": "boolean", "default": False},
@@ -131,7 +131,7 @@ JSON_META_PROPERTIES_SCHEMA = {
     "properties": {
         "$id": {"type": "string", "format": "uri-reference"},
         "title": {"type": "string", "maxLength": 300},
-        "description": {"type": "string"},
+        "description": {"type": "string", "format": "markdown"},
         "$comment": {"title": "comment", "type": "string"},
         "default": NESTED_JSON_SCHEMA_REF,
         "deprecated": {"type": "boolean", "default": False},

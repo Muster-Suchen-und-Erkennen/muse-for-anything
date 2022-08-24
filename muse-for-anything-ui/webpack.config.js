@@ -20,7 +20,7 @@ const baseUrl = '/static/';
 
 const purgecss = require('@fullhuman/postcss-purgecss')({
     content: [
-        path.resolve(srcDir, '/**/*.html')
+        path.resolve(srcDir, './**/*.html')
     ],
     defaultExtractor: content => content.match(/[A-Za-z0–9-_:/]+/g) || []
 });
@@ -39,7 +39,7 @@ const cssRules = (production) => [
                 plugins: [
                     require('autoprefixer')(),
                     require('tailwindcss')('tailwind.config.js'),
-                    //...when(production, purgecss), // not working right now (needs update to work with newest postcss)
+                    //...when(production, purgecss),
                     ...when(production, require('cssnano')()),
                 ],
             },
@@ -48,7 +48,7 @@ const cssRules = (production) => [
 ];
 
 
-module.exports = ({ production } = {}, { extractCss, analyze, tests, hmr, port, host } = {}) => ({
+module.exports = ({ production, extractCss, analyze, tests, hmr, port, host } = {}) => ({
     resolve: {
         extensions: ['.ts', '.js'],
         modules: [srcDir, 'node_modules'],
@@ -80,19 +80,19 @@ module.exports = ({ production } = {}, { extractCss, analyze, tests, hmr, port, 
         chunkFilename: '[name].chunk.js'
     },
     optimization: {
-        runtimeChunk: true,  // separates the runtime chunk, required for long term cacheability
+        runtimeChunk: 'single',  // separates the runtime chunk, required for long term cacheability
         // moduleIds is the replacement for HashedModuleIdsPlugin and NamedModulesPlugin deprecated in https://github.com/webpack/webpack/releases/tag/v4.16.0
         // changes module id's to use hashes be based on the relative path of the module, required for long term cacheability
         moduleIds: 'named', // uses 'named' as cache busting/hashing is handled by flask...
         chunkIds: 'named', // uses 'named' as cache busting/hashing is handled by flask...
-        namedChunks: true, // uses named chunks as cache busting/hashing is handled by flask...
+        //namedChunks: true, // uses named chunks as cache busting/hashing is handled by flask...
         // Use splitChunks to breakdown the App/Aurelia bundle down into smaller chunks
         // https://webpack.js.org/plugins/split-chunks-plugin/
 
 
         splitChunks: {
             hidePathInfo: true, // prevents the path from being used in the filename when using maxSize
-            chunks: "initial",
+            chunks: 'all', //force optimization of all chunks to deduplicate all modules and fix problems with aurelia-dialog
             // sizes are compared against source before minification
 
 
@@ -130,6 +130,7 @@ module.exports = ({ production } = {}, { extractCss, analyze, tests, hmr, port, 
                     enforce: true, // causes maxInitialRequests to be ignored, minSize still respected if specified in cacheGroup
                     minSize: 30000 // use the default minSize
                 },
+                // try to disable async chunc if more problems with aurelia dialog surface
                 vendorsAsync: { // vendors async chunk, remaining asynchronously used node modules as single chunk file
                     test: /[\\/]node_modules[\\/]/,
                     name: 'vendors.async',
@@ -220,14 +221,14 @@ module.exports = ({ production } = {}, { extractCss, analyze, tests, hmr, port, 
         port: port || project.platform.port,
         host: host
     },
-    devtool: production ? 'nosources-source-map' : 'cheap-module-eval-source-map',
+    devtool: production ? 'nosources-source-map' : 'eval-cheap-module-source-map',
     module: {
         rules: [
             // CSS required in JS/TS files should use the style-loader that auto-injects it into the website
             // only when the issuer is a .js/.ts file, so the loaders are not applied inside html templates
             {
                 test: /\.css$/i,
-                issuer: [{ not: [{ test: /\.html$/i }] }],
+                issuer: [{ not: /\.html$/i }],
                 use: extractCss ? [{
                     loader: MiniCssExtractPlugin.loader
                 }, ...cssRules(production)
@@ -235,7 +236,7 @@ module.exports = ({ production } = {}, { extractCss, analyze, tests, hmr, port, 
             },
             {
                 test: /\.css$/i,
-                issuer: [{ test: /\.html$/i }],
+                issuer: [/\.html$/i],
                 // CSS required in templates cannot be extracted safely
                 // because Aurelia would try to require it again in runtime
                 use: cssRules(production)
@@ -253,23 +254,22 @@ module.exports = ({ production } = {}, { extractCss, analyze, tests, hmr, port, 
                     { loader: "app-settings-loader", options: { env: production ? 'production' : 'development' } },
                 ]
             },
-            ...when(tests, {
-                test: /\.[jt]s$/i, loader: 'istanbul-instrumenter-loader',
-                include: srcDir, exclude: [/\.(spec|test)\.[jt]s$/i],
-                enforce: 'post', options: { esModules: true },
-            })
+            //...when(tests, {
+            //    test: /\.[jt]s$/i, loader: 'istanbul-instrumenter-loader',
+            //    include: srcDir, exclude: [/\.(spec|test)\.[jt]s$/i],
+            //    enforce: 'post', options: { esModules: true },
+            //})
         ]
     },
     plugins: [
         ...when(!tests, new DuplicatePackageCheckerPlugin()),
         new AureliaPlugin(),
-        new GlobDependenciesPlugin({ "resources": "src/resources/api-object/*.ts" }),
-        new ModuleDependenciesPlugin({
-            'aurelia-testing': ['./compile-spy', './view-spy']
-        }),
+        //new ModuleDependenciesPlugin({
+        //    'aurelia-testing': ['./compile-spy', './view-spy'] // FIXME
+        //}),
         new CopyWebpackPlugin({
             patterns: [
-                { from: 'src/locales/', to: 'locales/' }
+                { from: path.resolve(srcDir, './locales/'), to: 'locales/' }
             ]
         }),
         new HtmlWebpackPlugin({
@@ -286,7 +286,7 @@ module.exports = ({ production } = {}, { extractCss, analyze, tests, hmr, port, 
         })),
         ...when(!tests, new CopyWebpackPlugin({
             patterns: [
-                { from: 'static', to: outDir, globOptions: { ignore: ['.*'] } }
+                { from: path.resolve(srcDir, './../static'), to: outDir, globOptions: { ignore: ['.*'] } }
             ]
         })), // ignore dot (hidden) files
         ...when(analyze, new BundleAnalyzerPlugin()),

@@ -11,6 +11,8 @@ export class OntNamespace {
     isRoot: boolean = false;
     skipNavigation: boolean = false;
 
+    showGraph = false;
+
     private api: BaseApiService;
     private schemas: SchemaService;
 

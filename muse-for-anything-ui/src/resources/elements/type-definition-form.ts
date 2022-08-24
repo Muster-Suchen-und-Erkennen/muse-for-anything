@@ -1,6 +1,6 @@
-import { bindable, observable, bindingMode } from "aurelia-framework";
-import { NormalizedApiSchema, PropertyDescription } from "rest/schema-objects";
+import { autoinject, bindable, bindingMode, observable, TaskQueue } from "aurelia-framework";
 import { nanoid } from "nanoid";
+import { NormalizedApiSchema } from "rest/schema-objects";
 
 interface SchemaDescription {
     title: string;
@@ -8,6 +8,7 @@ interface SchemaDescription {
     schema: NormalizedApiSchema;
 }
 
+@autoinject()
 export class TypeDefinitionForm {
     @bindable key: string;
     @bindable label: string;
@@ -38,6 +39,12 @@ export class TypeDefinitionForm {
     valueCache: Map<string, any> = new Map();
 
     @observable() childValid: boolean;
+
+    private queue: TaskQueue;
+
+    constructor(queue: TaskQueue) {
+        this.queue = queue;
+    }
 
     initialDataChanged(newValue, oldValue) {
         this.updateChoiceFromObjectData(newValue, true);
@@ -150,7 +157,7 @@ export class TypeDefinitionForm {
         const containsChanges = Object.keys(newValueOut).some(key => newValueOut[key] !== this.valueOut?.[key]);
         const hasLessKeys = Object.keys(newValueOut).length < Object.keys(this.valueOut ?? {}).length;
         if (containsChanges || hasLessKeys) {
-            this.valueOut = newValueOut;
+            this.queue.queueMicroTask(() => this.valueOut = newValueOut);
         }
     }
 
@@ -163,11 +170,13 @@ export class TypeDefinitionForm {
     }
 
     updateValid() {
-        if (this.valueOut == null) {
-            this.valid = false; // this object type is never nullable
-        } else {
-            this.valid = this.childValid ?? false;
-        }
+        this.queue.queueMicroTask(() => {
+            if (this.valueOut == null) {
+                this.valid = false; // this object type is never nullable
+            } else {
+                this.valid = this.childValid ?? false;
+            }
+        });
     }
 
     chosenSchemaChanged(newSchemaValue: SchemaDescription, oldSchemaValue: SchemaDescription) {

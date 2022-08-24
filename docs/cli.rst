@@ -14,6 +14,12 @@ Cli Documentation of the Flask app
    :nested: full
 
 
+.. click:: muse_for_anything.password_helpers:PASSWORD_CLI
+   :prog: flask passwords
+   :section-title: Passwords cli for querying and verifying (current) password hashing settings
+   :nested: full
+
+
 .. click:: flask_migrate.cli:db
    :prog: flask db
    :section-title: DB Cli for Migrations

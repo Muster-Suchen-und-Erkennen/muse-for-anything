@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>{{title}}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <base href="/">
+    <link rel="icon" href="{{ static_url_for('static', filename='favicon.ico') | bustcache }}">
+
+    <style>
+        html,
+        body {
+            height: 90vh;
+            margin: unset;
+            padding: unset;
+        }
+
+        .main {
+            height: 100%;
+            width: max-content;
+            max-width: 20rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            margin-inline: auto;
+            padding: 1rem;
+            gap: 0.3rem;
+        }
+
+        .main>input {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 0.3rem;
+            font-size: 1.2rem;
+        }
+
+        .main>button[type="submit"] {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 0.3rem;
+            font-size: 1.3rem;
+        }
+    </style>
+
+    <!-- Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="script-src 'none'; default-src 'self';">
+</head>
+
+<body>
+    <form class="main" autocomplete="off" method="POST">
+        <h1>First Run!</h1>
+        <h2>
+            Register the Admin User:
+        </h2>
+        <label for="username">
+            Username:
+        </label>
+        <input id="username" name="username" type="text" value="admin" required>
+        <label for="password">
+            Password:
+        </label>
+        <input id="password" name="password" type="password" required>
+        <label for="password-retype">
+            Retype Password:
+        </label>
+        <input id="password-retype" name="password-retype" type="password" required>
+        <button type="submit">Create User</button>
+    </form>
+</body>
+
+</html>

@@ -1,9 +1,9 @@
-import { bindable, bindingMode, observable, autoinject } from "aurelia-framework";
 import { DialogService } from "aurelia-dialog";
+import { autoinject, bindable, bindingMode, observable, TaskQueue } from "aurelia-framework";
+import { ApiLink } from "rest/api-objects";
+import { BaseApiService } from "rest/base-api";
 import { NormalizedApiSchema, PropertyDescription } from "rest/schema-objects";
 import { ApiObjectChooserDialog } from "./api-object-chooser-dialog";
-import { BaseApiService } from "rest/base-api";
-import { ApiLink } from "rest/api-objects";
 
 
 @autoinject()
@@ -46,10 +46,12 @@ export class ResourceReferenceDefinitionForm {
 
     private dialogService: DialogService;
     private apiService: BaseApiService;
+    private queue: TaskQueue;
 
-    constructor(dialogService: DialogService, apiService: BaseApiService) {
+    constructor(dialogService: DialogService, apiService: BaseApiService, queue: TaskQueue) {
         this.dialogService = dialogService;
         this.apiService = apiService;
+        this.queue = queue;
     }
 
     initialDataChanged(newValue, oldValue) {
@@ -136,14 +138,14 @@ export class ResourceReferenceDefinitionForm {
         if (newValue == null) {
             this.value = {}; // is never nullable!
         } else {
-            this.currentReferenceType = newValue.referenceType ?? 'ont-taxonomy';
+            this.currentReferenceType = newValue.referenceType ?? "ont-taxonomy";
             this.value = { ...newValue };
             // TODO calc reference link…
         }
         this.reloadProperties();
 
         // defer a update valid until after value settles
-        window.setTimeout(() => this.updateValid(), 3);
+        this.queue.queueMicroTask(() => this.updateValid());
     }
 
     onPropertyValueUpdate = (value, binding) => {

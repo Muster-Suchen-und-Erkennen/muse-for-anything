@@ -1,21 +1,25 @@
 """Module containing the schema API of the v1 API."""
 
-from muse_for_anything.api.v1_api.ontology_type_versions_helpers import (
-    type_version_to_key,
-)
+from http import HTTPStatus
 from typing import Any, Callable, Dict, List, Optional, cast
-from flask import request, jsonify, Response
+
+from flask import Response, jsonify, request
 from flask.helpers import url_for
 from flask.views import MethodView
 from flask_babel import gettext
 from flask_smorest import abort
 from marshmallow.base import SchemaABC
 from marshmallow.fields import Field
-from http import HTTPStatus
 
-from .root import API_V1
-from ..util import JSON_SCHEMA, JSON_MIMETYPE, JSON_SCHEMA_MIMETYPE
-from ..base_models import ApiLink, ApiResponse, BaseApiObject, DynamicApiResponseSchema
+from muse_for_anything.api.v1_api.models.auth import (
+    UserCreateSchema,
+    UserRolePostSchema,
+    UserRoleSchema,
+    UserSchema,
+    UserUpdateSchema,
+)
+from muse_for_anything.api.v1_api.request_helpers import LinkGenerator
+
 from .models.ontology import (
     NamespaceSchema,
     ObjectTypeSchema,
@@ -24,14 +28,11 @@ from .models.ontology import (
     TaxonomyItemSchema,
     TaxonomySchema,
 )
-from .models.schema import SchemaApiObject, SchemaApiObjectSchema, TYPE_SCHEMA
-
-from ...db.models.ontology_objects import (
-    OntologyObject,
-    OntologyObjectType,
-    OntologyObjectTypeVersion,
-    OntologyObjectVersion,
-)
+from .models.schema import TYPE_SCHEMA, SchemaApiObject, SchemaApiObjectSchema
+from .root import API_V1
+from ..base_models import ApiLink, ApiResponse, BaseApiObject, DynamicApiResponseSchema
+from ..util import JSON_MIMETYPE, JSON_SCHEMA, JSON_SCHEMA_MIMETYPE
+from ...db.models.ontology_objects import OntologyObjectTypeVersion
 
 
 def create_schema_from_model(
@@ -112,6 +113,47 @@ SCHEMAS: Dict[str, Dict[str, Any]] = {
             "propertyOrder": {"namespaceId": 10, "taxonomyId": 20, "taxonomyItemId": 30},
         },
     ),
+    # Auth related schemas
+    "UserSchema": create_schema_from_model(
+        UserSchema(),
+        UserSchema={
+            "propertyOrder": {"username": 10, "eMail": 20},
+        },
+    ),
+    "UserCreateSchema": create_schema_from_model(
+        UserCreateSchema(exclude=("self",)),
+        UserCreateSchema={
+            "propertyOrder": {
+                "username": 10,
+                "eMail": 20,
+                "password": 30,
+                "retypePassword": 40,
+            },
+        },
+    ),
+    "UserUpdateSchema": create_schema_from_model(
+        UserUpdateSchema(exclude=("self",)),
+        UserUpdateSchema={
+            "propertyOrder": {
+                "username": 10,
+                "eMail": 20,
+                "password": 30,
+                "retypePassword": 40,
+            },
+        },
+    ),
+    "UserRolePostSchema": create_schema_from_model(
+        UserRolePostSchema(),
+        UserRolePostSchema={
+            "propertyOrder": {"role": 10},
+        },
+    ),
+    "UserRoleSchema": create_schema_from_model(
+        UserRoleSchema(),
+        UserRoleSchema={
+            "propertyOrder": {"role": 10, "description": 20},
+        },
+    ),
 }
 
 
@@ -133,7 +175,7 @@ RELATED_SCHEMA: Dict[str, List[str]] = {"OntologyType": ["TypeSchema"]}
 class SchemaRootView(MethodView):
     """Root endpoint for all schemas."""
 
-    @API_V1.response(DynamicApiResponseSchema())
+    @API_V1.response(200, DynamicApiResponseSchema())
     def get(self):
         """Get the urls for the schema api."""
         return ApiResponse(
@@ -163,7 +205,7 @@ class SchemaRootView(MethodView):
 class ApiSchemaRootView(MethodView):
     """Root endpoint for all api schemas."""
 
-    @API_V1.response(DynamicApiResponseSchema())
+    @API_V1.response(200, DynamicApiResponseSchema())
     def get(self):
         """Get the urls for the schema api."""
         # TODO add data
@@ -183,7 +225,8 @@ class ApiSchemaRootView(MethodView):
 class ApiSchemaView(MethodView):
     """Endpoint for api schemas."""
 
-    @API_V1.response(DynamicApiResponseSchema(SchemaApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(SchemaApiObjectSchema()))
+    @API_V1.alt_response(200, content_type=JSON_SCHEMA_MIMETYPE, success=True)
     def get(self, schema_id: str):
         """Get the urls for the schema api."""
         schema: Optional[Dict[str, Any]] = SCHEMAS.get(schema_id)
@@ -242,7 +285,7 @@ class ApiSchemaView(MethodView):
 class TypeSchemaRootView(MethodView):
     """Root endpoint for all ontology type schemas."""
 
-    @API_V1.response(DynamicApiResponseSchema())
+    @API_V1.response(200, DynamicApiResponseSchema())
     def get(self):
         """TODO"""
         # TODO add data
@@ -280,7 +323,7 @@ class TypeSchemaView(MethodView):
             abort(HTTPStatus.NOT_FOUND, message=gettext("Schema id not found."))
         return found_object_type_version  # is not None because abort raises exception
 
-    @API_V1.response(DynamicApiResponseSchema(SchemaApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(SchemaApiObjectSchema()))
     def get(self, schema_id: str):
         """TODO"""
         found_type_version = self._get_object_type_version(schema_id=schema_id)
@@ -334,6 +377,7 @@ class TypeSchemaView(MethodView):
                         "description": {
                             "title": "description",
                             "type": "string",
+                            "format": "markdown",
                         },
                         "name": {
                             "title": "name",
@@ -364,15 +408,7 @@ class TypeSchemaView(MethodView):
             return response
 
         related_schema_links = [
-            ApiLink(
-                href=type_version_schema_url,
-                rel=("schema",),
-                resource_type="ont-type-version",
-                resource_key=type_version_to_key(found_type_version),
-                schema=url_for(
-                    "api-v1.ApiSchemaView", schema_id="OntologyType", _external=True
-                ),
-            ),
+            LinkGenerator.get_link_of(found_type_version, extra_relations=("schema",)),
         ]
 
         # return full api response otherwise

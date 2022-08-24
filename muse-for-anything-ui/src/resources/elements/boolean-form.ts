@@ -1,8 +1,9 @@
-import { bindable, observable, bindingMode, child } from "aurelia-framework";
+import { bindable, observable, bindingMode, child, TaskQueue, autoinject } from "aurelia-framework";
 import { NormalizedApiSchema } from "rest/schema-objects";
 import { nanoid } from "nanoid";
 
 
+@autoinject()
 export class BooleanForm {
     @bindable key: string;
     @bindable label: string;
@@ -24,6 +25,12 @@ export class BooleanForm {
     isNullable: boolean = true;
 
     @child(".input-valid-check") formInput: Element;
+
+    private queue: TaskQueue;
+
+    constructor(queue: TaskQueue) {
+        this.queue = queue;
+    }
 
     initialDataChanged(newValue, oldValue) {
         if (newValue !== undefined) {
@@ -88,9 +95,9 @@ export class BooleanForm {
             this.valid = false;
             return;
         }
-        window.setTimeout(() => { // this prevents updates getting lost
+        this.queue.queueMicroTask(() => { // this prevents updates getting lost
             this.valid = this.isNullable || this.value != null;
-        }, 1);
+        });
     }
 
     formInputChanged() {

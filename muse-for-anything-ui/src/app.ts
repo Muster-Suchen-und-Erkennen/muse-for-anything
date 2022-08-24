@@ -1,8 +1,9 @@
-import { autoinject } from "aurelia-framework";
+import { EventAggregator } from "aurelia-event-aggregator";
+import { autoinject, observable } from "aurelia-framework";
 import { PLATFORM } from "aurelia-pal";
-import { RouterConfiguration, Router } from "aurelia-router";
-
-import { BaseApiService } from "rest/base-api";
+import { Router, RouterConfiguration } from "aurelia-router";
+import { ACTIVE_LINK_CHANNEL, ROOT_NAV_LINKS_CHANNEL } from "resources/events";
+import { NavigationLink, NavigationLinksService } from "services/navigation-links";
 
 @autoinject
 export class App {
@@ -10,11 +11,37 @@ export class App {
 
     private router: Router;
 
-    constructor(baseApi: BaseApiService) {
+    rootNavLinks: NavigationLink[] = [];
+
+    @observable activeLink: string | null = null;
+
+    activeNavLink: NavigationLink | null;
+
+    constructor(events: EventAggregator, navService: NavigationLinksService) {
         // query api by rel
         // baseApi.getByRel("authentication").then(result => console.log(result));
         // search api for rel
         // baseApi.searchResolveRels(["login", "post"]).then(result => console.log(result));
+        events.subscribe(ROOT_NAV_LINKS_CHANNEL, (navLinks) => {
+            this.rootNavLinks = navLinks;
+            this.activeLinkChanged();
+        });
+        events.subscribe(ACTIVE_LINK_CHANNEL, (activeLink: string | null) => {
+            if (activeLink?.includes("?")) {
+                this.activeLink = activeLink.split("?")[0];
+            } else {
+                this.activeLink = activeLink;
+            }
+        });
+        this.rootNavLinks = navService.getCurrentRootNavLinks(); // query service to init nav events
+    }
+
+    activeLinkChanged() {
+        if (this.activeLink == null) {
+            this.activeNavLink = null;
+            return;
+        }
+        this.activeNavLink = this.rootNavLinks.find(link => link.clientUrl.startsWith(this.activeLink));
     }
 
     configureRouter(config: RouterConfiguration, router: Router): void {
@@ -47,7 +74,7 @@ export class App {
                     sidebar: { moduleId: PLATFORM.moduleName("main-app/elements/explore-sidebar") },
                     content: { moduleId: PLATFORM.moduleName("main-app/elements/explore-content") },
                 },
-                nav: true,
+                nav: false,
                 title: "titles.explore",
             },
             {
@@ -70,6 +97,5 @@ export class App {
             },
         ]);
         config.mapUnknownRoutes({ redirect: "home" });
-        console.log(router.navigation)
     }
 }

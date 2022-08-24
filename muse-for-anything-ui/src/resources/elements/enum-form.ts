@@ -1,8 +1,9 @@
-import { bindable, observable, bindingMode, child } from "aurelia-framework";
-import { NormalizedApiSchema } from "rest/schema-objects";
+import { autoinject, bindable, bindingMode, observable, TaskQueue } from "aurelia-framework";
 import { nanoid } from "nanoid";
+import { NormalizedApiSchema } from "rest/schema-objects";
 
 
+@autoinject()
 export class EnumForm {
     @bindable key: string;
     @bindable label: string;
@@ -24,6 +25,12 @@ export class EnumForm {
     isNullable: boolean = true;
 
     enumChoices: Array<string | number | boolean | null> = [];
+
+    private queue: TaskQueue;
+
+    constructor(queue: TaskQueue) {
+        this.queue = queue;
+    }
 
     initialDataChanged(newValue, oldValue) {
         if (newValue !== undefined) {
@@ -101,9 +108,9 @@ export class EnumForm {
     }
 
     valueChanged(newValue, oldValue) {
-        window.setTimeout(() => { // this is somehow needed TODO: debug
+        this.queue.queueMicroTask(() => { // this is needed to properly propagate updates!
             this.valueOut = newValue;
-        }, 0);
+        });
     }
 
     valueOutChanged(newValue) {

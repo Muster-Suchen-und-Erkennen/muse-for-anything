@@ -34,6 +34,27 @@ export function isChangedApiObject(obj: any): obj is ChangedApiObject {
     return (obj as ChangedApiObject)?.changed != null && isApiLinkBase((obj as ChangedApiObject)?.changed);
 }
 
+export interface DeletedApiObject extends ApiObject {
+    deleted: ApiLink;
+    redirectTo: ApiLink;
+}
+
+export function isDeletedApiObject(obj: any): obj is DeletedApiObject {
+    if (!isApiObject(obj)) {
+        return false;
+    }
+    if (obj.self.resourceType !== "deleted") {
+        return false;
+    }
+    return (obj as DeletedApiObject)?.deleted != null && isApiLinkBase((obj as DeletedApiObject)?.deleted) && (obj as DeletedApiObject)?.redirectTo != null && isApiLinkBase((obj as DeletedApiObject)?.redirectTo);
+}
+
+export interface PageApiObject extends ApiObject {
+    collectionSize: number;
+    items: ApiLink[];
+    page: number;
+}
+
 export interface GenericApiObject extends ApiObject {
     [prop: string]: any;
 }

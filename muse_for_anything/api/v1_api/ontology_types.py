@@ -1,57 +1,69 @@
 """Module containing the type API endpoints of the v1 API."""
 
 from datetime import datetime
-from muse_for_anything.api.v1_api.ontology_type_validation import validate_object_type
-
-from marshmallow.utils import INCLUDE
-from muse_for_anything.api.v1_api.models.schema import JSONSchemaSchema
-from muse_for_anything.api.v1_api.ontology_types_helpers import (
-    action_links_for_type,
-    action_links_for_type_page,
-    create_action_link_for_type_page,
-    nav_links_for_type,
-    nav_links_for_type_page,
-    type_page_params_to_key,
-    type_to_api_response,
-    type_to_type_data,
-)
-from flask_babel import gettext
-from muse_for_anything.api.util import template_url_for
-from typing import Any, Callable, Dict, List, Optional, Union, cast
-from flask.helpers import url_for
-from flask.views import MethodView
-from sqlalchemy.sql.expression import asc, desc
-from sqlalchemy.orm.query import Query
-from flask_smorest import abort
 from http import HTTPStatus
+from typing import Any, List, Optional
 
+from flask.globals import g
+from flask.views import MethodView
+from flask_babel import gettext
+from flask_smorest import abort
+from marshmallow.utils import INCLUDE
+
+from muse_for_anything.api.pagination_util import (
+    PaginationOptions,
+    default_get_page_info,
+    dump_embedded_page_items,
+    generate_page_links,
+    prepare_pagination_query_args,
+)
+from muse_for_anything.api.v1_api.constants import (
+    CHANGED_REL,
+    CREATE,
+    CREATE_REL,
+    DELETE_REL,
+    NEW_REL,
+    RESTORE,
+    RESTORE_REL,
+    TYPE_EXTRA_LINK_RELATIONS,
+    TYPE_PAGE_EXTRA_LINK_RELATIONS,
+    TYPE_REL_TYPE,
+    UPDATE,
+    UPDATE_REL,
+)
+from muse_for_anything.api.v1_api.models.schema import JSONSchemaSchema
+from muse_for_anything.api.v1_api.ontology_type_validation import validate_object_type
+from muse_for_anything.api.v1_api.request_helpers import (
+    ApiResponseGenerator,
+    LinkGenerator,
+    PageResource,
+)
+from muse_for_anything.db.models.users import User
+from muse_for_anything.oso_helpers import FLASK_OSO, OsoResource
+
+from .models.ontology import ObjectTypeSchema
 from .root import API_V1
 from ..base_models import (
-    ApiLink,
     ApiResponse,
     ChangedApiObject,
     ChangedApiObjectSchema,
-    CursorPage,
     CursorPageArgumentsSchema,
     CursorPageSchema,
     DynamicApiResponseSchema,
     NewApiObject,
     NewApiObjectSchema,
 )
-from .models.ontology import ObjectTypeSchema
 from ...db.db import DB
-from ...db.pagination import get_page_info
 from ...db.models.namespace import Namespace
-from ...db.models.ontology_objects import OntologyObjectType, OntologyObjectTypeVersion
 from ...db.models.object_relation_tables import (
     OntologyTypeVersionToTaxonomy,
     OntologyTypeVersionToType,
     OntologyTypeVersionToTypeVersion,
 )
+from ...db.models.ontology_objects import OntologyObjectType, OntologyObjectTypeVersion
 
-from .namespace_helpers import (
-    query_params_to_api_key,
-)
+# import type specific generators to load them
+from .generators import type as type_, type_version  # noqa
 
 
 @API_V1.route("/namespaces/<string:namespace>/types/")
@@ -76,192 +88,75 @@ class TypesView(MethodView):
         return found_namespace  # is not None because abort raises exception
 
     @API_V1.arguments(CursorPageArgumentsSchema, location="query", as_kwargs=True)
-    @API_V1.response(DynamicApiResponseSchema(CursorPageSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(CursorPageSchema()))
+    @API_V1.require_jwt("jwt")
     def get(self, namespace: str, **kwargs: Any):
         """Get the page of types."""
         self._check_path_params(namespace=namespace)
         found_namespace = self._get_namespace(namespace=namespace)
-
-        cursor: Optional[str] = kwargs.get("cursor", None)
-        item_count: int = cast(int, kwargs.get("item_count", 25))
-        sort: str = cast(str, kwargs.get("sort", "name").lstrip("+"))
-        sort_function: Callable[..., Any] = (
-            desc if sort is not None and sort.startswith("-") else asc
+        FLASK_OSO.authorize_and_set_resource(
+            OsoResource(
+                TYPE_REL_TYPE, is_collection=True, parent_resource=found_namespace
+            )
         )
-        sort_key: str = sort.lstrip("+-") if sort is not None else "name"
+
+        pagination_options: PaginationOptions = prepare_pagination_query_args(
+            **kwargs, _sort_default="name"
+        )
 
         ontology_type_filter = (
             OntologyObjectType.deleted_on == None,
             OntologyObjectType.namespace_id == int(namespace),
         )
 
-        pagination_info = get_page_info(
+        pagination_info = default_get_page_info(
             OntologyObjectType,
-            OntologyObjectType.id,
+            ontology_type_filter,
+            pagination_options,
             [OntologyObjectType.name],
-            cursor,
-            sort,
-            item_count,
-            filter_criteria=ontology_type_filter,
         )
 
         object_types: List[OntologyObjectType] = pagination_info.page_items_query.all()
 
-        embedded_items: List[ApiResponse] = [
-            type_to_api_response(object_type) for object_type in object_types
-        ]
-        items: List[ApiLink] = [item.data.get("self") for item in embedded_items]
-
-        query_params = {
-            "item-count": item_count,
-            "sort": sort,
-        }
-
-        self_query_params = dict(query_params)
-
-        if cursor:
-            self_query_params["cursor"] = cursor
-
-        self_rels = []
-        if pagination_info.cursor_page == 1:
-            self_rels.append("first")
-        if (
-            pagination_info.last_page
-            and pagination_info.cursor_page == pagination_info.last_page.page
-        ):
-            self_rels.append("last")
-
-        self_link = ApiLink(
-            href=url_for(
-                "api-v1.TypesView",
-                namespace=namespace,
-                _external=True,
-                **self_query_params,
-            ),
-            rel=(
-                *self_rels,
-                "page",
-                f"page-{pagination_info.cursor_page}",
-                "collection",
-            ),
-            resource_type="ont-type",
-            resource_key=type_page_params_to_key(namespace, self_query_params),
-            schema=url_for(
-                "api-v1.ApiSchemaView", schema_id="OntologyType", _external=True
-            ),
+        embedded_items, items = dump_embedded_page_items(
+            object_types, ObjectTypeSchema(), TYPE_EXTRA_LINK_RELATIONS
         )
 
-        extra_links: List[ApiLink] = [self_link]
+        page_resource = PageResource(
+            OntologyObjectType,
+            resource=found_namespace,
+            page_number=pagination_info.cursor_page,
+            active_page=pagination_info.cursor_page,
+            last_page=pagination_info.last_page.page,
+            collection_size=pagination_info.collection_size,
+            item_links=items,
+        )
+        self_link = LinkGenerator.get_link_of(
+            page_resource, query_params=pagination_options.to_query_params()
+        )
 
-        if pagination_info.last_page is not None:
-            if pagination_info.cursor_page != pagination_info.last_page.page:
-                # only if current page is not last page
-                last_query_params = dict(query_params)
-                last_query_params["cursor"] = str(pagination_info.last_page.cursor)
+        extra_links = generate_page_links(
+            page_resource, pagination_info, pagination_options
+        )
 
-                extra_links.append(
-                    ApiLink(
-                        href=url_for(
-                            "api-v1.TypesView",
-                            namespace=namespace,
-                            _external=True,
-                            **last_query_params,
-                        ),
-                        rel=(
-                            "last",
-                            "page",
-                            f"page-{pagination_info.last_page.page}",
-                            "collection",
-                        ),
-                        resource_type="ont-type",
-                        resource_key=type_page_params_to_key(
-                            namespace, last_query_params
-                        ),
-                        schema=url_for(
-                            "api-v1.ApiSchemaView",
-                            schema_id="OntologyType",
-                            _external=True,
-                        ),
-                    )
-                )
-
-        for page in pagination_info.surrounding_pages:
-            if page == pagination_info.last_page:
-                continue  # link already included
-            page_query_params = dict(query_params)
-            page_query_params["cursor"] = str(page.cursor)
-
-            extra_rels = []
-            if page.page + 1 == pagination_info.cursor_page:
-                extra_rels.append("prev")
-            if page.page - 1 == pagination_info.cursor_page:
-                extra_rels.append("next")
-
-            extra_links.append(
-                ApiLink(
-                    href=url_for(
-                        "api-v1.TypesView",
-                        namespace=namespace,
-                        _external=True,
-                        **page_query_params,
-                    ),
-                    rel=(
-                        *extra_rels,
-                        "page",
-                        f"page-{page.page}",
-                        "collection",
-                    ),
-                    resource_type="ont-type",
-                    resource_key=type_page_params_to_key(namespace, page_query_params),
-                    schema=url_for(
-                        "api-v1.ApiSchemaView", schema_id="OntologyType", _external=True
-                    ),
-                )
-            )
-
-        extra_links.extend(nav_links_for_type_page(found_namespace))
-
-        extra_links.extend(action_links_for_type_page(found_namespace))
-
-        return ApiResponse(
-            links=[
-                ApiLink(
-                    href=url_for("api-v1.NamespacesView", _external=True, **query_params),
-                    rel=("first", "page", "page-1", "collection", "nav"),
-                    resource_type="ont-namespace",
-                    resource_key=query_params_to_api_key({"item-count": item_count}),
-                    schema=url_for(
-                        "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
-                    ),
+        return ApiResponseGenerator.get_api_response(
+            page_resource,
+            query_params=pagination_options.to_query_params(),
+            extra_links=[
+                LinkGenerator.get_link_of(
+                    page_resource.get_page(1),
+                    query_params=pagination_options.to_query_params(cursor=None),
                 ),
-                ApiLink(
-                    href=url_for(
-                        "api-v1.TypesView",
-                        namespace=namespace,
-                        _external=True,
-                        **query_params,
-                    ),
-                    rel=("first", "page", "page-1", "collection"),
-                    resource_type="ont-type",
-                    resource_key=type_page_params_to_key(namespace, query_params),
-                    schema=url_for(
-                        "api-v1.ApiSchemaView", schema_id="OntologyType", _external=True
-                    ),
-                ),
+                self_link,
                 *extra_links,
             ],
-            embedded=embedded_items,
-            data=CursorPage(
-                self=self_link,
-                collection_size=pagination_info.collection_size,
-                page=pagination_info.cursor_page,
-                first_row=pagination_info.cursor_row + 1,
-                items=items,
-            ),
+            extra_embedded=embedded_items,
+            link_to_relations=TYPE_PAGE_EXTRA_LINK_RELATIONS,
         )
 
     @API_V1.arguments(JSONSchemaSchema(unknown=INCLUDE))
-    @API_V1.response(DynamicApiResponseSchema(NewApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(NewApiObjectSchema()))
+    @API_V1.require_jwt("jwt")
     def post(self, data, namespace: str):
         """Create a new type."""
         self._check_path_params(namespace=namespace)
@@ -278,6 +173,10 @@ class TypesView(MethodView):
                     "Namespace is marked as deleted and cannot be modified further."
                 ),
             )
+
+        FLASK_OSO.authorize_and_set_resource(
+            OsoResource(TYPE_REL_TYPE, parent_resource=found_namespace), action=CREATE
+        )
 
         object_type = OntologyObjectType(
             namespace=found_namespace,
@@ -297,6 +196,10 @@ class TypesView(MethodView):
         DB.session.flush()
 
         object_type.current_version = object_type_version
+
+        # object_type is flushed, safe to add user rights here
+        user: User = g.current_user
+        user.set_role_for_resource("owner", object_type)
 
         DB.session.add(object_type)
         DB.session.add(object_type_version)
@@ -320,16 +223,23 @@ class TypesView(MethodView):
 
         DB.session.commit()
 
-        object_type_link = type_to_type_data(object_type).self
-        object_type_data = type_to_api_response(object_type)
+        object_type_response = ApiResponseGenerator.get_api_response(
+            object_type, link_to_relations=TYPE_EXTRA_LINK_RELATIONS
+        )
+        object_type_link = object_type_response.data.self
+        object_type_response.data = ObjectTypeSchema().dump(object_type_response.data)
 
-        self_link = create_action_link_for_type_page(namespace=found_namespace)
-        self_link.rel = (*self_link.rel, "ont-type")
-        self_link.resource_type = "new"
+        self_link = LinkGenerator.get_link_of(
+            PageResource(OntologyObjectType, resource=found_namespace),
+            for_relation=CREATE_REL,
+            extra_relations=(TYPE_REL_TYPE,),
+            ignore_deleted=True,
+        )
+        self_link.resource_type = NEW_REL
 
         return ApiResponse(
             links=[object_type_link],
-            embedded=[object_type_data],
+            embedded=[object_type_response],
             data=NewApiObject(
                 self=self_link,
                 new=object_type_link,
@@ -386,37 +296,25 @@ class TypeView(MethodView):
                 ),
             )
 
-    @API_V1.response(DynamicApiResponseSchema(ObjectTypeSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ObjectTypeSchema()))
+    @API_V1.require_jwt("jwt")
     def get(self, namespace: str, object_type: str, **kwargs: Any):
         """Get a single type."""
         self._check_path_params(namespace=namespace, object_type=object_type)
         found_object_type: OntologyObjectType = self._get_object_type(
             namespace=namespace, object_type=object_type
         )
+        FLASK_OSO.authorize_and_set_resource(found_object_type)
 
-        return ApiResponse(
-            links=[
-                ApiLink(
-                    href=url_for(
-                        "api-v1.NamespacesView",
-                        _external=True,
-                        **{"item-count": 50},
-                        sort="name",
-                    ),
-                    rel=("first", "page", "collection", "nav"),
-                    resource_type="ont-namespace",
-                    schema=url_for(
-                        "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
-                    ),
-                ),
-                *nav_links_for_type(found_object_type),
-                *action_links_for_type(found_object_type),
-            ],
-            data=type_to_type_data(found_object_type),
+        # TODO embed referenced types and taxonomies?
+
+        return ApiResponseGenerator.get_api_response(
+            found_object_type, link_to_relations=TYPE_EXTRA_LINK_RELATIONS
         )
 
     @API_V1.arguments(JSONSchemaSchema(unknown=INCLUDE))
-    @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.require_jwt("jwt")
     def put(self, data, namespace: str, object_type: str):
         """Update type (creates a new version)."""
         self._check_path_params(namespace=namespace, object_type=object_type)
@@ -424,6 +322,8 @@ class TypeView(MethodView):
             namespace=namespace, object_type=object_type
         )
         self._check_if_modifiable(found_object_type)
+
+        FLASK_OSO.authorize_and_set_resource(found_object_type, action=UPDATE)
 
         object_type_version = OntologyObjectTypeVersion(
             ontology_type=found_object_type,
@@ -462,32 +362,31 @@ class TypeView(MethodView):
         DB.session.add(found_object_type)
         DB.session.commit()
 
-        object_type_link = type_to_type_data(found_object_type).self
-        object_type_data = type_to_api_response(found_object_type)
+        object_type_response = ApiResponseGenerator.get_api_response(
+            found_object_type, link_to_relations=TYPE_EXTRA_LINK_RELATIONS
+        )
+        object_type_link = object_type_response.data.self
+        object_type_response.data = ObjectTypeSchema().dump(object_type_response.data)
+
+        self_link = LinkGenerator.get_link_of(
+            found_object_type,
+            for_relation=UPDATE_REL,
+            extra_relations=(TYPE_REL_TYPE,),
+            ignore_deleted=True,
+        )
+        self_link.resource_type = CHANGED_REL
 
         return ApiResponse(
             links=[object_type_link],
-            embedded=[object_type_data],
+            embedded=[object_type_response],
             data=ChangedApiObject(
-                self=ApiLink(
-                    href=url_for(
-                        "api-v1.TypeView",
-                        namespace=namespace,
-                        object_type=object_type,
-                        _external=True,
-                    ),
-                    rel=(
-                        "update",
-                        "put",
-                        "ont-type",
-                    ),
-                    resource_type="changed",
-                ),
+                self=self_link,
                 changed=object_type_link,
             ),
         )
 
-    @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.require_jwt("jwt")
     def post(self, namespace: str, object_type: str):  # restore action
         """Restore a deleted type."""
         self._check_path_params(namespace=namespace, object_type=object_type)
@@ -496,6 +395,8 @@ class TypeView(MethodView):
         )
         self._check_if_namespace_modifiable(object_type=found_object_type)
 
+        FLASK_OSO.authorize_and_set_resource(found_object_type, action=RESTORE)
+
         # only actually restore when not already restored
         if found_object_type.deleted_on is not None:
             # restore object type
@@ -503,32 +404,31 @@ class TypeView(MethodView):
             DB.session.add(found_object_type)
             DB.session.commit()
 
-        object_type_link = type_to_type_data(found_object_type).self
-        object_type_data = type_to_api_response(found_object_type)
+        object_type_response = ApiResponseGenerator.get_api_response(
+            found_object_type, link_to_relations=TYPE_EXTRA_LINK_RELATIONS
+        )
+        object_type_link = object_type_response.data.self
+        object_type_response.data = ObjectTypeSchema().dump(object_type_response.data)
+
+        self_link = LinkGenerator.get_link_of(
+            found_object_type,
+            for_relation=RESTORE_REL,
+            extra_relations=(TYPE_REL_TYPE,),
+            ignore_deleted=True,
+        )
+        self_link.resource_type = CHANGED_REL
 
         return ApiResponse(
             links=[object_type_link],
-            embedded=[object_type_data],
+            embedded=[object_type_response],
             data=ChangedApiObject(
-                self=ApiLink(
-                    href=url_for(
-                        "api-v1.TypeView",
-                        namespace=namespace,
-                        object_type=object_type,
-                        _external=True,
-                    ),
-                    rel=(
-                        "restore",
-                        "post",
-                        "ont-type",
-                    ),
-                    resource_type="changed",
-                ),
+                self=self_link,
                 changed=object_type_link,
             ),
         )
 
-    @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.require_jwt("jwt")
     def delete(self, namespace: str, object_type: str):
         """Delete a type."""
         self._check_path_params(namespace=namespace, object_type=object_type)
@@ -537,6 +437,8 @@ class TypeView(MethodView):
         )
         self._check_if_namespace_modifiable(object_type=found_object_type)
 
+        FLASK_OSO.authorize_and_set_resource(found_object_type)
+
         # only actually delete when not already deleted
         if found_object_type.deleted_on is None:
             # soft delete namespace
@@ -544,26 +446,25 @@ class TypeView(MethodView):
             DB.session.add(found_object_type)
             DB.session.commit()
 
-        object_type_link = type_to_type_data(found_object_type).self
-        object_type_data = type_to_api_response(found_object_type)
+        object_type_response = ApiResponseGenerator.get_api_response(
+            found_object_type, link_to_relations=TYPE_EXTRA_LINK_RELATIONS
+        )
+        object_type_link = object_type_response.data.self
+        object_type_response.data = ObjectTypeSchema().dump(object_type_response.data)
+
+        self_link = LinkGenerator.get_link_of(
+            found_object_type,
+            for_relation=DELETE_REL,
+            extra_relations=(TYPE_REL_TYPE,),
+            ignore_deleted=True,
+        )
+        self_link.resource_type = CHANGED_REL
 
         return ApiResponse(
             links=[object_type_link],
-            embedded=[object_type_data],
+            embedded=[object_type_response],
             data=ChangedApiObject(
-                self=ApiLink(
-                    href=url_for(
-                        "api-v1.TypeView",
-                        namespace=namespace,
-                        object_type=object_type,
-                        _external=True,
-                    ),
-                    rel=(
-                        "delete",
-                        "ont-type",
-                    ),
-                    resource_type="changed",
-                ),
+                self=self_link,
                 changed=object_type_link,
             ),
         )

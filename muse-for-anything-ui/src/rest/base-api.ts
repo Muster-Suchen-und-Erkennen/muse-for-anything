@@ -1,6 +1,19 @@
-import { autoinject } from "aurelia-framework";
+import { EventAggregator } from "aurelia-event-aggregator";
 import { HttpClient } from "aurelia-fetch-client";
-import { ApiResponse, ApiLink, GenericApiObject, ApiObject, matchesLinkRel, ApiLinkKey, KeyedApiLink, applyKeyToLinkedKey, checkKeyMatchesKeyedLink, isApiResponse, checkKeyMatchesKeyedLinkExact, checkKeyCompatibleWithKeyedLink } from "./api-objects";
+import { autoinject } from "aurelia-framework";
+import { REQUEST_FRESH_LOGIN_CHANNEL, REQUEST_LOGOUT_CHANNEL } from "resources/events";
+import { ApiLink, ApiLinkKey, ApiObject, ApiResponse, applyKeyToLinkedKey, checkKeyCompatibleWithKeyedLink, checkKeyMatchesKeyedLink, checkKeyMatchesKeyedLinkExact, GenericApiObject, isApiObject, isApiResponse, isChangedApiObject, isDeletedApiObject, KeyedApiLink, matchesLinkRel } from "./api-objects";
+
+export class ResponseError extends Error {
+    readonly status: number;
+    readonly response: Response;
+
+    constructor(message: string, response: Response) {
+        super(message);
+        this.status = response.status;
+        this.response = response;
+    }
+}
 
 @autoinject
 export class BaseApiService {
@@ -9,18 +22,34 @@ export class BaseApiService {
     static CACHE_VERSION = 1;
     static CURRENT_CACHES = {
         api: `api-cache-v${BaseApiService.CACHE_VERSION}`,
+        apiEmbedded: `api-embedded-cache-v${BaseApiService.CACHE_VERSION}`,
     };
 
     private http: HttpClient;
+    private events: EventAggregator;
+
     private apiRoot: Promise<ApiResponse<GenericApiObject>>;
     private apiCache: Cache;
+    private apiEmbeddedCache: Cache;
 
     private clientUrlToApiLink: Map<string, ApiLink> = new Map();
     private keyedLinksByKey: Map<string, KeyedApiLink> = new Map();
     private keyedLinkyByResourceType: Map<string, KeyedApiLink[]> = new Map();
+    private rootNavigationLinks: ApiLink[] = [];
 
-    constructor(http: HttpClient) {
+    private _defaultAuthorization: string;
+
+    constructor(http: HttpClient, eventAggregator: EventAggregator) {
         this.http = http;
+        this.events = eventAggregator;
+    }
+
+    public set defaultAuthorization(authorization: string) {
+        this._defaultAuthorization = authorization;
+    }
+
+    public resetDefaultAuthorization() {
+        this._defaultAuthorization = null;
     }
 
     private resolveRel(links: ApiLink[], rel: string | string[]): ApiLink {
@@ -43,6 +72,30 @@ export class BaseApiService {
         return `${resourceType}/${key.join("/")}`;
     }
 
+    private extractLastModified(data: any): string {
+        if (data != null) {
+            if (data.deletedOn != null) {
+                try {
+                    Date.parse(data.deletedOn);
+                    return data.deletedOn;
+                } catch {/* ignore errors */ }
+            }
+            if (data.updatedOn != null) {
+                try {
+                    Date.parse(data.updatedOn);
+                    return data.updatedOn;
+                } catch {/* ignore errors */ }
+            }
+            if (data.createdOn != null) {
+                try {
+                    Date.parse(data.createdOn);
+                    return data.createdOn;
+                } catch {/* ignore errors */ }
+            }
+        }
+        return (new Date()).toUTCString();
+    }
+
     private async cacheResults(request: RequestInfo, responseData: ApiResponse<unknown>) {
         if (this.apiCache == null) {
             return;
@@ -52,9 +105,35 @@ export class BaseApiService {
         const embedded = responseData?.embedded;
         delete responseData.embedded; // nothing outside of caching must depend on this!
 
+        const date = this.extractLastModified(responseData?.data);
+
         if (isGet) {
             // only cache the whole response for get requests
-            this.apiCache.put(request, new Response(JSON.stringify(responseData)));
+            this.apiCache.put(request, new Response(JSON.stringify(responseData), { headers: { "last-modified": date } }));
+        } else {
+            // if method could have deleted things
+            const apiObject = responseData?.data as ApiObject;
+            if (isChangedApiObject(apiObject)) {
+                // invalidate changed object
+                this.apiCache.delete(apiObject.changed.href);
+                this.apiEmbeddedCache.delete(apiObject.changed.href);
+                responseData.links.forEach(link => {
+                    // invalidate all related changes
+                    this.apiCache.delete(link.href);
+                    this.apiEmbeddedCache.delete(link.href);
+                });
+            }
+            if (isDeletedApiObject(apiObject)) {
+                // Remove cache entries of deleted object
+                // FIXME also delete related deleted resources in cache!!!
+                this.apiCache.delete(apiObject.deleted.href);
+                this.apiEmbeddedCache.delete(apiObject.deleted.href);
+                responseData.links.forEach(link => {
+                    // invalidate all related changes
+                    this.apiCache.delete(link.href);
+                    this.apiEmbeddedCache.delete(link.href);
+                });
+            }
         }
 
         if (embedded != null) {
@@ -64,7 +143,9 @@ export class BaseApiService {
                 if (selfLink == null) {
                     continue;
                 }
-                promises.push(this.apiCache.put(selfLink, new Response(JSON.stringify(response))));
+                const date = this.extractLastModified(response?.data);
+                const cache = this.apiEmbeddedCache ?? this.apiCache;
+                promises.push(cache.put(selfLink, new Response(JSON.stringify(response), { headers: { "last-modified": date } })));
             }
             await Promise.all(promises);
         }
@@ -94,7 +175,7 @@ export class BaseApiService {
     private async handleResponse<T>(response: Response, input: RequestInfo): Promise<T> {
         if (!response.ok) {
             console.warn(response);
-            throw Error("Something went wrong with the request!");
+            throw new ResponseError("Something went wrong with the request!", response);
         }
 
         if (response.status === 204) {
@@ -120,16 +201,69 @@ export class BaseApiService {
         }
     }
 
-    private async _fetch<T>(input: RequestInfo, ignoreCache = false, init: RequestInit = null): Promise<T> {
+    private applyDefaultAuthorization(init: RequestInit): RequestInit {
+        if (this._defaultAuthorization == null) {
+            return init;
+        }
+        if (init?.headers != null) {
+            if (Array.isArray(init.headers)) {
+                if (init.headers.every(header => header[0] !== "Authorization")) {
+                    init.headers.push(["Authorization", this._defaultAuthorization]);
+                }
+            } else {
+                if (init.headers?.["Authorization"] == null) {
+                    init.headers["Authorization"] = this._defaultAuthorization;
+                }
+            }
+        }
+        return init;
+    }
+
+    // eslint-disable-next-line complexity
+    private async _fetchCached(input: Request, ignoreCache: boolean | "ignore-embedded" = false): Promise<Response | null> {
+        if (this.apiCache == null || ignoreCache === true) {
+            return null;
+        }
+        const directCached = await this.apiCache.match(input);
+        if (this.apiEmbeddedCache != null) {
+            const embeddedCached = await this.apiEmbeddedCache.match(input);
+            if (directCached == null) {
+                if (ignoreCache === "ignore-embedded") {
+                    return null;
+                }
+                return embeddedCached;
+            }
+            if (embeddedCached != null) {
+                const dateDirect = directCached.headers.get("last-modified");
+                const dateEmbedded = embeddedCached.headers.get("last-modified");
+                if (dateDirect && dateEmbedded) {
+                    try {
+                        const timeDirect = Date.parse(dateDirect);
+                        const timeEmbedded = Date.parse(dateEmbedded);
+                        if (timeDirect >= timeEmbedded) {
+                            return directCached;
+                        }
+                        if (ignoreCache === "ignore-embedded") {
+                            return null; // direct cached is stale but embedded cache result is to be ignored
+                        }
+                    } catch {/* ignore errors */ }
+                }
+            }
+        }
+        return directCached;
+    }
+
+    private async _fetch<T>(input: RequestInfo, ignoreCache: boolean | "ignore-embedded" = false, init: RequestInit = null): Promise<T> {
         if (init != null && Boolean(init)) {
-            input = new Request(input, init);
+            input = new Request(input, this.applyDefaultAuthorization(init));
         }
         if (typeof input === "string") {
-            input = new Request(input, { headers: { Accept: "application/json" } });
+            input = new Request(input, this.applyDefaultAuthorization({ headers: { Accept: "application/json" } }));
         }
+        // FIXME caching
         const isGet = typeof input === "string" || input.method === "GET";
-        if (isGet && !ignoreCache && this.apiCache != null) {
-            const response = await this.apiCache.match(input);
+        if (isGet) {
+            const response = await this._fetchCached(input, ignoreCache);
             if (response != null) {
                 const responseData = await response.json();
                 if (input.url === responseData.data.self.href) {
@@ -150,6 +284,7 @@ export class BaseApiService {
 
             // remove refenrence to cache that should be deleted
             this.apiCache = null;
+            this.apiEmbeddedCache = null;
 
             // delete all! caches
             const cacheNames = await caches.keys();
@@ -180,6 +315,7 @@ export class BaseApiService {
 
             // open known cache
             this.apiCache = await caches.open(BaseApiService.CURRENT_CACHES.api);
+            this.apiEmbeddedCache = await caches.open(BaseApiService.CURRENT_CACHES.apiEmbedded);
         }
     }
 
@@ -232,9 +368,14 @@ export class BaseApiService {
 
     private async _searchResolveRels(rel: string | string[], root?: ApiResponse<unknown>, apiRel: string | string[] = "api"): Promise<ApiLink> {
         const base = root ?? await this.resolveApiRoot();
-        const link = base.links.find(link => matchesLinkRel(link, rel));
-        if (link != null) {
-            return link;
+        const matchingLinks = base.links.filter(link => matchesLinkRel(link, rel));
+        if (matchingLinks.length > 0) {
+            if (matchingLinks.length === 1) { // only one match
+                return matchingLinks[0];
+            }
+            // prioritise match with resourceType
+            const bestMatch = matchingLinks.find(link => (typeof rel === "string") ? link.resourceType === rel : rel.some(rel => link.resourceType === rel));
+            return bestMatch ?? matchingLinks[0];
         }
         for (const link of base.links) {
             if (matchesLinkRel(link, apiRel)) {
@@ -515,12 +656,15 @@ export class BaseApiService {
         return await this.resolveApiLinkKey(linkKey, resourceType, queryParams);
     }
 
-    private async prefetchRelsRecursive(rel: string | string[] = "api", root?: ApiResponse<unknown>, ignoreCache: boolean = true) {
+    private async prefetchRelsRecursive(rel: string | string[] = "api", root?: ApiResponse<unknown>, ignoreCache: boolean | "ignore-embedded" = true) {
         const base = root ?? await this.resolveApiRoot();
         base.links.forEach(async (link) => {
             if (matchesLinkRel(link, rel)) {
                 const new_base = await this._fetch<ApiResponse<unknown>>(link.href, ignoreCache);
                 this.prefetchRelsRecursive(rel, new_base, ignoreCache);
+            }
+            if (matchesLinkRel(link, "nav")) {
+                this.rootNavigationLinks.push(link);
             }
         });
     }
@@ -535,31 +679,56 @@ export class BaseApiService {
         return await this.apiRoot;
     }
 
-    public async getByRel<T>(rel: string | string[] | string[][], ignoreCache: boolean = false): Promise<ApiResponse<T>> {
+    public async getRootNavigationLinks(): Promise<ApiLink[]> {
+        await this.resolveApiRoot(); // await root links beeing resolved
+        return this.rootNavigationLinks;
+    }
+
+    public async getByRel<T>(rel: string | string[] | string[][], ignoreCache: boolean | "ignore-embedded" = false): Promise<ApiResponse<T>> {
         const link: ApiLink = await this.resolveRecursiveRels(rel);
         return await this._fetch<ApiResponse<T>>(link.href, ignoreCache);
     }
 
-    public async getByApiLink<T>(link: ApiLink, ignoreCache: boolean = false): Promise<ApiResponse<T>> {
+    public async getByApiLink<T>(link: ApiLink, ignoreCache: boolean | "ignore-embedded" = false): Promise<ApiResponse<T>> {
         return await this._fetch<ApiResponse<T>>(link.href, ignoreCache);
     }
 
-    public async submitByApiLink<T>(link: ApiLink, data?: any, signal?: AbortSignal): Promise<ApiResponse<T>> {
+    public async submitByApiLink<T>(link: ApiLink, data?: any, signal?: AbortSignal, authentication?: string): Promise<ApiResponse<T>> {
         const method = link.rel.find(rel => rel === "post" || rel === "put" || rel === "patch" || rel === "delete").toUpperCase();
         const init: RequestInit = {
             headers: { Accept: "application/json", "Content-Type": "application/json" },
             method: method,
         };
+        if (authentication != null) {
+            // FIXME use more generic methods for injecting auth
+            init.headers["Authorization"] = authentication;
+        }
         if (data !== undefined) {
             init.body = JSON.stringify(data);
         }
         if (signal != null) {
             init.signal = signal;
         }
-        return await this._fetch<ApiResponse<T>>(link.href, true, init);
+        if (link.rel.some(rel => rel === "requires-fresh-login")) {
+            // wait for a fresh login to happen
+            const authToken = await new Promise<string>((resolve, reject) => {
+                this.events.publish(REQUEST_FRESH_LOGIN_CHANNEL, { resolve, reject });
+            });
+            init.headers["Authorization"] = `Bearer ${authToken}`;
+        }
+        const result = await this._fetch<ApiResponse<T>>(link.href, true, init);
+
+        // check for logout handling
+        if (isApiObject(result.data)) {
+            if (matchesLinkRel(result.data.self, "logout")) {
+                // result contains logout command
+                this.events.publish(REQUEST_LOGOUT_CHANNEL);
+            }
+        }
+        return result;
     }
 
-    public async fetch<T>(input: RequestInfo, init?: RequestInit, ignoreCache: boolean = false): Promise<T> {
+    public async fetch<T>(input: RequestInfo, init?: RequestInit, ignoreCache: boolean | "ignore-embedded" = false): Promise<T> {
         return await this._fetch<T>(input, ignoreCache, init);
     }
 }

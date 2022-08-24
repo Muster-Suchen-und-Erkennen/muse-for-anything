@@ -1,25 +1,59 @@
 """Module containing the taxonomy API endpoints of the v1 API."""
 
 from datetime import datetime
-
-from marshmallow.utils import INCLUDE
-from flask_babel import gettext
-from muse_for_anything.api.util import template_url_for
-from typing import Any, Callable, Dict, List, Optional, Union, cast
-from flask.helpers import url_for
-from flask.views import MethodView
-from sqlalchemy.sql.expression import asc, desc, literal
-from sqlalchemy.orm.query import Query
-from flask_smorest import abort
 from http import HTTPStatus
+from typing import Any, List, Optional, cast
 
+from flask.globals import g
+from flask.views import MethodView
+from flask_babel import gettext
+from flask_smorest import abort
+from marshmallow.utils import INCLUDE
+from sqlalchemy.sql.expression import literal
+
+from muse_for_anything.api.pagination_util import (
+    PaginationOptions,
+    default_get_page_info,
+    dump_embedded_page_items,
+    generate_page_links,
+    prepare_pagination_query_args,
+)
+from muse_for_anything.api.v1_api.request_helpers import (
+    ApiResponseGenerator,
+    LinkGenerator,
+    PageResource,
+    skip_slow_policy_checks_for_links_in_embedded_responses,
+)
+from muse_for_anything.db.models.users import User
+from muse_for_anything.oso_helpers import FLASK_OSO, OsoResource
+
+from .constants import (
+    CHANGED_REL,
+    CREATE,
+    CREATE_REL,
+    DELETE_REL,
+    NEW_REL,
+    RESTORE,
+    RESTORE_REL,
+    TAXONOMY_EXTRA_LINK_RELATIONS,
+    TAXONOMY_ITEM_EXTRA_LINK_RELATIONS,
+    TAXONOMY_ITEM_PAGE_EXTRA_LINK_RELATIONS,
+    TAXONOMY_ITEM_REL_TYPE,
+    TAXONOMY_PAGE_EXTRA_LINK_RELATIONS,
+    TAXONOMY_REL_TYPE,
+    UPDATE,
+    UPDATE_REL,
+)
+from .models.ontology import (
+    TaxonomyItemRelationSchema,
+    TaxonomyItemSchema,
+    TaxonomySchema,
+)
 from .root import API_V1
 from ..base_models import (
-    ApiLink,
     ApiResponse,
     ChangedApiObject,
     ChangedApiObjectSchema,
-    CursorPage,
     CursorPageArgumentsSchema,
     CursorPageSchema,
     DynamicApiResponseSchema,
@@ -27,33 +61,11 @@ from ..base_models import (
     NewApiObjectSchema,
 )
 from ...db.db import DB
-from ...db.pagination import get_page_info
 from ...db.models.namespace import Namespace
 from ...db.models.taxonomies import Taxonomy, TaxonomyItem, TaxonomyItemVersion
 
-from .models.ontology import TaxonomyItemSchema, TaxonomySchema
-
-from .namespace_helpers import (
-    query_params_to_api_key,
-)
-
-from .taxonomy_helpers import (
-    action_links_for_taxonomy,
-    action_links_for_taxonomy_item_page,
-    action_links_for_taxonomy_page,
-    create_action_link_for_taxonomy_item_page,
-    create_action_link_for_taxonomy_page,
-    nav_links_for_taxonomy,
-    nav_links_for_taxonomy_item_page,
-    nav_links_for_taxonomy_page,
-    taxonomy_item_page_params_to_key,
-    taxonomy_item_relation_to_api_response,
-    taxonomy_item_to_api_response,
-    taxonomy_item_to_taxonomy_item_data,
-    taxonomy_page_params_to_key,
-    taxonomy_to_api_response,
-    taxonomy_to_taxonomy_data,
-)
+# import taxonomy specific generators to load them
+from .generators import taxonomy, taxonomy_item  # noqa
 
 
 @API_V1.route("/namespaces/<string:namespace>/taxonomies/")
@@ -79,194 +91,72 @@ class TaxonomiesView(MethodView):
         return found_namespace  # is not None because abort raises exception
 
     @API_V1.arguments(CursorPageArgumentsSchema, location="query", as_kwargs=True)
-    @API_V1.response(DynamicApiResponseSchema(CursorPageSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(CursorPageSchema()))
+    @API_V1.require_jwt("jwt")
     def get(self, namespace: str, **kwargs: Any):
         """Get the page of taxonomies."""
         self._check_path_params(namespace=namespace)
         found_namespace = self._get_namespace(namespace=namespace)
-
-        cursor: Optional[str] = kwargs.get("cursor", None)
-        item_count: int = cast(int, kwargs.get("item_count", 25))
-        sort: str = cast(str, kwargs.get("sort", "name").lstrip("+"))
-        sort_function: Callable[..., Any] = (
-            desc if sort is not None and sort.startswith("-") else asc
+        FLASK_OSO.authorize_and_set_resource(
+            OsoResource(
+                TAXONOMY_REL_TYPE, is_collection=True, parent_resource=found_namespace
+            )
         )
-        sort_key: str = sort.lstrip("+-") if sort is not None else "name"
+
+        pagination_options: PaginationOptions = prepare_pagination_query_args(
+            **kwargs, _sort_default="name"
+        )
 
         taxonomy_filter = (
             Taxonomy.deleted_on == None,
             Taxonomy.namespace_id == int(namespace),
         )
 
-        pagination_info = get_page_info(
-            Taxonomy,
-            Taxonomy.id,
-            [Taxonomy.name],
-            cursor,
-            sort,
-            item_count,
-            filter_criteria=taxonomy_filter,
+        pagination_info = default_get_page_info(
+            Taxonomy, taxonomy_filter, pagination_options, [Taxonomy.name]
         )
 
         taxonomies: List[Taxonomy] = pagination_info.page_items_query.all()
 
-        embedded_items: List[ApiResponse] = [
-            taxonomy_to_api_response(taxonomy) for taxonomy in taxonomies
-        ]
-        items: List[ApiLink] = [item.data.get("self") for item in embedded_items]
-
-        query_params = {
-            "item-count": item_count,
-            "sort": sort,
-        }
-
-        self_query_params = dict(query_params)
-
-        if cursor:
-            self_query_params["cursor"] = cursor
-
-        self_rels = []
-        if pagination_info.cursor_page == 1:
-            self_rels.append("first")
-        if (
-            pagination_info.last_page
-            and pagination_info.cursor_page == pagination_info.last_page.page
-        ):
-            self_rels.append("last")
-
-        self_link = ApiLink(
-            href=url_for(
-                "api-v1.TaxonomiesView",
-                namespace=namespace,
-                _external=True,
-                **self_query_params,
-            ),
-            rel=(
-                *self_rels,
-                "page",
-                f"page-{pagination_info.cursor_page}",
-                "collection",
-            ),
-            resource_type="ont-taxonomy",
-            resource_key=taxonomy_page_params_to_key(namespace, self_query_params),
-            schema=url_for(
-                "api-v1.ApiSchemaView", schema_id="TaxonomySchema", _external=True
-            ),
+        embedded_items, items = dump_embedded_page_items(
+            taxonomies, TaxonomySchema(), TAXONOMY_EXTRA_LINK_RELATIONS
         )
 
-        extra_links: List[ApiLink] = [self_link]
+        page_resource = PageResource(
+            Taxonomy,
+            resource=found_namespace,
+            page_number=pagination_info.cursor_page,
+            active_page=pagination_info.cursor_page,
+            last_page=pagination_info.last_page.page,
+            collection_size=pagination_info.collection_size,
+            item_links=items,
+        )
+        self_link = LinkGenerator.get_link_of(
+            page_resource, query_params=pagination_options.to_query_params()
+        )
 
-        if pagination_info.last_page is not None:
-            if pagination_info.cursor_page != pagination_info.last_page.page:
-                # only if current page is not last page
-                last_query_params = dict(query_params)
-                last_query_params["cursor"] = str(pagination_info.last_page.cursor)
+        extra_links = generate_page_links(
+            page_resource, pagination_info, pagination_options
+        )
 
-                extra_links.append(
-                    ApiLink(
-                        href=url_for(
-                            "api-v1.TaxonomiesView",
-                            namespace=namespace,
-                            _external=True,
-                            **last_query_params,
-                        ),
-                        rel=(
-                            "last",
-                            "page",
-                            f"page-{pagination_info.last_page.page}",
-                            "collection",
-                        ),
-                        resource_type="ont-taxonomy",
-                        resource_key=taxonomy_page_params_to_key(
-                            namespace, last_query_params
-                        ),
-                        schema=url_for(
-                            "api-v1.ApiSchemaView",
-                            schema_id="TaxonomySchema",
-                            _external=True,
-                        ),
-                    )
-                )
-
-        for page in pagination_info.surrounding_pages:
-            if page == pagination_info.last_page:
-                continue  # link already included
-            page_query_params = dict(query_params)
-            page_query_params["cursor"] = str(page.cursor)
-
-            extra_rels = []
-            if page.page + 1 == pagination_info.cursor_page:
-                extra_rels.append("prev")
-            if page.page - 1 == pagination_info.cursor_page:
-                extra_rels.append("next")
-
-            extra_links.append(
-                ApiLink(
-                    href=url_for(
-                        "api-v1.TaxonomiesView",
-                        namespace=namespace,
-                        _external=True,
-                        **page_query_params,
-                    ),
-                    rel=(
-                        *extra_rels,
-                        "page",
-                        f"page-{page.page}",
-                        "collection",
-                    ),
-                    resource_type="ont-taxonomy",
-                    resource_key=taxonomy_page_params_to_key(
-                        namespace, page_query_params
-                    ),
-                    schema=url_for(
-                        "api-v1.ApiSchemaView", schema_id="TaxonomySchema", _external=True
-                    ),
-                )
-            )
-
-        extra_links.extend(nav_links_for_taxonomy_page(found_namespace))
-
-        extra_links.extend(action_links_for_taxonomy_page(found_namespace))
-
-        return ApiResponse(
-            links=[
-                ApiLink(
-                    href=url_for("api-v1.NamespacesView", _external=True, **query_params),
-                    rel=("first", "page", "page-1", "collection", "nav"),
-                    resource_type="ont-namespace",
-                    resource_key=query_params_to_api_key({"item-count": item_count}),
-                    schema=url_for(
-                        "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
-                    ),
+        return ApiResponseGenerator.get_api_response(
+            page_resource,
+            query_params=pagination_options.to_query_params(),
+            extra_links=[
+                LinkGenerator.get_link_of(
+                    page_resource.get_page(1),
+                    query_params=pagination_options.to_query_params(cursor=None),
                 ),
-                ApiLink(
-                    href=url_for(
-                        "api-v1.TaxonomiesView",
-                        namespace=namespace,
-                        _external=True,
-                        **query_params,
-                    ),
-                    rel=("first", "page", "page-1", "collection"),
-                    resource_type="ont-taxonomy",
-                    resource_key=taxonomy_page_params_to_key(namespace, query_params),
-                    schema=url_for(
-                        "api-v1.ApiSchemaView", schema_id="TaxonomySchema", _external=True
-                    ),
-                ),
+                self_link,
                 *extra_links,
             ],
-            embedded=embedded_items,
-            data=CursorPage(
-                self=self_link,
-                collection_size=pagination_info.collection_size,
-                page=pagination_info.cursor_page,
-                first_row=pagination_info.cursor_row + 1,
-                items=items,
-            ),
+            extra_embedded=embedded_items,
+            link_to_relations=TAXONOMY_PAGE_EXTRA_LINK_RELATIONS,
         )
 
     @API_V1.arguments(TaxonomySchema())
-    @API_V1.response(DynamicApiResponseSchema(NewApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(NewApiObjectSchema()))
+    @API_V1.require_jwt("jwt")
     def post(self, data, namespace: str):
         """Create a new taxonomy."""
         self._check_path_params(namespace=namespace)
@@ -280,6 +170,10 @@ class TaxonomiesView(MethodView):
                     "Namespace is marked as deleted and cannot be modified further."
                 ),
             )
+
+        FLASK_OSO.authorize_and_set_resource(
+            OsoResource(TAXONOMY_REL_TYPE, parent_resource=found_namespace), action=CREATE
+        )
 
         existing: bool = (
             DB.session.query(literal(True))
@@ -303,18 +197,28 @@ class TaxonomiesView(MethodView):
             description=data.get("description", ""),
         )
         DB.session.add(taxonomy)
+        DB.session.flush()
+        user: User = g.current_user
+        user.set_role_for_resource("owner", taxonomy)
         DB.session.commit()
 
-        taxonomy_link = taxonomy_to_taxonomy_data(taxonomy).self
-        taxonomy_data = taxonomy_to_api_response(taxonomy)
+        taxonomy_response = ApiResponseGenerator.get_api_response(
+            taxonomy, link_to_relations=TAXONOMY_EXTRA_LINK_RELATIONS
+        )
+        taxonomy_link = taxonomy_response.data.self
+        taxonomy_response.data = TaxonomySchema().dump(taxonomy_response.data)
 
-        self_link = create_action_link_for_taxonomy_page(namespace=found_namespace)
-        self_link.rel = (*self_link.rel, "ont-taxonomy")
-        self_link.resource_type = "new"
+        self_link = LinkGenerator.get_link_of(
+            PageResource(Taxonomy, resource=found_namespace),
+            for_relation=CREATE_REL,
+            extra_relations=(TAXONOMY_REL_TYPE,),
+            ignore_deleted=True,
+        )
+        self_link.resource_type = NEW_REL
 
         return ApiResponse(
             links=[taxonomy_link],
-            embedded=[taxonomy_data],
+            embedded=[taxonomy_response],
             data=NewApiObject(
                 self=self_link,
                 new=taxonomy_link,
@@ -375,52 +279,54 @@ class TaxonomyView(MethodView):
                 ),
             )
 
-    @API_V1.response(DynamicApiResponseSchema(TaxonomySchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(TaxonomySchema()))
+    @API_V1.require_jwt("jwt")
     def get(self, namespace: str, taxonomy: str):
         """Get a single taxonomy."""
         self._check_path_params(namespace=namespace, taxonomy=taxonomy)
         found_taxonomy: Taxonomy = self._get_taxonomy(
             namespace=namespace, taxonomy=taxonomy
         )
+        FLASK_OSO.authorize_and_set_resource(found_taxonomy)
 
         embedded_items: List[ApiResponse] = []
 
-        for item in found_taxonomy.current_items:
-            embedded_items.append(taxonomy_item_to_api_response(item))
-            for relation in item.current_related:
-                embedded_items.append(taxonomy_item_relation_to_api_response(relation))
+        item_schema = TaxonomyItemSchema()
+        relation_schema = TaxonomyItemRelationSchema()
 
-        return ApiResponse(
-            links=[
-                ApiLink(
-                    href=url_for(
-                        "api-v1.NamespacesView",
-                        _external=True,
-                        **{"item-count": 50},
-                        sort="name",
-                    ),
-                    rel=("first", "page", "collection", "nav"),
-                    resource_type="ont-namespace",
-                    schema=url_for(
-                        "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
-                    ),
-                ),
-                *nav_links_for_taxonomy(found_taxonomy),
-                *action_links_for_taxonomy(found_taxonomy),
-            ],
-            embedded=embedded_items,
-            data=taxonomy_to_taxonomy_data(found_taxonomy),
+        with skip_slow_policy_checks_for_links_in_embedded_responses():
+            for item in found_taxonomy.current_items:
+                item_response = ApiResponseGenerator.get_api_response(item)
+                if item_response:
+                    item_response.data = item_schema.dump(item_response.data)
+                    embedded_items.append(item_response)
+                for relation in item.current_related:
+                    relation_response = ApiResponseGenerator.get_api_response(relation)
+                    if relation_response:
+                        relation_response.data = relation_schema.dump(
+                            relation_response.data
+                        )
+                        embedded_items.append(relation_response)
+
+        return ApiResponseGenerator.get_api_response(
+            found_taxonomy,
+            link_to_relations=TAXONOMY_EXTRA_LINK_RELATIONS,
+            extra_embedded=embedded_items,
         )
 
     @API_V1.arguments(TaxonomySchema())
-    @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.require_jwt("jwt")
     def put(self, data, namespace: str, taxonomy: str):
         """Update taxonomy in place."""
         self._check_path_params(namespace=namespace, taxonomy=taxonomy)
         found_taxonomy: Taxonomy = self._get_taxonomy(
             namespace=namespace, taxonomy=taxonomy
         )
+
         self._check_if_modifiable(found_taxonomy)
+
+        FLASK_OSO.authorize_and_set_resource(found_taxonomy, action=UPDATE)
 
         if found_taxonomy.name != data.get("name"):
             existing: bool = (
@@ -446,32 +352,31 @@ class TaxonomyView(MethodView):
         DB.session.add(found_taxonomy)
         DB.session.commit()
 
-        taxonomy_link = taxonomy_to_taxonomy_data(found_taxonomy).self
-        taxonomy_data = taxonomy_to_api_response(found_taxonomy)
+        taxonomy_response = ApiResponseGenerator.get_api_response(
+            found_taxonomy, link_to_relations=TAXONOMY_EXTRA_LINK_RELATIONS
+        )
+        taxonomy_link = taxonomy_response.data.self
+        taxonomy_response.data = TaxonomySchema().dump(taxonomy_response.data)
+
+        self_link = LinkGenerator.get_link_of(
+            found_taxonomy,
+            for_relation=UPDATE_REL,
+            extra_relations=(TAXONOMY_REL_TYPE,),
+            ignore_deleted=True,
+        )
+        self_link.resource_type = CHANGED_REL
 
         return ApiResponse(
             links=[taxonomy_link],
-            embedded=[taxonomy_data],
+            embedded=[taxonomy_response],
             data=ChangedApiObject(
-                self=ApiLink(
-                    href=url_for(
-                        "api-v1.TaxonomyView",
-                        namespace=namespace,
-                        taxonomy=taxonomy,
-                        _external=True,
-                    ),
-                    rel=(
-                        "update",
-                        "put",
-                        "ont-taxonomy",
-                    ),
-                    resource_type="changed",
-                ),
+                self=self_link,
                 changed=taxonomy_link,
             ),
         )
 
-    @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.require_jwt("jwt")
     def post(self, namespace: str, taxonomy: str):  # restore action
         """Restore a deleted taxonomy."""
         self._check_path_params(namespace=namespace, taxonomy=taxonomy)
@@ -480,6 +385,8 @@ class TaxonomyView(MethodView):
         )
         self._check_if_namespace_modifiable(found_taxonomy.namespace)
 
+        FLASK_OSO.authorize_and_set_resource(found_taxonomy, action=RESTORE)
+
         # only actually restore when not already restored
         if found_taxonomy.deleted_on is not None:
             # restore object type
@@ -487,32 +394,31 @@ class TaxonomyView(MethodView):
             DB.session.add(found_taxonomy)
             DB.session.commit()
 
-        taxonomy_link = taxonomy_to_taxonomy_data(found_taxonomy).self
-        taxonomy_data = taxonomy_to_api_response(found_taxonomy)
+        taxonomy_response = ApiResponseGenerator.get_api_response(
+            found_taxonomy, link_to_relations=TAXONOMY_EXTRA_LINK_RELATIONS
+        )
+        taxonomy_link = taxonomy_response.data.self
+        taxonomy_response.data = TaxonomySchema().dump(taxonomy_response.data)
+
+        self_link = LinkGenerator.get_link_of(
+            found_taxonomy,
+            for_relation=RESTORE_REL,
+            extra_relations=(TAXONOMY_REL_TYPE,),
+            ignore_deleted=True,
+        )
+        self_link.resource_type = CHANGED_REL
 
         return ApiResponse(
             links=[taxonomy_link],
-            embedded=[taxonomy_data],
+            embedded=[taxonomy_response],
             data=ChangedApiObject(
-                self=ApiLink(
-                    href=url_for(
-                        "api-v1.TaxonomyView",
-                        namespace=namespace,
-                        taxonomy=taxonomy,
-                        _external=True,
-                    ),
-                    rel=(
-                        "restore",
-                        "post",
-                        "ont-taxonomy",
-                    ),
-                    resource_type="changed",
-                ),
+                self=self_link,
                 changed=taxonomy_link,
             ),
         )
 
-    @API_V1.response(DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ChangedApiObjectSchema()))
+    @API_V1.require_jwt("jwt")
     def delete(self, namespace: str, taxonomy: str):
         """Delete a taxonomy."""
         self._check_path_params(namespace=namespace, taxonomy=taxonomy)
@@ -521,6 +427,8 @@ class TaxonomyView(MethodView):
         )
         self._check_if_namespace_modifiable(found_taxonomy.namespace)
 
+        FLASK_OSO.authorize_and_set_resource(found_taxonomy)
+
         # only actually delete when not already deleted
         if found_taxonomy.deleted_on is None:
             # soft delete namespace
@@ -528,26 +436,25 @@ class TaxonomyView(MethodView):
             DB.session.add(found_taxonomy)
             DB.session.commit()
 
-        taxonomy_link = taxonomy_to_taxonomy_data(found_taxonomy).self
-        taxonomy_data = taxonomy_to_api_response(found_taxonomy)
+        taxonomy_response = ApiResponseGenerator.get_api_response(
+            found_taxonomy, link_to_relations=TAXONOMY_EXTRA_LINK_RELATIONS
+        )
+        taxonomy_link = taxonomy_response.data.self
+        taxonomy_response.data = TaxonomySchema().dump(taxonomy_response.data)
+
+        self_link = LinkGenerator.get_link_of(
+            found_taxonomy,
+            for_relation=DELETE_REL,
+            extra_relations=(TAXONOMY_REL_TYPE,),
+            ignore_deleted=True,
+        )
+        self_link.resource_type = CHANGED_REL
 
         return ApiResponse(
             links=[taxonomy_link],
-            embedded=[taxonomy_data],
+            embedded=[taxonomy_response],
             data=ChangedApiObject(
-                self=ApiLink(
-                    href=url_for(
-                        "api-v1.TaxonomyView",
-                        namespace=namespace,
-                        taxonomy=taxonomy,
-                        _external=True,
-                    ),
-                    rel=(
-                        "delete",
-                        "ont-taxonomy",
-                    ),
-                    resource_type="changed",
-                ),
+                self=self_link,
                 changed=taxonomy_link,
             ),
         )
@@ -603,210 +510,78 @@ class TaxonomyItemsView(MethodView):
             )
 
     @API_V1.arguments(CursorPageArgumentsSchema, location="query", as_kwargs=True)
-    @API_V1.response(DynamicApiResponseSchema(CursorPageSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(CursorPageSchema()))
+    @API_V1.require_jwt("jwt")
     def get(self, namespace: str, taxonomy: str, **kwargs):
         """Get all items of a taxonomy."""
         self._check_path_params(namespace=namespace, taxonomy=taxonomy)
         found_taxonomy: Taxonomy = self._get_lazy_loaded_taxonomy(
             namespace=namespace, taxonomy=taxonomy
         )
-
-        cursor: Optional[str] = kwargs.get("cursor", None)
-        item_count: int = cast(int, kwargs.get("item_count", 25))
-        sort: str = cast(str, kwargs.get("sort", "-updated_on").lstrip("+"))
-        sort_function: Callable[..., Any] = (
-            desc if sort is not None and sort.startswith("-") else asc
+        FLASK_OSO.authorize_and_set_resource(
+            OsoResource(
+                TAXONOMY_ITEM_REL_TYPE, is_collection=True, parent_resource=found_taxonomy
+            )
         )
-        sort_key: str = sort.lstrip("+-") if sort is not None else "updated_on"
+
+        pagination_options: PaginationOptions = prepare_pagination_query_args(
+            **kwargs, _sort_default="-updated_on"
+        )
 
         taxonomy_item_filter = (
             TaxonomyItem.deleted_on == None,
             TaxonomyItem.taxonomy_id == int(taxonomy),
         )
 
-        pagination_info = get_page_info(
+        pagination_info = default_get_page_info(
             TaxonomyItem,
-            TaxonomyItem.id,
+            taxonomy_item_filter,
+            pagination_options,
             [TaxonomyItem.updated_on],
-            cursor,
-            sort,
-            item_count,
-            filter_criteria=taxonomy_item_filter,
         )
 
         taxonomy_items: List[TaxonomyItem] = pagination_info.page_items_query.all()
 
-        embedded_items: List[ApiResponse] = [
-            taxonomy_item_to_api_response(item) for item in taxonomy_items
-        ]
-        items: List[ApiLink] = [
-            item.data.get("self") for item in embedded_items
-        ]  # FIXME this uses already marshalled data…
-
-        query_params = {
-            "item-count": item_count,
-            "sort": sort,
-        }
-
-        self_query_params = dict(query_params)
-
-        if cursor:
-            self_query_params["cursor"] = cursor
-
-        self_rels = []
-        if pagination_info.cursor_page == 1:
-            self_rels.append("first")
-        if (
-            pagination_info.last_page
-            and pagination_info.cursor_page == pagination_info.last_page.page
-        ):
-            self_rels.append("last")
-
-        self_link = ApiLink(
-            href=url_for(
-                "api-v1.TaxonomyItemsView",
-                namespace=namespace,
-                taxonomy=taxonomy,
-                _external=True,
-                **self_query_params,
-            ),
-            rel=(
-                *self_rels,
-                "page",
-                f"page-{pagination_info.cursor_page}",
-                "collection",
-            ),
-            resource_type="ont-taxonomy-item",
-            resource_key=taxonomy_item_page_params_to_key(
-                namespace, taxonomy, self_query_params
-            ),
-            schema=url_for(
-                "api-v1.ApiSchemaView", schema_id="TaxonomyItemSchema", _external=True
-            ),
+        embedded_items, items = dump_embedded_page_items(
+            taxonomy_items, TaxonomyItemSchema(), TAXONOMY_ITEM_EXTRA_LINK_RELATIONS
         )
 
-        extra_links: List[ApiLink] = [self_link]
+        page_resource = PageResource(
+            TaxonomyItem,
+            resource=found_taxonomy,
+            page_number=pagination_info.cursor_page,
+            active_page=pagination_info.cursor_page,
+            last_page=pagination_info.last_page.page,
+            collection_size=pagination_info.collection_size,
+            item_links=items,
+        )
+        self_link = LinkGenerator.get_link_of(
+            page_resource,
+            query_params=pagination_options.to_query_params(),
+        )
 
-        if pagination_info.last_page is not None:
-            if pagination_info.cursor_page != pagination_info.last_page.page:
-                # only if current page is not last page
-                last_query_params = dict(query_params)
-                last_query_params["cursor"] = str(pagination_info.last_page.cursor)
+        extra_links = generate_page_links(
+            page_resource, pagination_info, pagination_options
+        )
 
-                extra_links.append(
-                    ApiLink(
-                        href=url_for(
-                            "api-v1.TaxonomyItemsView",
-                            namespace=namespace,
-                            taxonomy=taxonomy,
-                            _external=True,
-                            **last_query_params,
-                        ),
-                        rel=(
-                            "last",
-                            "page",
-                            f"page-{pagination_info.last_page.page}",
-                            "collection",
-                        ),
-                        resource_type="ont-taxonomy-item",
-                        resource_key=taxonomy_item_page_params_to_key(
-                            namespace, taxonomy, last_query_params
-                        ),
-                        schema=url_for(
-                            "api-v1.ApiSchemaView",
-                            schema_id="TaxonomyItemSchema",
-                            _external=True,
-                        ),
-                    )
-                )
-
-        for page in pagination_info.surrounding_pages:
-            if page == pagination_info.last_page:
-                continue  # link already included
-            page_query_params = dict(query_params)
-            page_query_params["cursor"] = str(page.cursor)
-
-            extra_rels = []
-            if page.page + 1 == pagination_info.cursor_page:
-                extra_rels.append("prev")
-            if page.page - 1 == pagination_info.cursor_page:
-                extra_rels.append("next")
-
-            extra_links.append(
-                ApiLink(
-                    href=url_for(
-                        "api-v1.TaxonomyItemsView",
-                        namespace=namespace,
-                        taxonomy=taxonomy,
-                        _external=True,
-                        **page_query_params,
-                    ),
-                    rel=(
-                        *extra_rels,
-                        "page",
-                        f"page-{page.page}",
-                        "collection",
-                    ),
-                    resource_type="ont-taxonomy-item",
-                    resource_key=taxonomy_item_page_params_to_key(
-                        namespace, taxonomy, page_query_params
-                    ),
-                    schema=url_for(
-                        "api-v1.ApiSchemaView",
-                        schema_id="TaxonomyItemSchema",
-                        _external=True,
-                    ),
-                )
-            )
-
-        extra_links.extend(nav_links_for_taxonomy_item_page(found_taxonomy))
-
-        extra_links.extend(action_links_for_taxonomy_item_page(found_taxonomy))
-
-        return ApiResponse(
-            links=[
-                ApiLink(
-                    href=url_for("api-v1.NamespacesView", _external=True, **query_params),
-                    rel=("first", "page", "page-1", "collection", "nav"),
-                    resource_type="ont-namespace",
-                    resource_key=query_params_to_api_key({"item-count": item_count}),
-                    schema=url_for(
-                        "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
-                    ),
+        return ApiResponseGenerator.get_api_response(
+            page_resource,
+            query_params=pagination_options.to_query_params(),
+            extra_links=[
+                LinkGenerator.get_link_of(
+                    page_resource.get_page(1),
+                    query_params=pagination_options.to_query_params(cursor=None),
                 ),
-                ApiLink(
-                    href=url_for(  # hardcoded first page link
-                        "api-v1.TaxonomyItemsView",
-                        namespace=namespace,
-                        taxonomy=taxonomy,
-                        _external=True,
-                        **query_params,
-                    ),
-                    rel=("first", "page", "page-1", "collection"),
-                    resource_type="ont-taxonomy-item",
-                    resource_key=taxonomy_item_page_params_to_key(
-                        namespace, taxonomy, query_params
-                    ),
-                    schema=url_for(
-                        "api-v1.ApiSchemaView",
-                        schema_id="TaxonomyItemSchema",
-                        _external=True,
-                    ),
-                ),
+                self_link,
                 *extra_links,
             ],
-            embedded=embedded_items,
-            data=CursorPage(
-                self=self_link,
-                collection_size=pagination_info.collection_size,
-                page=pagination_info.cursor_page,
-                first_row=pagination_info.cursor_row + 1,
-                items=items,
-            ),
+            extra_embedded=embedded_items,
+            link_to_relations=TAXONOMY_ITEM_PAGE_EXTRA_LINK_RELATIONS,
         )
 
     @API_V1.arguments(TaxonomyItemSchema())
-    @API_V1.response(DynamicApiResponseSchema(NewApiObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(NewApiObjectSchema()))
+    @API_V1.require_jwt("jwt")
     def post(self, data, namespace: str, taxonomy: str):
         """Create a new taxonomy item."""
         self._check_path_params(namespace=namespace, taxonomy=taxonomy)
@@ -830,6 +605,11 @@ class TaxonomyItemsView(MethodView):
                 ),
             )
 
+        FLASK_OSO.authorize_and_set_resource(
+            OsoResource(TAXONOMY_ITEM_REL_TYPE, parent_resource=found_taxonomy),
+            action=CREATE,
+        )
+
         taxonomy_item = TaxonomyItem(
             taxonomy=found_taxonomy,
         )
@@ -847,19 +627,31 @@ class TaxonomyItemsView(MethodView):
         DB.session.add(taxonomy_item_version)
         DB.session.commit()
 
-        taxonomy_item_link = taxonomy_item_to_taxonomy_item_data(taxonomy_item).self
-        taxonomy_item_data = taxonomy_item_to_api_response(taxonomy_item)
+        taxonomy_item_response = ApiResponseGenerator.get_api_response(
+            taxonomy_item, link_to_relations=TAXONOMY_ITEM_EXTRA_LINK_RELATIONS
+        )
+        taxonomy_item_link = taxonomy_item_response.data.self
+        taxonomy_item_response.data = TaxonomyItemSchema().dump(
+            taxonomy_item_response.data
+        )
 
-        taxonomy_link = taxonomy_to_taxonomy_data(taxonomy_item.taxonomy).self
-        taxonomy_data = taxonomy_to_api_response(taxonomy_item.taxonomy)
+        taxonomy_response = ApiResponseGenerator.get_api_response(
+            taxonomy_item.taxonomy, link_to_relations=TAXONOMY_EXTRA_LINK_RELATIONS
+        )
+        taxonomy_link = taxonomy_response.data.self
+        taxonomy_response.data = TaxonomySchema().dump(taxonomy_response.data)
 
-        self_link = create_action_link_for_taxonomy_item_page(taxonomy=found_taxonomy)
-        self_link.rel = (*self_link.rel, "ont-taxonomy-item")
-        self_link.resource_type = "new"
+        self_link = LinkGenerator.get_link_of(
+            PageResource(TaxonomyItem, resource=found_taxonomy),
+            for_relation=CREATE_REL,
+            extra_relations=(TAXONOMY_ITEM_REL_TYPE,),
+            ignore_deleted=True,
+        )
+        self_link.resource_type = NEW_REL
 
         return ApiResponse(
             links=[taxonomy_item_link, taxonomy_link],
-            embedded=[taxonomy_item_data, taxonomy_data],
+            embedded=[taxonomy_item_response, taxonomy_response],
             data=NewApiObject(
                 self=self_link,
                 new=taxonomy_item_link,

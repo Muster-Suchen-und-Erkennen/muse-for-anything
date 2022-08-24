@@ -1,0 +1,34 @@
+<template>
+    <require from="../elements/api-schema-view"></require>
+    <require from="../elements/svg-icon.html"></require>
+    <require from="../elements/markdown"></require>
+
+    <div if.bind="!isRoot">
+        <div class="w-full flex justify-between items-baseline">
+            <a class="link-hover flex items-center" href="/explore/${clientUrl}"
+                data-router-ignore.bind="skipNavigation & empty" aria-disabled.bind="clientUrl == null ? true : null">
+                <svg-icon class="mr-1" icon.bind="'user-role'"></svg-icon>
+                <p class="my-1 font-bold block-max-3l overflow-y-hidden overflow-ellipsis">
+                    ${apiObject.role}
+                </p>
+                <svg-icon class="ml-1" icon.bind="'link'" size.bind="19"></svg-icon>
+            </a>
+            <card-nav-icons api-object.bind="apiObject" main.one-time="'user'"></card-nav-icons>
+        </div>
+        <markdown class="my-1 block block-max-3l overflow-y-hidden overflow-ellipsis"
+            markdown-in.bind="apiObject.description"></markdown>
+    </div>
+
+
+    <div class="px-3 py-2 card" if.bind="isRoot">
+        <div class="w-full flex justify-between items-baseline">
+            <h3 class="mt-1 mb-2 font-bold text-lg flex items-center">
+                <svg-icon class="mr-1" icon.bind="'user-role'"></svg-icon>
+                ${"user-role" | t}: ${apiObject.role}
+            </h3>
+            <card-nav-icons api-object.bind="apiObject" main.one-time="'user'"></card-nav-icons>
+        </div>
+        <markdown class="my-1 block block-max-3l overflow-y-hidden overflow-ellipsis"
+            markdown-in.bind="apiObject.description"></markdown>
+    </div>
+</template>

@@ -1,54 +1,42 @@
 """Module containing the object API endpoints of the v1 API."""
 
-from datetime import datetime
-from muse_for_anything.api.v1_api.ontology_object_validation import validate_object
 
-from marshmallow.utils import INCLUDE
-from flask_babel import gettext
-from muse_for_anything.api.util import template_url_for
-from typing import Any, Callable, Dict, List, Optional, Union, cast
-from flask.helpers import url_for
-from flask.views import MethodView
-from sqlalchemy.sql.expression import asc, desc, literal
-from sqlalchemy.orm.query import Query
-from flask_smorest import abort
 from http import HTTPStatus
+from typing import Any, List, Optional
 
+from flask.views import MethodView
+from flask_babel import gettext
+from flask_smorest import abort
+from marshmallow.utils import INCLUDE
+
+from muse_for_anything.api.pagination_util import (
+    PaginationOptions,
+    default_get_page_info,
+    dump_embedded_page_items,
+    generate_page_links,
+    prepare_pagination_query_args,
+)
+from muse_for_anything.api.v1_api.constants import (
+    OBJECT_VERSION_EXTRA_LINK_RELATIONS,
+    OBJECT_VERSION_PAGE_EXTRA_LINK_RELATIONS,
+    OBJECT_VERSION_REL_TYPE,
+)
+from muse_for_anything.api.v1_api.request_helpers import (
+    ApiResponseGenerator,
+    LinkGenerator,
+    PageResource,
+)
+from muse_for_anything.oso_helpers import FLASK_OSO, OsoResource
+
+from .models.ontology import ObjectSchema
 from .root import API_V1
 from ..base_models import (
-    ApiLink,
-    ApiResponse,
-    ChangedApiObject,
-    ChangedApiObjectSchema,
-    CursorPage,
     CursorPageArgumentsSchema,
     CursorPageSchema,
     DynamicApiResponseSchema,
-    NewApiObject,
-    NewApiObjectSchema,
-)
-from .models.ontology import (
-    ObjectSchema,
 )
 from ...db.db import DB
-from ...db.pagination import get_page_info
-from ...db.models.namespace import Namespace
-from ...db.models.ontology_objects import (
-    OntologyObject,
-    OntologyObjectVersion,
-)
-
-from .namespace_helpers import (
-    query_params_to_api_key,
-)
-
-from muse_for_anything.api.v1_api.ontology_object_helpers import (
-    nav_links_for_object_version,
-    nav_links_for_object_versions_page,
-    object_to_object_data,
-    object_version_page_params_to_key,
-    object_version_to_api_response,
-)
+from ...db.models.ontology_objects import OntologyObject, OntologyObjectVersion
 
 
 @API_V1.route("/namespaces/<string:namespace>/objects/<string:object_id>/versions/")
@@ -80,183 +68,77 @@ class ObjectVersionsView(MethodView):
         return found_object  # is not None because abort raises exception
 
     @API_V1.arguments(CursorPageArgumentsSchema, location="query", as_kwargs=True)
-    @API_V1.response(DynamicApiResponseSchema(CursorPageSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(CursorPageSchema()))
+    @API_V1.require_jwt("jwt")
     def get(self, namespace: str, object_id: str, **kwargs: Any):
         """Get all versions of an object."""
         self._check_path_params(namespace=namespace, object_id=object_id)
         found_object: OntologyObject = self._get_object(
             namespace=namespace, object_id=object_id
         )
+        FLASK_OSO.authorize_and_set_resource(
+            OsoResource(
+                OBJECT_VERSION_REL_TYPE,
+                is_collection=True,
+                parent_resource=found_object,
+            )
+        )
 
-        cursor: Optional[str] = kwargs.get("cursor", None)
-        item_count: int = cast(int, kwargs.get("item_count", 25))
-        sort: str = cast(str, kwargs.get("sort", "-version").lstrip("+"))
+        pagination_options: PaginationOptions = prepare_pagination_query_args(
+            **kwargs, _sort_default="-version"
+        )
 
         object_version_filter = (
             OntologyObjectVersion.deleted_on == None,
             OntologyObjectVersion.ontology_object == found_object,
         )
 
-        pagination_info = get_page_info(
+        pagination_info = default_get_page_info(
             OntologyObjectVersion,
-            OntologyObjectVersion.id,
+            object_version_filter,
+            pagination_options,
             [OntologyObjectVersion.version],
-            cursor,
-            sort,
-            item_count,
-            filter_criteria=object_version_filter,
         )
 
         object_versions: List[
             OntologyObjectVersion
         ] = pagination_info.page_items_query.all()
 
-        embedded_items: List[ApiResponse] = [
-            object_version_to_api_response(object_version)
-            for object_version in object_versions
-        ]
-        items: List[ApiLink] = [item.data.get("self") for item in embedded_items]
-
-        query_params = {
-            "item-count": item_count,
-            "sort": sort,
-        }
-
-        self_query_params = dict(query_params)
-
-        if cursor:
-            self_query_params["cursor"] = cursor
-
-        self_rels: List[str] = []
-        if pagination_info.cursor_page == 1:
-            self_rels.append("first")
-        if (
-            pagination_info.last_page
-            and pagination_info.cursor_page == pagination_info.last_page.page
-        ):
-            self_rels.append("last")
-
-        self_link = ApiLink(
-            href=url_for(
-                "api-v1.ObjectVersionsView",
-                namespace=namespace,
-                object_id=object_id,
-                _external=True,
-                **self_query_params,
-            ),
-            rel=(
-                *self_rels,
-                "page",
-                f"page-{pagination_info.cursor_page}",
-                "collection",
-            ),
-            resource_type="ont-object-version",
-            resource_key=object_version_page_params_to_key(
-                found_object, self_query_params
-            ),
+        embedded_items, items = dump_embedded_page_items(
+            object_versions, ObjectSchema(), OBJECT_VERSION_EXTRA_LINK_RELATIONS
         )
 
-        extra_links: List[ApiLink] = [self_link]
+        page_resource = PageResource(
+            OntologyObjectVersion,
+            resource=found_object,
+            page_number=pagination_info.cursor_page,
+            active_page=pagination_info.cursor_page,
+            last_page=pagination_info.last_page.page,
+            collection_size=pagination_info.collection_size,
+            item_links=items,
+        )
+        self_link = LinkGenerator.get_link_of(
+            page_resource,
+            query_params=pagination_options.to_query_params(),
+        )
 
-        if pagination_info.last_page is not None:
-            if pagination_info.cursor_page != pagination_info.last_page.page:
-                # only if current page is not last page
-                last_query_params = dict(query_params)
-                last_query_params["cursor"] = str(pagination_info.last_page.cursor)
+        extra_links = generate_page_links(
+            page_resource, pagination_info, pagination_options
+        )
 
-                extra_links.append(
-                    ApiLink(
-                        href=url_for(
-                            "api-v1.ObjectVersionsView",
-                            namespace=namespace,
-                            object_id=object_id,
-                            _external=True,
-                            **last_query_params,
-                        ),
-                        rel=(
-                            "last",
-                            "page",
-                            f"page-{pagination_info.last_page.page}",
-                            "collection",
-                        ),
-                        resource_type="ont-object-version",
-                        resource_key=object_version_page_params_to_key(
-                            found_object, last_query_params
-                        ),
-                    )
-                )
-
-        for page in pagination_info.surrounding_pages:
-            if page == pagination_info.last_page:
-                continue  # link already included
-            page_query_params = dict(query_params)
-            page_query_params["cursor"] = str(page.cursor)
-
-            extra_rels: List[str] = []
-            if page.page + 1 == pagination_info.cursor_page:
-                extra_rels.append("prev")
-            if page.page - 1 == pagination_info.cursor_page:
-                extra_rels.append("next")
-
-            extra_links.append(
-                ApiLink(
-                    href=url_for(
-                        "api-v1.ObjectVersionsView",
-                        namespace=namespace,
-                        object_id=object_id,
-                        _external=True,
-                        **page_query_params,
-                    ),
-                    rel=(
-                        *extra_rels,
-                        "page",
-                        f"page-{page.page}",
-                        "collection",
-                    ),
-                    resource_type="ont-object-version",
-                    resource_key=object_version_page_params_to_key(
-                        found_object, page_query_params
-                    ),
-                )
-            )
-
-        extra_links.extend(nav_links_for_object_versions_page(found_object))
-
-        return ApiResponse(
-            links=[
-                ApiLink(
-                    href=url_for("api-v1.NamespacesView", _external=True, **query_params),
-                    rel=("first", "page", "page-1", "collection", "nav"),
-                    resource_type="ont-namespace",
-                    resource_key=query_params_to_api_key({"item-count": item_count}),
-                    schema=url_for(
-                        "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
-                    ),
+        return ApiResponseGenerator.get_api_response(
+            page_resource,
+            query_params=pagination_options.to_query_params(),
+            extra_links=[
+                LinkGenerator.get_link_of(
+                    page_resource.get_page(1),
+                    query_params=pagination_options.to_query_params(cursor=None),
                 ),
-                ApiLink(
-                    href=url_for(
-                        "api-v1.ObjectVersionsView",
-                        namespace=namespace,
-                        object_id=object_id,
-                        _external=True,
-                        **query_params,
-                    ),
-                    rel=("first", "page", "page-1", "collection"),
-                    resource_type="ont-object-version",
-                    resource_key=object_version_page_params_to_key(
-                        found_object, query_params
-                    ),
-                ),
+                self_link,
                 *extra_links,
             ],
-            embedded=embedded_items,
-            data=CursorPage(
-                self=self_link,
-                collection_size=pagination_info.collection_size,
-                page=pagination_info.cursor_page,
-                first_row=pagination_info.cursor_row + 1,
-                items=items,
-            ),
+            extra_embedded=embedded_items,
+            link_to_relations=OBJECT_VERSION_PAGE_EXTRA_LINK_RELATIONS,
         )
 
 
@@ -303,7 +185,8 @@ class ObjectVersionView(MethodView):
             abort(HTTPStatus.NOT_FOUND, message=gettext("Object version not found."))
         return found_object_version  # is not None because abort raises exception
 
-    @API_V1.response(DynamicApiResponseSchema(ObjectSchema()))
+    @API_V1.response(200, DynamicApiResponseSchema(ObjectSchema()))
+    @API_V1.require_jwt("jwt")
     def get(self, namespace: str, object_id: str, version: str, **kwargs: Any):
         """Get a specific version of an object."""
         self._check_path_params(namespace=namespace, object_id=object_id, version=version)
@@ -311,22 +194,8 @@ class ObjectVersionView(MethodView):
             namespace=namespace, object_id=object_id, version=version
         )
 
-        return ApiResponse(
-            links=[
-                ApiLink(
-                    href=url_for(
-                        "api-v1.NamespacesView",
-                        _external=True,
-                        **{"item-count": 25},
-                        sort="name",
-                    ),
-                    rel=("first", "page", "collection", "ont-namespace"),
-                    resource_type="ont-namespace",
-                    schema=url_for(
-                        "api-v1.ApiSchemaView", schema_id="Namespace", _external=True
-                    ),
-                ),
-                *nav_links_for_object_version(found_object_version),
-            ],
-            data=object_to_object_data(found_object_version),
+        FLASK_OSO.authorize_and_set_resource(found_object_version)
+
+        return ApiResponseGenerator.get_api_response(
+            found_object_version, link_to_relations=OBJECT_VERSION_EXTRA_LINK_RELATIONS
         )

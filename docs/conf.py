@@ -13,9 +13,9 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 from os import environ
-from tomlkit import parse
+from tomli import load as load_toml
 from pathlib import Path
 from shutil import copyfile
 import subprocess
@@ -23,6 +23,7 @@ from json import load
 
 
 ON_READTHEDOCS = environ.get("READTHEDOCS") == "True"
+
 
 # -- Project information -----------------------------------------------------
 
@@ -38,44 +39,30 @@ else:
     project_root = current_path
     pyproject_path = current_path / Path("pyproject.toml")
 
-if ON_READTHEDOCS:
-    # add dotenv file to make flask load the right app
-    dotenv_file_path: Path = project_root / Path(".env")
-    if not dotenv_file_path.exists():
-        with dotenv_file_path.open(mode="w") as env:
-            env.write("FLASK_APP=muse_for_anything\nFLASK_ENV=development\n")
-
 pyproject_toml: Any
 
-with pyproject_path.open() as pyproject:
-    content = "\n".join(pyproject.readlines())
-    pyproject_toml = parse(content)
+with pyproject_path.open(mode="rb") as pyproject:
+    pyproject_toml = load_toml(pyproject)
 
 package_config = pyproject_toml["tool"]["poetry"]
 sphinx_config = pyproject_toml["tool"].get("sphinx")
 
-project = package_config.get("name")
+project = str(package_config.get("name"))
 author = ", ".join(package_config.get("authors"))
 copyright_year = sphinx_config.get("copyright-year", 2020)
 copyright = f"{copyright_year}, {author}"
-version = package_config.get("version")
-release = sphinx_config.get("release", version)
+version = str(package_config.get("version"))
+release = str(sphinx_config.get("release", version))
 
 if sphinx_config.get("html-baseurl", None):
     html_baseurl = sphinx_config.get("html-baseurl", None)
 
 # -- update openapi specification -------------------------------------------
 
-if ON_READTHEDOCS:
-    subprocess.run(
-        ["flask", "openapi", "write", "docs/api.json"],
-        cwd=project_root,
-    )
-else:
-    subprocess.run(
-        ["poetry", "run", "flask", "openapi", "write", "docs/api.json"],
-        cwd=project_root,
-    )
+subprocess.run(
+    ["flask", "openapi", "write", "docs/api.json"],
+    cwd=project_root,
+)
 
 api_spec_path = project_root / Path("docs/api.json")
 
@@ -139,13 +126,26 @@ if sphinx_config.get("intersphinx-mapping", None):
         for key, val in mapping.items()
     }
 
+
+myst_enable_extensions: List[str] = []
+
 # enable markdown parsing
 if sphinx_config.get("enable-markdown", False):
-    extensions.append("recommonmark")
+    _md_plugin = sphinx_config["enable-markdown"]
+    if _md_plugin is True or _md_plugin.lower() == "myst":
+        extensions.append("myst_parser")
+    elif _md_plugin.lower() == "recommonmark":
+        extensions.append("recommonmark")
+    else:
+        print(
+            "Unknown markdown plugin specified (allowed: 'myst', 'recommonmark'), using 'myst'."
+        )
+        extensions.append("myst_parser")
     print("MARKDOWN ENABLED")
 
     # source_suffix[".txt"] = "markdown"
     source_suffix[".md"] = "markdown"
+
 
 # enable sphinx githubpages
 if sphinx_config.get("enable-githubpages", False):
@@ -213,7 +213,40 @@ redoc = [
     },
 ]
 
+# myst markdown parsing
+_myst_options = sphinx_config.get("myst", {})
+allowed_md_extensions = {
+    "amsmath",
+    "colon_fence",
+    "deflist",
+    "dollarmath",
+    "html_admonition",
+    "html_image",
+    "linkify",
+    "replacements",
+    "smartquotes",
+    "substitution",
+    "tasklist",
+}
 
+_heading_achors = _myst_options.get("heading_anchors", None)
+if _heading_achors and isinstance(_heading_achors, int) and _heading_achors > 0:
+    myst_heading_anchors = _heading_achors
+
+
+_md_extensions = _myst_options.get("extensions", None)
+if _md_extensions and isinstance(_md_extensions, list):
+    myst_enable_extensions = [x for x in _md_extensions if x in allowed_md_extensions]
+    unknown_md_extensions = [x for x in _md_extensions if x not in allowed_md_extensions]
+    if unknown_md_extensions:
+        print("Unknown Markdown extensions:", unknown_md_extensions)
+
+_md_substitutions = _myst_options.get("substitutions", None)
+if _md_substitutions and isinstance(_md_substitutions, dict):
+    myst_substitutions: Dict[str, str] = _md_substitutions
+
+
+# recommonmark settings
 def setup(app):
     recommonmark_config = {}
     if sphinx_config.get("recommonmark"):

@@ -2,13 +2,14 @@
     <require from="../elements/api-schema-view"></require>
     <require from="../elements/svg-icon.html"></require>
     <require from="../elements/card-nav-icons"></require>
+    <require from="../elements/markdown"></require>
 
     <div if.bind="!isRoot">
         <div class="w-full flex justify-between items-baseline">
             <a class="link-hover flex items-center" href="/explore/${clientUrl}"
                 data-router-ignore.bind="skipNavigation & empty" aria-disabled.bind="clientUrl == null ? true : null">
                 <svg-icon class="mr-1" icon.bind="'ont-object'"></svg-icon>
-                <p class="my-1 font-bold">
+                <p class="my-1 font-bold block-max-3l overflow-y-hidden overflow-ellipsis">
                     <span class="mr-2 uppercase" if.bind="apiObject.deletedOn != null" t="deleted">
                     </span>
                     ${apiObject.name}
@@ -18,7 +19,8 @@
             <card-nav-icons api-object.bind="apiObject" main.one-time="'ont-type'" extra.one-time="['ont-namespace']">
             </card-nav-icons>
         </div>
-        <p class="my-1">${apiObject.description}</p>
+        <markdown class="my-1 block block-max-3l overflow-y-hidden overflow-ellipsis"
+            markdown-in.bind="apiObject.description"></markdown>
     </div>
 
 

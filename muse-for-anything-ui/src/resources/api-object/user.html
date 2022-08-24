@@ -1,0 +1,32 @@
+<template>
+    <require from="../elements/api-resource"></require>
+    <require from="../elements/api-schema-view"></require>
+    <require from="../elements/svg-icon.html"></require>
+
+    <div if.bind="!isRoot">
+        <a class="link-hover flex items-center" href="/explore/${clientUrl}"
+            data-router-ignore.bind="skipNavigation & empty" aria-disabled.bind="clientUrl == null ? true : null">
+            <svg-icon class="mr-1" icon.bind="'user'"></svg-icon>
+            <p class="my-1 font-bold block-max-3l overflow-y-hidden overflow-ellipsis">
+                ${apiObject.username}
+            </p>
+            <svg-icon class="ml-1" icon.bind="'link'" size.bind="19"></svg-icon>
+        </a>
+        <p class="my-1 block-max-3l overflow-y-hidden overflow-ellipsis"><span class="mr-1 font-semibold">E-Mail:</span>
+            ${apiObject.eMail}</p>
+    </div>
+
+
+    <div class="px-3 py-2 card" if.bind="isRoot">
+        <h3 class="mt-1 mb-2 font-bold text-lg flex items-center">
+            <svg-icon class="mr-1" icon.bind="'user'"></svg-icon>
+            ${"user" | t}: ${apiObject.username}
+        </h3>
+        <p class="my-1"><span class="mr-1 font-semibold">E-Mail:</span> ${apiObject.eMail}</p>
+        <div if.bind="userRoles != null">
+            <p class="my-1 font-semibold">Roles:</span></p>
+            <api-resource class="" api-link.bind="userRoles" is-root.one-time="false"
+                skip-navigation.bind="skipNavigation"></api-resource>
+        </div>
+    </div>
+</template>

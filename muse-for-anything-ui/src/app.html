@@ -1,14 +1,14 @@
 <template>
     <require from="./app.css"></require>
-    <require from="./main-app/elements/main-header.html"></require>
+    <require from="./main-app/elements/main-header"></require>
     <require from="./resources/elements/svg-icon.html"></require>
 
     <div class="main">
 
         <header class="border-b border-gray-200 p-3 flex items-center">
-            <main-header></main-header>
+            <main-header class="w-full"></main-header>
         </header>
-        <nav class="bg-gray-800 text-center flex flex-col items-center">
+        <nav class="bg-gray-800 text-center flex flex-col items-center" role="navigation" aria-label="Main navigation.">
             <div class="sticky top-0">
                 <div class="w-full p-2" repeat.for="nav of router.navigation">
                     <a class="text-white hover:text-primary-light ${nav.isActive ? 'font-bold' : ''} flex flex-col items-center"
@@ -18,9 +18,17 @@
                         ${nav.title | t}
                     </a>
                 </div>
+                <div class="w-full p-2" repeat.for="navLink of rootNavLinks">
+                    <a class="text-white hover:text-primary-light ${(navLink == activeNavLink) ? 'font-bold' : ''} flex flex-col items-center"
+                        href.bind="navLink.clientUrl">
+                        <svg-icon icon.bind="navLink.icon" size.bind="'big'" if.bind="navLink.icon">
+                        </svg-icon>
+                        ${navLink.title | t}
+                    </a>
+                </div>
             </div>
         </nav>
-        <div class="sidebar bg-gray-50">
+        <div class="sidebar bg-gray-50" role="navigation" aria-label="Navigation links of the current page.">
             <router-view name="sidebar"></router-view>
         </div>
         <main>

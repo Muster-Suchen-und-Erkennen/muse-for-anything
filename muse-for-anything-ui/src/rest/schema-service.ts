@@ -1,5 +1,5 @@
 import { autoinject } from "aurelia-framework";
-import { ApiObject, ApiResponse, isApiObject, isApiResponse } from "./api-objects";
+import { ApiResponse } from "./api-objects";
 import { BaseApiService } from "./base-api";
 import { ApiSchema, SchemaApiObject } from "./schema-objects";
 
@@ -38,7 +38,7 @@ export class SchemaService {
         if (this.schemaMap.has(href)) {
             return this.schemaMap.get(href);
         }
-        const schemaResponse = await this.api.fetch<ApiResponse<SchemaApiObject>>(href, {}, true); // FIXME true for cache busting
+        const schemaResponse = await this.api.fetch<ApiResponse<SchemaApiObject>>(href, undefined, false); // FIXME true for cache busting
         const schema = new ApiSchema(schemaResponse, this);
         if (!this.schemaMap.has(href)) {
             // only store the first schema instance (fetch could be long running)

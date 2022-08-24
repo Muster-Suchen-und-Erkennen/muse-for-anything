@@ -4,7 +4,14 @@
         "app": "MUSE4Anything",
         "home": "Home",
         "explore": "Explore",
+        "reload": "Reload",
+        "login": "Log-In",
+        "fresh-login": "Refresh Log-In",
+        "logout": "Log-Out",
         "create": {
+            "user": "Create New User",
+            "user-role": "Add a User-Role",
+            "user-grant": "Create New User-Grant",
             "ont-namespace": "Create New Namespace",
             "ont-type": "Create New Type",
             "ont-object": "Create New Object",
@@ -20,12 +27,39 @@
             "ont-taxonomy-item": "Edit Item"
         }
     },
+    "dialog": {
+        "confirm": {
+            "title": "Confirmation Required!",
+            "body": {
+                "unknown": "A confirmation is required to perform the action.",
+                "change": "Confirm to change the current resource.",
+                "delete": "Confirm to delete the current resource.",
+                "deletePermanent": "Confirm to PERMANENTLY delete the current resource!"
+            },
+            "button": {
+                "cancel": "Cancel",
+                "unknown": "Confirm",
+                "change": "Confirm Change",
+                "delete": "Confirm Delete",
+                "deletePermanent": "Confirm Permanent Deletion!"
+            }
+        }
+    },
     "noItems": {
+        "user": "No Users, create one!",
+        "user-role": "No User-Roles, add one!",
+        "user-grant": "No User-Grants, add one!",
         "ont-namespace": "No Namespaces, create one!",
         "ont-type": "No Types, create one!",
         "ont-object": "No Objects, create one!",
         "ont-taxonomy": "No Taxonomies, create one!",
         "ont-taxonomy-item": "No Taxonomy-Items create one!"
+    },
+    "login": {
+        "username": "Username or E-Mail",
+        "password": "Password",
+        "keepLogin": "Keep me logged in",
+        "confirm-login": "log-in"
     },
     "loading": "loading…",
     "deleted": "Deleted",
@@ -33,6 +67,9 @@
     "parents": "Parents",
     "children": "Children",
     "resource-type": {
+        "user": "User",
+        "user-role": "User-Role",
+        "user-grant": "User-Grant",
         "ont-namespace": "Namespace",
         "ont-type": "Type",
         "ont-type-version": "Type Version",
@@ -48,6 +85,9 @@
         "actions": "Actions",
         "navigations": "Navigation",
         "collection": {
+            "user": "Users",
+            "user-role": "User-Roles",
+            "user-grant": "User-Grants",
             "ont-namespace": "Namespaces",
             "ont-type": "Types",
             "ont-type-version": "Type Versions",
@@ -59,6 +99,9 @@
             "ont-taxonomy-item-version": "Taxonomy-Item Versions"
         },
         "create": {
+            "user": "Create User",
+            "user-role": "Give Role to User",
+            "user-grant": "Create User-Grant",
             "ont-namespace": "Create Namespace",
             "ont-type": "Create Type",
             "ont-object": "Create Object",
@@ -67,6 +110,7 @@
             "ont-taxonomy-item-relation": "Create Taxonomy-Item-Relation"
         },
         "update": {
+            "user": "Edit User",
             "ont-namespace": "Edit Namespace",
             "ont-type": "Edit Type",
             "ont-object": "Edit Object",
@@ -74,6 +118,9 @@
             "ont-taxonomy-item": "Edit Taxonomy-Item"
         },
         "delete": {
+            "user": "Delete User",
+            "user-role": "Remove User-Role",
+            "user-grant": "Remove User-Grant",
             "ont-namespace": "Delete Namespace",
             "ont-type": "Delete Type",
             "ont-object": "Delete Object",
@@ -88,6 +135,9 @@
             "ont-taxonomy": "Restore Taxonomy",
             "ont-taxonomy-item": "Restore Taxonomy-Item"
         },
+        "user": "User",
+        "user-role": "User-Role",
+        "user-grant": "User-Grant",
         "ont-namespace": "Namespace",
         "ont-type": "Type",
         "ont-type-version": "Type Version",
@@ -116,6 +166,60 @@
     "namespace": "Namespace",
     "type": "Type",
     "object": "Object",
+    "user": "User",
+    "user-role": "User-Role",
+    "user-grant": "User-Grant",
     "cancel": "cancel",
-    "back": "back"
+    "back": "back",
+    "ontology": {
+        "filter-area": "Filter and Search",
+        "tree-view": "Treeview",
+        "overview": "Overview",
+        "node-link-tree": "Node-Link Tree",
+        "showGraph": "Show Ontology Graph",
+        "searchGraph": "Search Items in Graph",
+        "resetLayout": "Reset Layout to Box",
+        "toggleMaximize": "Maximize or minimize graph",
+        "zoomIn": "Zoom in",
+        "zoomOut": "Zoom out",
+        "moveUp": "up",
+        "moveDown": "down",
+        "moveLeft": "left",
+        "moveRight": "right",
+        "visibleElements": "Visible elements",
+        "taxonomies": "Taxonomies",
+        "types": "Types",
+        "showTaxonomies": "show taxonomies",
+        "showTypes": "show types",
+        "showSelectedItems": "show only selected items",
+        "showAllElementsWithoutAnEdgeButton": "show only elements without an edge",
+        "childsToShow": "number of type properties to be displayed:",
+        "childLevelsToShow": "depth of type proprties to show:",
+        "taxonomyLevelsToShow": "depth of taxonomy items to show:",
+        "itemsInGraph": "Items in graph",
+        "detailview-header": "Detailview",
+        "renderGraph": "Render graph",
+        "repositionVisibleItems": "Reposition all visible items",
+        "repositionVisibleItemsButton": "reposition",
+        "toggleFixedPosition": "(Un-)pin position of element",
+        "algorithm-header": "Algorithm",
+        "distance-header": "Distance between elements",
+        "detailview": {
+            "name": "name",
+            "id": "id",
+            "description": "description",
+            "type": "type",
+            "abstract": "abtract",
+            "implementations": "implementations",
+            "api-link": "api-link",
+            "children": "child elements",
+            "fixPosition": "fix elements position in graph",
+            "openEdit": "open item in new tab",
+            "openEditButton": "open"
+        },
+        "fixallSearchResults": "search results",
+        "fixallSearchResultsButton": "pin all search results",
+        "keepFocus": "keep focus on search result",
+        "temporaryZoomOut": "temporary zoom out"
+    }
 }
