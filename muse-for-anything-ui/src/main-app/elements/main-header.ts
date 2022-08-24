@@ -1,9 +1,10 @@
-import { bindable, observable, autoinject } from "aurelia-framework";
-import { EventAggregator, Subscription } from "aurelia-event-aggregator";
 import { DialogCloseResult, DialogService } from "aurelia-dialog";
+import { EventAggregator, Subscription } from "aurelia-event-aggregator";
+import { autoinject } from "aurelia-framework";
+import { AUTH_EVENTS_CHANNEL } from "resources/events";
+import { BaseApiService } from "rest/base-api";
 import { LoginDialog } from "../../resources/elements/login-dialog";
 import { AuthenticationService, LOGIN, LOGIN_EXPIRED, LOGIN_EXPIRES_SOON, LOGOUT } from "../../rest/authentication-service";
-import { AUTH_EVENTS_CHANNEL } from "resources/events";
 
 
 @autoinject()
@@ -13,16 +14,29 @@ export class MainHeader {
 
     private dialogService: DialogService;
     private authService: AuthenticationService;
+    private api: BaseApiService;
     private events: EventAggregator;
 
     private subscription: Subscription;
 
-    constructor(dialogService: DialogService, authService: AuthenticationService, events: EventAggregator) {
+    constructor(dialogService: DialogService, authService: AuthenticationService, api: BaseApiService, events: EventAggregator) {
         this.dialogService = dialogService;
         this.authService = authService;
+        this.api = api;
         this.events = events;
         this.isLoggedIn = this.authService.currentStatus.isLoggedIn;
         this.subscribe();
+    }
+
+    /**
+     * Helper function reloading everything bypassing the cache.
+     *
+     * TODO remove once caching can detect stale entries (e.g. via etags)
+     */
+    public reload() {
+        this.api.clearCaches(true).then(() => {
+            window.location.reload();
+        });
     }
 
     public logout() {

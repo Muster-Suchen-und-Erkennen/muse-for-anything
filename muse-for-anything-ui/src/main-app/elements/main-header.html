@@ -4,6 +4,10 @@
     <div class="w-full flex justify-between items-center">
         <h1 class="text-xl font-bold text-primary" t="titles.app">Hello</h1>
         <div class="flex items-center">
+            <button class="button-flat flex items-center" click.delegate="reload()">
+                <span t="titles.reload"></span>
+                <svg-icon class="ml-1" icon.bind="'reload'" size.bind="32"></svg-icon>
+            </button>
             <button class="button-flat flex items-center" click.delegate="showLoginDialog()" if.bind="!isLoggedIn">
                 <span t="titles.login"></span>
                 <svg-icon class="ml-1" icon.bind="'login'" size.bind="32"></svg-icon>
