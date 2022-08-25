@@ -11,6 +11,10 @@ This package uses Poetry ([documentation](https://python-poetry.org/docs/)).
 
 This package builds on the flask template https://github.com/buehlefs/flask-template
 
+## Docker
+
+A docker image is built automatically. Docker images can be found under [Packages](https://github.com/orgs/Muster-Suchen-und-Erkennen/packages?repo_name=muse-for-anything).
+
 ## VSCode
 
 For vscode install the python extension and add the poetry venv path to the folders the python extension searches for venvs.

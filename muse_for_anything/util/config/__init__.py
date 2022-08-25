@@ -1,11 +1,11 @@
 """Module containing default config values."""
+from logging import INFO, WARNING
 from os import urandom
-from logging import WARNING, INFO
 
-from .sqlalchemy_config import SQLAchemyProductionConfig, SQLAchemyDebugConfig
-from .smorest_config import SmorestProductionConfig, SmorestDebugConfig
-from .oso_config import OsoProductionConfig, OsoDebugConfig
-from .passwords_config import PasswordsProductionConfig, PasswordsDebugConfig
+from .oso_config import OsoDebugConfig, OsoProductionConfig
+from .passwords_config import PasswordsDebugConfig, PasswordsProductionConfig
+from .smorest_config import SmorestDebugConfig, SmorestProductionConfig
+from .sqlalchemy_config import SQLAchemyDebugConfig, SQLAchemyProductionConfig
 
 
 class ProductionConfig(
@@ -14,7 +14,10 @@ class ProductionConfig(
     OsoProductionConfig,
     PasswordsProductionConfig,
 ):
-    SECRET_KEY = urandom(32) # set this to a stable key to prevent tokens from expiring on server restart
+    ENV = "production"
+    SECRET_KEY = urandom(
+        32
+    )  # set this to a stable key to prevent tokens from expiring on server restart
 
     REVERSE_PROXY_COUNT = 0
 
@@ -39,6 +42,7 @@ class DebugConfig(
     OsoDebugConfig,
     PasswordsDebugConfig,
 ):
+    ENV = "debug"
     DEBUG = True
     SECRET_KEY = "debug_secret"  # FIXME make sure this NEVER! gets used in production!!!
 

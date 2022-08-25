@@ -25,6 +25,7 @@ from .util.reverse_proxy_fix import apply_reverse_proxy_fix
 
 ENV_PREFIX = "M4A"
 ENV_VAR_SETTINGS = (
+    ("SQLALCHEMY_DATABASE_URI", str),
     ("SECRET_KEY", str),
     ("REVERSE_PROXY_COUNT", int),
     ("DEFAULT_LOG_SEVERITY", int),
@@ -33,17 +34,26 @@ ENV_VAR_SETTINGS = (
 
 def create_app(test_config: Optional[Dict[str, Any]] = None):
     """Flask app factory."""
+    instance_path: str | None = environ.get(f"{ENV_PREFIX}_INSTANCE_PATH", None)
+    if instance_path:
+        if Path(instance_path).is_file():
+            instance_path = None
+
     # create and configure the app
-    app = Flask(__name__, instance_relative_config=True)
+    app = Flask(__name__, instance_relative_config=True, instance_path=instance_path)
 
     # Start Loading config #################
 
     # load defaults
-    flask_env = app.config.get("ENV")
-    if flask_env == "production":
-        app.config.from_object(ProductionConfig)
-    elif flask_env == "development":
+    flask_debug = (
+        app.config.get("DEBUG", False)
+        or environ.get("FLASK_ENV", "production").lower() == "development"
+    )
+    if flask_debug:
         app.config.from_object(DebugConfig)
+    elif not test_config:
+        # only load production defaults if no special test config is given
+        app.config.from_object(ProductionConfig)
 
     unchanged_secret_key = app.config.get("SECRET_KEY")
 
@@ -112,7 +122,9 @@ def create_app(test_config: Optional[Dict[str, Any]] = None):
         pass
 
     logger: Logger = app.logger
-    logger.info("Configuration loaded.")
+    logger.info(
+        f"Configuration loaded, instance folder located at '{app.instance_path}'."
+    )
 
     if settings_from_env_var:
         logger.info(

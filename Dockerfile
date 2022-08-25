@@ -50,6 +50,8 @@ RUN python -m flask digest compile
 RUN mkdir --parents /app/instance && chown gunicorn /app/instance && chmod u+rw /app/instance
 VOLUME ["/app/instance"]
 
+ENV M4A_INSTANCE_PATH="/app/instance"
+
 EXPOSE 8080
 
 # Wait for database
