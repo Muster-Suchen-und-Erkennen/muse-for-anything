@@ -51,7 +51,7 @@ def create_app(test_config: Optional[Dict[str, Any]] = None):
     )
     if flask_debug:
         app.config.from_object(DebugConfig)
-    elif not test_config:
+    elif test_config is None:
         # only load production defaults if no special test config is given
         app.config.from_object(ProductionConfig)
 

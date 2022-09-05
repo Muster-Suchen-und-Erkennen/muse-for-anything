@@ -42,7 +42,7 @@ class DebugConfig(
     OsoDebugConfig,
     PasswordsDebugConfig,
 ):
-    ENV = "debug"
+    ENV = "development"
     DEBUG = True
     SECRET_KEY = "debug_secret"  # FIXME make sure this NEVER! gets used in production!!!
 

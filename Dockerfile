@@ -25,7 +25,6 @@ ENV POETRY_VIRTUALENVS_CREATE=false
 RUN useradd gunicorn
 
 ENV FLASK_APP=muse_for_anything
-ENV FLASK_ENV=production
 ENV CONCURRENCY=2
 
 COPY --chown=gunicorn ./poetry.lock ./pyproject.toml ./tasks.py /app/
