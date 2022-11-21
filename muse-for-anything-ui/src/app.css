@@ -189,7 +189,7 @@ taxonomy-graph {
     min-height: 60vh;
     display: grid;
     grid-template-columns: minmax(8rem, 1fr) 1.5fr minmax(12rem, 2fr); 
-    grid-template-rows: 4rem minmax(4rem, 1fr) minmax(4rem, 1fr) 8rem;
+    grid-template-rows: 4rem minmax(4rem, 1fr) minmax(4rem, 2fr) 8rem;
     grid-template-areas: "buttons buttons buttons" ". . ." ". . form" "minimap . form"; /*  "empty empty empty empty" "empty empty form form" "minimap empty form form" */
 }
 
@@ -297,21 +297,29 @@ p:where(.block-max-3l:not(.overflow-y-hidden),.block-max-5l:not(.overflow-y-hidd
 }
 
 .milkdown-menu-wrapper {
-    padding-top: max(0.35rem, 8px);
-    max-width: 100%;
-    @apply p-2 flex flex-col relative;
+    @apply flex flex-col relative w-full;
 }
 
 .milkdown-menu-wrapper > .milkdown {
-    overflow-y: auto;
+    @apply p-2;
 }
 
-.milkdown-menu {
+.milkdown-menu-wrapper > .milkdown-menu {
     padding-top: max(0.35rem, 8px);
-    @apply rounded-md mb-2 shrink-0;
+    border: none;
+    @apply w-full px-2;
 }
 .milkdown-menu .menu-selector-wrapper {
     border: none;
+}
+.milkdown-menu .menu-selector-wrapper .menu-selector {
+    @apply m-0;
+}
+.milkdown-menu .button{
+    @apply m-0;
+}
+.milkdown-menu .divider{
+    @apply my-0 mx-2;
 }
 
 .milkdown-menu .menu-selector-list {
