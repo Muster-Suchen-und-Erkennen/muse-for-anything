@@ -16,7 +16,7 @@
                 aria-selected="selectedItems.has(choice.index)"
                 show.bind="(!filter && !hiddenItems.has(choice.index)) || (filter && filteredItems.has(choice.index))"
                 repeat.for="choice of datalistChoices">
-                <div style="width: ${choice.level}rem;" if.bind="showTreeControls"></div>
+                <div css="width: ${choice.level}rem;" if.bind="showTreeControls"></div>
                 <div class="min-h-full flex flex-row items-center justify-center" style="width:1rem;"
                     if.bind="showTreeControls">
                     <button class="button-flat text-black hover:text-primary" click.trigger="toggleGroup(choice.index)"
