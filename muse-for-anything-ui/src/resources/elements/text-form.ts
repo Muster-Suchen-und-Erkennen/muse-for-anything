@@ -35,6 +35,8 @@ export class TextForm {
 
     extraPatterns: RegExp[] = [];
 
+    knownFormats: Set<string> = new Set<string>(["markdown"]);
+
     @child(".input-valid-check") formInput: Element;
 
     private queue: TaskQueue;
