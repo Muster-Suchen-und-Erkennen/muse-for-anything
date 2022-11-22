@@ -12,7 +12,7 @@
                 </schema-form-actions>
             </div>
         </div>
-        <select class="bg-gray-100 border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1" id.bind="key+slug"
+        <select class="bg-gray-100 border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1 dark:bg-gray-700 dark:border-gray-200" id.bind="key+slug"
             name.bind="key+slug" required.bind="required && !isNullable && minLength != null & empty"
             value.bind="value">
             <option repeat.for="choice of enumChoices" model.bind="choice">

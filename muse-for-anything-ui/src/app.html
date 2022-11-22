@@ -5,7 +5,7 @@
 
     <div class="main">
 
-        <header class="border-b border-gray-200 p-3 flex items-center">
+        <header class="border-b border-default p-3 flex items-center bg-default text-default">
             <main-header class="w-full"></main-header>
         </header>
         <nav class="bg-gray-800 text-center flex flex-col items-center" role="navigation" aria-label="Main navigation.">
@@ -28,10 +28,10 @@
                 </div>
             </div>
         </nav>
-        <div class="sidebar bg-gray-50" role="navigation" aria-label="Navigation links of the current page.">
+        <div class="sidebar bg-gray-50 dark:bg-gray-900 dark:text-white" role="navigation" aria-label="Navigation links of the current page.">
             <router-view name="sidebar"></router-view>
         </div>
-        <main>
+        <main class="bg-default text-default">
             <router-view name="content"></router-view>
         </main>
     </div>

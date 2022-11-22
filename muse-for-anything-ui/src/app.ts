@@ -2,14 +2,14 @@ import { EventAggregator } from "aurelia-event-aggregator";
 import { autoinject, observable } from "aurelia-framework";
 import { PLATFORM } from "aurelia-pal";
 import { Router, RouterConfiguration } from "aurelia-router";
-import { ACTIVE_LINK_CHANNEL, ROOT_NAV_LINKS_CHANNEL } from "resources/events";
+import { ACTIVE_LINK_CHANNEL, ROOT_NAV_LINKS_CHANNEL, THEME_CHANNEL } from "resources/events";
 import { NavigationLink, NavigationLinksService } from "services/navigation-links";
+import { ThemeService } from "services/theme";
 
 @autoinject
 export class App {
-    public message = "Hello World!";
-
     private router: Router;
+    private documentBody: HTMLBodyElement | null = null;
 
     rootNavLinks: NavigationLink[] = [];
 
@@ -17,11 +17,12 @@ export class App {
 
     activeNavLink: NavigationLink | null;
 
-    constructor(events: EventAggregator, navService: NavigationLinksService) {
-        // query api by rel
-        // baseApi.getByRel("authentication").then(result => console.log(result));
-        // search api for rel
-        // baseApi.searchResolveRels(["login", "post"]).then(result => console.log(result));
+    constructor(events: EventAggregator, navService: NavigationLinksService, themeService: ThemeService) {
+        this.activeThemeChanged(themeService.getActiveTheme());
+
+        events.subscribe(THEME_CHANNEL, (activeTheme) => {
+            this.activeThemeChanged(activeTheme);
+        });
         events.subscribe(ROOT_NAV_LINKS_CHANNEL, (navLinks) => {
             this.rootNavLinks = navLinks;
             this.activeLinkChanged();
@@ -34,6 +35,19 @@ export class App {
             }
         });
         this.rootNavLinks = navService.getCurrentRootNavLinks(); // query service to init nav events
+    }
+
+    activeThemeChanged(activeTheme: "light" | "dark") {
+        if (this.documentBody == null) {
+            // cache body element
+            this.documentBody = document.querySelector("body");
+        }
+        // change theme on body to affect dialogs
+        if (activeTheme === "dark") {
+            this.documentBody?.classList?.add("dark");
+        } else {
+            this.documentBody?.classList?.remove("dark");
+        }
     }
 
     activeLinkChanged() {

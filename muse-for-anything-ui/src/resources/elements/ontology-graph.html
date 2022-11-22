@@ -13,19 +13,24 @@
                     height: 100%;
                     border-radius: 0.375rem;
                     background-color: var(--fill-color);
-                    --line-color: black;
-                    --line-highlight-color: #6d28d9;
-                    --text-color: black;
-                    --text-highlight-color: black;
-                    --fill-color: white;
-                    --fill-highlight-color: white;
-                    --type-color: #bdbdbd;
-                    --taxonomy-color: #faba6f;
-                    --highlight-parent-color: #c4b5fd;
-                    --highlight-child-color: #ede9fe;
-                    --type-color: #bdbdbd;
-                    --view-window-color: #6d28d95d;
+                    --line-color: var(--text-color, black);
+                    --line-highlight-color: var(--text-primary-color, #6d28d9);
+                    --text-highlight-color: var(--text-color, black);
+                    --fill-color: var(--background-color);
+                    --fill-highlight-color: var(--background-color);
+                    --type-color: var(--background-alt-color);
+                    --taxonomy-color: var(--accent-light-color);
+                    --highlight-parent-color: var(--text-primary-light-color);
+                    --highlight-child-color: var(--text-primary-light-color);
+                    --view-window-color: var(--primary-color);
                 }
+
+                :host-context(.dark) svg {
+                    --taxonomy-color: var(--accent-color);
+                    --highlight-parent-color: var(--text-primary-dark-color);
+                    --highlight-child-color: var(--text-primary-dark-color);
+                }
+
 
                 svg .zoom-group {
                     will-change: contents, transform;
@@ -216,6 +221,7 @@
                 rect.view-window {
                     fill: var(--view-window-color);
                     border-style: none;
+                    opacity: 0.6;
                 }
 
                 .invisible-rect {
@@ -388,7 +394,7 @@
                         <div class="control-group">
                             <label>
                                 ${"ontology.searchGraph" | t}
-                                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1"
+                                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1 dark:bg-gray-700 dark:border-gray-200"
                                     placeholder="search" value.from-view="filter & throttle"
                                     aria-owns="'datalist-'+slug" autocapitalize="none"
                                     value.bind="searchtext & debounce" type="text" autocomplete="off"
@@ -455,14 +461,14 @@
                             </label>
                             <label class="mt-2 inline-block">
                                 ${"ontology.childLevelsToShow" | t}
-                                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1"
+                                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1 dark:bg-gray-700 dark:border-gray-200"
                                     value.from-view="filter & throttle"
                                     value.bind="typeChildLevelsToShow | number & debounce" type="number"
                                     autocomplete="off" min="0" disabled.bind="!isRendered">
                             </label>
                             <label class="mt-2 inline-block">
                                 ${"ontology.taxonomyLevelsToShow" | t}
-                                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1"
+                                <input class="border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1 dark:bg-gray-700 dark:border-gray-200"
                                     value.from-view="filter & throttle"
                                     value.bind="taxonomyLevelsToShow | number & debounce" type="number"
                                     autocomplete="off" min="0" disabled.bind="!isRendered">
@@ -611,7 +617,7 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="buttons card bg-white px-3 py-2 items-center" style="width: fit-content;float: right;">
+                <div class="buttons card bg-default px-3 py-2 items-center" style="width: fit-content;float: right;">
                     <button class="button-flat px-2 items-center" click.delegate="toggleMenu()"
                         title='${"ontology.moveLeft" | t}' style="float:right;">
                         <svg-icon icon.bind="maximizeMenu ? 'arrow-right' : 'arrow-left'" size.bind="18"></svg-icon>

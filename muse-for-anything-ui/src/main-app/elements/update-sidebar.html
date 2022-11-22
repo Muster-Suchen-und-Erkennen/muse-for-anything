@@ -4,14 +4,14 @@
     <div class="sticky top-0">
         <p if.bind="isEmpty">Update Sidebar!</p>
         <div else class="flex flex-col">
-            <div class="sidebar-expandable border-b border-gray-400 shadow-md mb-2" if.bind="navLinks.self != null">
+            <div class="sidebar-expandable border-b border-gray-400 shadow-md mb-2 dark:border-gray-600" if.bind="navLinks.self != null">
                 <a class="sidebar-head flex items-start" href.bind="navLinks.self.clientUrl">
                     <svg-icon class="mr-1" icon.bind="'chevron-left'"></svg-icon>
                     <svg-icon class="mr-1" icon.bind="navLinks.self.icon" if.bind="navLinks.self.icon"></svg-icon>
                     ${navLinks.self.title | t} ${navLinks.self.name ? '"' + navLinks.self.name + '"' : ""}
                 </a>
             </div>
-            <div class="sidebar-expandable border-b border-gray-400 shadow-md mb-2"
+            <div class="sidebar-expandable border-b border-gray-400 shadow-md mb-2 dark:border-gray-600"
                 if.bind="navLinks.self == null && navLinks.up != null">
                 <a class="sidebar-head flex items-start" href.bind="navLinks.up.clientUrl">
                     <svg-icon class="mr-1" icon.bind="'chevron-left'"></svg-icon>

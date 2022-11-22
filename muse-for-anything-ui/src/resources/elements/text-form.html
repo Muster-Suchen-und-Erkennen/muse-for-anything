@@ -15,21 +15,21 @@
         </div>
         <template if.bind="(!knownFormats.has(format)) && isSingelLine">
             <input
-                class="input-valid-check border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1 ${dirty ? 'dirty' : ''} ${valid ? '' : 'error'}"
+                class="input-valid-check border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1 ${dirty ? 'dirty' : ''} ${valid ? '' : 'error'} dark:bg-gray-700 dark:border-gray-200"
                 id.bind="key+slug" name.bind="key+slug" type.bind="inputType" value.bind="value & throttle"
                 maxlength.bind="maxLength & optional" minlength.bind="minLength & optional"
                 pattern.bind="pattern & optional"
                 required.bind="(required || minLength != null) && !isNullable & empty">
         </template>
         <template if.bind="(!knownFormats.has(format)) && !isSingelLine">
-            <textarea class="input-valid-check border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1 resize"
+            <textarea class="input-valid-check border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1 resize dark:bg-gray-700 dark:border-gray-200"
                 id.bind="key+slug" name.bind="key+slug" value.bind="value & throttle"
                 maxlength.bind="maxLength & optional" minlength.bind="minLength & optional"
                 pattern.bind="pattern & optional"
                 required.bind="(required || minLength != null) && !isNullable & empty"></textarea>
         </template>
         <template if.bind="format == 'markdown'">
-            <markdown class="border rounded-sm border-gray-800 focus:ring-4" id.bind="key+slug" name.bind="key+slug" editable="true" markdown-in.bind="valueIn"
+            <markdown class="border rounded-sm border-gray-800 focus:ring-4 dark:border-gray-200" id.bind="key+slug" name.bind="key+slug" editable="true" markdown-in.bind="valueIn"
                 markdown-out.bind="value & throttle"></markdown>
         </template>
     </div>

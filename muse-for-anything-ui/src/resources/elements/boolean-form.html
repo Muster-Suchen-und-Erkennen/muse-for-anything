@@ -8,7 +8,7 @@
             <!-- input has to be in a template to be picked up by child… -->
             <template if.bind="schema != null">
                 <input
-                    class="input-valid-check rounded-sm focus:ring-4 m-1.5 px-2 py-1 ${dirty ? 'dirty' : ''} ${valid ? '' : 'error'}"
+                    class="input-valid-check rounded-sm focus:ring-4 m-1.5 px-2 py-1 ${dirty ? 'dirty' : ''} ${valid ? '' : 'error'}  dark:bg-gray-700 dark:border-gray-200"
                     id.bind="key+slug" name.bind="key+slug" type="checkbox" change.trigger="cycle($event)"
                     required.bind="required && !isNullable && minLength != null & empty">
             </template>

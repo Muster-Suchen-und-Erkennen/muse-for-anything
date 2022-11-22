@@ -13,12 +13,53 @@
         --tw-shadow: 0 1px 6px 0px rgba(0, 0, 0, 0.25), 0 2px 4px -1px rgba(0, 1, 0, 0.1);
         box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
     }
+    /* default-colors */
+    .text-default {
+        color: var(--text-color, black);
+    }
+    .text-alt-default {
+        color: var(--text-alt-color, black);
+    }
+    .bg-default {
+        background-color: var(--background-color);
+    }
+    .border-default {
+        border-color: var(--border-color, gray);
+    }
+    .bg-default-alt {
+        background-color: var(--background-alt-color);
+    }
+    .border-default-alt {
+        border-color: var(--border-alt-color, gray);
+    }
+    /* colors for svg use */
+    .svg-bg-default-alt {
+        fill: var(--background-alt-color);
+    }
+    .svg-border-default-alt {
+        stroke: var(--border-alt-color, gray);
+    }
+    .svg-border-text {
+        stroke: var(--text-color);
+    }
+    .svg-bg-accent {
+        fill: var(--accent-color);
+    }
+    .svg-border-accent {
+        stroke: var(--accent-color);
+    }
+    .svg-bg-accent-light {
+        fill: var(--accent-light-color);
+    }
+    .svg-border-accent-light {
+        stroke: var(--accent-light-color);
+    }
     /* default primary */
     .bg-primary {
         background-color: var(--primary-color);
     }
     .text-primary {
-        color: var(--primary-color);
+        color: var(--text-primary-color);
     }
     .border-primary {
         border-color: var(--primary-color);
@@ -126,9 +167,34 @@
     --accent-light-color: theme("colors.yellow.400");
     --accent-dark-color: theme("colors.yellow.800");
     --text-color: theme("colors.black");
-    --text-alt-color: theme("colors.neutral.800");
+    --text-alt-color: theme("colors.gray.800");
+    --text-primary-color: var(--primary-color);
+    --text-primary-light-color: var(--primary-light-color);
+    --text-primary-dark-color: var(--primary-dark-color);
     --background-color: theme("colors.white");
-    --background-alt-color: theme("colors.neutral.200");
+    --background-alt-color: theme("colors.gray.200");
+    --border-color: theme("colors.gray.200");
+    --font: theme("fontFamily.serif");
+    --font-mono: theme("fontFamily.mono");
+    --font-size: theme("fontSize.base");
+}
+
+.dark {
+    --primary-color: theme("colors.purple.600");
+    --primary-light-color: theme("colors.purple.400");
+    --primary-extra-light-color: theme("colors.purple.200");
+    --primary-dark-color: theme("colors.purple.800");
+    --accent-color: theme("colors.yellow.600");
+    --accent-light-color: theme("colors.yellow.400");
+    --accent-dark-color: theme("colors.yellow.800");
+    --text-color: theme("colors.white");
+    --text-alt-color: theme("colors.gray.200");
+    --text-primary-color: theme("colors.purple.400");
+    --text-primary-light-color: theme("colors.purple.200");
+    --text-primary-dark-color: theme("colors.purple.600");
+    --background-color: theme("colors.gray.800");
+    --background-alt-color: theme("colors.gray.700");
+    --border-color: theme("colors.gray.600");
     --font: theme("fontFamily.serif");
     --font-mono: theme("fontFamily.mono");
     --font-size: theme("fontSize.base");
@@ -245,7 +311,7 @@ summary:before {
     content: '';
     border-width: .3rem;
     border-style: solid;
-    border-color: transparent transparent transparent black;/*var(--text-color, black);*/
+    border-color: transparent transparent transparent var(--text-color, black);
     transform: rotate(0);
     transform-origin: .2rem 50%;
     transition: .25s transform ease;
@@ -254,7 +320,7 @@ summary:before {
 details[open] > summary:before {
     transform: rotate(90deg);
 }
-  
+
 details summary::-webkit-details-marker {
     display:none;
 }
@@ -305,21 +371,22 @@ p:where(.block-max-3l:not(.overflow-y-hidden),.block-max-5l:not(.overflow-y-hidd
 }
 
 .milkdown-menu-wrapper > .milkdown-menu {
-    padding-top: max(0.35rem, 8px);
     border: none;
+    overflow-x: auto;
     @apply w-full px-2;
 }
+
 .milkdown-menu .menu-selector-wrapper {
     border: none;
 }
 .milkdown-menu .menu-selector-wrapper .menu-selector {
-    @apply m-0;
+    @apply m-0 dark:text-white;
 }
 .milkdown-menu .button{
-    @apply m-0;
+    @apply m-0 dark:text-white;
 }
 .milkdown-menu .divider{
-    @apply my-0 mx-2;
+    @apply my-1 mx-2 dark:text-white;
 }
 
 .milkdown-menu .menu-selector-list {
@@ -526,7 +593,7 @@ p:where(.block-max-3l:not(.overflow-y-hidden),.block-max-5l:not(.overflow-y-hidd
 }
 
 .sidebar-expandable .sidebar-action, .sidebar-expandable .sidebar-link {
-    @apply bg-gray-50;
+    @apply bg-gray-50 dark:bg-gray-900;
 }
 
 .sidebar-expandable .sidebar-head {
@@ -541,47 +608,47 @@ p:where(.block-max-3l:not(.overflow-y-hidden),.block-max-5l:not(.overflow-y-hidd
 }
 
 .sidebar-head {
-    @apply px-3 py-2 bg-gray-200 font-semibold border-b border-gray-400 hover:text-primary shadow-md mb-2;
+    @apply px-3 py-2 bg-gray-200 font-semibold border-b border-default hover:text-primary shadow-md mb-2 dark:bg-gray-700 dark:hover:text-white dark:hover:bg-gray-800;
 }
 
 .sidebar-item {
-    @apply px-3 py-2 border-b border-gray-200;
+    @apply px-3 py-2 border-b border-default;
 }
 
 .sidebar-link {
-    @apply px-3 py-2 border-b border-gray-200 hover:text-primary;
+    @apply px-3 py-2 border-b border-default hover:text-primary dark:hover:text-white dark:hover:bg-gray-800;
 }
 
 .sidebar-action {
-    @apply px-3 py-2 border-b border-gray-200 hover:text-primary;
+    @apply px-3 py-2 border-b border-default hover:text-primary dark:hover:text-white dark:hover:bg-gray-800;
 }
 
 .sidebar-action.danger {
-    @apply text-red-600 hover:text-white hover:bg-red-600;
+    @apply text-red-600 hover:text-white hover:bg-red-600 dark:text-red-500 dark:hover:text-white;
 }
 
 /* element styles */
 
 .card {
-    @apply mb-2 rounded-md shadow-card;
+    @apply mb-2 rounded-md shadow-card dark:shadow-none dark:border dark:border-default;
 }
 
 /* button styles */
 
 .button-flat {
-    @apply p-1 m-1 rounded-sm hover:bg-gray-100 hover:shadow-sm hover:text-primary;
+    @apply p-1 m-1 rounded-sm hover:bg-gray-100 hover:shadow-sm hover:text-primary dark:hover:bg-gray-700;
 }
 
 .button-flat.danger {
-    @apply text-red-600 hover:bg-red-600 hover:text-white;
+    @apply text-red-600 hover:bg-red-600 hover:text-white dark:text-red-500 dark:hover:text-white;
 }
 
 .button-outline {
-    @apply p-1 mt-1 mb-1 rounded-md border-2 text-primary border-primary hover:bg-gray-200;
+    @apply p-1 mt-1 mb-1 rounded-md border-2 text-primary border-primary hover:bg-gray-200 dark:hover:bg-gray-700;
 }
 
 .button-outline.danger {
-    @apply text-red-600 border-red-600 hover:bg-red-600 hover:text-white;
+    @apply text-red-600 border-red-600 hover:bg-red-600 hover:text-white dark:text-red-500 dark:border-red-500 dark:hover:text-white;
 }
 
 .button-outline:disabled {
@@ -679,11 +746,11 @@ ux-dialog{
     height:-moz-fit-content;
     height:-webkit-fit-content;
     height:fit-content;
-    @apply bg-white rounded-md;
+    @apply bg-default text-default rounded-md;
 }
 
 ux-dialog>ux-dialog-header{
-    @apply flex w-full justify-between items-baseline py-1.5 px-2.5 border-b border-gray-300; 
+    @apply flex w-full justify-between items-baseline py-1.5 px-2.5 border-b border-gray-300 dark:border-gray-600; 
 }
 
 ux-dialog>ux-dialog-header>button{
@@ -695,7 +762,7 @@ ux-dialog>ux-dialog-body{
 }
 
 ux-dialog>ux-dialog-footer{
-    @apply flex justify-end items-baseline p-1 border-t border-gray-300; 
+    @apply flex justify-end items-baseline p-1 border-t border-gray-300 dark:border-gray-600; 
 }
 
 .ux-dialog-open{
@@ -703,7 +770,7 @@ ux-dialog>ux-dialog-footer{
 }
 
 #mainontology-graph {
-    background-color: white;
+    background-color: var(--background-color);
     display: grid; 
     grid-template-columns: 30% 2px 70%; 
     grid-template-rows: 100%; 
@@ -713,14 +780,14 @@ ux-dialog>ux-dialog-footer{
 } 
 
 #dragbar {
-    background-color: darkgray;
+    background-color: var(--background-alt-color);
 	grid-area: dragbar;
     cursor: ew-resize; 
     width: 1px;
 }
 
 #dragbar:hover {
-    background-color: rgb(255, 0, 234); 
+    background-color: var(--primary-color); 
     width: 4px;
 }
 
@@ -779,7 +846,7 @@ ontology-graph[data-maximized] {
 }
 
 .section-main-title-draggable:hover {
-    background-color: rgb(255, 0, 234); 
+    background-color: var(--primary-color-light); 
 }
 
 .ontology-move{
@@ -790,7 +857,7 @@ ontology-graph[data-maximized] {
 
 .ontology-moveBackground{
     border-radius: 50px;
-    background: #cacaca;
+    background: var(--background-alt-color);
     width: 102px;
     margin-left: auto;
     margin-right: auto;
@@ -848,7 +915,7 @@ tree-node  ul:first-child{
 }
 
 .ont-treeview-item-highlight {
-    color:rgb(255, 0, 234);
+    color:var(--primary-color-light);
 }
 
 .detailview-item {
@@ -859,7 +926,7 @@ tree-node  ul:first-child{
     white-space: nowrap;
     width: 100%;
     border-style: solid;
-    border-bottom: gray;
+    border-bottom: var(--border-color);
     border-top-width: 1px;
 }
 
@@ -926,12 +993,11 @@ input[type="checkbox"]:indeterminate {
 
 .button-list-fixed-position-fixed {
     opacity: 100%;
-    color: black;
 }
 
 
 .button-list-fixed-position:hover {
-    opacity: 100%;
+    opacity: 80%;
 }
 
 /* style scrollbar */
@@ -940,15 +1006,15 @@ input[type="checkbox"]:indeterminate {
     height: max(0.35rem, 8px);
 }
 ::-webkit-scrollbar-track {
-    background: rgba(241, 241, 241, 0);
+    border-radius: calc(max(0.35rem, 8px)/2);
+    @apply bg-neutral-200 dark:bg-neutral-600;
 }
 ::-webkit-scrollbar-thumb {
-    background: #666;
     border-radius: calc(max(0.35rem, 8px)/2);
-    border: 2px solid #f1f1f101;
+    @apply bg-neutral-500 border-solid border-2 border-neutral-200 dark:bg-neutral-400 dark:border-neutral-600;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: #111;
+    @apply bg-neutral-800 border dark:bg-neutral-200;
 }
 
 /* toogle switch */
@@ -984,9 +1050,9 @@ input[type="checkbox"]:indeterminate {
     left: 0;
     right: 0;
     height: 18px;
-    background-color: #ccc;
     -webkit-transition: .4s; 
     transition: .4s;
+    @apply bg-neutral-300 dark:bg-neutral-700;
 }
 
 .slider:before {
@@ -999,6 +1065,7 @@ input[type="checkbox"]:indeterminate {
     background-color: white;
     -webkit-transition: .4s;
     transition: .4s;
+    @apply bg-white dark:bg-neutral-300;
 }
 
 input:checked + .slider {

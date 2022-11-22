@@ -12,13 +12,13 @@
                 <label class="font-semibold form-title" for="username" t="login.username"
                     show.bind="!isPasswordOnly"></label>
                 <input
-                    class="input-valid-check border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1 ${(usernameDirty) ? 'dirty' : ''} ${(!usernameValid) ? 'error' : ''}"
+                    class="input-valid-check border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1 ${(usernameDirty) ? 'dirty' : ''} ${(!usernameValid) ? 'error' : ''}  dark:bg-gray-700 dark:border-gray-200"
                     id="username" name="username" type="text" value.bind="username & throttle"
                     blur.trigger="usernameDirty=(username != null)" minlength="3" disabled.bind="isPasswordOnly & empty"
                     required show.bind="!isPasswordOnly">
                 <label class="mt-3 font-semibold form-title" for="password" t="login.password"></label>
                 <input
-                    class="input-valid-check border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1 ${(passwordDirty) ? 'dirty' : ''} ${(!passwordValid) ? 'error' : ''}"
+                    class="input-valid-check border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1 ${(passwordDirty) ? 'dirty' : ''} ${(!passwordValid) ? 'error' : ''}  dark:bg-gray-700 dark:border-gray-200"
                     id="password" name="password" type="password" value.bind="password & throttle"
                     blur.trigger="passworDirty=(password!=null)" minlength="3" required>
                 <input class="mt-3 input-valid-check rounded-sm focus:ring-4 m-1.5 px-2 py-1" id="keep-login"

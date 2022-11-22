@@ -27,6 +27,11 @@
             "ont-taxonomy-item": "Edit Item"
         }
     },
+    "themes": {
+        "auto": "automatic",
+        "dark": "dark",
+        "light": "light"
+    },
     "dialog": {
         "confirm": {
             "title": "Confirmation Required!",

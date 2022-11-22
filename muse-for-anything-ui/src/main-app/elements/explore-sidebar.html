@@ -5,14 +5,14 @@
     <div class="sticky top-0">
         <p if.bind="isEmpty">Explore Sidebar!</p>
         <div else class="flex flex-col">
-            <div class="sidebar-expandable border-b border-gray-400 shadow-md mb-2"
+            <div class="sidebar-expandable border-b border-gray-400 shadow-md mb-2 dark:border-gray-600"
                 if.bind="navLinks.self != null && navLinks.up == null">
                 <a class="sidebar-head flex items-start" href.bind="navLinks.self.clientUrl">
                     <svg-icon class="mr-1" icon.bind="navLinks.self.icon" if.bind="navLinks.self.icon"></svg-icon>
                     ${navLinks.self.title | t} ${navLinks.self.name ? '"' + navLinks.self.name + '"' : ""}
                 </a>
             </div>
-            <div class="sidebar-expandable border-b border-gray-400 shadow-md mb-2"
+            <div class="sidebar-expandable border-b border-gray-400 shadow-md mb-2 dark:border-gray-600"
                 if.bind="navLinks.self != null && navLinks.up != null">
                 <a class="sidebar-head flex items-start" href.bind="navLinks.up.clientUrl">
                     <svg-icon class="mr-1" icon.bind="'chevron-left'"></svg-icon>
@@ -20,7 +20,7 @@
                     ${navLinks.self.title | t} ${navLinks.self.name ? '"' + navLinks.self.name + '"' : ""}
                 </a>
             </div>
-            <div class="sidebar-expandable border-b border-gray-400 shadow-md mb-2"
+            <div class="sidebar-expandable border-b border-gray-400 shadow-md mb-2 dark:border-gray-600"
                 if.bind="navLinks.self == null && navLinks.up != null">
                 <a class="sidebar-head flex items-start" href.bind="navLinks.up.clientUrl">
                     <svg-icon class="mr-1" icon.bind="'chevron-left'"></svg-icon>
@@ -30,16 +30,16 @@
 
             <!-- Actions -->
             <template if.bind="navLinks.actions != null && navLinks.actions.length > 0">
-                <h4 class="sidebar-item font-light mt-0 mb-1" t="nav.actions"></h4>
-                <div class="sidebar-expandable border-b border-gray-200" repeat.for="action of navLinks.actions">
+                <h4 class="sidebar-item font-light mt-0 mb-0" t="nav.actions"></h4>
+                <div class="sidebar-expandable border-b border-gray-200 dark:border-gray-600" repeat.for="action of navLinks.actions">
                     <action-link class="contents" action.bind="action"></action-link>
                 </div>
             </template>
 
             <!-- Navigations -->
             <template if.bind="navLinks.nav != null && navLinks.nav.length > 0">
-                <h4 class="sidebar-item font-light mt-9 mb-1" t="nav.navigations"></h4>
-                <div class="sidebar-expandable border-b border-gray-200" repeat.for="nav of navLinks.nav">
+                <h4 class="sidebar-item font-light mt-9 mb-0" t="nav.navigations"></h4>
+                <div class="sidebar-expandable border-b border-gray-200 dark:border-gray-600" repeat.for="nav of navLinks.nav">
                     <a class="sidebar-link flex items-start border-b border-gray-200" href.bind="nav.clientUrl">
                         <svg-icon class="mr-1" icon.bind="nav.icon" if.bind="nav.icon"></svg-icon>
                         ${nav.title | t} ${nav.name ? '"' + nav.name + '"' : ""}

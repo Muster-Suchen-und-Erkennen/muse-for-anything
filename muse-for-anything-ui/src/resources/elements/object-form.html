@@ -51,7 +51,7 @@
                 <label class="font-semibold form-title" for.bind="'newProp'+slug">New Property Name</label>
             </div>
             <input
-                class="input-valid-check border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1 ${extraPropertyName ? 'dirty' : ''} ${extraPropertyNameValid ? '' : 'error'}"
+                class="input-valid-check border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1 ${extraPropertyName ? 'dirty' : ''} ${extraPropertyNameValid ? '' : 'error'} dark:bg-gray-700 dark:border-gray-200"
                 name.bind="'newProp'+slug" type="text" value.bind="extraPropertyName & throttle">
             <button class="button-outline w-full" disabled.bind="!extraPropertyNameValid"
                 click.delegate="addProperty()">

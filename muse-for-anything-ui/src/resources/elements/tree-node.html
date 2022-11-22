@@ -15,14 +15,12 @@
             </div>
             <div if.bind="current.itemType=='typeItem'" title="Item Type: Type">
                 <svg height="16px" width="32px" xmlns="http://www.w3.org/2000/svg">
-                    <rect transform="scale(0.15)" stroke="rgb(189, 189, 189)" rx="10" id="svg_1" height="100 "
-                        width="198" y="3" x="2" fill="rgb(189, 189, 189)" />
+                    <rect class="svg-bg-default-alt svg-border-text" rx="2" height="14" width="28" y="1" x="1" stroke-width="1" />
                 </svg>
             </div>
             <div if.bind="current.itemType=='taxonomyItem'" title="Item Type: Taxonomy">
                 <svg height="16px" width="32px" xmlns="http://www.w3.org/2000/svg">
-                    <ellipse transform="scale(0.15)" stroke="#FABA6F" ry="50" rx="99" id="svg_1" cy="50.5" cx="99"
-                        fill="#FABA6F" />
+                    <ellipse class="svg-bg-accent-light svg-border-text dark:svg-bg-accent" ry="7" rx="14" cy="8" cx="15" stroke-width="1" />
                 </svg>
             </div>
             <div if.bind="current.itemType=='string'" title="Item Type: String">

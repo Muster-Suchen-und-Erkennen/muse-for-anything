@@ -353,7 +353,7 @@
             transform="translate(9 6)" />
     </svg>
 
-    <svg if.bind="icon === 'download'" height="${iconSize}" width="${iconSize}" xmlns="http://www.w3.org/2000/svg">
+    <svg if.bind="icon === 'download'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
         <g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
             transform="translate(4 2)">
             <path
@@ -363,65 +363,62 @@
         </g>
     </svg>
 
-    <svg if.bind="icon === 'string'" height="${iconSize}" width="${iconSize}" xmlns="http://www.w3.org/2000/svg">
-        <g transform="scale(0.18)">
-            <rect stroke-width="3" fill="#ffffff" x="2.5" y="2.5" width="95" height="95" id="svg_1" rx="10"
-                stroke="#000000" />
-            <rect fill="#BBBBBB" stroke="#C48157" x="265" y="23" width="0" height="1" id="svg_2" />
-            <text transform="matrix(1 0 0 1 0 0)" font-style="normal" font-weight="normal" xml:space="preserve"
-                text-anchor="start" font-family="sans-serif" font-size="51" id="svg_3" y="67.6246" x="6.20247"
-                stroke-width="0" stroke="#000000" fill="#000000">Abc</text>
+    <svg if.bind="icon === 'sun'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -1)">
+            <circle cx="10.5" cy="11.5" r="4"/>
+            <path d="m10.5 2.5v2"/>
+            <path d="m17 5-1.5 1.5"/>
+            <path d="m17.5 11.5h2"/>
+            <path d="m17 18-1.5-1.5"/>
+            <path d="m10.5 20.5v-2"/>
+            <path d="m4 18 1.5-1.5"/>
+            <path d="m1.5 11.5h2"/>
+            <path d="m4 5 1.5 1.5"/>
         </g>
+    </svg>
+    <svg if.bind="icon === 'moon'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
+        <path d="m 0.5 7.5 c 0 -3.9 3.1 -7 7 -7 c 1.3 0 2.5 0 3.6 1 c -3.1 .2 -5.6 2.8 -5.6 6 c 0 3.2 2.5 5.8 5.6 6 c -1 .6 -2.3 1 -3.6 1 c -3.9 0 -7 -3.1 -7 -7z"
+            fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" transform="translate(4 3)"/>
+    </svg>
+    <svg if.bind="icon === 'sunormoon'" height="${iconSize}" width="${iconSize}" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -1)">
+            <path d="m6.5 11.5 a 4 4 0 1 1 8 0"/>
+            <path d="m10.5 2.5v2"/>
+            <path d="m17 5-1.5 1.5"/>
+            <path d="m1.5 11.5h18"/>
+            <path d="m4 5 1.5 1.5"/>
+        </g>
+        <path d="m 5.5 7.5 c 0 3.2 2.5 5.8 5.6 6 c -1 .6 -2.3 1 -3.6 1 c -3.9 0 -7 -3.1 -7 -7z"
+            fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" transform="translate(4 3)"/>
     </svg>
 
-    <svg if.bind="icon === 'integer'" height="${iconSize}" width="${iconSize}" xmlns="http://www.w3.org/2000/svg">
-        <g transform="scale(0.18)">
-            <rect stroke-width="3" fill="#ffffff" x="2.5" y="2.5" width="95" height="95" id="svg_1" rx="10"
-                stroke="#000000" />
-            <rect fill="#BBBBBB" stroke="#C48157" x="265" y="23" width="0" height="1" id="svg_2" />
-            <text transform="matrix(1 0 0 1 0 0)" font-style="normal" font-weight="normal" xml:space="preserve"
-                text-anchor="start" font-family="sans-serif" font-size="51" id="svg_3" y="67.6246" x="7.46028"
-                stroke-width="0" stroke="#000000" fill="#000000">123</text>
-        </g>
+    <svg if.bind="icon === 'string'" height="${iconSize}" width="${iconSize}" viewBox="-1 -1 11.2 11.2" xmlns="http://www.w3.org/2000/svg">
+        <rect stroke="currentColor" fill="none" rx="1" height="10" width="10" y="0" x="0" stroke-width="0.4" />
+        <text font-family="sans-serif" font-size="6" y="6.5" x="0.5" fill="currentColor">Abc</text>
     </svg>
 
-    <svg if.bind="icon === 'boolean'" height="${iconSize}" width="${iconSize}" xmlns="http://www.w3.org/2000/svg">
-        <g transform="scale(0.18)">
-            <rect stroke="#000000" rx="10" id="svg_1" height="95" width="95" y="2.5" x="2.5" fill="#ffffff"
-                stroke-width="3" />
-            <rect id="svg_2" height="1" width="0" y="23" x="265" stroke="#C48157" fill="#BBBBBB" />
-            <text transform="matrix(1 0 0 1 0 0)" style="cursor: move;" fill="#000000" stroke="#000000" stroke-width="0"
-                x="12.22591" y="67.6246" id="svg_3" font-size="51" font-family="sans-serif" text-anchor="start"
-                xml:space="preserve" font-weight="normal" font-style="normal">T|F</text>
-        </g>
+    <svg if.bind="icon === 'integer'" height="${iconSize}" width="${iconSize}" viewBox="-1 -1 11.2 11.2" xmlns="http://www.w3.org/2000/svg">
+        <rect stroke="currentColor" fill="none" rx="1" height="10" width="10" y="0" x="0" stroke-width="0.4" />
+        <text font-family="sans-serif" font-size="6" y="6.5" x="0.5" fill="currentColor">123</text>
     </svg>
 
-    <svg if.bind="icon === 'typeref'" height="${iconSize}" width="${iconSize}" xmlns="http://www.w3.org/2000/svg">
-        <g transform="scale(0.18)">
-            <rect stroke-width="3" fill="#ffffff" x="2.5" y="2.5" width="95" height="95" id="svg_1" rx="10"
-                stroke="#000000" />
-            <rect fill="#BBBBBB" stroke="#C48157" x="265" y="23" width="0" height="1" id="svg_2" />
-            <ellipse ry="40" rx="40" id="svg_3" cy="50" cx="50" stroke-width="0" stroke="#dddddd" fill="#dddddd" />
-        </g>
-    </svg>
-    <svg if.bind="icon === 'taxref'" height="${iconSize}" width="${iconSize}" xmlns="http://www.w3.org/2000/svg">
-        <g transform="scale(0.18)">
-            <rect stroke-width="3" fill="#ffffff" x="2.5" y="2.5" width="95" height="95" id="svg_1" rx="10"
-                stroke="#000000" />
-            <rect fill="#BBBBBB" stroke="#C48157" x="265" y="23" width="0" height="1" id="svg_2" />
-            <ellipse ry="40" rx="40" id="svg_3" cy="50" cx="50" stroke-width="0" stroke="#FABA6F" fill="#FABA6F" />
-        </g>
+    <svg if.bind="icon === 'number'" height="${iconSize}" width="${iconSize}" viewBox="-1 -1 11.2 11.2" xmlns="http://www.w3.org/2000/svg">
+        <rect stroke="currentColor" fill="none" rx="1" height="10" width="10" y="0" x="0" stroke-width="0.4" />
+        <text font-family="sans-serif" font-size="6" y="6.5" x="0.5" fill="currentColor">1.2</text>
     </svg>
 
-    <svg if.bind="icon === 'number'" height="${iconSize}" width="${iconSize}" xmlns="http://www.w3.org/2000/svg">
-        <g transform="scale(0.18)">
-            <rect stroke-width="3" fill="#ffffff" x="2.5" y="2.5" width="95" height="95" id="svg_1" rx="10"
-                stroke="#000000" />
-            <rect fill="#BBBBBB" stroke="#C48157" x="265" y="23" width="0" height="1" id="svg_2" />
-            <text transform="matrix(1 0 0 1 0 0)" style="cursor: move;" font-style="normal" font-weight="normal"
-                xml:space="preserve" text-anchor="start" font-family="sans-serif" font-size="51" id="svg_3" y="67.50741"
-                x="14.55404" stroke-width="0" stroke="#000000" fill="#000000">1.2</text>
-        </g>
+    <svg if.bind="icon === 'boolean'" height="${iconSize}" width="${iconSize}" viewBox="-1 -1 11.2 11.2" xmlns="http://www.w3.org/2000/svg">
+        <rect stroke="currentColor" fill="none" rx="1" height="10" width="10" y="0" x="0" stroke-width="0.4" />
+        <text font-family="sans-serif" font-size="6" y="6.5" x="0.5" fill="currentColor">T|F</text>
+    </svg>
+
+    <svg if.bind="icon === 'typeref'" height="${iconSize}" width="${iconSize}" viewBox="-1 -1 11.2 11.2" xmlns="http://www.w3.org/2000/svg">
+        <rect stroke="currentColor" fill="none" rx="1" height="10" width="10" y="0" x="0" stroke-width="0.4" />
+        <ellipse class="svg-bg-default-alt svg-border-text" ry="4" rx="4" cy="5" cx="5" stroke-width="0.5"/>
+    </svg>
+    <svg if.bind="icon === 'taxref'" height="${iconSize}" width="${iconSize}" viewBox="-1 -1 11.2 11.2" xmlns="http://www.w3.org/2000/svg">
+        <rect stroke="currentColor" fill="none" rx="1" height="10" width="10" y="0" x="0" stroke-width="0.4" />
+        <ellipse class="svg-bg-accent-light svg-border-text dark:svg-bg-accent" ry="4" rx="4" cy="5" cx="5" stroke-width="0.5"/>
     </svg>
 
     <svg if.bind="icon === 'enum'" height="${iconSize}" width="${iconSize}" xmlns="http://www.w3.org/2000/svg">
@@ -448,9 +445,9 @@
 
     <svg if.bind="icon === 'array'" height="${iconSize}" width="${iconSize}" viewBox="0 0 20 20"
         xmlns="http://www.w3.org/2000/svg">
-        <rect transform="translate(0.4 0.4) scale(1.8)" stroke="currentColor" fill="#fff" rx="1" height="10" width="10"
+        <rect transform="translate(0.4 0.4) scale(1.8)" stroke="currentColor" fill="none" rx="1" height="10" width="10"
             y="0" x="0" stroke-width="0.4" />
-        <g fill="none" fill-rule="evenodd" transform="translate(3 4)">
+        <g transform="translate(3 4)">
             <g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
                 <path d="m11.5 5.5h-7" />
                 <path d="m11.5 9.5h-7" />
@@ -464,7 +461,7 @@
 
     <svg if.bind="icon === 'object'" height="${iconSize}" width="${iconSize}" viewBox="-1 -1 11.2 11.2"
         xmlns="http://www.w3.org/2000/svg">
-        <rect stroke="currentColor" fill="#fff" rx="1" height="10" width="10" y="0" x="0" stroke-width="0.4" />
+        <rect stroke="currentColor" fill="none" rx="1" height="10" width="10" y="0" x="0" stroke-width="0.4" />
         <path
             d="M4.4 1.8 c -2 0, -2 0, -2 2 v 0.2 c 0 1, 0 1, -1 1 c 1 0, 1 0, 1 1 v 0.2 c 0 2, 0 2, 2 2 m 1.2 0 c 2 0, 2 0, 2 -2 v -0.2 c 0 -1, 0 -1, 1 -1 c -1 0, -1 0, -1 -1 v -0.2 c 0 -2, 0 -2, -2 -2"
             stroke="currentColor" fill="none" />
@@ -475,7 +472,7 @@
         <g transform="scale(0.08)">
             <path
                 d="m172.54232,120.95584c-32.32044,0 -58.5,-26.17956 -58.5,-58.5c0,-32.32044 26.17956,-58.5 58.5,-58.5c32.32044,0 58.5,26.17956 58.5,58.5c0,32.32044 -26.17956,58.5 -58.5,58.5z"
-                opacity="undefined" stroke="currentColor" fill="currentColor" />
+                stroke="currentColor" fill="currentColor" />
             <rect transform="rotate(30 131.849 128.382)" stroke="currentColor" height="148.09493" width="24.61169"
                 y="54.33441" x="119.5431" fill="currentColor" />
             <path transform="rotate(74 94.666 193.305)"
@@ -491,7 +488,7 @@
         <g transform="scale(0.08)">
             <path
                 d="m125,120.6961c-32.32044,0 -58.5,-26.17956 -58.5,-58.5c0,-32.32044 26.17956,-58.5 58.5,-58.5c32.32044,0 58.5,26.17956 58.5,58.5c0,32.32044 -26.17956,58.5 -58.5,58.5z"
-                opacity="undefined" stroke="currentColor" fill="currentColor" />
+                stroke="currentColor" fill="currentColor" />
             <rect stroke="currentColor" height="148.09493" width="24.61169" y="68.41799" x="112.69416"
                 fill="currentColor" />
             <path transform="rotate(45 125.26 217.201)"
@@ -503,7 +500,7 @@
 
     <svg if.bind="icon === 'eye'" height="${iconSize}" width="${iconSize}" xmlns="http://www.w3.org/2000/svg">
         <g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-            transform="translate(2 5)">
+            transform="translate(1 3)">
             <path
                 d="m8.5 11c3.1296136 0 5.9629469-1.83333333 8.5-5.5-2.5370531-3.66666667-5.3703864-5.5-8.5-5.5-3.12961358 0-5.96294692 1.83333333-8.5 5.5 2.53705308 3.66666667 5.37038642 5.5 8.5 5.5z" />
             <path

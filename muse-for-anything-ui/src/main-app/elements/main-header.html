@@ -4,6 +4,12 @@
     <div class="w-full flex justify-between items-center">
         <h1 class="text-xl font-bold text-primary" t="titles.app">Hello</h1>
         <div class="flex items-center">
+            <button class="button-flat flex items-center" click.delegate="switchTheme()">
+                <span t.bind="'themes.'+currentThemeSetting"></span>
+                <svg-icon class="ml-1" icon.bind="'sunormoon'" size.bind="32" if.bind="currentThemeSetting === 'auto'"></svg-icon>
+                <svg-icon class="ml-1" icon.bind="'moon'" size.bind="32" if.bind="currentThemeSetting === 'dark'"></svg-icon>
+                <svg-icon class="ml-1" icon.bind="'sun'" size.bind="32" if.bind="currentThemeSetting === 'light'"></svg-icon>
+            </button>
             <button class="button-flat flex items-center" click.delegate="reload()">
                 <span t="titles.reload"></span>
                 <svg-icon class="ml-1" icon.bind="'reload'" size.bind="32"></svg-icon>

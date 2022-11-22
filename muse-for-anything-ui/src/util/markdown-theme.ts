@@ -160,13 +160,14 @@ const colorMap = {
     "solid": "--text-color",
     "shadow": "--background-color",
     "line": "--text-alt-color",
-    "border": "--text-alt-color",
+    "border": "--border-color",
     "surface": "--background-alt-color",
     "background": "--background-color",
 };
 
 export const MarkdownTheme = themeFactory((emotion, manager) => {
-    const documentStyles = (document.querySelector("body") as any)?.computedStyleMap();
+    const mainElement = document.querySelector("body main") ?? document.querySelector("body .main") ?? document.querySelector("body");
+    const documentStyles = (mainElement as any)?.computedStyleMap();
     // eslint-disable-next-line complexity
     manager.set(ThemeColor, ([key, opacity]) => {
         const cssVar = colorMap[key] ?? "--text";
