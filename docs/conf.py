@@ -6,6 +6,12 @@
 
 # -- Path setup --------------------------------------------------------------
 
+import subprocess
+from json import load
+from os import environ
+from pathlib import Path
+from shutil import copyfile
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -14,13 +20,8 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 from typing import Any, Dict, List, Optional, Tuple, Union
-from os import environ
-from tomli import load as load_toml
-from pathlib import Path
-from shutil import copyfile
-import subprocess
-from json import load
 
+from tomli import load as load_toml
 
 ON_READTHEDOCS = environ.get("READTHEDOCS") == "True"
 
@@ -213,6 +214,8 @@ redoc = [
     },
 ]
 
+redoc_uri = "https://unpkg.com/redoc@latest/bundles/redoc.standalone.js"
+
 # myst markdown parsing
 _myst_options = sphinx_config.get("myst", {})
 allowed_md_extensions = {
@@ -283,6 +286,7 @@ PATCH_SPHINX_CLICK = True
 
 if PATCH_SPHINX_CLICK:
     from functools import wraps
+
     from docutils import nodes
     from docutils.parsers.rst import directives
     from sphinx_click.ext import ClickDirective
