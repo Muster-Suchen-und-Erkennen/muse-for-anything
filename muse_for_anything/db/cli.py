@@ -10,6 +10,11 @@ from flask.cli import with_appcontext
 from .db import DB
 from .models.users import ALLOWED_USER_ROLES, User, UserRole
 from ..util.logging import get_logger
+from .models.namespace import Namespace 
+from .models.taxonomies import Taxonomy
+from .models.ontology_objects import OntologyObject
+from .models.ontology_objects import OntologyObjectType
+from .models.owl import OWL
 
 # make sure all models are imported for CLI to work properly
 from . import models  # noqa
@@ -209,3 +214,43 @@ def register_cli_blueprint(app: Flask):
     """Method to register the DB CLI blueprint."""
     app.register_blueprint(DB_CLI_BLP)
     app.logger.info("Registered DB CLI blueprint.")
+
+@DB_CLI.command("export-namespace")
+@click.option("-n", "--namespace")
+@with_appcontext
+def map_namespace_to_owl_cli(namespace: int):
+    click.echo(f"export {namespace}")
+    # get data from db
+    if namespace is None:
+        return 
+    found_namespace = Namespace.query.filter(Namespace.id==namespace).first()
+
+    found_taxonomy = Taxonomy.query.filter(
+            Taxonomy.deleted_on == None,
+            Taxonomy.namespace_id == found_namespace.id,
+        ).all()
+    
+    found_object = OntologyObject.query.filter(
+            OntologyObject.deleted_on == None,
+            OntologyObject.namespace_id == found_namespace.id,
+        ).all()
+    
+    found_object_type = OntologyObjectType.query.filter(
+            OntologyObjectType.deleted_on == None,
+            OntologyObjectType.namespace_id == found_namespace.id,
+        ).all()
+    
+    owl_namespace = OWL._map_namespace_to_owl(current_app, found_namespace)
+   
+    # owl_ontology = _map_ontology_object_to_owl(ontology_object)
+
+    # click.echo(owl_ontology)
+    click.echo(found_namespace)
+    click.echo(found_taxonomy)
+    click.echo(found_object)
+    click.echo(found_object_type)
+    # click.echo(dir(found_namespace))
+    # For later: move source code to an API endpoint
+
+    click.echo(owl_namespace)
+

@@ -347,6 +347,7 @@ class ObjectView(MethodView):
             abort(HTTPStatus.NOT_FOUND, message=gettext("Object not found."))
         return found_object  # is not None because abort raises exception
 
+
     def _check_if_namespace_and_type_modifiable(self, object: OntologyObject):
         if object.namespace.deleted_on is not None:
             # cannot modify deleted namespace!
