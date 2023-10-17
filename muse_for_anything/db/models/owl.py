@@ -3,7 +3,7 @@ from muse_for_anything.db.models.taxonomies import Taxonomy
 from muse_for_anything.db.models.ontology_objects import OntologyObject
 from muse_for_anything.db.models.ontology_objects import OntologyObjectType
 
-from jinja2 import Template, Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader
 import os
 
 class OWL:
@@ -17,27 +17,18 @@ class OWL:
         current_directory = os.getcwd()
         print("Current working directory:", current_directory)
         
-        # Create a Jinja2 environment and specify the template folder
-        env = Environment(loader=FileSystemLoader('/home/lizn/muse-for-anything/templates'))
+        env = Environment(loader=FileSystemLoader('muse_for_anything/templates'))
 
-        # Load the template from the file
         template = env.get_template('example.xml')
 
-        # Define variables for name and description
         data = {
             'name': namespace.name,
-            'description': namespace.description
+            'description_of_the_namespace': namespace.description
             }
 
-        # Render the template with the variables
         rendered_template = template.render(data)
 
-        # Print or save the rendered template
         print(rendered_template)
-
-        # You can save it to a file like this:
-        # with open('output.html', 'w') as output_file:
-        # output_file.write(rendered_template)
 
 
     def _map_taxonomy_to_owl(self, taxonomy: Taxonomy):

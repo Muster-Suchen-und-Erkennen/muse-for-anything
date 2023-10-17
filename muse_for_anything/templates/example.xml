@@ -12,8 +12,16 @@
     xmlns:owl="http://www.w3.org/2002/07/owl#"
     xmlns:xsd="http://www.w3.org/2001/XMLSchema#">
 
-    <owl:Ontology rdf:about="{{ name of the namespace }}">
-        <rdfs:comment>{{ Description of the namespace }}</rdfs:comment>
+    <owl:Ontology rdf:about="{{ name }}">
+        <rdfs:comment>{{ description_of_the_namespace }}</rdfs:comment>
     </owl:Ontology>
+
+    {% for taxonomies in taxonomy_list %}
+    <owl:Class rdf:about="{{ taxonomies }}">
+    {% end for %}
+
+    {% for types in type_list %}
+    <owl:Class rdf:about="{{ types }}">
+    {% end for %}
 
 </rdf:RDF>
