@@ -16,12 +16,18 @@
         <rdfs:comment>{{ description_of_the_namespace }}</rdfs:comment>
     </owl:Ontology>
 
-    {% for taxonomies in taxonomy_list %}
-    <owl:Class rdf:about="{{ taxonomies }}">
-    {% end for %}
-
-    {% for types in type_list %}
-    <owl:Class rdf:about="{{ types }}">
-    {% end for %}
+    {% for taxonomie in taxonomy_list %}
+    <owl:Class rdf:about="{{ taxonomie.name }}">
+        <rdfs:label>taxonomie</rdfs:label>
+        <rdfs:comment>{{ taxonomie.description }}</rdfs:comment>
+        {% for item in taxonomie.items %}
+        <owl:NamedIndividual rdf:about="{{ item.current_version.name }}">
+            <rdf:type rdf:resource="&owl;class"/>
+            <rdfs:label>taxonomy_item</rdfs:label>
+            <rdfs:comment>{{ item.current_version.description }}</rdfs:comment>
+        </owl:NamedIndividual>
+        {% endfor %} 
+    </owl:Class>      
+    {% endfor %}
 
 </rdf:RDF>

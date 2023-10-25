@@ -8,7 +8,7 @@ import os
 
 class OWL:
 
-    def _map_namespace_to_owl(self, namespace: Namespace):
+    def _map_namespace_to_owl(self, namespace: Namespace, taxonomies: list[Taxonomy]):
         # TODO implement mapping
         # for each attribute in namespace, create owl ontology namespace attribute
         # parse owl namespace in xml format
@@ -21,32 +21,30 @@ class OWL:
 
         template = env.get_template('example.xml')
 
+        # taxonomy_item = {
+        #     "name": "Item Name",
+        #     "description": "Item Description"
+        # }
+
+        # taxonomies_test = []
+
+        # for i in range(1, 4):
+        #     taxonomy = {
+        #         "name": f"Taxonomy {i}",
+        #         "description": f"Description of Taxonomy {i}",
+        #         "taxonomy_items": [taxonomy_item for _ in range(3)]
+        #     }
+        #     taxonomies_test.append(taxonomy)
+
+
+
         data = {
             'name': namespace.name,
-            'description_of_the_namespace': namespace.description
+            'description_of_the_namespace': namespace.description,
+            'taxonomy_list': taxonomies
             }
 
         rendered_template = template.render(data)
 
         print(rendered_template)
-
-
-    def _map_taxonomy_to_owl(self, taxonomy: Taxonomy):
-        # TODO implement mapping
-        
-        pass
-
-
-    def _map_object_to_owl(self, object: OntologyObject):
-        # TODO implement mapping
-
-        
-        pass
-
-
-    def _map_type_tp_owl(self, type: OntologyObjectType):
-        # TODO implement mapping
-        
-        pass
-
     
