@@ -18,16 +18,34 @@
 
     {% for taxonomie in taxonomy_list %}
     <owl:Class rdf:about="{{ taxonomie.name }}">
-        <rdfs:label>taxonomie</rdfs:label>
         <rdfs:comment>{{ taxonomie.description }}</rdfs:comment>
-        {% for item in taxonomie.items %}
-        <owl:NamedIndividual rdf:about="{{ item.current_version.name }}">
-            <rdf:type rdf:resource="&owl;class"/>
-            <rdfs:label>taxonomy_item</rdfs:label>
-            <rdfs:comment>{{ item.current_version.description }}</rdfs:comment>
-        </owl:NamedIndividual>
-        {% endfor %} 
+        <rdfs:label>taxonomie</rdfs:label> 
     </owl:Class>      
+    {% endfor %}
+
+    <owl:ObjectProperty rdf:about="#hasChild">
+        <rdfs:label>hasChild</rdfs:label>
+        <rdfs:comment>Denotes a source-target relationship between taxonomy items</rdfs:comment>
+    </owl:ObjectProperty>
+
+    {% for taxonomie in taxonomy_list %}
+    {% for item in taxonomie.items %}
+    <owl:NamedIndividual rdf:about="{{ item.current_version.name }}">
+        <rdf:type rdf:resource="&owl;class"/>
+        <rdfs:comment>{{ item.current_version.description }}</rdfs:comment>
+        <rdfs:label>taxonomy_item</rdfs:label>
+        {% for relation in item.current_related %}
+        <hasChild rdf:resource="{{ relation.taxonomy_item_target.name }}"/>
+        {% endfor %}
+    </owl:NamedIndividual>
+    {% endfor %}
+    {% endfor %}
+
+    {% for type in type_list %}
+    <owl:Class rdf:about="{{ type.name }}">
+        <rdfs:comment>{{ type.description }}</rdfs:comment>
+        <rdfs:label>type</rdfs:label>
+    </owl:Class>
     {% endfor %}
 
 </rdf:RDF>

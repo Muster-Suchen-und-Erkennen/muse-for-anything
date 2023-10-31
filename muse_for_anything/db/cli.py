@@ -240,7 +240,7 @@ def map_namespace_to_owl_cli(namespace: int):
             OntologyObjectType.namespace_id == found_namespace.id,
         ).all()
     
-    owl_namespace = OWL._map_namespace_to_owl(current_app, found_namespace, found_taxonomy)
+    owl_namespace = OWL._map_namespace_to_owl(current_app, found_namespace, found_taxonomy, found_object_type)
    
     # owl_ontology = _map_ontology_object_to_owl(ontology_object)
 
