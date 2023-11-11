@@ -234,13 +234,13 @@ def map_namespace_to_owl_cli(namespace: int):
             OntologyObject.deleted_on == None,
             OntologyObject.namespace_id == found_namespace.id,
         ).all()
-    
+
     found_object_type = OntologyObjectType.query.filter(
             OntologyObjectType.deleted_on == None,
             OntologyObjectType.namespace_id == found_namespace.id,
         ).all()
-    
-    owl_namespace = OWL._map_namespace_to_owl(current_app, found_namespace, found_taxonomy, found_object_type)
+       
+    owl_namespace = OWL._map_namespace_to_owl(current_app, found_namespace, found_taxonomy, found_object_type, found_object)
    
     # owl_ontology = _map_ontology_object_to_owl(ontology_object)
 
