@@ -48,11 +48,35 @@
     {% endfor %}
 
     {% for type in type_list %}
-    <owl:Class rdf:about="{{ type.name }}">
-        <rdfs:comment>{{ type.description }}</rdfs:comment>
-        <rdfs:label>{{ type.name }}</rdfs:label>
+    <owl:Class rdf:about="{{ type.current_version.name }}">
+        <rdfs:comment>{{ type.current_version.description }}</rdfs:comment>
+        <rdfs:label>{{ type.current_version.name }}</rdfs:label>
+        {% set schema = type.current_version.root_schema %}
+        {% if "object" in schema["type"] and "properties" in schema %}
+        {% for property_name, property_value in schema["properties"].items() %}
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <!-- Specify the onProperty as  -->
+                <owl:onProperty rdf:resource="{{ property_name }}"/>
+                <!-- You can leave this part empty for no restrictions -->
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        {% endfor%}
+        {% endif %}
     </owl:Class>
     {% endfor %}
+
+    {% for type in type_list %}
+    {% set schema = type.current_version.root_schema %}
+    {% if "object" in schema["type"] and "properties" in schema %}
+    {% for property_name, property_value in schema["properties"].items() %}
+    <owl:ObjectProperty rdf:about="{{ property_name }}">
+        <rdfs:labels>{{ property_name }}</rdfs:labels>
+    </owl:ObjectProperty>
+    {% endfor%}
+    {% endif %}
+    {% endfor %}
+
 
     {% for object in object_list %}
     <owl:NamedIndividual rdf:about="{{ object.name }}">

@@ -49,5 +49,5 @@ class OWL:
 
         rendered_template = template.render(data)
 
-        print(rendered_template)
+        print(rendered_template)    
     
