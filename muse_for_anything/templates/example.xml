@@ -32,11 +32,11 @@
     {% for item in taxonomie.items %}
     <owl:class rdf:about="{{ item.current_version.name }}">
         {% if item.current_ancestors %}
-            {% for relation in item.current_ancestors %}
-            <rdfs:subClassOf rdf:resource="{{ relation.taxonomy_item_source.name }}"/>
-            {% endfor %}
+        {% for relation in item.current_ancestors %}
+        <rdfs:subClassOf rdf:resource="{{ relation.taxonomy_item_source.name }}"/>
+        {% endfor %}
         {% else %}
-            <rdfs:subClassOf rdf:resource="{{ taxonomie.name }}"/>
+        <rdfs:subClassOf rdf:resource="{{ taxonomie.name }}"/>
         {% endif %}
         <rdfs:comment>{{ item.current_version.description }}</rdfs:comment>
         <rdfs:label>{{ item.current_version.name }}</rdfs:label>
@@ -56,9 +56,7 @@
         {% for property_name, property_value in schema["properties"].items() %}
         <rdfs:subClassOf>
             <owl:Restriction>
-                <!-- Specify the onProperty as  -->
                 <owl:onProperty rdf:resource="{{ property_name }}"/>
-                <!-- You can leave this part empty for no restrictions -->
             </owl:Restriction>
         </rdfs:subClassOf>
         {% endfor%}

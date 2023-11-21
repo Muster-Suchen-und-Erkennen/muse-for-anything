@@ -224,31 +224,13 @@ def map_namespace_to_owl_cli(namespace: int):
     if namespace is None:
         return 
     found_namespace = Namespace.query.filter(Namespace.id==namespace).first()
-
-    found_taxonomy = Taxonomy.query.filter(
-            Taxonomy.deleted_on == None,
-            Taxonomy.namespace_id == found_namespace.id,
-        ).all()
-    
-    found_object_type = OntologyObjectType.query.filter(
-            OntologyObjectType.deleted_on == None,
-            OntologyObjectType.namespace_id == found_namespace.id,
-        ).all()
-    
-    found_object = OntologyObject.query.filter(
-        OntologyObject.deleted_on == None,
-        OntologyObject.namespace_id == found_namespace.id,
-    ).all()
        
-    owl_namespace = OWL._map_namespace_to_owl(current_app, found_namespace, found_taxonomy, found_object_type, found_object)
+    owl_namespace = OWL().map_namespace_to_owl(found_namespace)
    
     # owl_ontology = _map_ontology_object_to_owl(ontology_object)
 
     # click.echo(owl_ontology)
     click.echo(found_namespace)
-    click.echo(found_taxonomy)
-    click.echo(found_object)
-    click.echo(found_object_type)
     # click.echo(dir(found_namespace))
     # For later: move source code to an API endpoint
 
