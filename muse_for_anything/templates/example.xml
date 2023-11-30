@@ -68,11 +68,18 @@
     {% endfor %}
 
 
-    {% for object in object_list %}
+    {% for object,variables in object_list %}
     <owl:NamedIndividual rdf:about="{{ object.current_version.name }}">
         <rdf:type rdf:resource="{{ object.ontology_type.name }}"/>
         <rdfs:comment>{{ object.current_version.description }}</rdfs:comment>
         <rdfs:label>{{ object.current_version.name }}</rdfs:label>
+        {% for variable in variables %}
+        {% if "ref" in variable %}
+        <{{ variable["name"] }} rdf:resource="{{ variable["ref"] }}"/>
+        {% else %}
+        <{{ variable["name"] }}>{{ variable["value"] }}</{{ variable["name"] }}>
+        {% endif %}
+        {% endfor %}
     </owl:NamedIndividual>
     {% endfor %}
 
