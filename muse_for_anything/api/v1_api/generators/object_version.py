@@ -17,10 +17,10 @@ from muse_for_anything.api.v1_api.constants import (
     OBJECT_VERSION_KEY,
     OBJECT_VERSION_PAGE_RESOURCE,
     OBJECT_VERSION_REL_TYPE,
+    OBJECT_VERSION_RESOURCE,
     PAGE_REL,
     TYPE_REL_TYPE,
     TYPE_VERSION_REL_TYPE,
-    TYPE_VERSION_RESOURCE,
     UP_REL,
 )
 from muse_for_anything.api.v1_api.generators.object import object_type_schema_url
@@ -158,7 +158,7 @@ class ObjectVersionKeyGenerator(KeyGenerator, resource_type=OntologyObjectVersio
         return key
 
 
-class TaxonomyItemVersionSelfLinkGenerator(
+class ObjectVersionSelfLinkGenerator(
     LinkGenerator, resource_type=OntologyObjectVersion
 ):
     def generate_link(
@@ -170,9 +170,9 @@ class TaxonomyItemVersionSelfLinkGenerator(
     ) -> Optional[ApiLink]:
         return ApiLink(
             href=url_for(
-                TYPE_VERSION_RESOURCE,
+                OBJECT_VERSION_RESOURCE,
                 namespace=str(resource.ontology_object.namespace_id),
-                object_type=str(resource.object_id),
+                object_id=str(resource.object_id),
                 version=str(resource.version),
                 _external=True,
             ),

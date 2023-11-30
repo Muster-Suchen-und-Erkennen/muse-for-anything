@@ -139,7 +139,7 @@ class ObjectTypeVersionKeyGenerator(
         return key
 
 
-class TaxonomyItemVersionSelfLinkGenerator(
+class ObjectTypeVersionSelfLinkGenerator(
     LinkGenerator, resource_type=OntologyObjectTypeVersion
 ):
     def generate_link(
