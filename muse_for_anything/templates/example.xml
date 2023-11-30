@@ -23,11 +23,6 @@
     </owl:Class>      
     {% endfor %}
 
-    <owl:ObjectProperty rdf:about="#hasChild">
-        <rdfs:label>hasChild</rdfs:label>
-        <rdfs:comment>Denotes a source-target relationship between taxonomy items</rdfs:comment>
-    </owl:ObjectProperty>
-
     {% for taxonomie in taxonomy_list %}
     {% for item in taxonomie.items %}
     <owl:class rdf:about="{{ item.current_version.name }}">
@@ -40,9 +35,6 @@
         {% endif %}
         <rdfs:comment>{{ item.current_version.description }}</rdfs:comment>
         <rdfs:label>{{ item.current_version.name }}</rdfs:label>
-        {% for relation in item.current_related %}
-        <hasChild rdf:resource="{{ relation.taxonomy_item_target.name }}"/>
-        {% endfor %}
     </owl:class>
     {% endfor %}
     {% endfor %}
@@ -77,10 +69,10 @@
 
 
     {% for object in object_list %}
-    <owl:NamedIndividual rdf:about="{{ object.name }}">
+    <owl:NamedIndividual rdf:about="{{ object.current_version.name }}">
         <rdf:type rdf:resource="{{ object.ontology_type.name }}"/>
-        <rdfs:comment>{{ object.description }}</rdfs:comment>
-        <rdfs:label>{{ object.name }}</rdfs:label>
+        <rdfs:comment>{{ object.current_version.description }}</rdfs:comment>
+        <rdfs:label>{{ object.current_version.name }}</rdfs:label>
     </owl:NamedIndividual>
     {% endfor %}
 
