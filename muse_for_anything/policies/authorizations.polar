@@ -16,6 +16,7 @@ allow(user: User, "RESTORE", resource: Namespace)
 allow(user: User, "DELETE", resource: Namespace)
     if can_delete(user) or can_delete(user, "ont-namespace") or can_delete(user, resource);
 
+allow(user: User, "EXPORT", resource: Namespace) if not is_protected_resource(user, resource);
 
 
 # type

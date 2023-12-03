@@ -59,6 +59,9 @@ class OWL:
             'object_list': [(object, self.get_ontology_object_variables(object)) for object in ontology_objects]
         }
 
+        #for t in ontology_object_types:
+        #   print(t.current_version.root_schema)
+
         rendered_template = template.render(data)
         return rendered_template 
 
@@ -91,5 +94,5 @@ class OWL:
                 TaxonomyItem.id == int(reference_key['taxonomyItemId']),
             ).first().name
         else:
-            raise Exception('Unknown reference type')  
+            raise Exception('Unknown reference type')
     

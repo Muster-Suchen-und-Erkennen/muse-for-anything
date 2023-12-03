@@ -44,7 +44,7 @@
         <rdfs:comment>{{ type.current_version.description }}</rdfs:comment>
         <rdfs:label>{{ type.current_version.name }}</rdfs:label>
         {% set schema = type.current_version.root_schema %}
-        {% if "object" in schema["type"] and "properties" in schema %}
+        {% if "object" in schema["type"] and "properties" in schema and not "referenceType" in schema%}
         {% for property_name, property_value in schema["properties"].items() %}
         <rdfs:subClassOf>
             <owl:Restriction>
@@ -58,7 +58,7 @@
 
     {% for type in type_list %}
     {% set schema = type.current_version.root_schema %}
-    {% if "object" in schema["type"] and "properties" in schema %}
+    {% if "object" in schema["type"] and "properties" in schema and not "referenceType" in schema%}
     {% for property_name, property_value in schema["properties"].items() %}
     <owl:ObjectProperty rdf:about="{{ property_name }}">
         <rdfs:labels>{{ property_name }}</rdfs:labels>

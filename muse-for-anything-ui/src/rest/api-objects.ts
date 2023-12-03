@@ -175,3 +175,11 @@ export function isApiResponse(obj: any): obj is ApiResponse<unknown> {
     return obj?.links != null && obj?.data != null && isApiObject(obj.data);
 }
 
+export interface FileExportData {
+    data: string;
+    name: string;
+}
+
+export function isFileExportData(obj: any): obj is FileExportData {
+    return (obj?.name != null && obj?.data != null);
+}

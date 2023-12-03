@@ -140,6 +140,9 @@
             "ont-taxonomy": "Restore Taxonomy",
             "ont-taxonomy-item": "Restore Taxonomy-Item"
         },
+        "export": {
+            "ont-namespace": "Export Namespace"
+        },
         "user": "User",
         "user-role": "User-Role",
         "user-grant": "User-Grant",
@@ -151,7 +154,8 @@
         "ont-taxonomy": "Taxonomy",
         "ont-taxonomy-item": "Taxonomy-Item",
         "ont-taxonomy-item-relation": "Taxonomy-Item-Relation",
-        "ont-taxonomy-item-version": "Taxonomy-Item Version"
+        "ont-taxonomy-item-version": "Taxonomy-Item Version",
+        "as-owl": "as OWL"
     },
     "pages": {
         "page": "page",

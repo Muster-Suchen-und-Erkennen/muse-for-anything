@@ -3,7 +3,7 @@ import { EventAggregator } from "aurelia-event-aggregator";
 import { autoinject, bindable } from "aurelia-framework";
 import { Router } from "aurelia-router";
 import { API_RESOURCE_CHANGES_CHANNEL } from "resources/events";
-import { ApiLink, isChangedApiObject, isDeletedApiObject } from "rest/api-objects";
+import { ApiLink, isChangedApiObject, isDeletedApiObject, isFileExportData } from "rest/api-objects";
 import { BaseApiService } from "rest/base-api";
 import { NavigationLink } from "services/navigation-links";
 import { ConfirmActionDialog } from "./confirm-action-dialog";
@@ -29,6 +29,11 @@ export class ActionLink {
     private isDangerous(action: NavigationLink): boolean {
         const link = action.apiLink;
         return link.rel.some(rel => rel === "danger" || rel === "permanent");
+    }
+
+    private isExport(action: NavigationLink): boolean {
+        const link = action.apiLink;
+        return link.rel.some(rel => rel === "export");
     }
 
     actionChanged(newAction: NavigationLink): void {
@@ -60,6 +65,15 @@ export class ActionLink {
             if (isDeletedApiObject(result.data)) {
                 this.navigateToOtherResourceOnDelete(result.data.redirectTo);
             }
+            if (this.isExport(action) && isFileExportData(result.data)) {
+                const blob = new Blob([result.data.data], { type: 'application/xml' })
+                const link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.download = result.data.name;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
         });
     }
 
@@ -70,3 +84,4 @@ export class ActionLink {
             });
     }
 }
+

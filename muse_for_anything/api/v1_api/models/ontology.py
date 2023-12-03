@@ -48,6 +48,10 @@ class NamespaceSchema(ChangesSchemaMixin, ApiObjectSchema):
     )
     description = ma.fields.String(load_default="", metadata={"format": "markdown"})
 
+class NamespaceExportSchema(MaBaseSchema):
+    data = ma.fields.String(required=True, allow_none=False)
+    name = ma.fields.String(required=True, allow_none=False)
+
 
 @dataclass
 class CreateDeleteDataMixin:
@@ -69,6 +73,11 @@ class NameDescriptionMixin:
 @dataclass
 class NamespaceData(BaseApiObject, ChangesDataMixin, NameDescriptionMixin):
     """Dataclass for Namespaces."""
+
+@dataclass
+class FileExportData:
+    data: str
+    name: str
 
 
 class ObjectTypeSchema(ChangesSchemaMixin, ApiObjectSchema):
