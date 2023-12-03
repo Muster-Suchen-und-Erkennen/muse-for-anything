@@ -13,7 +13,7 @@
     xmlns:xsd="http://www.w3.org/2001/XMLSchema#">
 
     <owl:Ontology rdf:about="{{ name }}">
-        <rdfs:comment>{{ description_of_the_namespace }}</rdfs:comment>
+        <rdfs:comment>{{ description }}</rdfs:comment>
     </owl:Ontology>
 
     {% for taxonomie in taxonomy_list %}
@@ -46,11 +46,19 @@
         {% set schema = type.current_version.root_schema %}
         {% if "object" in schema["type"] and "properties" in schema and not "referenceType" in schema%}
         {% for property_name, property_value in schema["properties"].items() %}
+        {% set property_type = property_value["type"][0] %}
+        {% if property_type == "number" or property_type == "integer" or property_type == "boolean" or property_type == "string" %}
         <rdfs:subClassOf>
             <owl:Restriction>
                 <owl:onProperty rdf:resource="{{ property_name }}"/>
+                {% if property_type == "number" %}
+                <owl:allValuesFrom rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+                {% else %}
+                <owl:allValuesFrom rdf:resource="http://www.w3.org/2001/XMLSchema#{{ property_type }}"/>
+                {% endif %}
             </owl:Restriction>
         </rdfs:subClassOf>
+        {% endif %}
         {% endfor%}
         {% endif %}
     </owl:Class>
