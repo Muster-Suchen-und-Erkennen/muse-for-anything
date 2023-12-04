@@ -59,9 +59,6 @@ class OWL:
             'object_list': [(object, self.get_ontology_object_variables(object)) for object in ontology_objects]
         }
 
-        #for t in ontology_object_types:
-        #   print(t.current_version.root_schema)
-
         rendered_template = template.render(data)
         return rendered_template 
 
@@ -74,7 +71,7 @@ class OWL:
         if 'referenceType' in root_schema and 'referenceKey' in root_schema:
             ref_name = self.find_reference_name(data['referenceType'], data['referenceKey'])
             result.append({'name': ref_name, 'ref': ref_name})
-        else:
+        elif isinstance(data, dict):
             for name,value in data.items():
                 property_schema = root_schema['properties'][name]
                 if 'referenceType' in property_schema and 'referenceKey' in property_schema:

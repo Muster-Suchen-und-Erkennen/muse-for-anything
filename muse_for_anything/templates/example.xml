@@ -25,7 +25,7 @@
 
     {% for taxonomie in taxonomy_list %}
     {% for item in taxonomie.items %}
-    <owl:class rdf:about="{{ item.current_version.name }}">
+    <owl:Class rdf:about="{{ item.current_version.name }}">
         {% if item.current_ancestors %}
         {% for relation in item.current_ancestors %}
         <rdfs:subClassOf rdf:resource="{{ relation.taxonomy_item_source.name }}"/>
@@ -35,7 +35,7 @@
         {% endif %}
         <rdfs:comment>{{ item.current_version.description }}</rdfs:comment>
         <rdfs:label>{{ item.current_version.name }}</rdfs:label>
-    </owl:class>
+    </owl:Class>
     {% endfor %}
     {% endfor %}
 
@@ -75,7 +75,17 @@
     {% endif %}
     {% endfor %}
 
-
+    {% for type in type_list %}
+    {% set schema = type.current_version.root_schema %}
+    {% if not "object" in schema["type"] and "string" in schema %}
+    {% for property_name, property_value in schema["properties"].items() %}
+    <owl:ObjectProperty rdf:about="{{ property_name }}">
+        <rdfs:labels>{{ property_name }}</rdfs:labels>
+    </owl:ObjectProperty>
+    {% endfor%}
+    {% endif %}
+    {% endfor %}
+   
     {% for object,variables in object_list %}
     <owl:NamedIndividual rdf:about="{{ object.current_version.name }}">
         <rdf:type rdf:resource="{{ object.ontology_type.name }}"/>
