@@ -364,6 +364,16 @@ class NamespaceExportView(MethodView):
     @API_V1.response(200, DynamicApiResponseSchema(NamespaceExportSchema()))
     @API_V1.require_jwt("jwt", optional=True)
     def get(self, namespace: str, **kwargs: Any):
+        """
+        GET method for exporting the namespace resource to OWL.
+
+        Args:
+            namespace (str): The namespace to export.
+            **kwargs (Any): Additional keyword arguments.
+
+        Returns:
+            ApiResponse: The API response containing the exported namespace resource in OWL format.
+        """
         if not namespace or not namespace.isdigit():
             abort(
                 HTTPStatus.BAD_REQUEST,

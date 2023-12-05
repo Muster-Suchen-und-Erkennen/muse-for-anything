@@ -9,11 +9,15 @@ import os
 class OWL:
 
     def map_namespace_to_owl(self, namespace: Namespace):
-        # implement mapping
-        # for each attribute in namespace, create owl ontology namespace attribute
-        # parse owl namespace in xml format
-        # return owl namespace (in XML format)
-        
+        """
+        Maps a namespace to an OWL representation.
+
+        Args:
+            namespace (Namespace): The namespace to be mapped.
+
+        Returns:
+            str: The rendered OWL representation as a string.
+        """
         taxonomies = Taxonomy.query.filter(
             Taxonomy.deleted_on == None,
             Taxonomy.namespace_id == namespace.id,
@@ -36,21 +40,6 @@ class OWL:
 
         template = env.get_template('example.xml')
 
-        # taxonomy_item = {
-        #     "name": "Item Name",
-        #     "description": "Item Description"
-        # }
-
-        # taxonomies_test = []
-
-        # for i in range(1, 4):
-        #     taxonomy = {
-        #         "name": f"Taxonomy {i}",
-        #         "description": f"Description of Taxonomy {i}",
-        #         "taxonomy_items": [taxonomy_item for _ in range(3)]
-        #     }
-        #     taxonomies_test.append(taxonomy)
-
         data = {
             'name': namespace.name,
             'description': namespace.description,
@@ -60,9 +49,20 @@ class OWL:
         }
 
         rendered_template = template.render(data)
-        return rendered_template 
+        return rendered_template
 
     def get_ontology_object_variables(self, ontology_object: OntologyObject):
+        """
+        Retrieves the variables of an ontology object.
+
+        Args:
+            ontology_object (OntologyObject): The ontology object to retrieve variables from.
+
+        Returns:
+            list: A list of dictionaries containing the variables of the ontology object.
+                    Each dictionary contains the name of the variable and its corresponding value or reference.
+
+        """
         current = ontology_object.current_version
         data = current.data
         type = current.ontology_type_version
@@ -82,6 +82,19 @@ class OWL:
         return result
     
     def find_reference_name(self, reference_type, reference_key):
+        """
+        Finds the name of a reference based on the type.
+
+        Args:
+            reference_type (str): The type of the reference.
+            reference_key (dict): The key of the reference.
+
+        Returns:
+            str: The name of the reference.
+
+        Raises:
+            Exception: If the reference type is unknown.
+        """
         if reference_type == 'ont-object':
             return OntologyObject.query.filter(
                 OntologyObject.id == int(reference_key['objectId']),

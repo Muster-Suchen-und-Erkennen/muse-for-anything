@@ -175,11 +175,19 @@ export function isApiResponse(obj: any): obj is ApiResponse<unknown> {
     return obj?.links != null && obj?.data != null && isApiObject(obj.data);
 }
 
+/**
+ * Represents the data for exporting a file.
+ */
 export interface FileExportData {
     data: string;
     name: string;
 }
 
+/**
+ * Checks if the given object is of type FileExportData.
+ * @param obj - The object to be checked.
+ * @returns True if the object is of type FileExportData, false otherwise.
+ */
 export function isFileExportData(obj: any): obj is FileExportData {
     return (obj?.name != null && obj?.data != null);
 }

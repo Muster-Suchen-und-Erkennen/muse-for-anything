@@ -219,6 +219,15 @@ def register_cli_blueprint(app: Flask):
 @click.option("-n", "--namespace")
 @with_appcontext
 def map_namespace_to_owl_cli(namespace: int):
+    """
+    Export the specified namespace to an OWL file.
+
+    Args:
+        namespace (int): The ID of the namespace to export.
+
+    Returns:
+        None
+    """
     click.echo(f"export {namespace}")
     # get data from db
     if namespace is None:
@@ -227,11 +236,7 @@ def map_namespace_to_owl_cli(namespace: int):
        
     owl_namespace = OWL().map_namespace_to_owl(found_namespace)
    
-    # owl_ontology = _map_ontology_object_to_owl(ontology_object)
-
-    # click.echo(owl_ontology)
     click.echo(found_namespace)
-    # click.echo(dir(found_namespace))
     # For later: move source code to an API endpoint
 
     click.echo(owl_namespace)

@@ -49,6 +49,13 @@ class NamespaceSchema(ChangesSchemaMixin, ApiObjectSchema):
     description = ma.fields.String(load_default="", metadata={"format": "markdown"})
 
 class NamespaceExportSchema(MaBaseSchema):
+    """
+    Schema for exporting namespace data.
+
+    Attributes:
+        data (str): The exported data.
+        name (str): The name of the namespace.
+    """
     data = ma.fields.String(required=True, allow_none=False)
     name = ma.fields.String(required=True, allow_none=False)
 
@@ -76,6 +83,13 @@ class NamespaceData(BaseApiObject, ChangesDataMixin, NameDescriptionMixin):
 
 @dataclass
 class FileExportData:
+    """
+    Represents data for exporting a file.
+
+    Attributes:
+        data (str): The file data.
+        name (str): The name of the file.
+    """
     data: str
     name: str
 

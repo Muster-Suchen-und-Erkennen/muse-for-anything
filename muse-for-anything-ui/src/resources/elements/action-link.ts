@@ -31,6 +31,11 @@ export class ActionLink {
         return link.rel.some(rel => rel === "danger" || rel === "permanent");
     }
 
+    /**
+     * Checks if the given NavigationLink is an export action.
+     * @param action The NavigationLink to check.
+     * @returns True if the NavigationLink is an export action, false otherwise.
+     */
     private isExport(action: NavigationLink): boolean {
         const link = action.apiLink;
         return link.rel.some(rel => rel === "export");
@@ -57,6 +62,13 @@ export class ActionLink {
         }
     }
 
+    /**
+     * Submits the given action by calling the API and handles the response accordingly.
+     * If the API response indicates a changed resource, it publishes the resource key to the API_RESOURCE_CHANGES_CHANNEL.
+     * If the API response indicates a deleted resource, it navigates to the specified redirect URL.
+     * If the action is an export action and the API response contains file export data, it triggers a file download.
+     * @param action The action to be submitted.
+     */
     private submitAction(action: NavigationLink) {
         this.api.submitByApiLink(this.action.apiLink).then(result => {
             if (isChangedApiObject(result.data)) {
