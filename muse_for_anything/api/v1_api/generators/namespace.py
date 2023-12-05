@@ -11,9 +11,12 @@ from muse_for_anything.api.v1_api.constants import (
     CREATE_REL,
     DELETE,
     DELETE_REL,
+    EXPORT,
+    EXPORT_REL,
     GET,
     ITEM_COUNT_DEFAULT,
     ITEM_COUNT_QUERY_KEY,
+    NAMESPACE_EXPORT_RESOURCE,
     NAMESPACE_EXTRA_LINK_RELATIONS,
     NAMESPACE_ID_KEY,
     NAMESPACE_PAGE_RESOURCE,
@@ -279,6 +282,34 @@ class RestoreNamespaceLinkGenerator(
         link = LinkGenerator.get_link_of(resource, ignore_deleted=ignore_deleted)
         link.rel = (RESTORE_REL, POST_REL)
         return link
+    
+
+class ExportNamespaceLinkGenerator(
+    LinkGenerator, resource_type=Namespace, relation=EXPORT_REL
+):
+    def generate_link(
+        self,
+        resource: Namespace,
+        *,
+        query_params: Optional[Dict[str, str]] = None,
+        ignore_deleted: bool = False,
+    ) -> Optional[ApiLink]:
+        assert isinstance(resource, Namespace)
+        if not LinkGenerator.skip_slow_policy_checks:
+            # skip policy check for embedded resources
+            if not FLASK_OSO.is_allowed(resource, action=EXPORT):
+                return  # not allowed
+        if not ignore_deleted:
+            if resource.is_deleted:
+                return  # deleted
+        return ApiLink(
+            href=url_for(NAMESPACE_EXPORT_RESOURCE, namespace=str(resource.id), _external=True),
+            rel=(EXPORT_REL,),
+            resource_type=NAMESPACE_REL_TYPE,
+            resource_key=KeyGenerator.generate_key(resource),
+            schema=url_for(SCHEMA_RESOURCE, schema_id=NAMESPACE_SCHEMA, _external=True),
+            name=resource.name,
+        )
 
 
 class NamespaceApiObjectGenerator(ApiObjectGenerator, resource_type=Namespace):

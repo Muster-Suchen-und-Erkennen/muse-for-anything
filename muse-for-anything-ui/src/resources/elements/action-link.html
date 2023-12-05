@@ -15,4 +15,11 @@
             ${action.title | t} ${action.name ? '"' + action.name + '"' : ""}
         </button>
     </template>
+    <template if.bind="action.actionType === 'export'">
+        <button class="sidebar-action ${dangerous ? 'danger' : ''} w-full text-left flex items-start"
+            click.delegate="performAction()">
+            <svg-icon class="mr-1" icon.bind="'download'" if.bind="action.actionType === 'export'"></svg-icon>
+            ${action.title | t} ${action.name ? '"' + action.name + '"' : ""} ${action.titleEnd | t}
+        </button>
+    </template>
 </template>
