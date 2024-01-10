@@ -55,6 +55,8 @@ copyright = f"{copyright_year}, {author}"
 version = str(package_config.get("version"))
 release = str(sphinx_config.get("release", version))
 
+config_theme = str(sphinx_config.get("theme"))
+
 if sphinx_config.get("html-baseurl", None):
     html_baseurl = sphinx_config.get("html-baseurl", None)
 
@@ -132,16 +134,7 @@ myst_enable_extensions: List[str] = []
 
 # enable markdown parsing
 if sphinx_config.get("enable-markdown", False):
-    _md_plugin = sphinx_config["enable-markdown"]
-    if _md_plugin is True or _md_plugin.lower() == "myst":
-        extensions.append("myst_parser")
-    elif _md_plugin.lower() == "recommonmark":
-        extensions.append("recommonmark")
-    else:
-        print(
-            "Unknown markdown plugin specified (allowed: 'myst', 'recommonmark'), using 'myst'."
-        )
-        extensions.append("myst_parser")
+    extensions.append("myst_parser")
     print("MARKDOWN ENABLED")
 
     # source_suffix[".txt"] = "markdown"
@@ -192,6 +185,9 @@ pygments_style = "sphinx"
 # a list of builtin themes.
 #
 html_theme = "alabaster"
+
+if config_theme:
+    html_theme = config_theme
 
 if ON_READTHEDOCS:
     html_theme = "sphinx_rtd_theme"
@@ -247,24 +243,6 @@ if _md_extensions and isinstance(_md_extensions, list):
 _md_substitutions = _myst_options.get("substitutions", None)
 if _md_substitutions and isinstance(_md_substitutions, dict):
     myst_substitutions: Dict[str, str] = _md_substitutions
-
-
-# recommonmark settings
-def setup(app):
-    recommonmark_config = {}
-    if sphinx_config.get("recommonmark"):
-        config = sphinx_config.get("recommonmark")
-        for key, val in config.items():
-            recommonmark_config[key.replace("-", "_")] = val
-        recommonmark_config.update(sphinx_config.get("recommonmark"))
-        app.add_config_value(
-            "recommonmark_config",
-            recommonmark_config,
-            True,
-        )
-        from recommonmark.transform import AutoStructify
-
-        app.add_transform(AutoStructify)
 
 
 # -- Extra Files -------------------------------------------------------------
