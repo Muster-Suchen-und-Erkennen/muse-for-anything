@@ -199,12 +199,12 @@
                     --base-opacity: 1;
                 }
 
-                .edge-group.highlight-incoming .edge {
-                    stroke-width: calc(var(--stroke-width)*2);
+                .edge-group.highlight-incoming, .edge-group.highlight-outgoing {
+                    --stroke-width: 2px;
                 }
 
-                .edge-group.highlight-outgoing .edge {
-                    stroke-width: calc(var(--stroke-width)*2);
+                .edge-group.big-edge.highlight-incoming, .edge-group.big-edge.highlight-outgoing {
+                    --stroke-width: 10px;
                 }
 
                 .edge-group .marker {
@@ -533,7 +533,7 @@
                 <div style="height: 100%;">
                     <network-graph id="graphexportsvg" class="maingraph"
                         classes="deleted search-match type-node taxonomy-node group-node child-node ghost-node ghost-edge big-edge"
-                        mode="layout" zoom="both" svg-template="#ontologyGraphTemplate">
+                        zoom="both" svg-template="#ontologyGraphTemplate">
                     </network-graph>
                 </div>
             </div>

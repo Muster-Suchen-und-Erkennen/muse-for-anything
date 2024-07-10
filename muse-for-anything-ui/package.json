@@ -20,6 +20,7 @@
     "aurelia-fetch-client": "^1.8.2",
     "aurelia-i18n": "^3.1.4",
     "d3-force": "^3.0.0",
+    "d3-shape": "^3.2.0",
     "i18next": "^21.7.1",
     "i18next-xhr-backend": "^3.2.2",
     "nanoid": "^4.0.0",
