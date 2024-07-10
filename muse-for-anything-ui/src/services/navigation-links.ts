@@ -172,6 +172,9 @@ export class NavigationLinksService {
         if (link.rel.some(rel => rel === "page" || rel === "collection")) {
             return `collection.${link.resourceType}`;
         }
+        if (link.rel.some(rel => rel === "export")) {
+            return link.rel.find(rel => rel.startsWith("ont-")) ?? link.resourceType;
+        }
         return link.resourceType;
     }
 
@@ -285,6 +288,7 @@ export class NavigationLinksService {
                         });
                     }
                     if (link.rel.some(rel => rel === "export")) {
+                        console.log(link)
                         actions.push({
                             ...navLinkBase,
                             clientUrl: `/export/${clientUrl}`,

@@ -155,7 +155,7 @@
         "ont-taxonomy-item": "Taxonomy-Item",
         "ont-taxonomy-item-relation": "Taxonomy-Item-Relation",
         "ont-taxonomy-item-version": "Taxonomy-Item Version",
-        "as-owl": "as OWL"
+        "as-owl": "as OWL (experimental)"
     },
     "pages": {
         "page": "page",

@@ -72,6 +72,16 @@ class RootView(MethodView):
                     resource_type="ont-namespace",
                     query_key=("item-count", "cursor", "sort"),
                 ),
+                KeyedApiLink(
+                    href=template_url_for(
+                        "api-v1.NamespaceExportView",
+                        {"namespace": "namespaceId"},
+                        _external=True,
+                    ),
+                    rel=("export", "ont-namespace"),
+                    resource_type="ont-export",
+                    key=("namespaceId",),
+                ),
                 # Types
                 KeyedApiLink(
                     href=template_url_for(

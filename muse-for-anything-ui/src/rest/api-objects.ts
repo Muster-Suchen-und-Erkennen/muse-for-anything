@@ -181,6 +181,7 @@ export function isApiResponse(obj: any): obj is ApiResponse<unknown> {
 export interface FileExportData {
     data: string;
     name: string;
+    contentType: string;
 }
 
 /**
@@ -189,5 +190,5 @@ export interface FileExportData {
  * @returns True if the object is of type FileExportData, false otherwise.
  */
 export function isFileExportData(obj: any): obj is FileExportData {
-    return (obj?.name != null && obj?.data != null);
+    return (obj?.name != null && obj?.data != null && obj?.contentType != null);
 }

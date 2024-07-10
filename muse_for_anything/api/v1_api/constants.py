@@ -1,6 +1,5 @@
 """Constants to be used for the API."""
 
-
 # actions ######################################################################
 
 GET = "GET"
@@ -52,6 +51,8 @@ REQUIRES_FRESH_LOGIN_REL = "requires-fresh-login"
 
 
 # relation types ###############################################################
+
+DATA_EXPORT_REL_TYPE = "ont-export"
 
 NAMESPACE_REL_TYPE = "ont-namespace"
 
@@ -201,6 +202,8 @@ VIEW_ALL_USERS_EXTRA_ARG = "VIEW_ALL_USERS"  # extra argument only for authentic
 # schemas ######################################################################
 
 NAMESPACE_SCHEMA = "Namespace"
+
+NAMESPACE_EXPORT_SCHEMA = "NamespaceExportSchema"
 
 TYPE_SCHEMA = "OntologyType"
 TYPE_SCHEMA_POST = "TypeSchema"

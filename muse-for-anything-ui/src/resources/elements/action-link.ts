@@ -78,8 +78,8 @@ export class ActionLink {
                 this.navigateToOtherResourceOnDelete(result.data.redirectTo);
             }
             if (this.isExport(action) && isFileExportData(result.data)) {
-                const blob = new Blob([result.data.data], { type: 'application/xml' })
-                const link = document.createElement('a');
+                const blob = new Blob([result.data.data], { type: result.data.contentType });
+                const link = document.createElement("a");
                 link.href = window.URL.createObjectURL(blob);
                 link.download = result.data.name;
                 document.body.appendChild(link);

@@ -1,24 +1,19 @@
 """CLI functions for the db module."""
 
-from email.policy import default
 from typing import Optional
 
 import click
 from flask import Blueprint, Flask, current_app
 from flask.cli import with_appcontext
 
-from .db import DB
-from .models.users import ALLOWED_USER_ROLES, User, UserRole
 from ..util.logging import get_logger
-from .models.namespace import Namespace 
-from .models.taxonomies import Taxonomy
-from .models.ontology_objects import OntologyObject
-from .models.ontology_objects import OntologyObjectType
-from .models.owl import OWL
 
 # make sure all models are imported for CLI to work properly
 from . import models  # noqa
-
+from .db import DB
+from .models import owl
+from .models.namespace import Namespace
+from .models.users import ALLOWED_USER_ROLES, User, UserRole
 
 DB_CLI_BLP = Blueprint("db_cli", __name__, cli_group=None)
 DB_CLI = DB_CLI_BLP.cli  # expose as attribute for autodoc generation
@@ -73,12 +68,14 @@ def create_admin_user(app: Flask, force: bool = False):
 @DB_CLI.command("create-user")
 @click.option("-u", "--username")
 @click.password_option("--password")
-@click.option("-r", "--role", default = None)
+@click.option("-r", "--role", default=None)
 @click.option("-f", "--force", is_flag=True, default=False)
 @with_appcontext
-def create_user_cli(username: str, password: str, role: Optional[str] = None, force: bool = False):
+def create_user_cli(
+    username: str, password: str, role: Optional[str] = None, force: bool = False
+):
     """Create a user with given username and password.
-    
+
     If the user already exists this method does nothing.
     If ``force`` is true and the user exists this method updates the user password.
     """
@@ -90,10 +87,17 @@ def create_user_cli(username: str, password: str, role: Optional[str] = None, fo
             f"User '{username}' was not created. Use -f or --force to change the current user password."
         )
 
-def create_user(app: Flask, username: str, password: str, role: Optional[str]=None, force: bool = False):
+
+def create_user(
+    app: Flask,
+    username: str,
+    password: str,
+    role: Optional[str] = None,
+    force: bool = False,
+):
     if User.exists((User.username == username,)):
         if not force:
-        # do not force create user when db contains a user with that name!
+            # do not force create user when db contains a user with that name!
             get_logger(app, DB_COMMAND_LOGGER).debug(
                 f"User '{username}' was not created because a user already exists."
             )
@@ -119,14 +123,17 @@ def create_user(app: Flask, username: str, password: str, role: Optional[str]=No
 @with_appcontext
 def delete_user_cli(username: str):
     """Delete the user with the given username."""
-    click.confirm(f"This will permanently delete the user '{username}'. Do you want to continue?", default=False, abort=True)
+    click.confirm(
+        f"This will permanently delete the user '{username}'. Do you want to continue?",
+        default=False,
+        abort=True,
+    )
     result = delete_user(current_app, username)
     if result:
         click.echo(f"User '{username}' deleted.")
     else:
-        click.echo(
-            f"User '{username}' could not be deleted."
-        )
+        click.echo(f"User '{username}' could not be deleted.")
+
 
 def delete_user(app: Flask, username: str):
     user_to_delete: Optional[User] = User.query.filter(User.username == username).first()
@@ -136,7 +143,7 @@ def delete_user(app: Flask, username: str):
         for grant in user_to_delete.grants:
             DB.session.delete(grant)
         DB.session.delete(user_to_delete)
-    
+
         DB.session.commit()
         get_logger(app, DB_COMMAND_LOGGER).info(f"User '{username}' was deleted.")
     return True
@@ -147,7 +154,7 @@ def delete_user(app: Flask, username: str):
 @with_appcontext
 def list_roles_cli(username: Optional[str]):
     """List all user roles.
-    
+
     If a username is given list only the roles the user has.
     """
     if username is None:
@@ -159,7 +166,6 @@ def list_roles_cli(username: Optional[str]):
         click.echo("\n".join(sorted(r.role for r in user.roles)))
     else:
         click.echo(f"could not find user with name {username}")
-
 
 
 @DB_CLI.command("add-role")
@@ -178,7 +184,6 @@ def add_user_role_cli(username: str, role: str):
         click.echo(f"could not find user with name {username}")
 
 
-
 @DB_CLI.command("remove-role")
 @click.option("-u", "--username")
 @click.option("-r", "--role")
@@ -194,7 +199,6 @@ def remove_user_role_cli(username: str, role: str):
         click.echo(f"Removed role '{role}' from user '{username}'.")
     else:
         click.echo(f"could not find user with name {username}")
-
 
 
 @DB_CLI.command("drop-db")
@@ -215,6 +219,7 @@ def register_cli_blueprint(app: Flask):
     app.register_blueprint(DB_CLI_BLP)
     app.logger.info("Registered DB CLI blueprint.")
 
+
 @DB_CLI.command("export-namespace")
 @click.option("-n", "--namespace")
 @with_appcontext
@@ -231,13 +236,12 @@ def map_namespace_to_owl_cli(namespace: int):
     click.echo(f"export {namespace}")
     # get data from db
     if namespace is None:
-        return 
-    found_namespace = Namespace.query.filter(Namespace.id==namespace).first()
-       
-    owl_namespace = OWL().map_namespace_to_owl(found_namespace)
-   
+        return
+    found_namespace = Namespace.query.filter(Namespace.id == namespace).first()
+
+    owl_namespace = owl.map_namespace_to_owl(found_namespace)
+
     click.echo(found_namespace)
     # For later: move source code to an API endpoint
 
     click.echo(owl_namespace)
-

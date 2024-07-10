@@ -17,9 +17,22 @@ from muse_for_anything.api.pagination_util import (
     generate_page_links,
     prepare_pagination_query_args,
 )
-from muse_for_anything.db.models.owl import OWL
+from muse_for_anything.db.models import owl
 from muse_for_anything.db.models.users import User
 
+from ...db.db import DB
+from ...db.models.namespace import Namespace
+from ...oso_helpers import FLASK_OSO, OsoResource
+from ..base_models import (
+    ApiResponse,
+    ChangedApiObject,
+    ChangedApiObjectSchema,
+    CursorPageArgumentsSchema,
+    CursorPageSchema,
+    DynamicApiResponseSchema,
+    NewApiObject,
+    NewApiObjectSchema,
+)
 from .constants import (
     CHANGED_REL,
     CREATE,
@@ -33,25 +46,12 @@ from .constants import (
     UPDATE,
     UPDATE_REL,
 )
-from .models.ontology import FileExportData, NamespaceExportSchema, NamespaceSchema
-from .request_helpers import ApiResponseGenerator, LinkGenerator, PageResource
-from .root import API_V1
-from ..base_models import (
-    ApiResponse,
-    ChangedApiObject,
-    ChangedApiObjectSchema,
-    CursorPageArgumentsSchema,
-    CursorPageSchema,
-    DynamicApiResponseSchema,
-    NewApiObject,
-    NewApiObjectSchema,
-)
-from ...db.db import DB
-from ...db.models.namespace import Namespace
-from ...oso_helpers import FLASK_OSO, OsoResource
 
 # import namespace specific generators to load them
 from .generators import namespace  # noqa
+from .models.ontology import FileExportDataRaw, NamespaceExportSchema, NamespaceSchema
+from .request_helpers import ApiResponseGenerator, LinkGenerator, PageResource
+from .root import API_V1
 
 
 @API_V1.route("/namespaces/")
@@ -357,6 +357,7 @@ class NamespaceView(MethodView):
             ),
         )
 
+
 @API_V1.route("/namespaces/<string:namespace>/export")
 class NamespaceExportView(MethodView):
     """Endpoint for exporting a single namespace resource to OWL."""
@@ -390,9 +391,10 @@ class NamespaceExportView(MethodView):
         FLASK_OSO.set_current_resource(found_namespace)
         FLASK_OSO.authorize()
 
-        data = OWL().map_namespace_to_owl(found_namespace)
+        data = owl.map_namespace_to_owl(found_namespace)
 
-        return ApiResponse(
-            links=[],
-            data=FileExportData(data=data, name=f"{found_namespace.name}.owl")
+        return ApiResponseGenerator.get_api_response(
+            FileExportDataRaw(
+                namespace=found_namespace, data=data, name=f"{found_namespace.name}.owl"
+            )
         )
