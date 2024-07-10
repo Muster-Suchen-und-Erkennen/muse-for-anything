@@ -1,6 +1,5 @@
 """Constants to be used for the API."""
 
-
 # actions ######################################################################
 
 GET = "GET"
@@ -9,6 +8,7 @@ UPDATE = "EDIT"
 EDIT = UPDATE
 DELETE = "DELETE"
 RESTORE = "RESTORE"
+EXPORT = "EXPORT"
 
 
 # special relations ############################################################
@@ -33,6 +33,7 @@ DELETE_REL = "delete"
 CREATE_REL = "create"
 UPDATE_REL = "update"
 RESTORE_REL = "restore"
+EXPORT_REL = "export"
 
 NEW_REL = "new"
 CHANGED_REL = "changed"
@@ -50,6 +51,8 @@ REQUIRES_FRESH_LOGIN_REL = "requires-fresh-login"
 
 
 # relation types ###############################################################
+
+DATA_EXPORT_REL_TYPE = "ont-export"
 
 NAMESPACE_REL_TYPE = "ont-namespace"
 
@@ -200,6 +203,8 @@ VIEW_ALL_USERS_EXTRA_ARG = "VIEW_ALL_USERS"  # extra argument only for authentic
 
 NAMESPACE_SCHEMA = "Namespace"
 
+NAMESPACE_EXPORT_SCHEMA = "NamespaceExportSchema"
+
 TYPE_SCHEMA = "OntologyType"
 TYPE_SCHEMA_POST = "TypeSchema"
 
@@ -226,6 +231,7 @@ TYPE_SCHEMA_RESOURCE = "api-v1.TypeSchemaView"
 
 NAMESPACE_PAGE_RESOURCE = "api-v1.NamespacesView"
 NAMESPACE_RESOURCE = "api-v1.NamespaceView"
+NAMESPACE_EXPORT_RESOURCE = "api-v1.NamespaceExportView"
 
 
 TYPE_PAGE_RESOURCE = "api-v1.TypesView"

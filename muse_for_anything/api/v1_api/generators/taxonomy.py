@@ -194,7 +194,7 @@ class TaxonomyApiObjectGenerator(ApiObjectGenerator, resource_type=Taxonomy):
             return
 
         return TaxonomyData(
-            self=LinkGenerator.get_link_of(resource, query_params=query_params),
+            self=LinkGenerator.get_link_of(resource, query_params=query_params, ignore_deleted=True),
             name=resource.name,
             description=resource.description,
             created_on=resource.created_on,

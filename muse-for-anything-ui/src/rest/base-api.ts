@@ -694,7 +694,7 @@ export class BaseApiService {
     }
 
     public async submitByApiLink<T>(link: ApiLink, data?: any, signal?: AbortSignal, authentication?: string): Promise<ApiResponse<T>> {
-        const method = link.rel.find(rel => rel === "post" || rel === "put" || rel === "patch" || rel === "delete").toUpperCase();
+        const method = link.rel.find(rel => rel === "post" || rel === "put" || rel === "patch" || rel === "delete")?.toUpperCase() ?? "GET";
         const init: RequestInit = {
             headers: { Accept: "application/json", "Content-Type": "application/json" },
             method: method,

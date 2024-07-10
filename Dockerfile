@@ -1,4 +1,4 @@
-FROM node:16-buster-slim as builder
+FROM node:20-buster-slim as builder
 
 COPY ./muse-for-anything-ui /muse-for-anything-ui
 

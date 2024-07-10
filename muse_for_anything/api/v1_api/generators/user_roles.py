@@ -224,7 +224,9 @@ class UserRoleApiObjectGenerator(ApiObjectGenerator, resource_type=UserRole):
             return
 
         return UserRoleData(
-            self=LinkGenerator.get_link_of(resource, query_params=query_params),
+            self=LinkGenerator.get_link_of(
+                resource, query_params=query_params, ignore_deleted=True
+            ),
             role=resource.role,
             description=resource.description,
         )

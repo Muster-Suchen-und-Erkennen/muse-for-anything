@@ -8,10 +8,11 @@ import { BaseApiService } from "rest/base-api";
 export interface NavigationLink {
     clientUrl: string;
     title: string;
+    titleEnd?: string;
     name?: string;
     sortKey: number;
     icon?: string;
-    actionType?: "create" | "update" | "delete" | "restore";
+    actionType?: "create" | "update" | "delete" | "restore" | "export";
     apiLink?: ApiLink;
 }
 
@@ -22,7 +23,7 @@ export interface NavLinks {
     nav?: NavigationLink[];
 }
 
-const ACTION_RELS: Set<string> = new Set<string>(["create", "update", "delete", "restore"]);
+const ACTION_RELS: Set<string> = new Set<string>(["create", "update", "delete", "restore", "export"]);
 
 export const RESOURCE_TYPE_ICONS: Map<string, string> = new Map([
     ["user", "user"],
@@ -171,6 +172,9 @@ export class NavigationLinksService {
         if (link.rel.some(rel => rel === "page" || rel === "collection")) {
             return `collection.${link.resourceType}`;
         }
+        if (link.rel.some(rel => rel === "export")) {
+            return link.rel.find(rel => rel.startsWith("ont-")) ?? link.resourceType;
+        }
         return link.resourceType;
     }
 
@@ -281,6 +285,17 @@ export class NavigationLinksService {
                             title: `nav.restore.${this.getTranslationKeyForLink(link)}`,
                             sortKey: baseSortKey + 40,
                             actionType: "restore",
+                        });
+                    }
+                    if (link.rel.some(rel => rel === "export")) {
+                        console.log(link)
+                        actions.push({
+                            ...navLinkBase,
+                            clientUrl: `/export/${clientUrl}`,
+                            title: `nav.export.${this.getTranslationKeyForLink(link)}`,
+                            titleEnd: "nav.as-owl",
+                            sortKey: baseSortKey + 50,
+                            actionType: "export",
                         });
                     }
                 }));

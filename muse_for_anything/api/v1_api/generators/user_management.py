@@ -271,7 +271,7 @@ class UserApiObjectGenerator(ApiObjectGenerator, resource_type=User):
             return
 
         return UserData(
-            self=LinkGenerator.get_link_of(resource, query_params=query_params),
+            self=LinkGenerator.get_link_of(resource, query_params=query_params, ignore_deleted=True),
             username=resource.username,
             e_mail=resource.e_mail,
         )

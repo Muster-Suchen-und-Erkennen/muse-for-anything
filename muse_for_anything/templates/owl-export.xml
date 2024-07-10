@@ -1,0 +1,105 @@
+<?xml version="1.0"?>
+<!DOCTYPE rdf:RDF [
+    <!ENTITY owl "http://www.w3.org/2002/07/owl#" >
+    <!ENTITY xsd "http://www.w3.org/2001/XMLSchema#" >
+    <!ENTITY rdfs "http://www.w3.org/2000/01/rdf-schema#" >
+    <!ENTITY rdf "http://www.w3.org/1999/02/22-rdf-syntax-ns#" >
+]>
+
+<rdf:RDF
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+    xmlns:owl="http://www.w3.org/2002/07/owl#"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema#">
+
+    <owl:Ontology rdf:about="{{ name }}">
+        <rdfs:comment>{{ description }}</rdfs:comment>
+    </owl:Ontology>
+
+    {% for taxonomie in taxonomy_list %}
+    <owl:Class rdf:about="{{ taxonomie.name }}">
+        <rdfs:comment>{{ taxonomie.description }}</rdfs:comment>
+        <rdfs:label>{{ taxonomie.name }}</rdfs:label> 
+    </owl:Class>      
+    {% endfor %}
+
+    {% for taxonomie in taxonomy_list %}
+    {% for item in taxonomie.items %}
+    <owl:Class rdf:about="{{ item.current_version.name }}">
+        {% if item.current_ancestors %}
+        {% for relation in item.current_ancestors %}
+        <rdfs:subClassOf rdf:resource="{{ relation.taxonomy_item_source.name }}"/>
+        {% endfor %}
+        {% else %}
+        <rdfs:subClassOf rdf:resource="{{ taxonomie.name }}"/>
+        {% endif %}
+        <rdfs:comment>{{ item.current_version.description }}</rdfs:comment>
+        <rdfs:label>{{ item.current_version.name }}</rdfs:label>
+    </owl:Class>
+    {% endfor %}
+    {% endfor %}
+
+    {% for type in type_list %}
+    <owl:Class rdf:about="{{ type.current_version.name }}">
+        <rdfs:comment>{{ type.current_version.description }}</rdfs:comment>
+        <rdfs:label>{{ type.current_version.name }}</rdfs:label>
+        {% set schema = type.current_version.root_schema %}
+        {% if "object" in schema["type"] and "properties" in schema and not "referenceType" in schema%}
+        {% for property_name, property_value in schema["properties"].items() %}
+        {% set property_type = property_value["type"][0] %}
+        {% if property_type == "number" or property_type == "integer" or property_type == "boolean" or property_type == "string" %}
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="{{ property_name }}"/>
+                {% if property_type == "number" %}
+                <owl:allValuesFrom rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+                {% else %}
+                <owl:allValuesFrom rdf:resource="http://www.w3.org/2001/XMLSchema#{{ property_type }}"/>
+                {% endif %}
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        {% endif %}
+        {% endfor%}
+        {% endif %}
+    </owl:Class>
+    {% endfor %}
+
+    {% for type in type_list %}
+    {% set schema = type.current_version.root_schema %}
+    {% if "object" in schema["type"] and "properties" in schema and not "referenceType" in schema%}
+    {% for property_name, property_value in schema["properties"].items() %}
+    <owl:ObjectProperty rdf:about="{{ property_name }}">
+        <rdfs:labels>{{ property_name }}</rdfs:labels>
+    </owl:ObjectProperty>
+    {% endfor%}
+    {% endif %}
+    {% endfor %}
+
+    {% for type in type_list %}
+    {% set schema = type.current_version.root_schema %}
+    {% if not "object" in schema["type"] and "string" in schema %}
+    {% for property_name, property_value in schema["properties"].items() %}
+    <owl:ObjectProperty rdf:about="{{ property_name }}">
+        <rdfs:labels>{{ property_name }}</rdfs:labels>
+    </owl:ObjectProperty>
+    {% endfor%}
+    {% endif %}
+    {% endfor %}
+   
+    {% for object,variables in object_list %}
+    <owl:NamedIndividual rdf:about="{{ object.current_version.name }}">
+        <rdf:type rdf:resource="{{ object.ontology_type.name }}"/>
+        <rdfs:comment>{{ object.current_version.description }}</rdfs:comment>
+        <rdfs:label>{{ object.current_version.name }}</rdfs:label>
+        {% for variable in variables %}
+        {% if "ref" in variable %}
+        <{{ variable["name"] }} rdf:resource="{{ variable["ref"] }}"/>
+        {% else %}
+        <{{ variable["name"] }}>{{ variable["value"] }}</{{ variable["name"] }}>
+        {% endif %}
+        {% endfor %}
+    </owl:NamedIndividual>
+    {% endfor %}
+
+
+</rdf:RDF>

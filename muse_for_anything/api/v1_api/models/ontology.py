@@ -2,22 +2,20 @@
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, List, Optional, Sequence
+from typing import Any, Optional, Sequence
+
 import marshmallow as ma
 from marshmallow.validate import Length, Regexp
 
 from ....util.import_helpers import get_all_classes_of_module
-
 from ...base_models import (
     ApiLink,
     ApiLinkSchema,
     ApiObjectSchema,
+    BaseApiObject,
     CursorPageArgumentsSchema,
     MaBaseSchema,
-    ApiResponseSchema,
-    BaseApiObject,
 )
-
 
 __all__ = ["NamespaceData"]
 
@@ -49,6 +47,20 @@ class NamespaceSchema(ChangesSchemaMixin, ApiObjectSchema):
     description = ma.fields.String(load_default="", metadata={"format": "markdown"})
 
 
+class NamespaceExportSchema(ApiObjectSchema):
+    """
+    Schema for exporting namespace data.
+
+    Attributes:
+        data (str): The exported data.
+        name (str): The name of the namespace.
+    """
+
+    data = ma.fields.String(required=True, allow_none=False)
+    content_type = ma.fields.String(required=True, allow_none=False)
+    name = ma.fields.String(required=True, allow_none=False)
+
+
 @dataclass
 class CreateDeleteDataMixin:
     created_on: datetime
@@ -71,11 +83,46 @@ class NamespaceData(BaseApiObject, ChangesDataMixin, NameDescriptionMixin):
     """Dataclass for Namespaces."""
 
 
+@dataclass
+class FileExportDataRaw:
+    """
+    Represents data for exporting a file.
+
+    Attributes:
+        data (str): The file data.
+        name (str): The name of the file.
+        content_type (str): the content type of the data encoded in data.
+    """
+
+    namespace: Any
+    data: str
+    name: str
+    content_type: str = "application/xml"
+
+
+@dataclass
+class FileExportData(BaseApiObject):
+    """
+    Represents data for exporting a file.
+
+    Attributes:
+        data (str): The file data.
+        name (str): The name of the file.
+        content_type (str): the content type of the data encoded in data.
+    """
+
+    data: str
+    name: str
+    content_type: str = "application/xml"
+
+
 class ObjectTypeSchema(ChangesSchemaMixin, ApiObjectSchema):
     name = ma.fields.String(
         allow_none=False, dump_only=True, validate=Length(1, MAX_STRING_LENGTH)
     )
-    description = ma.fields.String(allow_none=False, dump_only=True, metadata={"format": "markdown"})
+    description = ma.fields.String(
+        allow_none=False, dump_only=True, metadata={"format": "markdown"}
+    )
     version = ma.fields.Integer(allow_none=False, dump_only=True)
     abstract = ma.fields.Boolean(required=False, load_default=False, dump_default=False)
     schema = ma.fields.Raw(allow_none=False, dump_only=True)
@@ -112,7 +159,9 @@ class TaxonomySchema(ChangesSchemaMixin, ApiObjectSchema):
     name = ma.fields.String(
         allow_none=False, required=True, validate=Length(1, MAX_STRING_LENGTH)
     )
-    description = ma.fields.String(allow_none=True, required=False, metadata={"format": "markdown"})
+    description = ma.fields.String(
+        allow_none=True, required=False, metadata={"format": "markdown"}
+    )
     items = ma.fields.List(
         ma.fields.Nested(ApiLinkSchema()), allow_none=False, dump_only=True
     )
@@ -127,7 +176,9 @@ class TaxonomyItemSchema(ChangesSchemaMixin, ApiObjectSchema):
     name = ma.fields.String(
         allow_none=False, required=True, validate=Length(1, MAX_STRING_LENGTH)
     )
-    description = ma.fields.String(load_default="", required=False, metadata={"format": "markdown"})
+    description = ma.fields.String(
+        load_default="", required=False, metadata={"format": "markdown"}
+    )
     sort_key = ma.fields.Float(allow_nan=False, allow_none=True, required=False)
     is_toplevel_item = ma.fields.Boolean(allow_none=False, dump_only=True)
     version = ma.fields.Integer(allow_none=False, dump_only=True)

@@ -9,11 +9,16 @@ from muse_for_anything.api.v1_api.constants import (
     COLLECTION_REL,
     CREATE,
     CREATE_REL,
+    DATA_EXPORT_REL_TYPE,
     DELETE,
     DELETE_REL,
+    EXPORT,
+    EXPORT_REL,
     GET,
     ITEM_COUNT_DEFAULT,
     ITEM_COUNT_QUERY_KEY,
+    NAMESPACE_EXPORT_RESOURCE,
+    NAMESPACE_EXPORT_SCHEMA,
     NAMESPACE_EXTRA_LINK_RELATIONS,
     NAMESPACE_ID_KEY,
     NAMESPACE_PAGE_RESOURCE,
@@ -34,7 +39,11 @@ from muse_for_anything.api.v1_api.constants import (
     UPDATE,
     UPDATE_REL,
 )
-from muse_for_anything.api.v1_api.models.ontology import NamespaceData
+from muse_for_anything.api.v1_api.models.ontology import (
+    FileExportData,
+    FileExportDataRaw,
+    NamespaceData,
+)
 from muse_for_anything.api.v1_api.request_helpers import (
     ApiObjectGenerator,
     ApiResponseGenerator,
@@ -281,6 +290,38 @@ class RestoreNamespaceLinkGenerator(
         return link
 
 
+class ExportNamespaceLinkGenerator(
+    LinkGenerator, resource_type=Namespace, relation=EXPORT_REL
+):
+    def generate_link(
+        self,
+        resource: Namespace,
+        *,
+        query_params: Optional[Dict[str, str]] = None,
+        ignore_deleted: bool = False,
+    ) -> Optional[ApiLink]:
+        assert isinstance(resource, Namespace)
+        if not LinkGenerator.skip_slow_policy_checks:
+            # skip policy check for embedded resources
+            if not FLASK_OSO.is_allowed(resource, action=EXPORT):
+                return  # not allowed
+        if not ignore_deleted:
+            if resource.is_deleted:
+                return  # deleted
+        return ApiLink(
+            href=url_for(
+                NAMESPACE_EXPORT_RESOURCE, namespace=str(resource.id), _external=True
+            ),
+            rel=(EXPORT_REL, NAMESPACE_REL_TYPE),
+            resource_type=DATA_EXPORT_REL_TYPE,
+            resource_key=KeyGenerator.generate_key(resource),
+            schema=url_for(
+                SCHEMA_RESOURCE, schema_id=NAMESPACE_EXPORT_SCHEMA, _external=True
+            ),
+            name=resource.name,
+        )
+
+
 class NamespaceApiObjectGenerator(ApiObjectGenerator, resource_type=Namespace):
     def generate_api_object(
         self,
@@ -294,7 +335,7 @@ class NamespaceApiObjectGenerator(ApiObjectGenerator, resource_type=Namespace):
             return
 
         return NamespaceData(
-            self=LinkGenerator.get_link_of(resource, query_params=query_params),
+            self=LinkGenerator.get_link_of(resource, query_params=query_params, ignore_deleted=True),
             name=resource.name,
             description=resource.description,
             created_on=resource.created_on,
@@ -312,6 +353,99 @@ class NamespaceApiResponseGenerator(ApiResponseGenerator, resource_type=Namespac
             if link_to_relations is None
             else link_to_relations
         )
+        return ApiResponseGenerator.default_generate_api_response(
+            resource, link_to_relations=link_to_relations, **kwargs
+        )
+
+
+class ExportNamespaceKeyGenerator(KeyGenerator, resource_type=FileExportDataRaw):
+    def update_key(
+        self, key: Dict[str, str], resource: FileExportDataRaw
+    ) -> Dict[str, str]:
+        assert isinstance(resource, FileExportDataRaw)
+        assert isinstance(resource.namespace, Namespace)
+        return KeyGenerator.generate_key(resource.namespace)
+
+
+class ExportNamespaceSelfLinkGenerator(LinkGenerator, resource_type=FileExportDataRaw):
+    def generate_link(
+        self,
+        resource: FileExportDataRaw,
+        *,
+        query_params: Optional[Dict[str, str]] = None,
+        ignore_deleted: bool = False,
+    ) -> Optional[ApiLink]:
+        assert isinstance(resource, FileExportDataRaw)
+        if not LinkGenerator.skip_slow_policy_checks:
+            # skip policy check for embedded resources
+            if not FLASK_OSO.is_allowed(resource.namespace, action=EXPORT):
+                return  # not allowed
+        if not ignore_deleted:
+            if resource.namespace.is_deleted:
+                return  # deleted
+        return ApiLink(
+            href=url_for(
+                NAMESPACE_EXPORT_RESOURCE,
+                namespace=str(resource.namespace.id),
+                _external=True,
+            ),
+            rel=(EXPORT_REL, NAMESPACE_REL_TYPE),
+            resource_type=DATA_EXPORT_REL_TYPE,
+            resource_key=KeyGenerator.generate_key(resource),
+            schema=url_for(
+                SCHEMA_RESOURCE, schema_id=NAMESPACE_EXPORT_SCHEMA, _external=True
+            ),
+            name=resource.name,
+        )
+
+
+class NamespaceExportUpLinkGenerator(
+    LinkGenerator, resource_type=FileExportDataRaw, relation=UP_REL
+):
+    def generate_link(
+        self,
+        resource: FileExportDataRaw,
+        *,
+        query_params: Optional[Dict[str, str]] = None,
+        ignore_deleted: bool = False,
+    ) -> Optional[ApiLink]:
+        return LinkGenerator.get_link_of(
+            resource.namespace,
+            extra_relations=(UP_REL,),
+        )
+
+
+class NamespaceExportApiObjectGenerator(
+    ApiObjectGenerator, resource_type=FileExportDataRaw
+):
+    def generate_api_object(
+        self,
+        resource: FileExportDataRaw,
+        *,
+        query_params: Optional[Dict[str, str]] = None,
+    ) -> Optional[FileExportData]:
+        assert isinstance(resource, FileExportDataRaw)
+
+        if not FLASK_OSO.is_allowed(resource.namespace, action=EXPORT):
+            return  # not allowed
+
+        return FileExportData(
+            self=LinkGenerator.get_link_of(
+                resource, query_params=query_params, ignore_deleted=True
+            ),
+            name=resource.name,
+            data=resource.data,
+            content_type=resource.content_type,
+        )
+
+
+class NamespaceExportApiResponseGenerator(
+    ApiResponseGenerator, resource_type=FileExportDataRaw
+):
+    def generate_api_response(
+        self, resource, *, link_to_relations: Optional[Iterable[str]], **kwargs
+    ) -> Optional[ApiResponse]:
+        link_to_relations = [] if link_to_relations is None else link_to_relations
         return ApiResponseGenerator.default_generate_api_response(
             resource, link_to_relations=link_to_relations, **kwargs
         )
