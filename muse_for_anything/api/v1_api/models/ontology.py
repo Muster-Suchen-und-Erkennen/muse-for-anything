@@ -7,7 +7,6 @@ from typing import Any, Optional, Sequence
 import marshmallow as ma
 from marshmallow.validate import Length, Regexp
 
-from ....util.import_helpers import get_all_classes_of_module
 from ...base_models import (
     ApiLink,
     ApiLinkSchema,
@@ -16,6 +15,7 @@ from ...base_models import (
     CursorPageArgumentsSchema,
     MaBaseSchema,
 )
+from ....util.import_helpers import get_all_classes_of_module
 
 __all__ = ["NamespaceData"]
 
@@ -37,6 +37,14 @@ class DeleteSchemaMixin:
 
 
 class ChangesSchemaMixin(CreateSchemaMixin, UpdateSchemaMixin, DeleteSchemaMixin):
+    pass
+
+
+class SearchPageSchemaMixin:
+    search = ma.fields.String(required=False, allow_none=True, missing=None)
+
+
+class NamespacePageParamsSchema(SearchPageSchemaMixin, CursorPageArgumentsSchema):
     pass
 
 
@@ -116,6 +124,10 @@ class FileExportData(BaseApiObject):
     content_type: str = "application/xml"
 
 
+class ObjectTypePageParamsSchema(CursorPageArgumentsSchema, SearchPageSchemaMixin):
+    pass
+
+
 class ObjectTypeSchema(ChangesSchemaMixin, ApiObjectSchema):
     name = ma.fields.String(
         allow_none=False, dump_only=True, validate=Length(1, MAX_STRING_LENGTH)
@@ -151,8 +163,12 @@ class ObjectData(BaseApiObject, ChangesDataMixin, NameDescriptionMixin):
     data: Any
 
 
-class ObjectsCursorPageArgumentsSchema(CursorPageArgumentsSchema):
+class ObjectsCursorPageArgumentsSchema(CursorPageArgumentsSchema, SearchPageSchemaMixin):
     type_id = ma.fields.String(data_key="type-id", allow_none=True, load_only=True)
+
+
+class TaxonomyPageParamsSchema(CursorPageArgumentsSchema, SearchPageSchemaMixin):
+    pass
 
 
 class TaxonomySchema(ChangesSchemaMixin, ApiObjectSchema):
@@ -170,6 +186,10 @@ class TaxonomySchema(ChangesSchemaMixin, ApiObjectSchema):
 @dataclass
 class TaxonomyData(BaseApiObject, ChangesDataMixin, NameDescriptionMixin):
     items: Sequence[ApiLink] = tuple()
+
+
+class TaxonomyItemPageParamsSchema(CursorPageArgumentsSchema, SearchPageSchemaMixin):
+    pass
 
 
 class TaxonomyItemSchema(ChangesSchemaMixin, ApiObjectSchema):

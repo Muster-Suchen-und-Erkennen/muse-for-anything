@@ -45,16 +45,21 @@ from .constants import (
     TARGET_REL,
     TAXONOMY_EXTRA_LINK_RELATIONS,
     TAXONOMY_ITEM_EXTRA_LINK_RELATIONS,
+    TAXONOMY_ITEM_REL_TYPE,
     TAXONOMY_ITEM_RELATION_EXTRA_LINK_RELATIONS,
     TAXONOMY_ITEM_RELATION_PAGE_EXTRA_LINK_RELATIONS,
     TAXONOMY_ITEM_RELATION_REL_TYPE,
-    TAXONOMY_ITEM_REL_TYPE,
     TAXONOMY_ITEM_VERSION_EXTRA_LINK_RELATIONS,
     TAXONOMY_ITEM_VERSION_PAGE_EXTRA_LINK_RELATIONS,
     TAXONOMY_ITEM_VERSION_REL_TYPE,
     UPDATE,
     UPDATE_REL,
 )
+
+# import taxonomy items specific generators to load them
+from .generators import taxonomy_item  # noqa
+from .generators import taxonomy_item_relation  # noqa
+from .generators import taxonomy_item_version  # noqa
 from .models.ontology import (
     TaxonomyItemRelationPostSchema,
     TaxonomyItemRelationSchema,
@@ -74,13 +79,6 @@ from ..base_models import (
     NewApiObjectSchema,
 )
 from ...db.db import DB
-
-# import taxonomy items specific generators to load them
-from .generators import (
-    taxonomy_item,
-    taxonomy_item_version,
-    taxonomy_item_relation,
-)  # noqa
 
 
 @API_V1.route(
@@ -610,9 +608,9 @@ class TaxonomyItemRelationsView(MethodView):
             [TaxonomyItemRelation.created_on],
         )
 
-        taxonomy_item_relations: List[
-            TaxonomyItemRelation
-        ] = pagination_info.page_items_query.all()
+        taxonomy_item_relations: List[TaxonomyItemRelation] = (
+            pagination_info.page_items_query.all()
+        )
 
         embedded_items, items = dump_embedded_page_items(
             taxonomy_item_relations,
@@ -780,12 +778,12 @@ class TaxonomyItemRelationView(MethodView):
         taxonomy_id = int(taxonomy)
         taxonomy_item_id = int(taxonomy_item)
         relation_id = int(relation)
-        found_taxonomy_item_relation: Optional[
-            TaxonomyItemRelation
-        ] = TaxonomyItemRelation.query.filter(
-            TaxonomyItemRelation.id == relation_id,
-            TaxonomyItemRelation.taxonomy_item_source_id == taxonomy_item_id,
-        ).first()
+        found_taxonomy_item_relation: Optional[TaxonomyItemRelation] = (
+            TaxonomyItemRelation.query.filter(
+                TaxonomyItemRelation.id == relation_id,
+                TaxonomyItemRelation.taxonomy_item_source_id == taxonomy_item_id,
+            ).first()
+        )
 
         if (
             found_taxonomy_item_relation is None
@@ -1017,9 +1015,9 @@ class TaxonomyItemVersionsView(MethodView):
             [TaxonomyItemVersion.created_on],
         )
 
-        taxonomy_item_versions: List[
-            TaxonomyItemVersion
-        ] = pagination_info.page_items_query.all()
+        taxonomy_item_versions: List[TaxonomyItemVersion] = (
+            pagination_info.page_items_query.all()
+        )
 
         embedded_items, items = dump_embedded_page_items(
             taxonomy_item_versions,
@@ -1099,12 +1097,12 @@ class TaxonomyItemVersionView(MethodView):
         taxonomy_id = int(taxonomy)
         taxonomy_item_id = int(taxonomy_item)
         version_nr = int(version)
-        found_taxonomy_item_version: Optional[
-            TaxonomyItemVersion
-        ] = TaxonomyItemVersion.query.filter(
-            TaxonomyItemVersion.version == version_nr,
-            TaxonomyItemVersion.taxonomy_item_id == taxonomy_item_id,
-        ).first()
+        found_taxonomy_item_version: Optional[TaxonomyItemVersion] = (
+            TaxonomyItemVersion.query.filter(
+                TaxonomyItemVersion.version == version_nr,
+                TaxonomyItemVersion.taxonomy_item_id == taxonomy_item_id,
+            ).first()
+        )
 
         if (
             found_taxonomy_item_version is None

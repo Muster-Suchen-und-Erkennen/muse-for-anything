@@ -49,10 +49,25 @@ export function isDeletedApiObject(obj: any): obj is DeletedApiObject {
     return (obj as DeletedApiObject)?.deleted != null && isApiLinkBase((obj as DeletedApiObject)?.deleted) && (obj as DeletedApiObject)?.redirectTo != null && isApiLinkBase((obj as DeletedApiObject)?.redirectTo);
 }
 
+export interface CollectionFilterOption {
+    value: string;
+    name?: string;
+}
+
+export interface CollectionFilter {
+    key: string;
+    type: string;
+    required?: boolean;
+    name?: string;
+    description?: string;
+    options?: CollectionFilterOption[];
+}
+
 export interface PageApiObject extends ApiObject {
     collectionSize: number;
     items: ApiLink[];
     page: number;
+    filters?: CollectionFilter[];
 }
 
 export interface GenericApiObject extends ApiObject {

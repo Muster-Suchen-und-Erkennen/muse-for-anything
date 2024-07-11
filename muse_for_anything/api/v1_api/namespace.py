@@ -8,7 +8,7 @@ from flask.globals import g
 from flask.views import MethodView
 from flask_babel import gettext
 from flask_smorest import abort
-from sqlalchemy.sql.expression import literal
+from sqlalchemy.sql.expression import literal, or_
 
 from muse_for_anything.api.pagination_util import (
     PaginationOptions,
@@ -20,19 +20,6 @@ from muse_for_anything.api.pagination_util import (
 from muse_for_anything.db.models import owl
 from muse_for_anything.db.models.users import User
 
-from ...db.db import DB
-from ...db.models.namespace import Namespace
-from ...oso_helpers import FLASK_OSO, OsoResource
-from ..base_models import (
-    ApiResponse,
-    ChangedApiObject,
-    ChangedApiObjectSchema,
-    CursorPageArgumentsSchema,
-    CursorPageSchema,
-    DynamicApiResponseSchema,
-    NewApiObject,
-    NewApiObjectSchema,
-)
 from .constants import (
     CHANGED_REL,
     CREATE,
@@ -46,22 +33,41 @@ from .constants import (
     UPDATE,
     UPDATE_REL,
 )
+from .models.ontology import (
+    FileExportDataRaw,
+    NamespaceExportSchema,
+    NamespacePageParamsSchema,
+    NamespaceSchema,
+)
+from .request_helpers import ApiResponseGenerator, LinkGenerator, PageResource
+from .root import API_V1
+from ..base_models import (
+    ApiResponse,
+    ChangedApiObject,
+    ChangedApiObjectSchema,
+    CollectionFilter,
+    CollectionFilterOption,
+    CursorPageSchema,
+    DynamicApiResponseSchema,
+    NewApiObject,
+    NewApiObjectSchema,
+)
+from ...db.db import DB
+from ...db.models.namespace import Namespace
+from ...oso_helpers import FLASK_OSO, OsoResource
 
 # import namespace specific generators to load them
 from .generators import namespace  # noqa
-from .models.ontology import FileExportDataRaw, NamespaceExportSchema, NamespaceSchema
-from .request_helpers import ApiResponseGenerator, LinkGenerator, PageResource
-from .root import API_V1
 
 
 @API_V1.route("/namespaces/")
 class NamespacesView(MethodView):
     """Endpoint for all namespaces collection resource."""
 
-    @API_V1.arguments(CursorPageArgumentsSchema, location="query", as_kwargs=True)
+    @API_V1.arguments(NamespacePageParamsSchema, location="query", as_kwargs=True)
     @API_V1.response(200, DynamicApiResponseSchema(CursorPageSchema()))
     @API_V1.require_jwt("jwt", optional=True)
-    def get(self, **kwargs: Any):
+    def get(self, search: Optional[str], **kwargs: Any):
         """Get the page of namespaces."""
         FLASK_OSO.authorize_and_set_resource(
             OsoResource(NAMESPACE_REL_TYPE, is_collection=True)
@@ -72,6 +78,17 @@ class NamespacesView(MethodView):
         )
 
         namespace_filter = (Namespace.deleted_on == None,)
+
+        if search:
+            namespace_filter += (
+                or_(
+                    # TODO switch from contains to match depending on DB...
+                    # Namespace.name.match(search),
+                    # Namespace.description.match(search),
+                    Namespace.name.contains(search),
+                    Namespace.description.contains(search),
+                ),
+            )
 
         pagination_info = default_get_page_info(
             Namespace, namespace_filter, pagination_options, [Namespace.name]
@@ -91,21 +108,43 @@ class NamespacesView(MethodView):
             collection_size=pagination_info.collection_size,
             item_links=items,
         )
+
+        filter_query_params = {}
+        if search:
+            filter_query_params["search"] = search
+
+        page_resource.filters = [
+            CollectionFilter(key="?search", type="search"),
+            CollectionFilter(
+                key="sort", type="?sort", options=[CollectionFilterOption("name")]
+            ),
+        ]
+
         self_link = LinkGenerator.get_link_of(
-            page_resource, query_params=pagination_options.to_query_params()
+            page_resource,
+            query_params=pagination_options.to_query_params(
+                extra_params=filter_query_params
+            ),
         )
 
         extra_links = generate_page_links(
-            page_resource, pagination_info, pagination_options
+            page_resource,
+            pagination_info,
+            pagination_options,
+            extra_params=filter_query_params,
         )
 
         return ApiResponseGenerator.get_api_response(
             page_resource,
-            query_params=pagination_options.to_query_params(),
+            query_params=pagination_options.to_query_params(
+                extra_params=filter_query_params
+            ),
             extra_links=[
                 LinkGenerator.get_link_of(
                     page_resource.get_page(1),
-                    query_params=pagination_options.to_query_params(cursor=None),
+                    query_params=pagination_options.to_query_params(
+                        cursor=None, extra_params=filter_query_params
+                    ),
                 ),
                 self_link,
                 *extra_links,

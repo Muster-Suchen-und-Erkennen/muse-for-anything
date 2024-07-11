@@ -9,6 +9,7 @@ from flask.views import MethodView
 from flask_babel import gettext
 from flask_smorest import abort
 from marshmallow.utils import INCLUDE
+from sqlalchemy.sql.expression import or_
 
 from muse_for_anything.api.pagination_util import (
     PaginationOptions,
@@ -46,17 +47,6 @@ from muse_for_anything.db.models.object_relation_tables import (
 from muse_for_anything.db.models.users import User
 from muse_for_anything.oso_helpers import FLASK_OSO, OsoResource
 
-from .models.ontology import ObjectSchema, ObjectsCursorPageArgumentsSchema
-from .root import API_V1
-from ..base_models import (
-    ApiResponse,
-    ChangedApiObject,
-    ChangedApiObjectSchema,
-    CursorPageSchema,
-    DynamicApiResponseSchema,
-    NewApiObject,
-    NewApiObjectSchema,
-)
 from ...db.db import DB
 from ...db.models.namespace import Namespace
 from ...db.models.ontology_objects import (
@@ -64,9 +54,23 @@ from ...db.models.ontology_objects import (
     OntologyObjectType,
     OntologyObjectVersion,
 )
+from ..base_models import (
+    ApiResponse,
+    ChangedApiObject,
+    ChangedApiObjectSchema,
+    CollectionFilter,
+    CollectionFilterOption,
+    CursorPageSchema,
+    DynamicApiResponseSchema,
+    NewApiObject,
+    NewApiObjectSchema,
+)
 
 # import object specific generators to load them
-from .generators import object as object_, object_version  # noqa
+from .generators import object as object_  # noqa
+from .generators import object_version  # noqa
+from .models.ontology import ObjectSchema, ObjectsCursorPageArgumentsSchema
+from .root import API_V1
 
 
 @API_V1.route("/namespaces/<string:namespace>/objects/")
@@ -112,7 +116,7 @@ class ObjectsView(MethodView):
     @API_V1.arguments(ObjectsCursorPageArgumentsSchema, location="query", as_kwargs=True)
     @API_V1.response(200, DynamicApiResponseSchema(CursorPageSchema()))
     @API_V1.require_jwt("jwt")
-    def get(self, namespace: str, **kwargs: Any):
+    def get(self, namespace: str, search: Optional[str] = None, **kwargs: Any):
         """Get the page of objects."""
         self._check_path_params(namespace=namespace)
         found_namespace = self._get_namespace(namespace=namespace)
@@ -151,6 +155,16 @@ class ObjectsView(MethodView):
                 TYPE_ID_QUERY_KEY: str(found_type.id),
             }
 
+        if search:
+            ontology_object_filter = (
+                *ontology_object_filter,
+                or_(
+                    # TODO switch from contains to match depending on DB...
+                    OntologyObject.name.contains(search),
+                    OntologyObject.description.contains(search),
+                ),
+            )
+
         pagination_info = default_get_page_info(
             OntologyObject,
             ontology_object_filter,
@@ -174,21 +188,43 @@ class ObjectsView(MethodView):
             item_links=items,
             extra_arguments={TYPE_EXTRA_ARG: found_type} if found_type else {},
         )
+
+        filter_query_params = {}
+        if search:
+            filter_query_params["search"] = search
+
+        page_resource.filters = [
+            CollectionFilter(key="?search", type="search"),
+            CollectionFilter(
+                key="sort", type="?sort", options=[CollectionFilterOption("name")]
+            ),
+        ]
+
         self_link = LinkGenerator.get_link_of(
-            page_resource, query_params=pagination_options.to_query_params()
+            page_resource,
+            query_params=pagination_options.to_query_params(
+                extra_params=filter_query_params
+            ),
         )
 
         extra_links = generate_page_links(
-            page_resource, pagination_info, pagination_options
+            page_resource,
+            pagination_info,
+            pagination_options,
+            extra_params=filter_query_params,
         )
 
         return ApiResponseGenerator.get_api_response(
             page_resource,
-            query_params=pagination_options.to_query_params(),
+            query_params=pagination_options.to_query_params(
+                extra_params=filter_query_params
+            ),
             extra_links=[
                 LinkGenerator.get_link_of(
                     page_resource.get_page(1),
-                    query_params=pagination_options.to_query_params(cursor=None),
+                    query_params=pagination_options.to_query_params(
+                        cursor=None, extra_params=filter_query_params
+                    ),
                 ),
                 self_link,
                 *extra_links,
@@ -346,7 +382,6 @@ class ObjectView(MethodView):
         if found_object is None:
             abort(HTTPStatus.NOT_FOUND, message=gettext("Object not found."))
         return found_object  # is not None because abort raises exception
-
 
     def _check_if_namespace_and_type_modifiable(self, object: OntologyObject):
         if object.namespace.deleted_on is not None:

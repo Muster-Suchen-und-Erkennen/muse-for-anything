@@ -7,3 +7,4 @@ export const REQUEST_FRESH_LOGIN_CHANNEL = "request-fresh-login-event";
 export const REQUEST_LOGOUT_CHANNEL = "request-logout-event";
 export const THEME_SETTING_CHANNEL = "theme-setting-changed-event";
 export const THEME_CHANNEL = "theme-changed-event";
+export const DIALOG_ROUTING_CHANNEL = "dialog-navigation-event";

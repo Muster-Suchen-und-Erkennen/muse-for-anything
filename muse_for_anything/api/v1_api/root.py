@@ -70,7 +70,7 @@ class RootView(MethodView):
                     ),
                     rel=("collection", "page"),
                     resource_type="ont-namespace",
-                    query_key=("item-count", "cursor", "sort"),
+                    query_key=("item-count", "cursor", "sort", "search"),
                 ),
                 KeyedApiLink(
                     href=template_url_for(
@@ -94,7 +94,7 @@ class RootView(MethodView):
                     rel=("collection", "page"),
                     resource_type="ont-type",
                     key=("namespaceId",),
-                    query_key=("item-count", "cursor", "sort"),
+                    query_key=("item-count", "cursor", "sort", "search"),
                 ),
                 KeyedApiLink(
                     href=template_url_for(
@@ -149,7 +149,7 @@ class RootView(MethodView):
                     rel=("collection", "page"),
                     resource_type="ont-object",
                     key=("namespaceId",),
-                    query_key=("item-count", "cursor", "sort", "type-id"),
+                    query_key=("item-count", "cursor", "sort", "type-id", "search"),
                 ),
                 KeyedApiLink(
                     href=template_url_for(
@@ -204,7 +204,7 @@ class RootView(MethodView):
                     rel=("collection", "page"),
                     resource_type="ont-taxonomy",
                     key=("namespaceId",),
-                    query_key=("item-count", "cursor", "sort"),
+                    query_key=("item-count", "cursor", "sort", "search"),
                 ),
                 KeyedApiLink(
                     href=template_url_for(
@@ -232,7 +232,7 @@ class RootView(MethodView):
                     rel=("collection", "page"),
                     resource_type="ont-taxonomy-item",
                     key=("namespaceId", "taxonomyId"),
-                    query_key=("item-count", "cursor", "sort"),
+                    query_key=("item-count", "cursor", "sort", "search"),
                 ),
                 KeyedApiLink(
                     href=template_url_for(

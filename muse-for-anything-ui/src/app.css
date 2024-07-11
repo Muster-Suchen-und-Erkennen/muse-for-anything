@@ -659,6 +659,10 @@ p:where(.block-max-3l:not(.overflow-y-hidden),.block-max-5l:not(.overflow-y-hidd
     @apply text-gray-400 border-gray-400;
 }
 
+.button-form-r {
+    @apply p-1 rounded-r-sm border border-gray-800 dark:bg-gray-700 dark:border-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600;
+}
+
 
 /* link styles */
 

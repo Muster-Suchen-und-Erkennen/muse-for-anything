@@ -1,5 +1,7 @@
-import { bindable, autoinject, observable } from "aurelia-framework";
 import { DialogController } from "aurelia-dialog";
+import { EventAggregator, Subscription } from "aurelia-event-aggregator";
+import { autoinject, observable } from "aurelia-framework";
+import { DIALOG_ROUTING_CHANNEL } from "resources/events";
 import { ApiLink } from "rest/api-objects";
 import { BaseApiService } from "rest/base-api";
 
@@ -14,12 +16,36 @@ export class ApiObjectChooserDialog {
     referenceType: string;
     chosenReference: ApiLink;
 
+    private domNode: Element;
     private api: BaseApiService;
     private controller: DialogController;
+    private events: EventAggregator;
 
-    constructor(apiService: BaseApiService, controller: DialogController) {
+    private subscription: Subscription | null = null;
+
+    constructor(element: Element, apiService: BaseApiService, controller: DialogController, events: EventAggregator) {
+        this.domNode = element;
         this.api = apiService;
         this.controller = controller;
+        this.events = events;
+        this.subscribe();
+    }
+
+    subscribe(): void {
+        this.subscription = this.events.subscribe(DIALOG_ROUTING_CHANNEL, (data: { "source": Element, "link": ApiLink }) => {
+            let parent = data.source;
+            while (parent != null && parent !== this.domNode) {
+                parent = parent.parentElement;
+            }
+            const newApiLink = data.link;
+            if (parent === this.domNode) {
+                this.currentApiLink = newApiLink;
+            }
+        });
+    }
+
+    detached() {
+        this.subscription?.dispose();
     }
 
     currentApiLinkChanged(newLink: ApiLink) {
@@ -67,6 +93,7 @@ export class ApiObjectChooserDialog {
 
     onClick(event: MouseEvent) {
         const linkElement = event.composedPath().find(element => (element as Element).tagName === "A") as HTMLAnchorElement;
+        console.log(event, event.defaultPrevented, linkElement)
         if (linkElement != null) {
             event.preventDefault();
             const clientUrl = linkElement.pathname + linkElement.search;
@@ -88,6 +115,8 @@ export class ApiObjectChooserDialog {
             });
             return false;
         }
+        // allow other event handlers to consume this event
+        return true;
     }
 
     navigateBack() {

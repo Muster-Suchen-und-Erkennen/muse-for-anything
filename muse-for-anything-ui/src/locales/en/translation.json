@@ -157,6 +157,10 @@
         "ont-taxonomy-item-version": "Taxonomy-Item Version",
         "as-owl": "as OWL (experimental)"
     },
+    "filters": {
+        "searchLabel": "Search in collection",
+        "searchButton": "Search"
+    },
     "pages": {
         "page": "page",
         "first": "first",

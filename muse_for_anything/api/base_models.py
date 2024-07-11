@@ -2,10 +2,12 @@
 
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Sequence, Union
+
 import marshmallow as ma
 from marshmallow.base import SchemaABC
-from marshmallow.validate import Length, Range
 from marshmallow.utils import is_collection
+from marshmallow.validate import Length, Range
+
 from ..util.import_helpers import get_all_classes_of_module
 from .util import camelcase
 
@@ -162,6 +164,46 @@ class DynamicApiResponseSchema(ApiResponseSchema):
         return self._data_schema.load(value, many=many)
 
 
+class CollectionFilterOptionSchema(MaBaseSchema):
+    value = ma.fields.String(required=True, allow_none=True)
+    name = ma.fields.String(required=False, allow_none=True)
+
+    @ma.post_dump()
+    def remove_empty_attributes(
+        self, data: Dict[str, Optional[Union[str, List[str]]]], **kwargs
+    ):
+        """Remove empty attributes from serialized api response for a smaller and more readable output."""
+        if not data.get("name", None):
+            del data["name"]
+        return data
+
+
+class CollectionFilterSchema(MaBaseSchema):
+    key = ma.fields.String(required=True, allow_none=True)
+    type = ma.fields.String(required=True, allow_none=True)
+    required = ma.fields.Boolean(required=False, allow_none=True)
+    name = ma.fields.String(required=False, allow_none=True)
+    description = ma.fields.String(required=False, allow_none=True)
+    options = ma.fields.List(
+        ma.fields.Nested(CollectionFilterOptionSchema),
+        dump_default=tuple(),
+        required=True,
+        dump_only=True,
+    )
+
+    @ma.post_dump()
+    def remove_empty_attributes(
+        self, data: Dict[str, Optional[Union[str, List[str]]]], **kwargs
+    ):
+        """Remove empty attributes from serialized api response for a smaller and more readable output."""
+        for key in ("required", "name", "description"):
+            if (v := data.get(key, None)) is None or v == "":
+                del data[key]
+        if not data.get("options", None):
+            del data["options"]
+        return data
+
+
 class CollectionResourceSchema(ApiObjectSchema):
     collection_size = ma.fields.Integer(required=True, allow_none=False, dump_only=True)
     items = ma.fields.List(
@@ -170,6 +212,21 @@ class CollectionResourceSchema(ApiObjectSchema):
         required=True,
         dump_only=True,
     )
+    filters = ma.fields.List(
+        ma.fields.Nested(CollectionFilterSchema),
+        dump_default=tuple(),
+        required=True,
+        dump_only=True,
+    )
+
+    @ma.post_dump()
+    def remove_empty_attributes(
+        self, data: Dict[str, Optional[Union[str, List[str]]]], **kwargs
+    ):
+        """Remove empty attributes from serialized api response for a smaller and more readable output."""
+        if not data.get("filters", tuple()):
+            del data["filters"]
+        return data
 
 
 class CursorPageSchema(ApiObjectSchema):
@@ -181,6 +238,21 @@ class CursorPageSchema(ApiObjectSchema):
         required=True,
         dump_only=True,
     )
+    filters = ma.fields.List(
+        ma.fields.Nested(CollectionFilterSchema),
+        dump_default=tuple(),
+        required=True,
+        dump_only=True,
+    )
+
+    @ma.post_dump()
+    def remove_empty_attributes(
+        self, data: Dict[str, Optional[Union[str, List[str]]]], **kwargs
+    ):
+        """Remove empty attributes from serialized api response for a smaller and more readable output."""
+        if not data.get("filters", tuple()):
+            del data["filters"]
+        return data
 
 
 class CursorPageArgumentsSchema(MaBaseSchema):
@@ -320,9 +392,26 @@ class ApiResponse:
 
 
 @dataclass
+class CollectionFilterOption:
+    value: str
+    name: str = ""
+
+
+@dataclass
+class CollectionFilter:
+    key: str
+    type: str
+    required: bool = False
+    name: str = ""
+    description: str = ""
+    options: Sequence[CollectionFilterOption] = tuple()
+
+
+@dataclass
 class CollectionResource(BaseApiObject):
     collection_size: int
     items: Sequence[ApiLink]
+    filters: Sequence[CollectionFilter] = tuple()
 
 
 @dataclass
@@ -331,6 +420,7 @@ class CursorPage(BaseApiObject):
     page: int
     items: Sequence[ApiLink]
     first_row: Optional[int] = None  # TODO remove later, kept for compatibility
+    filters: Sequence[CollectionFilter] = tuple()
 
 
 __all__ = list(get_all_classes_of_module(__name__, MaBaseSchema))

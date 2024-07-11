@@ -13,6 +13,7 @@ from muse_for_anything.api.base_models import (
     BaseApiObject,
     CollectionResource as CollectionResponse,
     CursorPage,
+    CollectionFilter,
 )
 
 
@@ -22,6 +23,7 @@ class CollectionResource:
     resource: Optional[Any] = None
     collection_size: int = 0
     item_links: Optional[Sequence[ApiLink]] = None
+    filters: Sequence[CollectionFilter] = tuple()
 
 
 @dataclass()
@@ -34,6 +36,7 @@ class PageResource:
     collection_size: int = 0
     item_links: Optional[Sequence[ApiLink]] = None
     extra_arguments: Dict[str, Any] = field(default_factory=dict)
+    filters: Sequence[CollectionFilter] = tuple()
 
     @property
     def is_first(self) -> bool:
@@ -327,6 +330,7 @@ class CollectionResourceApiObjectGenerator(
             self=LinkGenerator.get_link_of(resource, query_params=query_params),
             collection_size=resource.collection_size,
             items=(resource.item_links if resource.item_links else []),
+            filters=resource.filters,
         )
 
 
@@ -354,6 +358,7 @@ class CursorPageApiObjectGenerator(ApiObjectGenerator, resource_type=PageResourc
             collection_size=resource.collection_size,
             page=resource.page_number,
             items=(resource.item_links if resource.item_links else []),
+            filters=resource.filters,
         )
 
 
