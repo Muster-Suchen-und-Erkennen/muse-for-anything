@@ -3,6 +3,8 @@
     <require from="../elements/svg-icon.html"></require>
     <require from="../elements/card-nav-icons"></require>
     <require from="../elements/markdown"></require>
+    <require from="../elements/api-resource"></require>
+    <require from="../elements/schema-form"></require>
 
     <div if.bind="!isRoot">
         <div class="w-full flex justify-between items-baseline">
@@ -35,4 +37,30 @@
         </div>
         <api-schema-view data.bind="apiObject" schema-url.bind="apiObject.self.schema"></api-schema-view>
     </div>
+
+    <template if.bind="isRoot && (latestVersionApiLink != null || allVersionsUrl != null)">
+        <h3 class="font-lg font-semibold mt-4">${"schemaViews.versions" | t}:</h3>
+        <div class="card px-2 py-2 mt-2 mb-4" if.bind="latestVersionApiLink != null">
+            <api-resource api-link.bind="latestVersionApiLink" is-root.one-time="false" skip-navigation.bind="skipNavigation"></api-resource>
+        </div>
+        <div class="card px-2 py-2 mt-2 mb-4" if.bind="allVersionsUrl != null">
+            <a class="link-hover flex items-center" href="/explore/${allVersionsUrl}" data-router-ignore.bind="skipNavigation & empty">
+                <svg-icon class="mr-1" icon.bind="'ont-type'"></svg-icon>
+                <p class="my-1 font-bold block-max-3l overflow-y-hidden overflow-ellipsis">
+                    all versions
+                </p>
+                <svg-icon class="ml-1" icon.bind="'link'" size.bind="19"></svg-icon>
+            </a>
+        </div>
+    </template>
+
+    <template if.bind="isMain && isRoot && schema != null">
+        <h3 class="font-lg font-semibold mt-8">${"schemaViews.exampleForm" | t}:</h3>
+
+        <div class="card px-2 py-2 mt-2 mb-4">
+            <form submit.trigger="submit()">
+                <schema-form schema.bind="schema" debug.bind="debug" context.bind="schemaContext" label.bind="schema.title ? schema.title : 'data'"></schema-form>
+            </form>
+        </div>
+    </template>
 </template>

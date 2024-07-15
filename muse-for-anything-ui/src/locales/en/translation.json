@@ -179,7 +179,9 @@
         "chooseSchemaBase": "choose reference base",
         "useCurrentTypeAsBase": "use current type as base",
         "referenceTarget": "Schema Reference Target Type",
-        "currentType": "current type"
+        "currentType": "current type",
+        "versions": "Versions",
+        "exampleForm": "Example Input Form"
     },
     "graph": {
         "minimize": "minimize graph",
