@@ -18,6 +18,8 @@ export class TypeRootForm {
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
 
+    contextOut: any;
+
     @observable() value: any = {};
 
     typeSchema: NormalizedApiSchema;
@@ -35,6 +37,8 @@ export class TypeRootForm {
 
     @observable() childSchemasValid = {};
     @observable() childSchemasDirty = {};
+
+    embeddedTypeTitles = {};
 
     containedTypes: string[] = [];
 
@@ -57,6 +61,42 @@ export class TypeRootForm {
         this.valid = null;
         this.typeSchema = newValue.normalized.properties?.get("definitions")?.normalized?.additionalProperties as NormalizedApiSchema;
         this.reloadProperties();
+    }
+
+    contextChanged(newValue) {
+        const context = { ...(newValue ?? {}) };
+        this.enrichContext(context);
+        this.contextOut = context;
+    }
+
+    private updateContext(newValue) {
+        const context = { ...(newValue ?? {}) };
+        this.enrichContext(context);
+        if (
+            this.contextOut == null ||
+            context.topLevelTypeName !== this.contextOut.topLevelTypeName ||
+            JSON.stringify(context.topLevelTypeDefs) !== JSON.stringify(this.contextOut.topLevelTypeDefs)
+        ) {
+            this.contextOut = context;
+        }
+    }
+
+    private enrichContext(context: any) {
+        // TODO add extra context
+        const topLevelTypeDefs = [];
+        const defs = this.valueOut?.definitions ?? {};
+        Object.keys(defs).forEach(key => {
+            topLevelTypeDefs.push({
+                key: key,
+                title: defs[key]?.title ?? key,
+            });
+        });
+        context.topLevelTypeName = this.valueOut?.title;
+        context.topLevelTypeDefs = topLevelTypeDefs;
+    }
+
+    getEmbeddedTypeTitle(key: string) {
+        return this.valueOut?.definitions?.[key]?.title ?? null;
     }
 
     // eslint-disable-next-line complexity
@@ -120,7 +160,6 @@ export class TypeRootForm {
             // different contents
             this.containedTypes = containedTypes;
         }
-
     }
 
     onPropertyValueUpdate = (value, binding) => {
@@ -170,6 +209,18 @@ export class TypeRootForm {
     valueOutChanged(newValue) {
         this.updateValid();
         this.updateDirty();
+        this.updateContext(this.context);
+        const defs = this.valueOut?.definitions ?? {};
+        const embeddedTypeTitles = {};
+        Object.keys(defs).forEach(key => {
+            const title = defs[key]?.title;
+            if (title != null) {
+                embeddedTypeTitles[key] = `${title} (${key})`;
+            } else {
+                embeddedTypeTitles[key] = key;
+            }
+        });
+        this.embeddedTypeTitles = embeddedTypeTitles;
     }
 
     private showAddPropertyButton(prop: PropertyDescription, requiredProperties: Set<string>): boolean {

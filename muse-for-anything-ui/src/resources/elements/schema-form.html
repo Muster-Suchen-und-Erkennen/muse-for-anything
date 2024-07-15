@@ -5,6 +5,8 @@
     <require from="./type-definition-form"></require>
     <require from="./resource-reference-definition-form"></require>
     <require from="./resource-reference-form"></require>
+    <require from="./json-type-form"></require>
+    <require from="./json-ref-form"></require>
     <require from="./enum-item-form"></require>
     <require from="./object-form"></require>
     <require from="./array-form"></require>
@@ -49,6 +51,18 @@
             valid.from-view="valid" dirty.from-view="dirty" actions.bind="actions"
             action-signal.call="actionSignal($event)">
         </enum-item-form>
+        <json-type-form if.bind="extraType === 'jsonType'" key.bind="key" label.bind="label"
+            initial-data.bind="initialDataFix" schema.bind="activeSchema" required.bind="required" debug.bind="debug"
+            context.bind="context" value-in.bind="valueIn" value-out.from-view="valueOut & throttle"
+            valid.from-view="valid" dirty.from-view="dirty" actions.bind="actions"
+            action-signal.call="actionSignal($event)">
+        </json-type-form>
+        <json-ref-form if.bind="extraType === 'jsonRef'" key.bind="key" label.bind="label"
+            initial-data.bind="initialDataFix" schema.bind="activeSchema" required.bind="required" debug.bind="debug"
+            context.bind="context" value-in.bind="valueIn" value-out.from-view="valueOut & throttle"
+            valid.from-view="valid" dirty.from-view="dirty" actions.bind="actions"
+            action-signal.call="actionSignal($event)">
+        </json-ref-form>
     </template>
     <template if.bind="schemaType === 'object'">
         <div class="${noCard ? '' : 'card px-2 py-2 mt-4'}">

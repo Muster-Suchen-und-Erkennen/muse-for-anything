@@ -28,7 +28,7 @@
                 key.bind="prop.propertyName" label.bind="prop.propertyTitle"
                 initial-data.bind="initialData[prop.propertyName]"
                 value.bind="value[prop.propertyName] & tee:onPropertyValueUpdate" schema.bind="prop.propertySchema"
-                context.bind="context"
+                context.bind="contextOut"
                 required.bind="requiredProperties != null && requiredProperties.has(prop.propertyName)"
                 valid.from-view="propertiesValid[prop.propertyName] & tee:onPropertyValidUpdate"
                 dirty.from-view="propertiesDirty[prop.propertyName] & tee:onPropertyDirtyUpdate"
@@ -37,22 +37,22 @@
             </schema-form>
         </div>
         <div class="mt-6">
-            <schema-form class="w-full properties" key.bind="'root'" label.bind="'root'"
+            <schema-form class="w-full properties" key.bind="'root'" label.bind="embeddedTypeTitles['root']"
                 initial-data.bind="initialData.definitions['root']"
                 value.bind="childSchemas['root'] & tee:onSchemaValueUpdate" schema.bind="typeSchema"
                 required.bind="true" valid.from-view="childSchemasValid['root'] & tee:onSchemaValidUpdate"
                 dirty.from-view="childSchemasDirty['root'] & tee:onSchemaDirtyUpdate"
-                update-signal.call="schemaUpdateSignal()" debug.bind="debug" context.bind="context">
+                update-signal.call="schemaUpdateSignal()" debug.bind="debug" context.bind="contextOut">
             </schema-form>
         </div>
         <div class="mt-4" repeat.for="typeId of containedTypes">
-            <schema-form class="w-full properties" key.bind="typeId" label.bind="typeId"
+            <schema-form class="w-full properties" key.bind="typeId" label.bind="embeddedTypeTitles[typeId]"
                 initial-data.bind="initialData.definitions[typeId]"
                 value.bind="childSchemas[typeId] & tee:onSchemaValueUpdate" schema.bind="typeSchema"
                 required.bind="true" valid.from-view="childSchemasValid[typeId] & tee:onSchemaValidUpdate"
                 dirty.from-view="childSchemasDirty[typeId] & tee:onSchemaDirtyUpdate"
                 update-signal.call="schemaUpdateSignal()" actions.bind="['remove']"
-                action-signal.call="typeActionSignal($event)" debug.bind="debug" context.bind="context">
+                action-signal.call="typeActionSignal($event)" debug.bind="debug" context.bind="contextOut">
             </schema-form>
         </div>
         <button class="button-outline w-full" click.delegate="addType()">

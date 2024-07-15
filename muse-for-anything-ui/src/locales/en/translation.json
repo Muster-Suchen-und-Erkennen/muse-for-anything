@@ -177,6 +177,7 @@
         "schemaReference": "Schema Reference",
         "referenceBase": "Schema Reference Base",
         "chooseSchemaBase": "choose reference base",
+        "useCurrentTypeAsBase": "use current type as base",
         "referenceTarget": "Schema Reference Target Type",
         "currentType": "current type"
     },
