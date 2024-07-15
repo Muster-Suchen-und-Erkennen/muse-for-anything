@@ -182,8 +182,14 @@ export class JsonRefForm {
 
     private async updateBaseSchemaFromApiLink(base: ApiLink) {
         // TODO: update schema link from api link
-        const baseType = await this.apiService.getByApiLink<ApiObject>(base, false);
-        const baseTypeVersionLink = baseType.links.find(l => l.resourceType === "ont-type-version" && l.rel.some(r => r === "latest"));
+        let baseTypeVersionLink: ApiLink | null = null;
+        if (base.resourceType === "ont-type") {
+            const baseType = await this.apiService.getByApiLink<ApiObject>(base, false);
+            baseTypeVersionLink = baseType.links.find(l => l.resourceType === "ont-type-version" && l.rel.some(r => r === "latest"));
+        }
+        if (base.resourceType === "ont-type-version") {
+            baseTypeVersionLink = base;
+        }
         if (baseTypeVersionLink == null) {
             // TODO: present error to user
             console.warn("Did not find latest version of type ", base);
@@ -263,7 +269,7 @@ export class JsonRefForm {
             return;
         }
         const model = {
-            referenceType: "ont-type",
+            referenceType: new Set(["ont-type", "ont-type-version"]),
             baseApiLink: this.namespaceApiLink,
         };
         this.dialogService.open({ viewModel: ApiObjectChooserDialog, model: model, lock: false }).whenClosed(response => {
