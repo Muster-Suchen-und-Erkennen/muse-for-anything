@@ -14,6 +14,7 @@ from muse_for_anything.api.v1_api.constants import (
     GET,
     ITEM_COUNT_DEFAULT,
     ITEM_COUNT_QUERY_KEY,
+    LATEST_REL,
     NAMESPACE_REL_TYPE,
     NAV_REL,
     OBJECT_REL_TYPE,
@@ -209,7 +210,9 @@ class ObjectTypeApiObjectGenerator(ApiObjectGenerator, resource_type=OntologyObj
             return
 
         return ObjectTypeData(
-            self=LinkGenerator.get_link_of(resource, query_params=query_params, ignore_deleted=True),
+            self=LinkGenerator.get_link_of(
+                resource, query_params=query_params, ignore_deleted=True
+            ),
             name=resource.name,
             description=resource.description,
             created_on=resource.created_on,
@@ -424,4 +427,21 @@ class ObjectTypeObjectsNavLinkGenerator(
                 TYPE_ID_QUERY_KEY: str(resource.id),
             },
             extra_relations=(NAV_REL,),
+        )
+
+
+class ObjectTypeCurrentTypeVersionLinkGenerator(
+    LinkGenerator, resource_type=OntologyObjectType, relation=LATEST_REL
+):
+    def generate_link(
+        self,
+        resource: OntologyObjectType,
+        *,
+        query_params: Optional[Dict[str, str]] = None,
+        ignore_deleted: bool = False,
+    ) -> Optional[ApiLink]:
+        assert isinstance(resource, OntologyObjectType)
+        return LinkGenerator.get_link_of(
+            resource.current_version,
+            extra_relations=(LATEST_REL,),
         )
