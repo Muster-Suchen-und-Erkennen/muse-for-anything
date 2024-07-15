@@ -3,25 +3,36 @@
     <require from="./resource-reference-definition-view"></require>
     <require from="./resource-reference-view"></require>
     <require from="./type-definition-view"></require>
+    <require from="./type-root-view"></require>
+    <require from="./json-ref-view"></require>
     <require from="./array-view"></require>
     <require from="./markdown"></require>
 
     <template if.bind="schemaType === 'object'">
-        <object-view class="w-full" data.bind="data" schema.bind="schema"></object-view>
+        <object-view class="w-full" data.bind="data" schema.bind="schema" context.bind="context"></object-view>
     </template>
     <template if.bind="schemaType === 'resourceReferenceDefinition'">
-        <resource-reference-definition-view class="w-full" data.bind="data" schema.bind="schema">
+        <resource-reference-definition-view class="w-full" data.bind="data" schema.bind="schema" context.bind="context">
         </resource-reference-definition-view>
     </template>
     <template if.bind="schemaType === 'resourceReference'">
-        <resource-reference-view class="w-full" data.bind="data" schema.bind="schema"></resource-reference-view>
+        <resource-reference-view class="w-full" data.bind="data" schema.bind="schema" context.bind="context"></resource-reference-view>
+    </template>
+    <template if.bind="schemaType === 'typeRoot'">
+        <type-root-view class="w-full" data.bind="data" schema.bind="schema" context.bind="context"></type-root-view>
     </template>
     <template if.bind="schemaType === 'typeDefinition'">
-        <type-definition-view class="w-full" data.bind="data" schema.bind="schema"></type-definition-view>
+        <type-definition-view class="w-full" data.bind="data" schema.bind="schema" context.bind="context"></type-definition-view>
+    </template>
+    <template if.bind="schemaType === 'jsonType'">
+        <p class="m0">${data|find:'null':'!=':'?'}${(data != null && data.contains('null')) ? ' | null' : ''}</p>
+    </template>
+    <template if.bind="schemaType === 'jsonRef'">
+        <json-ref-view class="w-full" data.bind="data" schema.bind="schema" context.bind="context"></json-ref-view>
     </template>
     <template if.bind="schemaType === 'array'">
-        <array-view class="w-full" data.bind="data" schema.bind="schema"></array-view>
-    </template>
+        <array-view class="w-full" data.bind="data" schema.bind="schema" context.bind="context"></array-view>
+    </template> 
     <template if.bind="schemaType === 'string'">
         <p class="m-0 whitespace-pre-line">${data != null ? data : ''}</p>
     </template>

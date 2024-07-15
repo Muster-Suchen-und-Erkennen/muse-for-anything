@@ -1,0 +1,20 @@
+<template>
+    <require from="./api-resource"></require>
+
+    <p class="mb-2">
+        <span class="font-semibold">${'schemaViews.referenceBase' | t}:</span>
+        <span if.bind="base == null">${context.topLevelTypeName} (${'schemaViews.currentType' | t})</span>
+        <span if.bind="base != null && baseApiLink == null">${base}</span>
+    </p>
+
+    <div class="card px-2 py-2 mt-2 mb-4" if.bind="baseApiLink != null">
+        <api-resource api-link.bind="baseApiLink" is-root.one-time="false">
+        </api-resource>
+    </div>
+
+    <p class="mb-2">
+        <span class="font-semibold">${'schemaViews.referenceTarget' | t}: </span>
+        <span if.bind="refTitle == null">${ref}</span>
+        <span if.bind="refTitle != null">${refTitle}</span>
+    </p>
+</template>

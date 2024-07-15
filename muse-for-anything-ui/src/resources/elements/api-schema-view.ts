@@ -6,6 +6,7 @@ import { SchemaService } from "rest/schema-service";
 export class ApiSchemaView {
     @bindable data;
     @bindable schemaUrl;
+    @bindable context: any;
     schema: NormalizedApiSchema;
 
 

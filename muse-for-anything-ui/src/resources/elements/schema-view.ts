@@ -1,11 +1,14 @@
 import { bindable } from "aurelia-framework";
 import { NormalizedApiSchema, NormalizedJsonSchema } from "rest/schema-objects";
 
-const SUPPORTED_CUSTOM_TYPES = new Set(["resourceReferenceDefinition", "resourceReference", "typeDefinition"]);
+const SUPPORTED_CUSTOM_TYPES = new Set([
+    "resourceReferenceDefinition", "resourceReference", "typeRoot", "typeDefinition", "jsonType", "jsonRef"
+]);
 
 export class SchemaView {
     @bindable data: any;
     @bindable schema: NormalizedApiSchema;
+    @bindable context: any;
 
     schemaType: string;
 
@@ -26,6 +29,11 @@ export class SchemaView {
             }
         } else if (normalized.mainType === "array") {
             this.schemaType = "array";
+            if (normalized.customType != null) {
+                if (SUPPORTED_CUSTOM_TYPES.has(normalized.customType)) {
+                    this.schemaType = normalized.customType;
+                }
+            }
         } else if (normalized.mainType === "string") {
             this.schemaType = this.getTypeForString(normalized);
         } else if (normalized.mainType === "number") {

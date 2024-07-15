@@ -8,14 +8,14 @@
                 ${prop.propertyTitle}:
             </summary>
             <schema-view class="flex-grow block" style.bind="propertyStyle(prop.propertySchema)"
-                data.bind="data[prop.propertyName]" schema.bind="prop.propertySchema"></schema-view>
+                data.bind="data[prop.propertyName]" schema.bind="prop.propertySchema" context.bind="context"></schema-view>
         </details>
         <div class="flex flex-wrap items-baseline" show.bind="data[prop.propertyName] != null" else>
-            <p class="mr-2 font-semibold">
+            <p class="mr-2 font-semibold" show.bind="showPropertyTitle(prop.propertySchema)">
                 ${prop.propertyTitle}:
             </p>
             <schema-view class="flex-grow flex items-baseline" style.bind="propertyStyle(prop.propertySchema)"
-                data.bind="data[prop.propertyName]" schema.bind="prop.propertySchema"></schema-view>
+                data.bind="data[prop.propertyName]" schema.bind="prop.propertySchema" context.bind="context"></schema-view>
         </div>
     </template>
 </template>

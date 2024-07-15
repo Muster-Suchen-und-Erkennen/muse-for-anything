@@ -4,6 +4,7 @@ import { ItemDescription, NormalizedApiSchema } from "rest/schema-objects";
 export class ArrayView {
     @bindable data: any[];
     @bindable schema: NormalizedApiSchema;
+    @bindable context: any;
 
     items: ItemDescription[] = [];
 

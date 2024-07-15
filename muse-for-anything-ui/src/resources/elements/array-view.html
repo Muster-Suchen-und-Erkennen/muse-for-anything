@@ -7,6 +7,6 @@
             ${item.itemIndex}:
         </p>
         <schema-view class="flex-grow flex items-baseline" style.bind="propertyStyle(item.itemSchema)"
-            data.bind="data[item.itemIndex]" schema.bind="item.itemSchema"></schema-view>
+            data.bind="data[item.itemIndex]" schema.bind="item.itemSchema" context.bind="context"></schema-view>
     </div>
 </template>
