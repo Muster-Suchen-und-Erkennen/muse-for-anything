@@ -16,6 +16,7 @@ export class CardNavIcons {
     @bindable apiObject: ApiObject;
     @bindable main: string;
     @bindable extra: string[] = [];
+    @bindable skipNavigation: boolean = false;
 
     navOptions: Map<string, NavOption> = new Map();
 
