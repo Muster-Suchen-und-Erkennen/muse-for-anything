@@ -3,6 +3,7 @@
     <require from="../elements/svg-icon.html"></require>
     <require from="../elements/card-nav-icons"></require>
     <require from="../elements/markdown"></require>
+    <require from="../elements/schema-form"></require>
 
     <div if.bind="!isRoot">
         <div class="w-full flex justify-between items-baseline">
@@ -20,7 +21,7 @@
                 </p>
                 <svg-icon class="ml-1" icon.bind="'link'" size.bind="19"></svg-icon>
             </a>
-            <card-nav-icons api-object.bind="apiObject" main.one-time="'ont-namespace'"></card-nav-icons>
+            <card-nav-icons api-object.bind="apiObject" main.one-time="'ont-namespace'" skip-navigation.one-time="skipNavigation"></card-nav-icons>
         </div>
         <markdown class="my-1 block block-max-3l overflow-y-hidden overflow-ellipsis"
             markdown-in.bind="apiObject.description"></markdown>
@@ -38,8 +39,18 @@
                     <span t="version"></span> ${apiObject.version}
                 </span>
             </h3>
-            <card-nav-icons api-object.bind="apiObject" main.one-time="'ont-namespace'"></card-nav-icons>
+            <card-nav-icons api-object.bind="apiObject" main.one-time="'ont-namespace'" skip-navigation.one-time="skipNavigation"></card-nav-icons>
         </div>
         <api-schema-view data.bind="apiObject" schema-url.bind="apiObject.self.schema"></api-schema-view>
     </div>
+
+    <template if.bind="isMain && isRoot && schema != null">
+        <h3 class="font-lg font-semibold mt-8">${"schemaViews.exampleForm" | t}:</h3>
+
+        <div class="card px-2 py-2 mt-2 mb-4">
+            <form submit.trigger="submit()">
+                <schema-form schema.bind="schema" debug.bind="debug" context.bind="schemaContext" label.bind="schema.title ? schema.title : 'data'"></schema-form>
+            </form>
+        </div>
+    </template>
 </template>
