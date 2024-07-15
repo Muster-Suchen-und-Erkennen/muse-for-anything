@@ -7,7 +7,8 @@
     <div if.bind="!isRoot">
         <div class="w-full flex justify-between items-baseline">
             <a class="link-hover flex items-center" href="/explore/${clientUrl}"
-                aria-disabled.bind="clientUrl == null ? true : null">
+                aria-disabled.bind="clientUrl == null ? true : null"
+                data-router-ignore.bind="skipNavigation & empty">
                 <svg-icon class="mr-1" icon.bind="'ont-type'"></svg-icon>
                 <p class="my-1 font-bold block-max-3l overflow-y-hidden overflow-ellipsis">
                     <span class="mr-2 uppercase" if.bind="apiObject.deletedOn != null" t="deleted">
