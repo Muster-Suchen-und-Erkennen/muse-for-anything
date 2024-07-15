@@ -288,7 +288,6 @@ export class NavigationLinksService {
                         });
                     }
                     if (link.rel.some(rel => rel === "export")) {
-                        console.log(link)
                         actions.push({
                             ...navLinkBase,
                             clientUrl: `/export/${clientUrl}`,
