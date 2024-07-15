@@ -6,14 +6,16 @@
     <div if.bind="!isRoot">
         <div class="w-full flex justify-between items-baseline">
             <a class="link-hover flex items-center" href="/explore/${clientUrl}"
-                data-router-ignore.bind="skipNavigation & empty" aria-disabled.bind="clientUrl == null ? true : null">
+                data-router-ignore.bind="skipNavigation & empty"
+                aria-disabled.bind="clientUrl == null ? true : null">
                 <svg-icon class="mr-1" icon.bind="'user-role'"></svg-icon>
                 <p class="my-1 font-bold block-max-3l overflow-y-hidden overflow-ellipsis">
                     ${apiObject.role}
                 </p>
                 <svg-icon class="ml-1" icon.bind="'link'" size.bind="19"></svg-icon>
             </a>
-            <card-nav-icons api-object.bind="apiObject" main.one-time="'user'"></card-nav-icons>
+            <card-nav-icons api-object.bind="apiObject" main.one-time="'user'"
+                skip-navigation.one-time="skipNavigation"></card-nav-icons>
         </div>
         <markdown class="my-1 block block-max-3l overflow-y-hidden overflow-ellipsis"
             markdown-in.bind="apiObject.description"></markdown>
@@ -26,7 +28,8 @@
                 <svg-icon class="mr-1" icon.bind="'user-role'"></svg-icon>
                 ${"user-role" | t}: ${apiObject.role}
             </h3>
-            <card-nav-icons api-object.bind="apiObject" main.one-time="'user'"></card-nav-icons>
+            <card-nav-icons api-object.bind="apiObject" main.one-time="'user'"
+                skip-navigation.one-time="skipNavigation"></card-nav-icons>
         </div>
         <markdown class="my-1 block block-max-3l overflow-y-hidden overflow-ellipsis"
             markdown-in.bind="apiObject.description"></markdown>

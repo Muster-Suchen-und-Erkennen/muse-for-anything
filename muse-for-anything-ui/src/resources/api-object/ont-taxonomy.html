@@ -17,7 +17,7 @@
                 </p>
                 <svg-icon class="ml-1" icon.bind="'link'" size.bind="19"></svg-icon>
             </a>
-            <card-nav-icons api-object.bind="apiObject" main.one-time="'ont-namespace'"></card-nav-icons>
+            <card-nav-icons api-object.bind="apiObject" main.one-time="'ont-namespace'" skip-navigation.one-time="skipNavigation"></card-nav-icons>
         </div>
         <markdown class="my-1 block block-max-3l overflow-y-hidden overflow-ellipsis"
             markdown-in.bind="apiObject.description"></markdown>
@@ -32,7 +32,7 @@
                 </span>
                 ${"resource-type.ont-taxonomy" | t}: ${apiObject.name}
             </h3>
-            <card-nav-icons api-object.bind="apiObject" main.one-time="'ont-namespace'"></card-nav-icons>
+            <card-nav-icons api-object.bind="apiObject" main.one-time="'ont-namespace'" skip-navigation.one-time="skipNavigation"></card-nav-icons>
         </div>
         <api-schema-view data.bind="apiObject" schema-url.bind="apiObject.self.schema"></api-schema-view>
     </div>

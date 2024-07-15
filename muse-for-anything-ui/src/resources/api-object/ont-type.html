@@ -9,7 +9,8 @@
     <div if.bind="!isRoot">
         <div class="w-full flex justify-between items-baseline">
             <a class="link-hover flex items-center" href="/explore/${clientUrl}"
-                data-router-ignore.bind="skipNavigation & empty" aria-disabled.bind="clientUrl == null ? true : null">
+                data-router-ignore.bind="skipNavigation & empty"
+                aria-disabled.bind="clientUrl == null ? true : null">
                 <svg-icon class="mr-1" icon.bind="'ont-type'"></svg-icon>
                 <p class="my-1 font-bold block-max-3l overflow-y-hidden overflow-ellipsis">
                     <span class="mr-2 uppercase" if.bind="apiObject.deletedOn != null" t="deleted">
@@ -18,7 +19,8 @@
                 </p>
                 <svg-icon class="ml-1" icon.bind="'link'" size.bind="19"></svg-icon>
             </a>
-            <card-nav-icons api-object.bind="apiObject" main.one-time="'ont-namespace'"></card-nav-icons>
+            <card-nav-icons api-object.bind="apiObject" main.one-time="'ont-namespace'"
+                skip-navigation.one-time="skipNavigation"></card-nav-icons>
         </div>
         <markdown class="my-1 block block-max-3l overflow-y-hidden overflow-ellipsis"
             markdown-in.bind="apiObject.description"></markdown>
@@ -33,7 +35,8 @@
                 </span>
                 ${"type" | t}: ${apiObject.name}
             </h3>
-            <card-nav-icons api-object.bind="apiObject" main.one-time="'ont-namespace'"></card-nav-icons>
+            <card-nav-icons api-object.bind="apiObject" main.one-time="'ont-namespace'"
+                skip-navigation.one-time="skipNavigation"></card-nav-icons>
         </div>
         <api-schema-view data.bind="apiObject" schema-url.bind="apiObject.self.schema"></api-schema-view>
     </div>
