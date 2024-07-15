@@ -13,7 +13,7 @@ export class ApiObjectChooserDialog {
     baseApiLink: ApiLink;
     @observable() currentApiLink: ApiLink;
 
-    referenceType: string;
+    referenceType: string | Set<string>;
     chosenReference: ApiLink;
 
     private domNode: Element;
@@ -50,24 +50,39 @@ export class ApiObjectChooserDialog {
 
     currentApiLinkChanged(newLink: ApiLink) {
         this.chosenReference = null;
-        if (newLink.resourceType === this.referenceType) {
-            if (newLink.rel.some(rel => rel === "collection")) {
-                return;
+        if (newLink.rel.some(rel => rel === "collection")) {
+            return;  // do not match collections
+        }
+
+        if (typeof this.referenceType === "string") {
+            if (newLink.resourceType === this.referenceType) {
+                // reference matches
+                this.chosenReference = newLink;
             }
-            // reference matches
+            return;
+        }
+
+        if (this.referenceType.has(newLink.resourceType)) {
+            // one reference matches
             this.chosenReference = newLink;
         }
     }
 
     activate(model) {
         this.referenceType = model?.referenceType;
-        if (model?.referenceType == null || model?.baseApiLink == null) {
+        if (this.referenceType == null || model?.baseApiLink == null) {
             return;
         }
         this.api.getByApiLink(model.baseApiLink).then(response => {
             const baseApiLink = response.links.find(link => {
-                if (link.resourceType !== model.referenceType) {
-                    return false;
+                if (typeof this.referenceType === "string") {
+                    if (link.resourceType !== this.referenceType) {
+                        return false;
+                    }
+                } else {
+                    if (!this.referenceType.has(link.resourceType)) {
+                        return false;
+                    }
                 }
                 if (link.rel.some(rel => rel === "nav")) {
                     return true;
@@ -93,12 +108,11 @@ export class ApiObjectChooserDialog {
 
     onClick(event: MouseEvent) {
         const linkElement = event.composedPath().find(element => (element as Element).tagName === "A") as HTMLAnchorElement;
-        console.log(event, event.defaultPrevented, linkElement)
         if (linkElement != null) {
             event.preventDefault();
             const clientUrl = linkElement.pathname + linkElement.search;
             if (!clientUrl.startsWith("/explore/")) {
-                return;
+                return false;
             }
             this.api.resolveClientUrl(clientUrl.substring(9)).then(newApiLink => {
                 if (newApiLink?.resourceKey?.["?item-count"] == null && !newApiLink.rel.some(rel => rel === "page")) {
