@@ -137,15 +137,6 @@ class NamespacesView(MethodView):
                     CollectionFilterOption("updated_on"),
                 ],
             ),
-            CollectionFilter(
-                key="?test4",
-                type="string",
-                options=[
-                    CollectionFilterOption("A"),
-                    CollectionFilterOption("B"),
-                    CollectionFilterOption("C"),
-                ],
-            ),
         ]
         if is_admin:
             page_resource.filters.append(
