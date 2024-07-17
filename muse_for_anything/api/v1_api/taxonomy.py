@@ -27,20 +27,6 @@ from muse_for_anything.api.v1_api.request_helpers import (
 from muse_for_anything.db.models.users import User
 from muse_for_anything.oso_helpers import FLASK_OSO, OsoResource
 
-from ...db.db import DB
-from ...db.models.namespace import Namespace
-from ...db.models.taxonomies import Taxonomy, TaxonomyItem, TaxonomyItemVersion
-from ..base_models import (
-    ApiResponse,
-    ChangedApiObject,
-    ChangedApiObjectSchema,
-    CollectionFilter,
-    CollectionFilterOption,
-    CursorPageSchema,
-    DynamicApiResponseSchema,
-    NewApiObject,
-    NewApiObjectSchema,
-)
 from .constants import (
     CHANGED_REL,
     CREATE,
@@ -58,9 +44,6 @@ from .constants import (
     UPDATE,
     UPDATE_REL,
 )
-
-# import taxonomy specific generators to load them
-from .generators import taxonomy, taxonomy_item  # noqa
 from .models.ontology import (
     TaxonomyItemPageParamsSchema,
     TaxonomyItemRelationSchema,
@@ -69,6 +52,23 @@ from .models.ontology import (
     TaxonomySchema,
 )
 from .root import API_V1
+from ..base_models import (
+    ApiResponse,
+    ChangedApiObject,
+    ChangedApiObjectSchema,
+    CollectionFilter,
+    CollectionFilterOption,
+    CursorPageSchema,
+    DynamicApiResponseSchema,
+    NewApiObject,
+    NewApiObjectSchema,
+)
+from ...db.db import DB
+from ...db.models.namespace import Namespace
+from ...db.models.taxonomies import Taxonomy, TaxonomyItem, TaxonomyItemVersion
+
+# import taxonomy specific generators to load them
+from .generators import taxonomy, taxonomy_item  # noqa
 
 
 @API_V1.route("/namespaces/<string:namespace>/taxonomies/")
@@ -96,7 +96,13 @@ class TaxonomiesView(MethodView):
     @API_V1.arguments(TaxonomyPageParamsSchema, location="query", as_kwargs=True)
     @API_V1.response(200, DynamicApiResponseSchema(CursorPageSchema()))
     @API_V1.require_jwt("jwt")
-    def get(self, namespace: str, search: Optional[str] = None, **kwargs: Any):
+    def get(
+        self,
+        namespace: str,
+        search: Optional[str] = None,
+        deleted: bool = False,
+        **kwargs: Any,
+    ):
         """Get the page of taxonomies."""
         self._check_path_params(namespace=namespace)
         found_namespace = self._get_namespace(namespace=namespace)
@@ -110,8 +116,13 @@ class TaxonomiesView(MethodView):
             **kwargs, _sort_default="name"
         )
 
+        is_admin = FLASK_OSO.is_admin()
+
+        if deleted and not is_admin:
+            deleted = False
+
         taxonomy_filter = (
-            Taxonomy.deleted_on == None,
+            Taxonomy.deleted_on == None if not deleted else Taxonomy.deleted_on != None,
             Taxonomy.namespace_id == int(namespace),
         )
 
@@ -151,6 +162,8 @@ class TaxonomiesView(MethodView):
         filter_query_params = {}
         if search:
             filter_query_params["search"] = search
+        if deleted:
+            filter_query_params["deleted"] = deleted
 
         page_resource.filters = [
             CollectionFilter(key="?search", type="search"),
@@ -164,6 +177,15 @@ class TaxonomiesView(MethodView):
                 ],
             ),
         ]
+
+        if is_admin:
+            page_resource.filters.append(
+                CollectionFilter(
+                    key="?deleted",
+                    type="boolean",
+                    options=[CollectionFilterOption(value="True")],
+                )
+            )
 
         self_link = LinkGenerator.get_link_of(
             page_resource,
@@ -556,7 +578,14 @@ class TaxonomyItemsView(MethodView):
     @API_V1.arguments(TaxonomyItemPageParamsSchema, location="query", as_kwargs=True)
     @API_V1.response(200, DynamicApiResponseSchema(CursorPageSchema()))
     @API_V1.require_jwt("jwt")
-    def get(self, namespace: str, taxonomy: str, search: Optional[str] = None, **kwargs):
+    def get(
+        self,
+        namespace: str,
+        taxonomy: str,
+        search: Optional[str] = None,
+        deleted: bool = False,
+        **kwargs,
+    ):
         """Get all items of a taxonomy."""
         self._check_path_params(namespace=namespace, taxonomy=taxonomy)
         found_taxonomy: Taxonomy = self._get_lazy_loaded_taxonomy(
@@ -572,8 +601,17 @@ class TaxonomyItemsView(MethodView):
             **kwargs, _sort_default="-created_on"
         )
 
+        is_admin = FLASK_OSO.is_admin()
+
+        if deleted and not is_admin:
+            deleted = False
+
         taxonomy_item_filter = (
-            TaxonomyItem.deleted_on == None,
+            (
+                TaxonomyItem.deleted_on == None
+                if not deleted
+                else TaxonomyItem.deleted_on != None
+            ),
             TaxonomyItem.taxonomy_id == int(taxonomy),
         )
 
@@ -618,6 +656,8 @@ class TaxonomyItemsView(MethodView):
         filter_query_params = {}
         if search:
             filter_query_params["search"] = search
+        if deleted:
+            filter_query_params["deleted"] = deleted
 
         page_resource.filters = [
             CollectionFilter(key="?search", type="search"),
@@ -630,6 +670,15 @@ class TaxonomyItemsView(MethodView):
                 ],
             ),
         ]
+
+        if is_admin:
+            page_resource.filters.append(
+                CollectionFilter(
+                    key="?deleted",
+                    type="boolean",
+                    options=[CollectionFilterOption(value="True")],
+                )
+            )
 
         self_link = LinkGenerator.get_link_of(
             page_resource,

@@ -47,13 +47,8 @@ from muse_for_anything.db.models.object_relation_tables import (
 from muse_for_anything.db.models.users import User
 from muse_for_anything.oso_helpers import FLASK_OSO, OsoResource
 
-from ...db.db import DB
-from ...db.models.namespace import Namespace
-from ...db.models.ontology_objects import (
-    OntologyObject,
-    OntologyObjectType,
-    OntologyObjectVersion,
-)
+from .models.ontology import ObjectSchema, ObjectsCursorPageArgumentsSchema
+from .root import API_V1
 from ..base_models import (
     ApiResponse,
     ChangedApiObject,
@@ -65,12 +60,17 @@ from ..base_models import (
     NewApiObject,
     NewApiObjectSchema,
 )
+from ...db.db import DB
+from ...db.models.namespace import Namespace
+from ...db.models.ontology_objects import (
+    OntologyObject,
+    OntologyObjectType,
+    OntologyObjectVersion,
+)
 
 # import object specific generators to load them
 from .generators import object as object_  # noqa
 from .generators import object_version  # noqa
-from .models.ontology import ObjectSchema, ObjectsCursorPageArgumentsSchema
-from .root import API_V1
 
 
 @API_V1.route("/namespaces/<string:namespace>/objects/")
@@ -116,7 +116,13 @@ class ObjectsView(MethodView):
     @API_V1.arguments(ObjectsCursorPageArgumentsSchema, location="query", as_kwargs=True)
     @API_V1.response(200, DynamicApiResponseSchema(CursorPageSchema()))
     @API_V1.require_jwt("jwt")
-    def get(self, namespace: str, search: Optional[str] = None, **kwargs: Any):
+    def get(
+        self,
+        namespace: str,
+        search: Optional[str] = None,
+        deleted: bool = False,
+        **kwargs: Any,
+    ):
         """Get the page of objects."""
         self._check_path_params(namespace=namespace)
         found_namespace = self._get_namespace(namespace=namespace)
@@ -141,8 +147,17 @@ class ObjectsView(MethodView):
             **kwargs, _sort_default="name"
         )
 
+        is_admin = FLASK_OSO.is_admin()
+
+        if deleted and not is_admin:
+            deleted = False
+
         ontology_object_filter = (
-            OntologyObject.deleted_on == None,
+            (
+                OntologyObject.deleted_on == None
+                if not deleted
+                else OntologyObject.deleted_on != None
+            ),
             OntologyObject.namespace_id == int(namespace),
         )
 
@@ -197,6 +212,8 @@ class ObjectsView(MethodView):
         filter_query_params = {}
         if search:
             filter_query_params["search"] = search
+        if deleted:
+            filter_query_params["deleted"] = deleted
 
         sort_options = [
             CollectionFilterOption("name"),
@@ -216,6 +233,15 @@ class ObjectsView(MethodView):
                 options=sort_options,
             ),
         ]
+
+        if is_admin:
+            page_resource.filters.append(
+                CollectionFilter(
+                    key="?deleted",
+                    type="boolean",
+                    options=[CollectionFilterOption("True")],
+                )
+            )
 
         self_link = LinkGenerator.get_link_of(
             page_resource,

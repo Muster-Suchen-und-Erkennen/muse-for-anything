@@ -70,7 +70,7 @@ class RootView(MethodView):
                     ),
                     rel=("collection", "page"),
                     resource_type="ont-namespace",
-                    query_key=("item-count", "cursor", "sort", "search"),
+                    query_key=("item-count", "cursor", "sort", "search", "deleted"),
                 ),
                 KeyedApiLink(
                     href=template_url_for(
@@ -94,7 +94,7 @@ class RootView(MethodView):
                     rel=("collection", "page"),
                     resource_type="ont-type",
                     key=("namespaceId",),
-                    query_key=("item-count", "cursor", "sort", "search"),
+                    query_key=("item-count", "cursor", "sort", "search", "deleted"),
                 ),
                 KeyedApiLink(
                     href=template_url_for(
@@ -121,7 +121,7 @@ class RootView(MethodView):
                     rel=("collection", "page", "schema"),
                     resource_type="ont-type-version",
                     key=("namespaceId", "typeId"),
-                    query_key=("item-count", "cursor", "sort"),
+                    query_key=("item-count", "cursor", "sort", "deleted"),
                 ),
                 KeyedApiLink(
                     href=template_url_for(
@@ -149,7 +149,7 @@ class RootView(MethodView):
                     rel=("collection", "page"),
                     resource_type="ont-object",
                     key=("namespaceId",),
-                    query_key=("item-count", "cursor", "sort", "type-id", "search"),
+                    query_key=("item-count", "cursor", "sort", "type-id", "search", "deleted"),
                 ),
                 KeyedApiLink(
                     href=template_url_for(
@@ -176,7 +176,7 @@ class RootView(MethodView):
                     rel=("collection", "page", "schema"),
                     resource_type="ont-object-version",
                     key=("namespaceId", "objectId"),
-                    query_key=("item-count", "cursor", "sort"),
+                    query_key=("item-count", "cursor", "sort", "deleted"),
                 ),
                 KeyedApiLink(
                     href=template_url_for(
@@ -204,7 +204,7 @@ class RootView(MethodView):
                     rel=("collection", "page"),
                     resource_type="ont-taxonomy",
                     key=("namespaceId",),
-                    query_key=("item-count", "cursor", "sort", "search"),
+                    query_key=("item-count", "cursor", "sort", "search", "deleted"),
                 ),
                 KeyedApiLink(
                     href=template_url_for(
@@ -232,7 +232,7 @@ class RootView(MethodView):
                     rel=("collection", "page"),
                     resource_type="ont-taxonomy-item",
                     key=("namespaceId", "taxonomyId"),
-                    query_key=("item-count", "cursor", "sort", "search"),
+                    query_key=("item-count", "cursor", "sort", "search", "deleted"),
                 ),
                 KeyedApiLink(
                     href=template_url_for(
@@ -261,7 +261,7 @@ class RootView(MethodView):
                     rel=("collection", "page"),
                     resource_type="ont-taxonomy-item-version",
                     key=("namespaceId", "taxonomyId", "taxonomyItemId"),
-                    query_key=("item-count", "cursor", "sort"),
+                    query_key=("item-count", "cursor", "sort", "deleted"),
                 ),
                 KeyedApiLink(
                     href=template_url_for(

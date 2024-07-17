@@ -113,6 +113,21 @@ class CustomFlaskOso(FlaskOso):
             resource = self._get_resource()
         super().authorize(resource, actor=actor, action=action)
 
+    def is_admin(
+        self,
+        resource: Optional[Any] = None,
+        *,
+        actor: Optional[Any] = None,
+    ):
+        if resource is None:
+            resource = self._get_resource()
+
+        if actor is None:
+            actor = self._get_current_actor()
+
+        oso: Oso = self.oso
+        return oso.query_rule("is_admin", resource)
+
     def is_allowed(
         self,
         resource: Optional[Any] = None,

@@ -1,6 +1,5 @@
 """Module containing the object API endpoints of the v1 API."""
 
-
 from http import HTTPStatus
 from typing import Any, List, Optional
 
@@ -28,17 +27,16 @@ from muse_for_anything.api.v1_api.request_helpers import (
 )
 from muse_for_anything.oso_helpers import FLASK_OSO, OsoResource
 
-from .models.ontology import ObjectSchema
-from .root import API_V1
-from ..base_models import (
-    CursorPageArgumentsSchema,
-    CursorPageSchema,
-    DynamicApiResponseSchema,
-    CollectionFilter,
-    CollectionFilterOption,
-)
 from ...db.db import DB
 from ...db.models.ontology_objects import OntologyObject, OntologyObjectVersion
+from ..base_models import (
+    CollectionFilter,
+    CollectionFilterOption,
+    CursorPageSchema,
+    DynamicApiResponseSchema,
+)
+from .models.ontology import ObjectSchema, ObjectVersionsCursorPageArgumentsSchema
+from .root import API_V1
 
 
 @API_V1.route("/namespaces/<string:namespace>/objects/<string:object_id>/versions/")
@@ -69,10 +67,12 @@ class ObjectVersionsView(MethodView):
             abort(HTTPStatus.NOT_FOUND, message=gettext("Object not found."))
         return found_object  # is not None because abort raises exception
 
-    @API_V1.arguments(CursorPageArgumentsSchema, location="query", as_kwargs=True)
+    @API_V1.arguments(
+        ObjectVersionsCursorPageArgumentsSchema, location="query", as_kwargs=True
+    )
     @API_V1.response(200, DynamicApiResponseSchema(CursorPageSchema()))
     @API_V1.require_jwt("jwt")
-    def get(self, namespace: str, object_id: str, **kwargs: Any):
+    def get(self, namespace: str, object_id: str, deleted: bool = False, **kwargs: Any):
         """Get all versions of an object."""
         self._check_path_params(namespace=namespace, object_id=object_id)
         found_object: OntologyObject = self._get_object(
@@ -90,8 +90,17 @@ class ObjectVersionsView(MethodView):
             **kwargs, _sort_default="-version"
         )
 
+        is_admin = FLASK_OSO.is_admin()
+
+        if deleted and not is_admin:
+            deleted = False
+
         object_version_filter = (
-            OntologyObjectVersion.deleted_on == None,
+            (
+                OntologyObjectVersion.deleted_on == None
+                if not deleted
+                else OntologyObjectVersion.deleted_on != None
+            ),
             OntologyObjectVersion.ontology_object == found_object,
         )
 
@@ -102,9 +111,9 @@ class ObjectVersionsView(MethodView):
             [OntologyObjectVersion.version],
         )
 
-        object_versions: List[
-            OntologyObjectVersion
-        ] = pagination_info.page_items_query.all()
+        object_versions: List[OntologyObjectVersion] = (
+            pagination_info.page_items_query.all()
+        )
 
         embedded_items, items = dump_embedded_page_items(
             object_versions, ObjectSchema(), OBJECT_VERSION_EXTRA_LINK_RELATIONS
@@ -120,6 +129,10 @@ class ObjectVersionsView(MethodView):
             item_links=items,
         )
 
+        filter_query_params = {}
+        if deleted:
+            filter_query_params["deleted"] = deleted
+
         page_resource.filters = [
             CollectionFilter(
                 key="?sort",
@@ -128,22 +141,40 @@ class ObjectVersionsView(MethodView):
             ),
         ]
 
+        if is_admin:
+            page_resource.filters.append(
+                CollectionFilter(
+                    key="?deleted",
+                    type="boolean",
+                    options=[CollectionFilterOption(value="True")],
+                )
+            )
+
         self_link = LinkGenerator.get_link_of(
             page_resource,
-            query_params=pagination_options.to_query_params(),
+            query_params=pagination_options.to_query_params(
+                extra_params=filter_query_params
+            ),
         )
 
         extra_links = generate_page_links(
-            page_resource, pagination_info, pagination_options
+            page_resource,
+            pagination_info,
+            pagination_options,
+            extra_params=filter_query_params,
         )
 
         return ApiResponseGenerator.get_api_response(
             page_resource,
-            query_params=pagination_options.to_query_params(),
+            query_params=pagination_options.to_query_params(
+                extra_params=filter_query_params
+            ),
             extra_links=[
                 LinkGenerator.get_link_of(
                     page_resource.get_page(1),
-                    query_params=pagination_options.to_query_params(cursor=None),
+                    query_params=pagination_options.to_query_params(
+                        cursor=None, extra_params=filter_query_params
+                    ),
                 ),
                 self_link,
                 *extra_links,
@@ -182,12 +213,12 @@ class ObjectVersionView(MethodView):
         namespace_id = int(namespace)
         ontology_object_id = int(object_id)
         version_number = int(version)
-        found_object_version: Optional[
-            OntologyObjectVersion
-        ] = OntologyObjectVersion.query.filter(
-            OntologyObjectVersion.version == version_number,
-            OntologyObjectVersion.object_id == ontology_object_id,
-        ).first()
+        found_object_version: Optional[OntologyObjectVersion] = (
+            OntologyObjectVersion.query.filter(
+                OntologyObjectVersion.version == version_number,
+                OntologyObjectVersion.object_id == ontology_object_id,
+            ).first()
+        )
 
         if (
             found_object_version is None

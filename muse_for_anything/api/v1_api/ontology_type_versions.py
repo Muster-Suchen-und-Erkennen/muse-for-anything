@@ -28,22 +28,21 @@ from muse_for_anything.api.v1_api.request_helpers import (
 )
 from muse_for_anything.oso_helpers import FLASK_OSO, OsoResource
 
-from ...db.db import DB
-from ...db.models.ontology_objects import OntologyObjectType, OntologyObjectTypeVersion
+from .models.ontology import ObjectTypeSchema, ObjectTypeVersionsPageParamsSchema
+from .root import API_V1
 from ..base_models import (
     CollectionFilter,
     CollectionFilterOption,
-    CursorPageArgumentsSchema,
     CursorPageSchema,
     DynamicApiResponseSchema,
 )
 from ..util import JSON_MIMETYPE, JSON_SCHEMA_MIMETYPE
+from ...db.db import DB
+from ...db.models.ontology_objects import OntologyObjectType, OntologyObjectTypeVersion
 
 # import type specific generators to load them
 from .generators import type as type_  # noqa
-from .generators import type_version
-from .models.ontology import ObjectTypeSchema
-from .root import API_V1
+from .generators import type_version  # noqa
 
 
 @API_V1.route("/namespaces/<string:namespace>/types/<string:object_type>/versions/")
@@ -74,10 +73,12 @@ class TypeVersionsView(MethodView):
             abort(HTTPStatus.NOT_FOUND, message=gettext("Object Type not found."))
         return found_object_type  # is not None because abort raises exception
 
-    @API_V1.arguments(CursorPageArgumentsSchema, location="query", as_kwargs=True)
+    @API_V1.arguments(
+        ObjectTypeVersionsPageParamsSchema, location="query", as_kwargs=True
+    )
     @API_V1.response(200, DynamicApiResponseSchema(CursorPageSchema()))
     @API_V1.require_jwt("jwt")
-    def get(self, namespace: str, object_type: str, **kwargs: Any):
+    def get(self, namespace: str, object_type: str, deleted: bool = False, **kwargs: Any):
         """Get all versions of a type."""
         self._check_path_params(namespace=namespace, object_type=object_type)
         found_object_type: OntologyObjectType = self._get_object_type(
@@ -95,12 +96,17 @@ class TypeVersionsView(MethodView):
             **kwargs, _sort_default="-version"
         )
 
-        cursor: Optional[str] = kwargs.get("cursor", None)
-        item_count: int = cast(int, kwargs.get("item_count", 25))
-        sort: str = cast(str, kwargs.get("sort", "-version").lstrip("+"))
+        is_admin = FLASK_OSO.is_admin()
+
+        if deleted and not is_admin:
+            deleted = False
 
         ontology_type_version_filter = (
-            OntologyObjectTypeVersion.deleted_on == None,
+            (
+                OntologyObjectTypeVersion.deleted_on == None
+                if not deleted
+                else OntologyObjectTypeVersion.deleted_on != None
+            ),
             OntologyObjectTypeVersion.ontology_type == found_object_type,
         )
 
@@ -129,6 +135,10 @@ class TypeVersionsView(MethodView):
             item_links=items,
         )
 
+        filter_query_params = {}
+        if deleted:
+            filter_query_params["deleted"] = deleted
+
         page_resource.filters = [
             CollectionFilter(
                 key="?sort",
@@ -137,22 +147,40 @@ class TypeVersionsView(MethodView):
             ),
         ]
 
+        if is_admin:
+            page_resource.filters.append(
+                CollectionFilter(
+                    key="?deleted",
+                    type="boolean",
+                    options=[CollectionFilterOption(value="True")],
+                )
+            )
+
         self_link = LinkGenerator.get_link_of(
             page_resource,
-            query_params=pagination_options.to_query_params(),
+            query_params=pagination_options.to_query_params(
+                extra_params=filter_query_params
+            ),
         )
 
         extra_links = generate_page_links(
-            page_resource, pagination_info, pagination_options
+            page_resource,
+            pagination_info,
+            pagination_options,
+            extra_params=filter_query_params,
         )
 
         return ApiResponseGenerator.get_api_response(
             page_resource,
-            query_params=pagination_options.to_query_params(),
+            query_params=pagination_options.to_query_params(
+                extra_params=filter_query_params
+            ),
             extra_links=[
                 LinkGenerator.get_link_of(
                     page_resource.get_page(1),
-                    query_params=pagination_options.to_query_params(cursor=None),
+                    query_params=pagination_options.to_query_params(
+                        cursor=None, extra_params=filter_query_params
+                    ),
                 ),
                 self_link,
                 *extra_links,
