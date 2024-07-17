@@ -1,0 +1,20 @@
+<template>
+    <require from="./svg-icon.html"></require>
+
+    <div class="inline-flex items-center" repeat.for="key of current">
+        <button class="button-flat-toggle active h-8 ${key.startsWith('-') ? 'hover:line-through' : ''}"
+            style="margin-right: 0; border-top-right-radius: 0; border-bottom-right-radius: 0;"
+            click.delegate="toggleOrRemove(key.substring(1))">
+            ${sortKeyToName[key.substring(1)] ? sortKeyToName[key.substring(1)] : "filters.sort."+key.substring(1)|t}
+        </button>
+        <button class="button-flat-toggle active h-8" click.delegate="toggleDirection(key.substring(1))"
+            style="margin-left: 0; border-top-left-radius: 0; border-bottom-left-radius: 0;">
+            <svg-icon icon.bind="'arrow-up'" if.bind="key.startsWith('+')"></svg-icon>
+            <svg-icon icon.bind="'arrow-down'" if.bind="key.startsWith('-')"></svg-icon>
+        </button>
+    </div>
+
+    <button class="button-flat-toggle h-8 flex-shrink-0" click.delegate="addToCurrent(key)" repeat.for="key of available">
+        ${sortKeyToName[key] ? sortKeyToName[key] : "filters.sort."+key|t}
+    </button>
+</template>

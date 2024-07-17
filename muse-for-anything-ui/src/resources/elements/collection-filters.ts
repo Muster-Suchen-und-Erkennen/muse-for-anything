@@ -17,6 +17,10 @@ export class CollectionFilters {
     searchFilterKey: string | null = null;
     searchFilterValue: string = "";
 
+    sortFilter: CollectionFilter | null = null;
+    sortFilterValue: string | null = null;
+    newSortFilterValue: string | null = null;
+
     private domNode: Element;
     private api: BaseApiService;
     private router: Router;
@@ -35,6 +39,7 @@ export class CollectionFilters {
         }
         const searchFilter = newValue.find(filter => filter.type === "search");
         this.searchFilterKey = searchFilter?.key ?? null;
+        this.sortFilter = newValue.find(filter => filter.type === "sort");
         this.updateCurrentFilterValues();
     }
 
@@ -48,6 +53,10 @@ export class CollectionFilters {
         if (this.searchFilterKey) {
             this.searchFilterValue = key[this.searchFilterKey];
         }
+
+        if (this.sortFilter) {
+            this.sortFilterValue = key[this.sortFilter.key];
+        }
     }
 
 
@@ -55,7 +64,9 @@ export class CollectionFilters {
         this.navigateToFilter();
     }
 
-
+    onSort() {
+        this.navigateToFilter();
+    }
 
     private navigateToFilter() {
         if (this.collection == null) {
@@ -75,6 +86,16 @@ export class CollectionFilters {
             } else {
                 delete targetKey[this.searchFilterKey];
                 targetUrl.searchParams.delete(this.searchFilterKey.substring(1));
+            }
+        }
+
+        if (this.sortFilter?.key?.startsWith("?")) {
+            if (this.newSortFilterValue) {
+                targetKey[this.sortFilter.key] = this.newSortFilterValue;
+                targetUrl.searchParams.set(this.sortFilter.key.substring(1), this.newSortFilterValue);
+            } else {
+                delete targetKey[this.sortFilter.key];
+                targetUrl.searchParams.delete(this.sortFilter.key.substring(1));
             }
         }
 

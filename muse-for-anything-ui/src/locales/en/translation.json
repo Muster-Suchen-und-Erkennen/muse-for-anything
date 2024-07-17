@@ -159,7 +159,18 @@
     },
     "filters": {
         "searchLabel": "Search in collection",
-        "searchButton": "Search"
+        "searchButton": "Search",
+        "sortBy": "Sort by",
+        "apply": "apply",
+        "sort": {
+            "name": "Name",
+            "created_on": "Created",
+            "updated_on": "Updated",
+            "object_type_id": "Object Type",
+            "version": "Version",
+            "username": "Username",
+            "e_mail": "E-Mail"
+        }
     },
     "pages": {
         "page": "page",
