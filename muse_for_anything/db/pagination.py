@@ -57,16 +57,22 @@ def get_page_info(
     if issubclass(model, IdMixin):
         sort_columns["id"] = model.id
 
-    sort_column_name = sort.lstrip("+-")
-    sort_direction: Any = desc if sort.startswith("-") else asc
+    order_by = []
 
-    sort_column = sort_columns[sort_column_name]
-    if "collate" in sort_column.info:
-        order_by = sort_direction(
-            sort_columns[sort_column_name].collate(sort_column.info["collate"])
-        )
-    else:
-        order_by = sort_direction(sort_columns[sort_column_name])
+    for s in sort.split(","):
+        sort_column_name = s.lstrip("+-")
+        sort_direction: Any = desc if s.startswith("-") else asc
+
+        sort_column = sort_columns[sort_column_name]
+
+        if "collate" in sort_column.info:
+            order_by.append(
+                sort_direction(
+                    sort_columns[sort_column_name].collate(sort_column.info["collate"])
+                )
+            )
+        else:
+            order_by.append(sort_direction(sort_columns[sort_column_name]))
     row_numbers: Any = func.row_number().over(order_by=order_by)
 
     query_filter: Any = and_(*filter_criteria)
@@ -86,7 +92,7 @@ def get_page_info(
             .scalar()  # none or value of the cursor
         )
 
-    item_query: Query = model.query.filter(query_filter).order_by(order_by)
+    item_query: Query = model.query.filter(query_filter).order_by(*order_by)
 
     if collection_size <= item_count:
         return PaginationInfo(
