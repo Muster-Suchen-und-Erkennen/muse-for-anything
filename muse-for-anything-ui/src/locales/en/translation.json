@@ -160,8 +160,10 @@
     "filters": {
         "searchLabel": "Search in collection",
         "searchButton": "Search",
+        "filterButton": "Filter",
         "sortBy": "Sort by",
         "apply": "apply",
+        "emptyOption": "---",
         "sort": {
             "name": "Name",
             "created_on": "Created",
@@ -170,6 +172,9 @@
             "version": "Version",
             "username": "Username",
             "e_mail": "E-Mail"
+        },
+        "keys": {
+            "?deleted": "Show deleted"
         }
     },
     "pages": {
