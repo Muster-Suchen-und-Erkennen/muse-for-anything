@@ -34,7 +34,7 @@
         </button>
     </div>
     <form class="card px-2 py-2 mt-4" id.bind="'filter-panel-'+slug" if.bind="extraFilters.length > 0" show.bind="showFilters" submit.delegate="onFiltersApply()">
-        <div class="flex ${filter.type !== 'boolean' ? 'flex-col' : 'items-center'} form-field" repeat.for="filter of extraFilters">
+        <div class="flex ${filter.type !== 'boolean' ? 'flex-col' : 'items-center'} form-field mb-2" repeat.for="filter of extraFilters">
             <label class="font-semibold form-title" for.bind="'filter-'+filter.key+slug">${filter.name ? filter.name : 'filters.keys.'+filter.key | t}</label>
             <template if.bind="filter.type === 'boolean'">
                 <input class="rounded-sm focus:ring-4 m-1.5 px-2 py-1 dark:bg-gray-700 dark:border-gray-200" id.bind="'filter-'+filter.key+slug" 

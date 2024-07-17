@@ -174,7 +174,8 @@
             "e_mail": "E-Mail"
         },
         "keys": {
-            "?deleted": "Show deleted"
+            "?deleted": "Show deleted",
+            "?type-id": "Filter by object type"
         }
     },
     "pages": {
