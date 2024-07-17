@@ -29,7 +29,7 @@
         </div>
         <button class="button-flat-toggle inline-flex items-center self-center" aria-controls.bind="'filter-panel-'+slug" 
             aria-expanded.bind="showFilters|json" if.bind="extraFilters.length > 0" click.delegate="showFilters = !showFilters">
-            <svg-icon class="mr-1" icon.bind="'filter'"></svg-icon>
+            <svg-icon class="mr-1 ${extraFiltersUsed ? 'text-primary' : ''}" icon.bind="extraFiltersUsed ? 'filter-filled' : 'filter'"></svg-icon>
             ${'filters.filterButton' | t}
         </button>
     </div>

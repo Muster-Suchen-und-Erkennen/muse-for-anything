@@ -23,6 +23,7 @@ export class CollectionFilters {
 
     extraFilters: CollectionFilter[] = [];
     showFilters: boolean = false;
+    extraFiltersUsed: boolean = false;
 
     extraFilterValues: { [props: string]: string | number | boolean } = {};
 
@@ -68,11 +69,14 @@ export class CollectionFilters {
         }
 
         const extraFilterValues: { [props: string]: string | number | boolean } = {};
+        let extraFiltersUsed = false;
         this.extraFilters.forEach(filter => {
             if (key[filter.key]) {
+                extraFiltersUsed = true;
                 extraFilterValues[filter.key] = this.keyValueToFilterType(key[filter.key], filter.type);
             }
         });
+        this.extraFiltersUsed = extraFiltersUsed;
         this.extraFilterValues = extraFilterValues;
     }
 
