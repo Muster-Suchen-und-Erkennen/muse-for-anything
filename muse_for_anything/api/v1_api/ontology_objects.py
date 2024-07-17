@@ -169,7 +169,12 @@ class ObjectsView(MethodView):
             OntologyObject,
             ontology_object_filter,
             pagination_options,
-            [OntologyObject.name],
+            [
+                OntologyObject.name,
+                OntologyObject.created_on,
+                OntologyObject.updated_on,
+                OntologyObject.object_type_id,
+            ],
         )
 
         objects: List[OntologyObject] = pagination_info.page_items_query.all()
@@ -193,10 +198,22 @@ class ObjectsView(MethodView):
         if search:
             filter_query_params["search"] = search
 
+        sort_options = [
+            CollectionFilterOption("name"),
+            CollectionFilterOption("created_on"),
+            CollectionFilterOption("updated_on"),
+        ]
+
+        if found_type is None:
+            # sort by type is only useful if not already filtered by type
+            sort_options.append(CollectionFilterOption("object_type_id"))
+
         page_resource.filters = [
             CollectionFilter(key="?search", type="search"),
             CollectionFilter(
-                key="sort", type="?sort", options=[CollectionFilterOption("name")]
+                key="?sort",
+                type="sort",
+                options=sort_options,
             ),
         ]
 

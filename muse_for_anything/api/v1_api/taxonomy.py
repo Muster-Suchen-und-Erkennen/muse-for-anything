@@ -126,7 +126,10 @@ class TaxonomiesView(MethodView):
             )
 
         pagination_info = default_get_page_info(
-            Taxonomy, taxonomy_filter, pagination_options, [Taxonomy.name]
+            Taxonomy,
+            taxonomy_filter,
+            pagination_options,
+            [Taxonomy.name, Taxonomy.created_on, Taxonomy.updated_on],
         )
 
         taxonomies: List[Taxonomy] = pagination_info.page_items_query.all()
@@ -152,7 +155,13 @@ class TaxonomiesView(MethodView):
         page_resource.filters = [
             CollectionFilter(key="?search", type="search"),
             CollectionFilter(
-                key="sort", type="?sort", options=[CollectionFilterOption("name")]
+                key="?sort",
+                type="sort",
+                options=[
+                    CollectionFilterOption("name"),
+                    CollectionFilterOption("created_on"),
+                    CollectionFilterOption("updated_on"),
+                ],
             ),
         ]
 
@@ -560,7 +569,7 @@ class TaxonomyItemsView(MethodView):
         )
 
         pagination_options: PaginationOptions = prepare_pagination_query_args(
-            **kwargs, _sort_default="-updated_on"
+            **kwargs, _sort_default="-created_on"
         )
 
         taxonomy_item_filter = (
@@ -587,7 +596,7 @@ class TaxonomyItemsView(MethodView):
             TaxonomyItem,
             taxonomy_item_filter,
             pagination_options,
-            [TaxonomyItem.updated_on],
+            [TaxonomyItem.created_on, TaxonomyItem.updated_on],
         )
 
         taxonomy_items: List[TaxonomyItem] = pagination_info.page_items_query.all()
@@ -613,7 +622,12 @@ class TaxonomyItemsView(MethodView):
         page_resource.filters = [
             CollectionFilter(key="?search", type="search"),
             CollectionFilter(
-                key="sort", type="?sort", options=[CollectionFilterOption("name")]
+                key="?sort",
+                type="sort",
+                options=[
+                    CollectionFilterOption("created_on"),
+                    CollectionFilterOption("updated_on"),
+                ],
             ),
         ]
 

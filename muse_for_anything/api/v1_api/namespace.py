@@ -91,7 +91,10 @@ class NamespacesView(MethodView):
             )
 
         pagination_info = default_get_page_info(
-            Namespace, namespace_filter, pagination_options, [Namespace.name]
+            Namespace,
+            namespace_filter,
+            pagination_options,
+            [Namespace.name, Namespace.created_on, Namespace.updated_on],
         )
 
         namespaces: List[Namespace] = pagination_info.page_items_query.all()
@@ -116,7 +119,13 @@ class NamespacesView(MethodView):
         page_resource.filters = [
             CollectionFilter(key="?search", type="search"),
             CollectionFilter(
-                key="sort", type="?sort", options=[CollectionFilterOption("name")]
+                key="?sort",
+                type="sort",
+                options=[
+                    CollectionFilterOption("name"),
+                    CollectionFilterOption("created_on"),
+                    CollectionFilterOption("updated_on"),
+                ],
             ),
         ]
 

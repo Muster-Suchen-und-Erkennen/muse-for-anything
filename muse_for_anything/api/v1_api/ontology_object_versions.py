@@ -34,6 +34,8 @@ from ..base_models import (
     CursorPageArgumentsSchema,
     CursorPageSchema,
     DynamicApiResponseSchema,
+    CollectionFilter,
+    CollectionFilterOption,
 )
 from ...db.db import DB
 from ...db.models.ontology_objects import OntologyObject, OntologyObjectVersion
@@ -117,6 +119,15 @@ class ObjectVersionsView(MethodView):
             collection_size=pagination_info.collection_size,
             item_links=items,
         )
+
+        page_resource.filters = [
+            CollectionFilter(
+                key="?sort",
+                type="sort",
+                options=[CollectionFilterOption(value="version")],
+            ),
+        ]
+
         self_link = LinkGenerator.get_link_of(
             page_resource,
             query_params=pagination_options.to_query_params(),

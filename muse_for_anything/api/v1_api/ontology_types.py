@@ -42,19 +42,6 @@ from muse_for_anything.api.v1_api.request_helpers import (
 from muse_for_anything.db.models.users import User
 from muse_for_anything.oso_helpers import FLASK_OSO, OsoResource
 
-from .models.ontology import ObjectTypeSchema, ObjectTypePageParamsSchema
-from .root import API_V1
-from ..base_models import (
-    ApiResponse,
-    ChangedApiObject,
-    ChangedApiObjectSchema,
-    CursorPageSchema,
-    DynamicApiResponseSchema,
-    NewApiObject,
-    NewApiObjectSchema,
-    CollectionFilter,
-    CollectionFilterOption,
-)
 from ...db.db import DB
 from ...db.models.namespace import Namespace
 from ...db.models.object_relation_tables import (
@@ -63,9 +50,23 @@ from ...db.models.object_relation_tables import (
     OntologyTypeVersionToTypeVersion,
 )
 from ...db.models.ontology_objects import OntologyObjectType, OntologyObjectTypeVersion
+from ..base_models import (
+    ApiResponse,
+    ChangedApiObject,
+    ChangedApiObjectSchema,
+    CollectionFilter,
+    CollectionFilterOption,
+    CursorPageSchema,
+    DynamicApiResponseSchema,
+    NewApiObject,
+    NewApiObjectSchema,
+)
 
 # import type specific generators to load them
-from .generators import type as type_, type_version  # noqa
+from .generators import type as type_  # noqa
+from .generators import type_version
+from .models.ontology import ObjectTypePageParamsSchema, ObjectTypeSchema
+from .root import API_V1
 
 
 @API_V1.route("/namespaces/<string:namespace>/types/")
@@ -125,7 +126,11 @@ class TypesView(MethodView):
             OntologyObjectType,
             ontology_type_filter,
             pagination_options,
-            [OntologyObjectType.name],
+            [
+                OntologyObjectType.name,
+                OntologyObjectType.created_on,
+                OntologyObjectType.updated_on,
+            ],
         )
 
         object_types: List[OntologyObjectType] = pagination_info.page_items_query.all()
@@ -162,7 +167,13 @@ class TypesView(MethodView):
         page_resource.filters = [
             CollectionFilter(key="?search", type="search"),
             CollectionFilter(
-                key="sort", type="?sort", options=[CollectionFilterOption("name")]
+                key="?sort",
+                type="sort",
+                options=[
+                    CollectionFilterOption("name"),
+                    CollectionFilterOption("created_on"),
+                    CollectionFilterOption("updated_on"),
+                ],
             ),
         ]
 

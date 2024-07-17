@@ -28,19 +28,22 @@ from muse_for_anything.api.v1_api.request_helpers import (
 )
 from muse_for_anything.oso_helpers import FLASK_OSO, OsoResource
 
-from .models.ontology import ObjectTypeSchema
-from .root import API_V1
+from ...db.db import DB
+from ...db.models.ontology_objects import OntologyObjectType, OntologyObjectTypeVersion
 from ..base_models import (
+    CollectionFilter,
+    CollectionFilterOption,
     CursorPageArgumentsSchema,
     CursorPageSchema,
     DynamicApiResponseSchema,
 )
 from ..util import JSON_MIMETYPE, JSON_SCHEMA_MIMETYPE
-from ...db.db import DB
-from ...db.models.ontology_objects import OntologyObjectType, OntologyObjectTypeVersion
 
 # import type specific generators to load them
-from .generators import type as type_, type_version  # noqa
+from .generators import type as type_  # noqa
+from .generators import type_version
+from .models.ontology import ObjectTypeSchema
+from .root import API_V1
 
 
 @API_V1.route("/namespaces/<string:namespace>/types/<string:object_type>/versions/")
@@ -108,9 +111,9 @@ class TypeVersionsView(MethodView):
             [OntologyObjectTypeVersion.version],
         )
 
-        type_versions: List[
-            OntologyObjectTypeVersion
-        ] = pagination_info.page_items_query.all()
+        type_versions: List[OntologyObjectTypeVersion] = (
+            pagination_info.page_items_query.all()
+        )
 
         embedded_items, items = dump_embedded_page_items(
             type_versions, ObjectTypeSchema(), TYPE_VERSION_EXTRA_LINK_RELATIONS
@@ -125,6 +128,15 @@ class TypeVersionsView(MethodView):
             collection_size=pagination_info.collection_size,
             item_links=items,
         )
+
+        page_resource.filters = [
+            CollectionFilter(
+                key="?sort",
+                type="sort",
+                options=[CollectionFilterOption(value="version")],
+            ),
+        ]
+
         self_link = LinkGenerator.get_link_of(
             page_resource,
             query_params=pagination_options.to_query_params(),
@@ -179,12 +191,12 @@ class TypeVersionView(MethodView):
         namespace_id = int(namespace)
         object_type_id = int(object_type)
         version_number = int(version)
-        found_object_type_version: Optional[
-            OntologyObjectTypeVersion
-        ] = OntologyObjectTypeVersion.query.filter(
-            OntologyObjectTypeVersion.version == version_number,
-            OntologyObjectTypeVersion.object_type_id == object_type_id,
-        ).first()
+        found_object_type_version: Optional[OntologyObjectTypeVersion] = (
+            OntologyObjectTypeVersion.query.filter(
+                OntologyObjectTypeVersion.version == version_number,
+                OntologyObjectTypeVersion.object_type_id == object_type_id,
+            ).first()
+        )
 
         if (
             found_object_type_version is None

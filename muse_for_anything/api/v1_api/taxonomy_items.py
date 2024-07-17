@@ -72,6 +72,8 @@ from ..base_models import (
     ApiResponse,
     ChangedApiObject,
     ChangedApiObjectSchema,
+    CollectionFilter,
+    CollectionFilterOption,
     CursorPageArgumentsSchema,
     CursorPageSchema,
     DynamicApiResponseSchema,
@@ -1000,7 +1002,7 @@ class TaxonomyItemVersionsView(MethodView):
         )
 
         pagination_options: PaginationOptions = prepare_pagination_query_args(
-            **kwargs, _sort_default="-created_on"
+            **kwargs, _sort_default="-version"
         )
 
         taxonomy_item_version_filter = (
@@ -1012,7 +1014,7 @@ class TaxonomyItemVersionsView(MethodView):
             TaxonomyItemVersion,
             taxonomy_item_version_filter,
             pagination_options,
-            [TaxonomyItemVersion.created_on],
+            [TaxonomyItemVersion.version],
         )
 
         taxonomy_item_versions: List[TaxonomyItemVersion] = (
@@ -1034,6 +1036,15 @@ class TaxonomyItemVersionsView(MethodView):
             collection_size=pagination_info.collection_size,
             item_links=items,
         )
+
+        page_resource.filters = [
+            CollectionFilter(
+                key="?sort",
+                type="sort",
+                options=[CollectionFilterOption("version")],
+            ),
+        ]
+
         self_link = LinkGenerator.get_link_of(
             page_resource, query_params=pagination_options.to_query_params()
         )
