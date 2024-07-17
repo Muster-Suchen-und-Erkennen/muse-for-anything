@@ -5,7 +5,7 @@
         <template if.bind="main != null">
             <a class="link-hover flex items-center" style="max-width: 12rem;"
                 href.bind="navOptions.get(main).clientUrl" data-router-ignore.bind="skipNavigation & empty">
-                <svg-icon class="mr-1" icon.bind="navOptions.get(main).icon""></svg-icon>
+                <svg-icon class="mr-1" icon.bind="navOptions.get(main).icon"></svg-icon>
                 <span class=" whitespace-nowrap overflow-hidden overflow-ellipsis">
                     ${navOptions.get(main).title}
                     </span>

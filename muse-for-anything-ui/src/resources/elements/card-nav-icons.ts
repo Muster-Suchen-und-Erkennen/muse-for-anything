@@ -1,8 +1,8 @@
-import { bindable, autoinject } from "aurelia-framework";
 import { EventAggregator } from "aurelia-event-aggregator";
+import { autoinject, bindable } from "aurelia-framework";
+import { ApiLink, ApiObject } from "rest/api-objects";
 import { BaseApiService } from "rest/base-api";
 import { RESOURCE_TYPE_ICONS } from "services/navigation-links";
-import { ApiLink, ApiObject } from "rest/api-objects";
 
 interface NavOption {
     link: ApiLink;
