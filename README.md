@@ -38,6 +38,15 @@ To override any variable create a `.env` file.
 Environment variables in `.env` take precedence over `.flaskenv`.
 See the content of the `.flaskenv` file for the default environment variables.
 
+Before the first start, be sure to create a database:
+
+```bash
+poetry run flask db upgrade
+
+# create user admin:admin
+poetry run flask create-admin-user
+```
+
 Run the development server with
 
 ```bash

@@ -16,7 +16,8 @@
                 </p>
                 <svg-icon class="ml-1" icon.bind="'link'" size.bind="19"></svg-icon>
             </a>
-            <card-nav-icons api-object.bind="apiObject" main.one-time="'ont-type'" extra.one-time="['ont-namespace']">
+            <card-nav-icons api-object.bind="apiObject" main.one-time="'ont-type'"
+                extra.one-time="['ont-namespace']" skip-navigation.one-time="skipNavigation">
             </card-nav-icons>
         </div>
         <markdown class="my-1 block block-max-3l overflow-y-hidden overflow-ellipsis"
@@ -32,9 +33,26 @@
                 </span>
                 ${"object" | t}: ${apiObject.name}
             </h3>
-            <card-nav-icons api-object.bind="apiObject" main.one-time="'ont-type'" extra.one-time="['ont-namespace']">
+            <card-nav-icons api-object.bind="apiObject" main.one-time="'ont-type'"
+                extra.one-time="['ont-namespace']" skip-navigation.one-time="skipNavigation">
             </card-nav-icons>
         </div>
         <api-schema-view data.bind="apiObject" schema-url.bind="apiObject.self.schema"></api-schema-view>
     </div>
+
+    <template if.bind="isRoot && (latestVersionApiLink != null || allVersionsUrl != null)">
+        <h3 class="font-lg font-semibold mt-4">${"schemaViews.versions" | t}:</h3>
+        <div class="card px-2 py-2 mt-2 mb-4" if.bind="latestVersionApiLink != null">
+            <api-resource api-link.bind="latestVersionApiLink" is-root.one-time="false" skip-navigation.bind="skipNavigation"></api-resource>
+        </div>
+        <div class="card px-2 py-2 mt-2 mb-4" if.bind="allVersionsUrl != null">
+            <a class="link-hover flex items-center" href="/explore/${allVersionsUrl}" data-router-ignore.bind="skipNavigation & empty">
+                <svg-icon class="mr-1" icon.bind="'ont-object'"></svg-icon>
+                <p class="my-1 font-bold block-max-3l overflow-y-hidden overflow-ellipsis">
+                    all versions
+                </p>
+                <svg-icon class="ml-1" icon.bind="'link'" size.bind="19"></svg-icon>
+            </a>
+        </div>
+    </template>
 </template>

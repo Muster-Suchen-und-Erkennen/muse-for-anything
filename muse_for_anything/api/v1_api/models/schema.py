@@ -1,15 +1,18 @@
 """Module containing all API schemas for the schema API."""
 
-from typing import Any, Dict
 from dataclasses import dataclass
+from typing import Any, Dict
 
-from flask import request
 import marshmallow as ma
+from flask import request
 
 from ....util.import_helpers import get_all_classes_of_module
-
-from ...base_models import BaseApiObject, MaBaseSchema, ApiResponseSchema, ApiObjectSchema
-
+from ...base_models import (
+    ApiObjectSchema,
+    ApiResponseSchema,
+    BaseApiObject,
+    MaBaseSchema,
+)
 
 __all__ = []
 
@@ -183,6 +186,7 @@ JSON_OBJECT_PROPERTIES_SCHEMA = {
             },
             "minItems": 1,
             "uniqueItems": True,
+            "customType": "jsonType",
         },
         "customType": {
             "enum": [
@@ -267,6 +271,7 @@ JSON_ARRAY_PROPERTIES_BASE_SCHEMA = {
             },
             "minItems": 1,
             "uniqueItems": True,
+            "customType": "jsonType",
         },
         "maxItems": {"type": "integer", "minimum": 0},
         "minItems": {"type": "integer", "minimum": 0, "default": 0},
@@ -334,9 +339,10 @@ JSON_TUPLE_PROPERTIES_SCHEMA = {
     "propertyOrder": {
         "arrayType": 100,
         "items": 110,
-        "minItems": 120,
-        "maxItems": 130,
-        "uniqueItems": 140,
+        "additionalItems": 120,
+        "minItems": 130,
+        "maxItems": 140,
+        "uniqueItems": 150,
     },
 }
 
@@ -361,6 +367,7 @@ JSON_STRING_PROPERTIES_SCHEMA = {
             },
             "minItems": 1,
             "uniqueItems": True,
+            "customType": "jsonType",
         },
         "maxLength": {"type": "integer", "minimum": 0},
         "minLength": {"type": "integer", "minimum": 0, "default": 0},
@@ -428,6 +435,7 @@ JSON_NUMBER_PROPERTIES_SCHEMA = {
             },
             "minItems": 1,
             "uniqueItems": True,
+            "customType": "jsonType",
         },
     },
     "propertyOrder": {
@@ -461,6 +469,7 @@ JSON_INTEGER_PROPERTIES_SCHEMA = {
             },
             "minItems": 1,
             "uniqueItems": True,
+            "customType": "jsonType",
         },
     },
     "propertyOrder": {
@@ -493,6 +502,7 @@ JSON_BOOLEAN_PROPERTIES_SCHEMA = {
             },
             "minItems": 1,
             "uniqueItems": True,
+            "customType": "jsonType",
         },
     },
     "hiddenProperties": ["abstract"],
@@ -551,6 +561,7 @@ JSON_REF_PROPERTIES_SCHEMA = {
     "$id": JSON_REF_PROPERTIES_SCHEMA_REF["$ref"],
     "title": "Schema Reference",
     "type": ["object"],
+    "customType": "jsonRef",
     "default": {"$ref": None},
     "required": ["$ref"],
     "allOf": [JSON_META_PROPERTIES_SCHEMA_REF],
@@ -585,6 +596,7 @@ JSON_RESOURCE_REFERENCE_SCHEMA = {
             },
             "minItems": 1,
             "uniqueItems": True,
+            "customType": "jsonType",
         },
         "customType": {"const": "resourceReference"},
         "referenceType": {

@@ -25,6 +25,7 @@ NEXT_REL = "next"
 
 UP_REL = "up"
 NAV_REL = "nav"
+LATEST_REL = "latest"
 
 POST_REL = "post"
 PUT_REL = "put"
@@ -53,6 +54,8 @@ REQUIRES_FRESH_LOGIN_REL = "requires-fresh-login"
 # relation types ###############################################################
 
 DATA_EXPORT_REL_TYPE = "ont-export"
+
+SCHEMA_REL_TYPE = "schema"
 
 NAMESPACE_REL_TYPE = "ont-namespace"
 
@@ -89,6 +92,7 @@ TYPE_PAGE_EXTRA_LINK_RELATIONS = (NAMESPACE_REL_TYPE,)
 TYPE_EXTRA_LINK_RELATIONS = (
     NAMESPACE_REL_TYPE,
     TYPE_VERSION_REL_TYPE,
+    LATEST_REL,
     OBJECT_REL_TYPE,
     f"{CREATE_REL}_{OBJECT_REL_TYPE}",
 )

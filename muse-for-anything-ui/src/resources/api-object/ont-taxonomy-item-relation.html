@@ -8,6 +8,7 @@
     <div if.bind="!isRoot">
         <div class="w-full flex justify-between items-baseline">
             <a class="link-hover flex items-center" href="/explore/${clientUrl}"
+                data-router-ignore.bind="skipNavigation & empty"
                 aria-disabled.bind="clientUrl == null ? true : null">
                 <svg-icon class="mr-1" icon.bind="'ont-taxonomy-item-relation'"></svg-icon>
                 <p class="my-1 font-bold block-max-3l overflow-y-hidden overflow-ellipsis">
@@ -18,7 +19,7 @@
                 <svg-icon class="ml-1" icon.bind="'link'" size.bind="19"></svg-icon>
             </a>
             <card-nav-icons api-object.bind="apiObject" main.one-time="'ont-taxonomy'"
-                extra.one-time="['ont-namespace']"></card-nav-icons>
+                extra.one-time="['ont-namespace']" skip-navigation.one-time="skipNavigation"></card-nav-icons>
         </div>
         <api-resource class="block px-3 py-2 card" api-link.bind="apiObject.targetItem" is-root.one-time="false">
         </api-resource>
@@ -34,7 +35,7 @@
                 ${"resource-type.ont-taxonomy-item-relation" | t}
             </h3>
             <card-nav-icons api-object.bind="apiObject" main.one-time="'ont-taxonomy'"
-                extra.one-time="['ont-namespace']"></card-nav-icons>
+                extra.one-time="['ont-namespace']" skip-navigation.one-time="skipNavigation"></card-nav-icons>
         </div>
         <p class="font-semibold">Source:</p>
         <api-resource class="block px-3 py-2 card" api-link.bind="apiObject.sourceItem" is-root.one-time="false">

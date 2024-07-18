@@ -98,6 +98,12 @@ function isJsonSchemaRoot(obj: any): obj is JsonSchemaRoot {
     return obj?.$schema != null;
 }
 
+export interface SchemaTypeDefinition {
+    key: string;
+    title?: string;
+    description?: string;
+}
+
 export interface SchemaApiObject extends ApiObject {
     schema: JsonSchemaRoot;
 }
@@ -274,6 +280,22 @@ export class ApiSchema {
             resolved.originId = originalId;
         }
         return resolved;
+    }
+
+    public getDefinedTypes() {
+        const defs = this.schemaRoot?.definitions ?? {};
+        const definedTypes: SchemaTypeDefinition[] = [];
+        Object.keys(defs).forEach(key => {
+            const typeDef: SchemaTypeDefinition = { key: key };
+            if (defs[key]?.title) {
+                typeDef.title = defs[key]?.title;
+            }
+            if (defs[key]?.description) {
+                typeDef.title = defs[key]?.description;
+            }
+            definedTypes.push(typeDef);
+        });
+        return definedTypes;
     }
 
     public async resolveSchema(ref?: string, depth: number = 0): Promise<JsonSchema> {

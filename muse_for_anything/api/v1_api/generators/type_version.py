@@ -14,6 +14,7 @@ from muse_for_anything.api.v1_api.constants import (
     NAV_REL,
     PAGE_REL,
     SCHEMA_RESOURCE,
+    SCHEMA_REL_TYPE,
     TYPE_REL_TYPE,
     TYPE_SCHEMA,
     TYPE_VERSION_EXTRA_LINK_RELATIONS,
@@ -157,7 +158,7 @@ class ObjectTypeVersionSelfLinkGenerator(
                 version=str(resource.version),
                 _external=True,
             ),
-            rel=tuple(),
+            rel=(SCHEMA_REL_TYPE,),
             resource_type=TYPE_VERSION_REL_TYPE,
             resource_key=KeyGenerator.generate_key(resource),
             schema=url_for(SCHEMA_RESOURCE, schema_id=TYPE_SCHEMA, _external=True),
@@ -180,7 +181,9 @@ class ObjectTypeVersionApiObjectGenerator(
             return
 
         return ObjectTypeData(
-            self=LinkGenerator.get_link_of(resource, query_params=query_params, ignore_deleted=True),
+            self=LinkGenerator.get_link_of(
+                resource, query_params=query_params, ignore_deleted=True
+            ),
             name=resource.name,
             description=resource.description,
             created_on=resource.created_on,

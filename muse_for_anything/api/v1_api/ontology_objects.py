@@ -9,7 +9,7 @@ from flask.views import MethodView
 from flask_babel import gettext
 from flask_smorest import abort
 from marshmallow.utils import INCLUDE
-from sqlalchemy.sql.expression import or_
+from sqlalchemy.sql.expression import or_, select
 
 from muse_for_anything.api.pagination_util import (
     PaginationOptions,
@@ -31,6 +31,7 @@ from muse_for_anything.api.v1_api.constants import (
     RESTORE_REL,
     TYPE_EXTRA_ARG,
     TYPE_ID_QUERY_KEY,
+    TYPE_REL_TYPE,
     UPDATE,
     UPDATE_REL,
 )
@@ -47,13 +48,8 @@ from muse_for_anything.db.models.object_relation_tables import (
 from muse_for_anything.db.models.users import User
 from muse_for_anything.oso_helpers import FLASK_OSO, OsoResource
 
-from ...db.db import DB
-from ...db.models.namespace import Namespace
-from ...db.models.ontology_objects import (
-    OntologyObject,
-    OntologyObjectType,
-    OntologyObjectVersion,
-)
+from .models.ontology import ObjectSchema, ObjectsCursorPageArgumentsSchema
+from .root import API_V1
 from ..base_models import (
     ApiResponse,
     ChangedApiObject,
@@ -65,12 +61,17 @@ from ..base_models import (
     NewApiObject,
     NewApiObjectSchema,
 )
+from ...db.db import DB
+from ...db.models.namespace import Namespace
+from ...db.models.ontology_objects import (
+    OntologyObject,
+    OntologyObjectType,
+    OntologyObjectVersion,
+)
 
 # import object specific generators to load them
 from .generators import object as object_  # noqa
 from .generators import object_version  # noqa
-from .models.ontology import ObjectSchema, ObjectsCursorPageArgumentsSchema
-from .root import API_V1
 
 
 @API_V1.route("/namespaces/<string:namespace>/objects/")
@@ -113,10 +114,59 @@ class ObjectsView(MethodView):
             abort(HTTPStatus.NOT_FOUND, message=gettext("Object type not found."))
         return found_type  # is not None because abort raises exception
 
+    def _get_type_filter_options(
+        self, namespace: Namespace, found_type: Optional[OntologyObjectType]
+    ) -> List[CollectionFilterOption]:
+        can_include_type_filter = FLASK_OSO.is_allowed(
+            OsoResource(
+                TYPE_REL_TYPE,
+                is_collection=True,
+                parent_resource=namespace,
+            )
+        )
+        if not can_include_type_filter:
+            if found_type:
+                return [
+                    CollectionFilterOption(value=str(found_type.id), name=found_type.name)
+                ]
+            return []
+        sub_q = (
+            select(OntologyObject.object_type_id)
+            .where(OntologyObject.namespace == namespace)
+            .where(OntologyObject.deleted_on == None)
+            .distinct()
+        )
+        q = (
+            select(OntologyObjectType.id, OntologyObjectType.name)
+            .where(OntologyObjectType.namespace == namespace)
+            .where(OntologyObjectType.deleted_on == None)
+        )
+
+        if found_type:
+            q = q.where(
+                or_(
+                    OntologyObjectType.id.in_(sub_q),
+                    OntologyObjectType.id == found_type.id,
+                )
+            )
+        else:
+            q = q.where(OntologyObjectType.id.in_(sub_q))
+
+        used_types = DB.session.execute(q).all()
+        return [
+            CollectionFilterOption(value=str(id_), name=name) for id_, name in used_types
+        ]
+
     @API_V1.arguments(ObjectsCursorPageArgumentsSchema, location="query", as_kwargs=True)
     @API_V1.response(200, DynamicApiResponseSchema(CursorPageSchema()))
     @API_V1.require_jwt("jwt")
-    def get(self, namespace: str, search: Optional[str] = None, **kwargs: Any):
+    def get(
+        self,
+        namespace: str,
+        search: Optional[str] = None,
+        deleted: bool = False,
+        **kwargs: Any,
+    ):
         """Get the page of objects."""
         self._check_path_params(namespace=namespace)
         found_namespace = self._get_namespace(namespace=namespace)
@@ -141,8 +191,17 @@ class ObjectsView(MethodView):
             **kwargs, _sort_default="name"
         )
 
+        is_admin = FLASK_OSO.is_admin()
+
+        if deleted and not is_admin:
+            deleted = False
+
         ontology_object_filter = (
-            OntologyObject.deleted_on == None,
+            (
+                OntologyObject.deleted_on == None
+                if not deleted
+                else OntologyObject.deleted_on != None
+            ),
             OntologyObject.namespace_id == int(namespace),
         )
 
@@ -169,7 +228,12 @@ class ObjectsView(MethodView):
             OntologyObject,
             ontology_object_filter,
             pagination_options,
-            [OntologyObject.name],
+            [
+                OntologyObject.name,
+                OntologyObject.created_on,
+                OntologyObject.updated_on,
+                OntologyObject.object_type_id,
+            ],
         )
 
         objects: List[OntologyObject] = pagination_info.page_items_query.all()
@@ -192,13 +256,41 @@ class ObjectsView(MethodView):
         filter_query_params = {}
         if search:
             filter_query_params["search"] = search
+        if deleted:
+            filter_query_params["deleted"] = deleted
+
+        sort_options = [
+            CollectionFilterOption("name"),
+            CollectionFilterOption("created_on"),
+            CollectionFilterOption("updated_on"),
+        ]
+
+        if found_type is None:
+            # sort by type is only useful if not already filtered by type
+            sort_options.append(CollectionFilterOption("object_type_id"))
 
         page_resource.filters = [
             CollectionFilter(key="?search", type="search"),
             CollectionFilter(
-                key="sort", type="?sort", options=[CollectionFilterOption("name")]
+                key="?sort",
+                type="sort",
+                options=sort_options,
+            ),
+            CollectionFilter(
+                key="?type-id",
+                type="string",
+                options=self._get_type_filter_options(found_namespace, found_type),
             ),
         ]
+
+        if is_admin:
+            page_resource.filters.append(
+                CollectionFilter(
+                    key="?deleted",
+                    type="boolean",
+                    options=[CollectionFilterOption("True")],
+                )
+            )
 
         self_link = LinkGenerator.get_link_of(
             page_resource,

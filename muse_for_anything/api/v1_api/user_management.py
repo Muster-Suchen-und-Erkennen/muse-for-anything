@@ -20,6 +20,22 @@ from muse_for_anything.db.models.users import User
 from muse_for_anything.db.pagination import PaginationInfo
 from muse_for_anything.oso_helpers import FLASK_OSO, OsoResource
 
+from ...db.db import DB
+from ..base_models import (
+    ApiLink,
+    ApiResponse,
+    ChangedApiObject,
+    ChangedApiObjectSchema,
+    CursorPageArgumentsSchema,
+    CursorPageSchema,
+    DeletedApiObject,
+    DeletedApiObjectSchema,
+    DynamicApiResponseSchema,
+    NewApiObject,
+    NewApiObjectSchema,
+    CollectionFilter,
+    CollectionFilterOption,
+)
 from .constants import (
     CHANGED_REL,
     CREATE,
@@ -35,26 +51,12 @@ from .constants import (
     USER_REL_TYPE,
     VIEW_ALL_USERS_EXTRA_ARG,
 )
-from .models.auth import UserCreateSchema, UserSchema, UserUpdateSchema
-from .request_helpers import ApiResponseGenerator, LinkGenerator, PageResource
-from .root import API_V1
-from ..base_models import (
-    ApiLink,
-    ApiResponse,
-    ChangedApiObject,
-    ChangedApiObjectSchema,
-    CursorPageArgumentsSchema,
-    CursorPageSchema,
-    DeletedApiObject,
-    DeletedApiObjectSchema,
-    DynamicApiResponseSchema,
-    NewApiObject,
-    NewApiObjectSchema,
-)
-from ...db.db import DB
 
 # import user management specific generators to load them
 from .generators import user_management  # noqa
+from .models.auth import UserCreateSchema, UserSchema, UserUpdateSchema
+from .request_helpers import ApiResponseGenerator, LinkGenerator, PageResource
+from .root import API_V1
 
 
 @API_V1.route("/auth/users/")
@@ -86,7 +88,10 @@ class UsersView(MethodView):
 
         if can_view_all_users:
             pagination_info = default_get_page_info(
-                User, tuple(), pagination_options, [User.username]
+                User,
+                tuple(),
+                pagination_options,
+                [User.username, User.e_mail, User.created_on],
             )
 
             users = pagination_info.page_items_query.all()
@@ -109,12 +114,25 @@ class UsersView(MethodView):
             User,
             page_number=pagination_info.cursor_page,
             active_page=pagination_info.cursor_page,
-            last_page=pagination_info.last_page.page
-            if pagination_info.last_page
-            else None,
+            last_page=(
+                pagination_info.last_page.page if pagination_info.last_page else None
+            ),
             collection_size=pagination_info.collection_size,
             item_links=items,
         )
+
+        page_resource.filters = [
+            CollectionFilter(
+                key="?sort",
+                type="sort",
+                options=[
+                    CollectionFilterOption("username"),
+                    CollectionFilterOption("e_mail"),
+                    CollectionFilterOption("created_on"),
+                ],
+            ),
+        ]
+
         self_link = LinkGenerator.get_link_of(
             page_resource, query_params=pagination_options.to_query_params()
         )
@@ -345,9 +363,9 @@ class UserView(MethodView):
         self_link = LinkGenerator.get_link_of(
             found_user,
             for_relation=DELETE_REL,
-            extra_relations=(USER_REL_TYPE,)
-            if deleted_self
-            else (USER_REL_TYPE, LOGOUT_REL),
+            extra_relations=(
+                (USER_REL_TYPE,) if deleted_self else (USER_REL_TYPE, LOGOUT_REL)
+            ),
             ignore_deleted=True,
         )
         self_link.resource_type = DELETED_REL

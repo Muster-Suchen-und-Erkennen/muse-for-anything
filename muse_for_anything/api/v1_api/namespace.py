@@ -67,7 +67,7 @@ class NamespacesView(MethodView):
     @API_V1.arguments(NamespacePageParamsSchema, location="query", as_kwargs=True)
     @API_V1.response(200, DynamicApiResponseSchema(CursorPageSchema()))
     @API_V1.require_jwt("jwt", optional=True)
-    def get(self, search: Optional[str], **kwargs: Any):
+    def get(self, search: Optional[str], deleted: bool = False, **kwargs: Any):
         """Get the page of namespaces."""
         FLASK_OSO.authorize_and_set_resource(
             OsoResource(NAMESPACE_REL_TYPE, is_collection=True)
@@ -77,7 +77,15 @@ class NamespacesView(MethodView):
             **kwargs, _sort_default="name"
         )
 
-        namespace_filter = (Namespace.deleted_on == None,)
+        is_admin = FLASK_OSO.is_admin()
+
+        if deleted and not is_admin:
+            deleted = False
+
+        if not deleted:
+            namespace_filter = (Namespace.deleted_on == None,)
+        else:
+            namespace_filter = (Namespace.deleted_on != None,)
 
         if search:
             namespace_filter += (
@@ -91,7 +99,10 @@ class NamespacesView(MethodView):
             )
 
         pagination_info = default_get_page_info(
-            Namespace, namespace_filter, pagination_options, [Namespace.name]
+            Namespace,
+            namespace_filter,
+            pagination_options,
+            [Namespace.name, Namespace.created_on, Namespace.updated_on],
         )
 
         namespaces: List[Namespace] = pagination_info.page_items_query.all()
@@ -112,13 +123,29 @@ class NamespacesView(MethodView):
         filter_query_params = {}
         if search:
             filter_query_params["search"] = search
+        if deleted:
+            filter_query_params["deleted"] = True
 
         page_resource.filters = [
             CollectionFilter(key="?search", type="search"),
             CollectionFilter(
-                key="sort", type="?sort", options=[CollectionFilterOption("name")]
+                key="?sort",
+                type="sort",
+                options=[
+                    CollectionFilterOption("name"),
+                    CollectionFilterOption("created_on"),
+                    CollectionFilterOption("updated_on"),
+                ],
             ),
         ]
+        if is_admin:
+            page_resource.filters.append(
+                CollectionFilter(
+                    key="?deleted",
+                    type="boolean",
+                    options=[CollectionFilterOption("True")],
+                )
+            )
 
         self_link = LinkGenerator.get_link_of(
             page_resource,

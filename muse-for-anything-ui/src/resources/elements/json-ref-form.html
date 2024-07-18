@@ -1,0 +1,43 @@
+<template>
+    <require from="./validity-indicator"></require>
+    <require from="./schema-form-actions"></require>
+    <require from="./api-resource"></require>
+
+    <div class="flex flex-col form-field">
+        <div class="mb-2 mt-2 w-full flex items-center">
+            <p class="font-semibold form-title">${'schemaViews.schemaReference' | t}:</p>
+            <validity-indicator class="ml-1" valid.bind="valid"></validity-indicator>
+            <div class="flex-grow"></div>
+            <div class="justify-items-end flex items-center" if.bind="actions != null">
+                <schema-form-actions actions.bind="actions" key.bind="key" action-signal.call="actionSignal($event)">
+                </schema-form-actions>
+            </div>
+        </div>
+        <p class="mb-2">
+            <span class="font-semibold">${'schemaViews.referenceBase' | t}:</span>
+            <span if.bind="base == null">${context.topLevelTypeName} (${'schemaViews.currentType' | t})</span>
+            <span if.bind="base != null && baseApiLink == null">${base}</span>
+            <button class="button-outline" click.delegate="openRefBaseChooser()" if.bind="namespaceApiLink">
+                ${'schemaViews.chooseSchemaBase' | t}
+            </button>
+            <button class="button-outline" click.delegate="unsetRefBase()" if.bind="base != null">
+                ${'schemaViews.useCurrentTypeAsBase' | t}
+            </button>
+        </p>
+
+        <div class="card px-2 py-2 mt-2 mb-4" if.bind="baseApiLink != null">
+            <api-resource api-link.bind="baseApiLink" is-root.one-time="false">
+            </api-resource>
+        </div>
+        
+
+        <label class="font-semibold" for.bind="'ref'+slug">${'schemaViews.referenceTarget' | t}</label>
+        <select id.bind="'ref'+slug" class="bg-gray-100 border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1 dark:bg-gray-700 dark:border-gray-200"
+            value.bind="ref">
+            <option model.bind="null">Choose...</option>
+            <option repeat.for="choice of refChoices" model.bind="choice.key">
+                ${choice.title}
+            </option>
+        </select>
+    </div>
+</template>

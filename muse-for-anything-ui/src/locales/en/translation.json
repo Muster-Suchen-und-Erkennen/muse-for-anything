@@ -159,7 +159,24 @@
     },
     "filters": {
         "searchLabel": "Search in collection",
-        "searchButton": "Search"
+        "searchButton": "Search",
+        "filterButton": "Filter",
+        "sortBy": "Sort by",
+        "apply": "apply",
+        "emptyOption": "---",
+        "sort": {
+            "name": "Name",
+            "created_on": "Created",
+            "updated_on": "Updated",
+            "object_type_id": "Object Type",
+            "version": "Version",
+            "username": "Username",
+            "e_mail": "E-Mail"
+        },
+        "keys": {
+            "?deleted": "Show deleted",
+            "?type-id": "Filter by object type"
+        }
     },
     "pages": {
         "page": "page",
@@ -170,7 +187,18 @@
     },
     "schemaViews": {
         "true": "True",
-        "false": "False"
+        "false": "False",
+        "nullable": "allow empty values",
+        "mainType": "Main Type Definition",
+        "embeddedTypes": "Embedded Type Definitions",
+        "schemaReference": "Schema Reference",
+        "referenceBase": "Schema Reference Base",
+        "chooseSchemaBase": "choose reference base",
+        "useCurrentTypeAsBase": "use current type as base",
+        "referenceTarget": "Schema Reference Target Type",
+        "currentType": "current type",
+        "versions": "Versions",
+        "exampleForm": "Example Input Form"
     },
     "graph": {
         "minimize": "minimize graph",

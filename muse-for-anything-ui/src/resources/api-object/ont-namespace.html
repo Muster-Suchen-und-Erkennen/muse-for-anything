@@ -28,7 +28,7 @@
         <api-schema-view data.bind="apiObject" schema-url.bind="apiObject.self.schema"></api-schema-view>
     </div>
 
-    <template if.bind="isRoot">
+    <template if.bind="isRoot && isMain">
         <div class="mt-8 h-36 flex justify-center items-center card" if.bind="!showGraph">
             <button class="button-outline" click.delegate="showGraph = true">${"ontology.showGraph" | t}</button>
         </div>

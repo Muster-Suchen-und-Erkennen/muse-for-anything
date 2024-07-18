@@ -5,6 +5,7 @@ import { NormalizedApiSchema } from "rest/schema-objects";
 export class TypeDefinitionView {
     @bindable data: any;
     @bindable schema: NormalizedApiSchema;
+    @bindable context: any;
 
     metaSchema: NormalizedApiSchema;
 

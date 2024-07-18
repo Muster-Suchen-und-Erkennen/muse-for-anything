@@ -1,20 +1,67 @@
 <template>
     <require from="./svg-icon.html"></require>
-    <template if.bind="searchFilterKey != null">
-        <form class="w-1/3" style="min-width: 15rem;" submit.delegate="onSearch()">
-            <div role="search">
-                <label class="font-semibold form-title" for="search-${slug}">
-                    ${'filters.searchLabel' | t}
-                </label>
-                <div class="inline-flex gap-0 focus-within:ring-4">
-                    <input id="search-${slug}" type="search" value.bind="searchFilterValue"
-                    class="input-valid-check border border-r-0 rounded-r-sm border-gray-800 w-full px-2 py-1 dark:bg-gray-700 dark:border-gray-200">
-                    <button value="Search" class="button-form-r inline-flex items-center">
-                        <svg-icon class="mr-1" icon.bind="'search'"></svg-icon>
-                        ${'filters.searchButton' | t}
-                    </button>
-                </div>
+    <require from="./sort-filter"></require>
+
+    <div class="flex flex-row">
+        <div class="flex flex-row items-end flex-wrap">
+            <template if.bind="searchFilterKey != null">
+                <form class="w-1/3" style="min-width: 15rem;" submit.delegate="onSearch()">
+                <div role="search">
+                    <label class="font-semibold form-title" for="search-${slug}">
+                        ${'filters.searchLabel' | t}
+                    </label>
+                    <div class="inline-flex gap-0 focus-within:ring-4">
+                        <input id="search-${slug}" type="search" value.bind="searchFilterValue"
+                            class="input-valid-check border border-r-0 rounded-r-sm border-gray-800 w-full px-2 py-1 dark:bg-gray-700 dark:border-gray-200">
+                            <button value="Search" class="button-form-r inline-flex items-center">
+                                <svg-icon class="mr-1" icon.bind="'search'"></svg-icon>
+                                ${'filters.searchButton' | t}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </template>
+            <div class="flex flex-row items-baseline flex-wrap ml-2 mr-2" if.bind="sortFilter != null">
+                <p class="flex-shrink-0">${'filters.sortBy' | t}:</p>
+                <sort-filter class="contents" filter.bind="sortFilter" current-value.bind="sortFilterValue" sort-string.bind="newSortFilterValue"></sort-filter>
+                <button class="button-flat h-8" click.delegate="onSort()" if.bind="newSortFilterValue != sortFilterValue">${'filters.apply' | t}</button>
             </div>
-        </form>
-    </template>
+        </div>
+        <button class="button-flat-toggle inline-flex items-center self-center" aria-controls.bind="'filter-panel-'+slug" 
+            aria-expanded.bind="showFilters|json" if.bind="extraFilters.length > 0" click.delegate="showFilters = !showFilters">
+            <svg-icon class="mr-1 ${extraFiltersUsed ? 'text-primary' : ''}" icon.bind="extraFiltersUsed ? 'filter-filled' : 'filter'"></svg-icon>
+            ${'filters.filterButton' | t}
+        </button>
+    </div>
+    <form class="card px-2 py-2 mt-4" id.bind="'filter-panel-'+slug" if.bind="extraFilters.length > 0" show.bind="showFilters" submit.delegate="onFiltersApply()">
+        <div class="flex ${filter.type !== 'boolean' ? 'flex-col' : 'items-center'} form-field mb-2" repeat.for="filter of extraFilters">
+            <label class="font-semibold form-title" for.bind="'filter-'+filter.key+slug">${filter.name ? filter.name : 'filters.keys.'+filter.key | t}</label>
+            <template if.bind="filter.type === 'boolean'">
+                <input class="rounded-sm focus:ring-4 m-1.5 px-2 py-1 dark:bg-gray-700 dark:border-gray-200" id.bind="'filter-'+filter.key+slug" 
+                    type="checkbox" required.bind="filter.required" checked.bind="extraFilterValues[filter.key]">
+            </template>
+            <template if.bind="filter.type === 'integer'">
+                <input class="rounded-sm focus:ring-4 m-1.5 px-2 py-1 dark:bg-gray-700 dark:border-gray-200" id.bind="'filter-'+filter.key+slug" 
+                    type="number" required.bind="filter.required" value.bind="extraFilterValues[filter.key]" step="1">
+            </template>
+            <template if.bind="filter.type === 'number'">
+                <input class="rounded-sm focus:ring-4 m-1.5 px-2 py-1 dark:bg-gray-700 dark:border-gray-200" id.bind="'filter-'+filter.key+slug" 
+                    type="number" required.bind="filter.required" value.bind="extraFilterValues[filter.key]">
+            </template>
+            <template if.bind="filter.type === 'string' && !(filter.options.length > 0)">
+                <input class="rounded-sm focus:ring-4 m-1.5 px-2 py-1 dark:bg-gray-700 dark:border-gray-200" id.bind="'filter-'+filter.key+slug" 
+                    type="text" required.bind="filter.required" value.bind="extraFilterValues[filter.key]">
+            </template>
+            <template if.bind="filter.type === 'string' && filter.options.length > 0">
+                <select class="bg-gray-100 border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1 dark:bg-gray-700 dark:border-gray-200"
+                    id.bind="'filter-'+filter.key+slug" required.bind="filter.required" value.bind="extraFilterValues[filter.key]">
+                    <option model.bind="null">${"filters.emptyOption" | t}</option>
+                    <option repeat.for="choice of filter.options" model.bind="choice.value">
+                        ${choice.name ? choice.name : choice.value}
+                    </option>
+                </select>
+            </template>
+        </div>
+        <button class="button-flat">${'filters.apply' | t}</button>
+    </form>
 </template>

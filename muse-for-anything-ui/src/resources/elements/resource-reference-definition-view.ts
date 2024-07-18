@@ -8,6 +8,7 @@ import { NormalizedApiSchema, PropertyDescription } from "rest/schema-objects";
 export class ResourceReferenceDefinitionView {
     @bindable data: any;
     @bindable schema: NormalizedApiSchema;
+    @bindable context: any;
 
     referenceTypeProp: PropertyDescription;
     referenceType: string;

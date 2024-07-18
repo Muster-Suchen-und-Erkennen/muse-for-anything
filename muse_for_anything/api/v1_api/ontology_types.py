@@ -42,18 +42,19 @@ from muse_for_anything.api.v1_api.request_helpers import (
 from muse_for_anything.db.models.users import User
 from muse_for_anything.oso_helpers import FLASK_OSO, OsoResource
 
-from .models.ontology import ObjectTypeSchema, ObjectTypePageParamsSchema
+from .generators import type_version  # noqa
+from .models.ontology import ObjectTypePageParamsSchema, ObjectTypeSchema
 from .root import API_V1
 from ..base_models import (
     ApiResponse,
     ChangedApiObject,
     ChangedApiObjectSchema,
+    CollectionFilter,
+    CollectionFilterOption,
     CursorPageSchema,
     DynamicApiResponseSchema,
     NewApiObject,
     NewApiObjectSchema,
-    CollectionFilter,
-    CollectionFilterOption,
 )
 from ...db.db import DB
 from ...db.models.namespace import Namespace
@@ -65,7 +66,7 @@ from ...db.models.object_relation_tables import (
 from ...db.models.ontology_objects import OntologyObjectType, OntologyObjectTypeVersion
 
 # import type specific generators to load them
-from .generators import type as type_, type_version  # noqa
+from .generators import type as type_  # noqa
 
 
 @API_V1.route("/namespaces/<string:namespace>/types/")
@@ -92,7 +93,13 @@ class TypesView(MethodView):
     @API_V1.arguments(ObjectTypePageParamsSchema, location="query", as_kwargs=True)
     @API_V1.response(200, DynamicApiResponseSchema(CursorPageSchema()))
     @API_V1.require_jwt("jwt")
-    def get(self, namespace: str, search: Optional[str] = None, **kwargs: Any):
+    def get(
+        self,
+        namespace: str,
+        search: Optional[str] = None,
+        deleted: bool = False,
+        **kwargs: Any,
+    ):
         """Get the page of types."""
         self._check_path_params(namespace=namespace)
         found_namespace = self._get_namespace(namespace=namespace)
@@ -106,8 +113,17 @@ class TypesView(MethodView):
             **kwargs, _sort_default="name"
         )
 
+        is_admin = FLASK_OSO.is_admin()
+
+        if deleted and not is_admin:
+            deleted = False
+
         ontology_type_filter = (
-            OntologyObjectType.deleted_on == None,
+            (
+                OntologyObjectType.deleted_on == None
+                if not deleted
+                else OntologyObjectType.deleted_on != None
+            ),
             OntologyObjectType.namespace_id == int(namespace),
         )
 
@@ -125,7 +141,11 @@ class TypesView(MethodView):
             OntologyObjectType,
             ontology_type_filter,
             pagination_options,
-            [OntologyObjectType.name],
+            [
+                OntologyObjectType.name,
+                OntologyObjectType.created_on,
+                OntologyObjectType.updated_on,
+            ],
         )
 
         object_types: List[OntologyObjectType] = pagination_info.page_items_query.all()
@@ -147,6 +167,8 @@ class TypesView(MethodView):
         filter_query_params = {}
         if search:
             filter_query_params["search"] = search
+        if deleted:
+            filter_query_params["deleted"] = deleted
 
         self_link = LinkGenerator.get_link_of(
             page_resource,
@@ -155,16 +177,27 @@ class TypesView(MethodView):
             ),
         )
 
-        filter_query_params = {}
-        if search:
-            filter_query_params["search"] = search
-
         page_resource.filters = [
             CollectionFilter(key="?search", type="search"),
             CollectionFilter(
-                key="sort", type="?sort", options=[CollectionFilterOption("name")]
+                key="?sort",
+                type="sort",
+                options=[
+                    CollectionFilterOption("name"),
+                    CollectionFilterOption("created_on"),
+                    CollectionFilterOption("updated_on"),
+                ],
             ),
         ]
+
+        if is_admin:
+            page_resource.filters.append(
+                CollectionFilter(
+                    key="?deleted",
+                    type="boolean",
+                    options=[CollectionFilterOption(value="True")],
+                )
+            )
 
         extra_links = generate_page_links(
             page_resource,

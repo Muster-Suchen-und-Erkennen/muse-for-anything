@@ -31,6 +31,20 @@ from muse_for_anything.db.models.taxonomies import (
 )
 from muse_for_anything.oso_helpers import FLASK_OSO, OsoResource
 
+from ...db.db import DB
+from ..base_models import (
+    ApiLink,
+    ApiResponse,
+    ChangedApiObject,
+    ChangedApiObjectSchema,
+    CollectionFilter,
+    CollectionFilterOption,
+    CursorPageArgumentsSchema,
+    CursorPageSchema,
+    DynamicApiResponseSchema,
+    NewApiObject,
+    NewApiObjectSchema,
+)
 from .constants import (
     CHANGED_REL,
     CHILD_REL,
@@ -57,28 +71,19 @@ from .constants import (
 )
 
 # import taxonomy items specific generators to load them
-from .generators import taxonomy_item  # noqa
-from .generators import taxonomy_item_relation  # noqa
-from .generators import taxonomy_item_version  # noqa
+from .generators import (
+    taxonomy_item,  # noqa
+    taxonomy_item_relation,  # noqa
+    taxonomy_item_version,  # noqa
+)
 from .models.ontology import (
     TaxonomyItemRelationPostSchema,
     TaxonomyItemRelationSchema,
     TaxonomyItemSchema,
+    TaxonomyItemVersionsPageParamsSchema,
     TaxonomySchema,
 )
 from .root import API_V1
-from ..base_models import (
-    ApiLink,
-    ApiResponse,
-    ChangedApiObject,
-    ChangedApiObjectSchema,
-    CursorPageArgumentsSchema,
-    CursorPageSchema,
-    DynamicApiResponseSchema,
-    NewApiObject,
-    NewApiObjectSchema,
-)
-from ...db.db import DB
 
 
 @API_V1.route(
@@ -980,10 +985,19 @@ class TaxonomyItemVersionsView(MethodView):
             abort(HTTPStatus.NOT_FOUND, message=gettext("Taxonomy item not found."))
         return found_taxonomy_item  # is not None because abort raises exception
 
-    @API_V1.arguments(CursorPageArgumentsSchema, location="query", as_kwargs=True)
+    @API_V1.arguments(
+        TaxonomyItemVersionsPageParamsSchema, location="query", as_kwargs=True
+    )
     @API_V1.response(200, DynamicApiResponseSchema(CursorPageSchema()))
     @API_V1.require_jwt("jwt")
-    def get(self, namespace: str, taxonomy: str, taxonomy_item: str, **kwargs: Any):
+    def get(
+        self,
+        namespace: str,
+        taxonomy: str,
+        taxonomy_item: str,
+        deleted: bool = False,
+        **kwargs: Any,
+    ):
         """Get all versions of a taxonomy item."""
         self._check_path_params(
             namespace=namespace, taxonomy=taxonomy, taxonomy_item=taxonomy_item
@@ -1000,11 +1014,20 @@ class TaxonomyItemVersionsView(MethodView):
         )
 
         pagination_options: PaginationOptions = prepare_pagination_query_args(
-            **kwargs, _sort_default="-created_on"
+            **kwargs, _sort_default="-version"
         )
 
+        is_admin = FLASK_OSO.is_admin()
+
+        if deleted and not is_admin:
+            deleted = False
+
         taxonomy_item_version_filter = (
-            TaxonomyItemVersion.deleted_on == None,
+            (
+                TaxonomyItemVersion.deleted_on == None
+                if not deleted
+                else TaxonomyItemVersion.deleted_on != None
+            ),
             TaxonomyItemVersion.taxonomy_item == found_taxonomy_item,
         )
 
@@ -1012,7 +1035,7 @@ class TaxonomyItemVersionsView(MethodView):
             TaxonomyItemVersion,
             taxonomy_item_version_filter,
             pagination_options,
-            [TaxonomyItemVersion.created_on],
+            [TaxonomyItemVersion.version],
         )
 
         taxonomy_item_versions: List[TaxonomyItemVersion] = (
@@ -1034,21 +1057,53 @@ class TaxonomyItemVersionsView(MethodView):
             collection_size=pagination_info.collection_size,
             item_links=items,
         )
+
+        filter_query_params = {}
+        if deleted:
+            filter_query_params["deleted"] = deleted
+
+        page_resource.filters = [
+            CollectionFilter(
+                key="?sort",
+                type="sort",
+                options=[CollectionFilterOption("version")],
+            ),
+        ]
+
+        if is_admin:
+            page_resource.filters.append(
+                CollectionFilter(
+                    key="?deleted",
+                    type="boolean",
+                    options=[CollectionFilterOption(value="True")],
+                )
+            )
+
         self_link = LinkGenerator.get_link_of(
-            page_resource, query_params=pagination_options.to_query_params()
+            page_resource,
+            query_params=pagination_options.to_query_params(
+                extra_params=filter_query_params
+            ),
         )
 
         extra_links = generate_page_links(
-            page_resource, pagination_info, pagination_options
+            page_resource,
+            pagination_info,
+            pagination_options,
+            extra_params=filter_query_params,
         )
 
         return ApiResponseGenerator.get_api_response(
             page_resource,
-            query_params=pagination_options.to_query_params(),
+            query_params=pagination_options.to_query_params(
+                extra_params=filter_query_params
+            ),
             extra_links=[
                 LinkGenerator.get_link_of(
                     page_resource.get_page(1),
-                    query_params=pagination_options.to_query_params(cursor=None),
+                    query_params=pagination_options.to_query_params(
+                        cursor=None, extra_params=filter_query_params
+                    ),
                 ),
                 self_link,
                 *extra_links,

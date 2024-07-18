@@ -44,7 +44,11 @@ class SearchPageSchemaMixin:
     search = ma.fields.String(required=False, allow_none=True, missing=None)
 
 
-class NamespacePageParamsSchema(SearchPageSchemaMixin, CursorPageArgumentsSchema):
+class DeletedPageSchemaMixin:
+    deleted = ma.fields.Boolean(required=False, allow_none=True, missing=False)
+
+
+class NamespacePageParamsSchema(SearchPageSchemaMixin, DeletedPageSchemaMixin, CursorPageArgumentsSchema):
     pass
 
 
@@ -124,7 +128,11 @@ class FileExportData(BaseApiObject):
     content_type: str = "application/xml"
 
 
-class ObjectTypePageParamsSchema(CursorPageArgumentsSchema, SearchPageSchemaMixin):
+class ObjectTypePageParamsSchema(CursorPageArgumentsSchema, SearchPageSchemaMixin, DeletedPageSchemaMixin):
+    pass
+
+
+class ObjectTypeVersionsPageParamsSchema(CursorPageArgumentsSchema, DeletedPageSchemaMixin):
     pass
 
 
@@ -163,11 +171,15 @@ class ObjectData(BaseApiObject, ChangesDataMixin, NameDescriptionMixin):
     data: Any
 
 
-class ObjectsCursorPageArgumentsSchema(CursorPageArgumentsSchema, SearchPageSchemaMixin):
+class ObjectsCursorPageArgumentsSchema(CursorPageArgumentsSchema, DeletedPageSchemaMixin, SearchPageSchemaMixin):
     type_id = ma.fields.String(data_key="type-id", allow_none=True, load_only=True)
 
 
-class TaxonomyPageParamsSchema(CursorPageArgumentsSchema, SearchPageSchemaMixin):
+class ObjectVersionsCursorPageArgumentsSchema(CursorPageArgumentsSchema, DeletedPageSchemaMixin):
+    pass
+
+
+class TaxonomyPageParamsSchema(CursorPageArgumentsSchema, SearchPageSchemaMixin, DeletedPageSchemaMixin):
     pass
 
 
@@ -188,7 +200,11 @@ class TaxonomyData(BaseApiObject, ChangesDataMixin, NameDescriptionMixin):
     items: Sequence[ApiLink] = tuple()
 
 
-class TaxonomyItemPageParamsSchema(CursorPageArgumentsSchema, SearchPageSchemaMixin):
+class TaxonomyItemPageParamsSchema(CursorPageArgumentsSchema, SearchPageSchemaMixin, DeletedPageSchemaMixin):
+    pass
+
+
+class TaxonomyItemVersionsPageParamsSchema(CursorPageArgumentsSchema, DeletedPageSchemaMixin):
     pass
 
 

@@ -8,6 +8,7 @@ import { NormalizedApiSchema } from "rest/schema-objects";
 export class ResourceReferenceView {
     @bindable data: any;
     @bindable schema: NormalizedApiSchema;
+    @bindable context: any;
 
     resourceLink: ApiLink;
 

@@ -116,9 +116,6 @@ export class TypeDefinitionForm {
         const rawChoices = [...(newValue.normalized.oneOf ?? [])];
         const choices = rawChoices.map(schema => {
             const normalized = schema.normalized;
-            if (normalized == null) {
-                console.log(schema)
-            }
             return {
                 title: normalized.title ?? normalized.originRef,
                 description: normalized.description ?? "",

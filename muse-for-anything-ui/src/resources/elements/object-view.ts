@@ -4,6 +4,7 @@ import { NormalizedApiSchema, PropertyDescription } from "rest/schema-objects";
 export class ObjectView {
     @bindable data: any;
     @bindable schema: NormalizedApiSchema;
+    @bindable context: any;
 
     properties: PropertyDescription[] = [];
 
@@ -31,11 +32,21 @@ export class ObjectView {
         this.properties = this.schema.getPropertyList(Object.keys(this.data));
     }
 
+    showPropertyTitle(schema: NormalizedApiSchema): boolean {
+        if (schema?.normalized?.customType === "typeRoot") {
+            return false; // hide the property title of the type root type properties
+        }
+        return true;
+    }
+
     isObjectProperty(schema: NormalizedApiSchema): boolean {
         if (schema?.normalized?.mainType === "object") {
             if (schema.normalized?.customType != null) {
                 // TODO maybe exclude some custom types
                 if (schema.normalized.customType === "resourceReference") {
+                    return false; // treat resource reference as a simple type
+                }
+                if (schema.normalized.customType === "typeRoot") {
                     return false; // treat resource reference as a simple type
                 }
             }
@@ -45,7 +56,16 @@ export class ObjectView {
     }
 
     isArrayProperty(schema: NormalizedApiSchema): boolean {
-        return schema?.normalized?.mainType === "array";
+        if (schema?.normalized?.mainType === "array") {
+            if (schema.normalized?.customType != null) {
+                // TODO maybe exclude some custom types
+                if (schema.normalized.customType === "jsonType") {
+                    return false; // treat json type arrays as a simple type
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     propertyStyle(schema: NormalizedApiSchema): string {
