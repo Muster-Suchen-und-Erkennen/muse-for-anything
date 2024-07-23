@@ -1,6 +1,6 @@
 """Module containing the taxonomy API endpoints of the v1 API."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from http import HTTPStatus
 from typing import Any, List, Optional
 
@@ -498,7 +498,7 @@ class TaxonomyView(MethodView):
         # only actually delete when not already deleted
         if found_taxonomy.deleted_on is None:
             # soft delete namespace
-            found_taxonomy.deleted_on = datetime.utcnow()
+            found_taxonomy.deleted_on = datetime.now(timezone.utc)
             DB.session.add(found_taxonomy)
             DB.session.commit()
 

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Sequence
 from sqlalchemy import DateTime
 from sqlalchemy.sql.elements import literal
@@ -33,21 +33,29 @@ class IdMixin:
 class NameDescriptionMixin:
     """Add a 'name' and 'description' column to the table."""
 
-    name: Mapped[str] = mapped_column(DB.Unicode, nullable=False, index=True, info={"collate": "NOCASE"})
+    name: Mapped[str] = mapped_column(
+        DB.Unicode, nullable=False, index=True, info={"collate": "NOCASE"}
+    )
     description: Mapped[str] = mapped_column(DB.UnicodeText, nullable=True, index=True)
 
 
 class UniqueNameDescriptionMixin:
     """Add a 'name' (with a unique constraint) and 'description' column to the table."""
 
-    name: Mapped[str] = mapped_column(DB.Unicode, nullable=False, unique=True, index=True, info={"collate": "NOCASE"})
+    name: Mapped[str] = mapped_column(
+        DB.Unicode, nullable=False, unique=True, index=True, info={"collate": "NOCASE"}
+    )
     description: Mapped[str] = mapped_column(DB.UnicodeText, nullable=True, index=True)
 
 
 class CreateDeleteMixin:
     """Add the columns 'created_on' and 'deleted_on' to track creation and deletion of immutable database entries."""
 
-    created_on: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    created_on: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
     deleted_on: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
 
     @property
@@ -58,7 +66,12 @@ class CreateDeleteMixin:
 class ChangesMixin(CreateDeleteMixin):
     """Add the columns 'created_on', 'updated_on' and 'deleted_on' to track changes to the database entries."""
 
-    updated_on: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_on: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default_factory=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
 
 
 __all__ = list(get_all_classes_of_module(__name__))

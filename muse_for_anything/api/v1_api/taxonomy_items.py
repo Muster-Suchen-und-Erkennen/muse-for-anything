@@ -1,6 +1,6 @@
 """Module containing the taxonomy items API endpoints of the v1 API."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from http import HTTPStatus
 from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
 
@@ -423,7 +423,7 @@ class TaxonomyItemView(MethodView):
         # only actually delete when not already deleted
         if found_taxonomy_item.deleted_on is None:
             # delete taxonomy item
-            deleted_timestamp = datetime.utcnow()
+            deleted_timestamp = datetime.now(timezone.utc)
             found_taxonomy_item.deleted_on = deleted_timestamp
             # also delete incoming and outgoing relations to remove them
             # from relations of existing items
@@ -913,7 +913,7 @@ class TaxonomyItemRelationView(MethodView):
         # only actually delete when not already deleted
         if found_relation.deleted_on is None:
             # delete taxonomy item relation
-            found_relation.deleted_on = datetime.utcnow()
+            found_relation.deleted_on = datetime.now(timezone.utc)
             DB.session.add(found_relation)
             DB.session.commit()
 
