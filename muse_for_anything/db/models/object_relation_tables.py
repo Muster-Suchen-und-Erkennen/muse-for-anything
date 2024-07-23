@@ -30,10 +30,14 @@ class OntologyTypeVersionToTypeVersion(MODEL, IdMixin):
     __tablename__ = "TypeVersionToTypeVersion"
 
     # the type version importing
-    type_version_source_id: Mapped[int] = mapped_column(ForeignKey("OntologyObjectTypeVersion.id"), nullable=False)
-    
+    type_version_source_id: Mapped[int] = mapped_column(
+        ForeignKey("OntologyObjectTypeVersion.id"), nullable=False
+    )
+
     # the imported type version
-    type_version_target_id: Mapped[int] = mapped_column(ForeignKey("OntologyObjectTypeVersion.id"), nullable=False)
+    type_version_target_id: Mapped[int] = mapped_column(
+        ForeignKey("OntologyObjectTypeVersion.id"), nullable=False
+    )
 
     # relationships
     type_version_source: Mapped[OntologyObjectTypeVersion] = relationship(
@@ -62,8 +66,12 @@ class OntologyTypeVersionToType(MODEL, IdMixin):
 
     __tablename__ = "TypeVersionToType"
 
-    type_version_source_id: Mapped[int] = mapped_column(ForeignKey("OntologyObjectTypeVersion.id"), nullable=False)
-    type_target_id: Mapped[int] = mapped_column(ForeignKey("OntologyObjectType.id"), nullable=False)
+    type_version_source_id: Mapped[int] = mapped_column(
+        ForeignKey("OntologyObjectTypeVersion.id"), nullable=False
+    )
+    type_target_id: Mapped[int] = mapped_column(
+        ForeignKey("OntologyObjectType.id"), nullable=False
+    )
 
     # relationships
     type_version_source: Mapped[OntologyObjectTypeVersion] = relationship(
@@ -92,8 +100,12 @@ class OntologyTypeVersionToTaxonomy(MODEL, IdMixin):
 
     __tablename__ = "TypeVersionToTaxonomy"
 
-    type_version_source_id: Mapped[int] = mapped_column(ForeignKey("OntologyObjectTypeVersion.id"), nullable=False)
-    taxonomy_target_id: Mapped[int] = mapped_column(ForeignKey("Taxonomy.id"), nullable=False)
+    type_version_source_id: Mapped[int] = mapped_column(
+        ForeignKey("OntologyObjectTypeVersion.id"), nullable=False
+    )
+    taxonomy_target_id: Mapped[int] = mapped_column(
+        ForeignKey("Taxonomy.id"), nullable=False
+    )
 
     # relationships
     type_version_source: Mapped[OntologyObjectTypeVersion] = relationship(
@@ -122,8 +134,12 @@ class OntologyObjectVersionToObject(MODEL, IdMixin):
 
     __tablename__ = "ObjectVersionToObject"
 
-    object_version_source_id: Mapped[int] = mapped_column(ForeignKey("OntologyObjectTypeVersion.id"), nullable=False)
-    object_target_id: Mapped[int] = mapped_column(ForeignKey("OntologyObject.id"), nullable=False)
+    object_version_source_id: Mapped[int] = mapped_column(
+        ForeignKey("OntologyObjectTypeVersion.id"), nullable=False
+    )
+    object_target_id: Mapped[int] = mapped_column(
+        ForeignKey("OntologyObject.id"), nullable=False
+    )
 
     # relationships
     object_version_source: Mapped[OntologyObjectVersion] = relationship(
@@ -152,8 +168,12 @@ class OntologyObjectVersionToTaxonomyItem(MODEL, IdMixin):
 
     __tablename__ = "ObjectVersionToTaxonomyItem"
 
-    object_version_source_id: Mapped[int] = mapped_column(ForeignKey("OntologyObjectVersion.id"), nullable=False)
-    taxonomy_item_target_id: Mapped[int] = mapped_column(ForeignKey("TaxonomyItem.id"), nullable=False)
+    object_version_source_id: Mapped[int] = mapped_column(
+        ForeignKey("OntologyObjectVersion.id"), nullable=False
+    )
+    taxonomy_item_target_id: Mapped[int] = mapped_column(
+        ForeignKey("TaxonomyItem.id"), nullable=False
+    )
 
     # relationships
     object_version_source: Mapped[OntologyObjectVersion] = relationship(

@@ -282,7 +282,9 @@ class TaxonomyItemVersionApiObjectGenerator(
         ]
 
         return TaxonomyItemData(
-            self=LinkGenerator.get_link_of(resource, query_params=query_params, ignore_deleted=True),
+            self=LinkGenerator.get_link_of(
+                resource, query_params=query_params, ignore_deleted=True
+            ),
             name=resource.name,
             description=resource.description,
             sort_key=resource.sort_key,

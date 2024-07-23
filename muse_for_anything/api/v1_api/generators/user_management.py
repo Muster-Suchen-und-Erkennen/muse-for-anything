@@ -253,7 +253,9 @@ class UserCreateUserRoleLinkGenerator(
             return
         link = LinkGenerator.get_link_of(CollectionResource(UserRole, resource=resource))
         link.rel = (CREATE_REL, POST_REL, REQUIRES_FRESH_LOGIN_REL)
-        link.schema = url_for(SCHEMA_RESOURCE, schema_id=USER_ROLE_POST_SCHEMA, _external=True)
+        link.schema = url_for(
+            SCHEMA_RESOURCE, schema_id=USER_ROLE_POST_SCHEMA, _external=True
+        )
         return link
 
 
@@ -271,7 +273,9 @@ class UserApiObjectGenerator(ApiObjectGenerator, resource_type=User):
             return
 
         return UserData(
-            self=LinkGenerator.get_link_of(resource, query_params=query_params, ignore_deleted=True),
+            self=LinkGenerator.get_link_of(
+                resource, query_params=query_params, ignore_deleted=True
+            ),
             username=resource.username,
             e_mail=resource.e_mail,
         )

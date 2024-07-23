@@ -62,12 +62,12 @@ def resolve_type_version_schema_url(url_string: str):
     version: str = params.get("version")
     if endpoint == "api-v1.TypeVersionView":
 
-        found_type_version: Optional[
-            OntologyObjectTypeVersion
-        ] = OntologyObjectTypeVersion.query.filter(
-            OntologyObjectTypeVersion.version == int(version),
-            OntologyObjectTypeVersion.object_type_id == int(object_type),
-        ).first()
+        found_type_version: Optional[OntologyObjectTypeVersion] = (
+            OntologyObjectTypeVersion.query.filter(
+                OntologyObjectTypeVersion.version == int(version),
+                OntologyObjectTypeVersion.object_type_id == int(object_type),
+            ).first()
+        )
 
         if found_type_version is None:
             raise DataVisitorException(f"Invalid schema ref! Schema '{url}' not found!")

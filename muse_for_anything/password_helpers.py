@@ -447,8 +447,8 @@ class FlaskPassword:
             end = time_ns()
             results.append(end - start)
 
-        min_time = min(results) / (10 ** 9)
-        max_time = max(results) / (10 ** 9)
+        min_time = min(results) / (10**9)
+        max_time = max(results) / (10**9)
 
         if min_time < 0.1:
             if self._app:
@@ -536,12 +536,12 @@ class FlaskPassword:
                     timings.append(end - start)
                 results_bcrypt[rounds] = timings
                 if echo_results:
-                    min_time = min(timings) / (10 ** 9)
-                    max_time = max(timings) / (10 ** 9)
+                    min_time = min(timings) / (10**9)
+                    max_time = max(timings) / (10**9)
                     click.echo(
                         f"Log Rounds {rounds: 4}: Min {min_time:<8.3} s  Max {max_time:<8.3} s"
                     )
-                if max(timings) > 1 * (10 ** 9):
+                if max(timings) > 1 * (10**9):
                     break
 
         if echo_results:
@@ -567,12 +567,12 @@ class FlaskPassword:
                 timings.append(end - start)
             results_pbkdf2[rounds] = timings
             if echo_results:
-                min_time = min(timings) / (10 ** 9)
-                max_time = max(timings) / (10 ** 9)
+                min_time = min(timings) / (10**9)
+                max_time = max(timings) / (10**9)
                 click.echo(
                     f"Rounds {rounds:13_}: Min {min_time:<6.3} s  Max {max_time:<6.3} s"
                 )
-            if max(timings) > 1 * (10 ** 9):
+            if max(timings) > 1 * (10**9):
                 break
 
         results = {
@@ -613,8 +613,8 @@ def generate_calibration_data():
     data = FLASK_PASSWORD.calibrate(True)
     click.echo("\nDetermining good settings from calibration results:\n")
 
-    min_threshold_ns = 0.2 * (10 ** 9)
-    max_threshold_ns = 1.2 * (10 ** 9)
+    min_threshold_ns = 0.2 * (10**9)
+    max_threshold_ns = 1.2 * (10**9)
 
     for key, name in (("bcrypt", "Bcrypt"), ("pbkdf2", "PBKDF2")):
         calibration_data = data.get(key)

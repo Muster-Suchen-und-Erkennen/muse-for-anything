@@ -158,9 +158,7 @@ class ObjectVersionKeyGenerator(KeyGenerator, resource_type=OntologyObjectVersio
         return key
 
 
-class ObjectVersionSelfLinkGenerator(
-    LinkGenerator, resource_type=OntologyObjectVersion
-):
+class ObjectVersionSelfLinkGenerator(LinkGenerator, resource_type=OntologyObjectVersion):
     def generate_link(
         self,
         resource: OntologyObjectVersion,
@@ -199,7 +197,9 @@ class ObjectVersionApiObjectGenerator(
             return
 
         return ObjectData(
-            self=LinkGenerator.get_link_of(resource, query_params=query_params, ignore_deleted=True),
+            self=LinkGenerator.get_link_of(
+                resource, query_params=query_params, ignore_deleted=True
+            ),
             name=resource.name,
             description=resource.description,
             created_on=resource.created_on,

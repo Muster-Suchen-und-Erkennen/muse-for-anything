@@ -24,9 +24,11 @@ class OntologyObjectType(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
     __tablename__ = "Type"
 
     namespace_id: Mapped[int] = mapped_column(ForeignKey("Namespace.id"), nullable=False)
-    current_version_id: Mapped[int] = mapped_column(ForeignKey("TypeVesion.id"), nullable=True)
+    current_version_id: Mapped[int] = mapped_column(
+        ForeignKey("TypeVesion.id"), nullable=True
+    )
     is_toplevel_type: Mapped[int] = mapped_column(nullable=False)
-    
+
     # relationships
     namespace: Mapped[Namespace] = relationship(innerjoin=True, lazy="selectin")
     current_version: Mapped["OntologyObjectTypeVersion"] = relationship(
@@ -111,7 +113,9 @@ class OntologyObjectTypeVersion(MODEL, IdMixin, CreateDeleteMixin):
     __tablename__ = "TypeVersion"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    object_type_id: Mapped[int] = mapped_column(ForeignKey("OntologyObjectType.id"), nullable=False)
+    object_type_id: Mapped[int] = mapped_column(
+        ForeignKey("OntologyObjectType.id"), nullable=False
+    )
     version: Mapped[int] = mapped_column(nullable=False)
     data: Mapped[Text] = mapped_column(DB.JSON, nullable=False)
 
@@ -143,11 +147,13 @@ class OntologyObjectTypeVersion(MODEL, IdMixin, CreateDeleteMixin):
         back_populates="type_version_source",
         primaryjoin="OntologyObjectTypeVersion.id == OntologyTypeVersionToTypeVersion.type_version_source_id",
     )
-    imported_by_types: Mapped[List["rel.OntologyTypeVersionToTypeVersion"]] = relationship(
-        lazy="select",
-        order_by="OntologyTypeVersionToTypeVersion.id",
-        back_populates="type_version_target",
-        primaryjoin="OntologyObjectTypeVersion.id == OntologyTypeVersionToTypeVersion.type_version_target_id",
+    imported_by_types: Mapped[List["rel.OntologyTypeVersionToTypeVersion"]] = (
+        relationship(
+            lazy="select",
+            order_by="OntologyTypeVersionToTypeVersion.id",
+            back_populates="type_version_target",
+            primaryjoin="OntologyObjectTypeVersion.id == OntologyTypeVersionToTypeVersion.type_version_target_id",
+        )
     )
 
     referenced_types: Mapped[List["rel.OntologyTypeVersionToType"]] = relationship(
@@ -157,11 +163,13 @@ class OntologyObjectTypeVersion(MODEL, IdMixin, CreateDeleteMixin):
         primaryjoin="OntologyObjectTypeVersion.id == OntologyTypeVersionToType.type_version_source_id",
     )
 
-    referenced_taxonomies: Mapped[List["rel.OntologyTypeVersionToTaxonomy"]] = relationship(
-        lazy="select",
-        order_by="OntologyTypeVersionToTaxonomy.id",
-        back_populates="type_version_source",
-        primaryjoin="OntologyObjectTypeVersion.id == OntologyTypeVersionToTaxonomy.type_version_source_id",
+    referenced_taxonomies: Mapped[List["rel.OntologyTypeVersionToTaxonomy"]] = (
+        relationship(
+            lazy="select",
+            order_by="OntologyTypeVersionToTaxonomy.id",
+            back_populates="type_version_source",
+            primaryjoin="OntologyObjectTypeVersion.id == OntologyTypeVersionToTaxonomy.type_version_source_id",
+        )
     )
 
     @property
@@ -207,8 +215,12 @@ class OntologyObject(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
     __tablename__ = "Object"
 
     namespace_id: Mapped[int] = mapped_column(ForeignKey("Namespace.id"), nullable=False)
-    object_type_id: Mapped[int] = mapped_column(ForeignKey("OnotologyObjectType.id"), nullable=False)
-    current_version_id: Mapped[int] = mapped_column(ForeignKey("ObjectVersion.id"), nullable=True)
+    object_type_id: Mapped[int] = mapped_column(
+        ForeignKey("OnotologyObjectType.id"), nullable=False
+    )
+    current_version_id: Mapped[int] = mapped_column(
+        ForeignKey("ObjectVersion.id"), nullable=True
+    )
 
     # relationships
     namespace: Mapped[Namespace] = relationship(innerjoin=True, lazy="selectin")
@@ -231,11 +243,13 @@ class OntologyObject(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
         primaryjoin="OntologyObject.id == OntologyObjectVersion.object_id",
     )
 
-    referenced_by_objects: Mapped[List["rel.OntologyObjectVersionToObject"]] = relationship(
-        lazy="select",
-        order_by="OntologyObjectVersionToObject.id",
-        back_populates="object_target",
-        primaryjoin="OntologyObject.id == OntologyObjectVersionToObject.object_target_id",
+    referenced_by_objects: Mapped[List["rel.OntologyObjectVersionToObject"]] = (
+        relationship(
+            lazy="select",
+            order_by="OntologyObjectVersionToObject.id",
+            back_populates="object_target",
+            primaryjoin="OntologyObject.id == OntologyObjectVersionToObject.object_target_id",
+        )
     )
 
     @property
@@ -285,9 +299,13 @@ class OntologyObjectVersion(MODEL, IdMixin, NameDescriptionMixin, CreateDeleteMi
 
     __tablename__ = "ObjectVersion"
 
-    object_id: Mapped[int] = mapped_column(ForeignKey("OntologyObject.id"), nullable=False)
+    object_id: Mapped[int] = mapped_column(
+        ForeignKey("OntologyObject.id"), nullable=False
+    )
     version: Mapped[int] = mapped_column(nullable=False)
-    object_type_version_id: Mapped[int] = mapped_column(ForeignKey("OntologyObjectTypeVersion.id"), nullable=False)
+    object_type_version_id: Mapped[int] = mapped_column(
+        ForeignKey("OntologyObjectTypeVersion.id"), nullable=False
+    )
     data: Mapped[Text] = mapped_column(DB.JSON, nullable=False)
 
     @declared_attr
@@ -318,11 +336,13 @@ class OntologyObjectVersion(MODEL, IdMixin, NameDescriptionMixin, CreateDeleteMi
         primaryjoin="OntologyObjectVersion.id == OntologyObjectVersionToObject.object_version_source_id",
     )
 
-    referenced_taxonomy_items: Mapped[List["rel.OntologyObjectVersionToTaxonomyItem"]] = relationship(
-        lazy="select",
-        order_by="OntologyObjectVersionToTaxonomyItem.id",
-        back_populates="object_version_source",
-        primaryjoin="OntologyObjectVersion.id == OntologyObjectVersionToTaxonomyItem.object_version_source_id",
+    referenced_taxonomy_items: Mapped[List["rel.OntologyObjectVersionToTaxonomyItem"]] = (
+        relationship(
+            lazy="select",
+            order_by="OntologyObjectVersionToTaxonomyItem.id",
+            back_populates="object_version_source",
+            primaryjoin="OntologyObjectVersion.id == OntologyObjectVersionToTaxonomyItem.object_version_source_id",
+        )
     )
 
     @property

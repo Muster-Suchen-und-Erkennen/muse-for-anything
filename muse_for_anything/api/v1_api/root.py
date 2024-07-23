@@ -149,7 +149,14 @@ class RootView(MethodView):
                     rel=("collection", "page"),
                     resource_type="ont-object",
                     key=("namespaceId",),
-                    query_key=("item-count", "cursor", "sort", "type-id", "search", "deleted"),
+                    query_key=(
+                        "item-count",
+                        "cursor",
+                        "sort",
+                        "type-id",
+                        "search",
+                        "deleted",
+                    ),
                 ),
                 KeyedApiLink(
                     href=template_url_for(

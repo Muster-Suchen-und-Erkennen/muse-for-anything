@@ -57,7 +57,7 @@ class OsoResource:
     arguments: Optional[Dict[str, Any]] = None
 
 
-class CustomFlaskOso():
+class CustomFlaskOso:
 
     _oso: Oso
     _app: Flask
@@ -66,19 +66,19 @@ class CustomFlaskOso():
     def __init__(self, oso: Optional[Oso] = None, app: Optional[Flask] = None) -> None:
         self._app = app
         self._oso = None
-        
+
         def unauthorized() -> NoReturn:
             raise Forbidden("Unauthorized")
-        
+
         self._unauthorized_action = unauthorized
-        
+
         self._get_actor = lambda: g.current_user
-        
+
         if self._app is not None:
             self.init_app(self._app)
         if oso is not None:
             self.set_oso(oso)
-        
+
         self._allowed_methods = None
 
     def set_oso(self, oso: Oso) -> None:
@@ -94,7 +94,7 @@ class CustomFlaskOso():
 
     def teardown(self, exception):
         pass
-    
+
     def _provide_oso(self) -> None:
         top = _app_context()
         if not hasattr(top, "oso_flask_oso"):
@@ -105,30 +105,26 @@ class CustomFlaskOso():
     ):
         self._allowed_methods = None
 
-    def set_get_actor(self, func:Callable[[], Any]) -> None:
+    def set_get_actor(self, func: Callable[[], Any]) -> None:
         self._get_actor = func
-        
-    def set_unauthorize_action(self, func:Callable[[], Any]) -> None:
+
+    def set_unauthorize_action(self, func: Callable[[], Any]) -> None:
         self._unauthorized_action = func
-        
-    def require_authorization(self, app:Optional[Flask] = None) -> None:
+
+    def require_authorization(self, app: Optional[Flask] = None) -> None:
         if app is None:
             app = self._app
         if app is None:
-            raise OsoError(
-                "Cannot require authorization without Flask app object"
-            )
+            raise OsoError("Cannot require authorization without Flask app object")
         app.after_request(self._require_authorization)
-        
+
     def perform_route_authorization(self, app: Optional[Flask] = None) -> None:
         if app is None:
             app = self._app
         if app is None:
-            raise OsoError(
-                "Cannot perform route authorization without Flask app object"
-            )
+            raise OsoError("Cannot perform route authorization without Flask app object")
         app.before_request(self.perform_route_authorization)
-        
+
     def skip_authorization(self, reason: Optional[str] = None) -> None:
         _authorize_called()
 
@@ -183,21 +179,21 @@ class CustomFlaskOso():
             resource = request._get_currect_object()
         if self.oso is None:
             raise OsoError("Cannot perform authorization without oso instance")
-        
+
         allowed = self.oso.is_allowed(actor, action, resource)
         _authorize_called()
-        
+
         if not allowed:
             self._unauthorized_action()
-        
+
     @property
     def app(self) -> Flask:
         return self._app or current_app
-    
+
     @property
     def oso(self) -> Optional[Oso]:
         return self._oso
-    
+
     @property
     def current_actor(self) -> Any:
         return self._get_actor()
@@ -206,7 +202,7 @@ class CustomFlaskOso():
         if not request.url_rule:
             return
         self.authorize(resource=request)
-        
+
     def _require_authorization(self, response: Response) -> Response:
         if not request.url_rule:
             return Response
@@ -273,8 +269,10 @@ OSO = Oso()
 
 FLASK_OSO = CustomFlaskOso(oso=OSO)
 
+
 def _authorize_called() -> None:
     _app_context().oso_flask_authorize_called = True
+
 
 def _app_context():
     top = request_ctx
@@ -284,6 +282,7 @@ def _app_context():
             "See https://flask.palletsprojects.com/en/1.1.x/appcontext/#manually-push-a-context"
         )
     return top
+
 
 def register_oso(app: Flask):
     """Register oso to enable access management for this app."""

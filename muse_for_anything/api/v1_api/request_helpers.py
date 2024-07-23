@@ -293,7 +293,9 @@ class ApiObjectGenerator:
         query_params: Optional[Dict[str, str]] = None,
     ) -> Optional[BaseApiObject]:
         return BaseApiObject(
-            self=LinkGenerator.get_link_of(resource, query_params=query_params, ignore_deleted=True)
+            self=LinkGenerator.get_link_of(
+                resource, query_params=query_params, ignore_deleted=True
+            )
         )
 
     def generate_api_object(

@@ -335,7 +335,9 @@ class NamespaceApiObjectGenerator(ApiObjectGenerator, resource_type=Namespace):
             return
 
         return NamespaceData(
-            self=LinkGenerator.get_link_of(resource, query_params=query_params, ignore_deleted=True),
+            self=LinkGenerator.get_link_of(
+                resource, query_params=query_params, ignore_deleted=True
+            ),
             name=resource.name,
             description=resource.description,
             created_on=resource.created_on,

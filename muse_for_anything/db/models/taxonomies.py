@@ -81,7 +81,9 @@ class TaxonomyItem(MODEL, IdMixin, ChangesMixin):
     __tablename__ = "TaxonomyItem"
 
     taxonomy_id: Mapped[int] = mapped_column(ForeignKey("Taxonomy.id"), nullable=False)
-    current_version_id: Mapped[int] = mapped_column(ForeignKey("TaxonomyItemVersion.id"), nullable=True)
+    current_version_id: Mapped[int] = mapped_column(
+        ForeignKey("TaxonomyItemVersion.id"), nullable=True
+    )
 
     # relationships
     taxonomy: Mapped[Taxonomy] = relationship(
@@ -127,11 +129,13 @@ class TaxonomyItem(MODEL, IdMixin, ChangesMixin):
         primaryjoin="and_(TaxonomyItem.id == TaxonomyItemRelation.taxonomy_item_target_id, TaxonomyItemRelation.deleted_on == None)",
     )
 
-    referenced_by_objects: Mapped[List["rel.OntologyObjectVersionToTaxonomyItem"]] = relationship(
-        lazy="select",
-        order_by="OntologyObjectVersionToTaxonomyItem.id",
-        back_populates="taxonomy_item_target",
-        primaryjoin="TaxonomyItem.id == OntologyObjectVersionToTaxonomyItem.taxonomy_item_target_id",
+    referenced_by_objects: Mapped[List["rel.OntologyObjectVersionToTaxonomyItem"]] = (
+        relationship(
+            lazy="select",
+            order_by="OntologyObjectVersionToTaxonomyItem.id",
+            back_populates="taxonomy_item_target",
+            primaryjoin="TaxonomyItem.id == OntologyObjectVersionToTaxonomyItem.taxonomy_item_target_id",
+        )
     )
 
     @property
@@ -174,10 +178,12 @@ class TaxonomyItemVersion(MODEL, IdMixin, NameDescriptionMixin, CreateDeleteMixi
 
     __tablename__ = "TaxonomyItemVersion"
 
-    taxonomy_item_id: Mapped[int] = mapped_column(ForeignKey("TaxonomyItem.id"), nullable=False)
+    taxonomy_item_id: Mapped[int] = mapped_column(
+        ForeignKey("TaxonomyItem.id"), nullable=False
+    )
     version: Mapped[int] = mapped_column(nullable=False)
     sort_key: Mapped[float] = mapped_column(nullable=True)
-    
+
     @declared_attr
     def __table_args__(cls):
         return (
@@ -224,9 +230,13 @@ class TaxonomyItemRelation(MODEL, IdMixin, CreateDeleteMixin):
 
     __tablename__ = "TaxonomyItemRelation"
 
-    taxonomy_item_source_id: Mapped[int] = mapped_column(ForeignKey("TaxonomyItem.id"), nullable=False)
+    taxonomy_item_source_id: Mapped[int] = mapped_column(
+        ForeignKey("TaxonomyItem.id"), nullable=False
+    )
 
-    taxonomy_item_target_id: Mapped[int] = mapped_column(ForeignKey("TaxonomyItem.id"), nullable=False)
+    taxonomy_item_target_id: Mapped[int] = mapped_column(
+        ForeignKey("TaxonomyItem.id"), nullable=False
+    )
 
     # relationships
     taxonomy_item_source: Mapped[TaxonomyItem] = relationship(

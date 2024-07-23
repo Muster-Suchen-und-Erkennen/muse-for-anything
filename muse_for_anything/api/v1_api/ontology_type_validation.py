@@ -211,12 +211,12 @@ class RefVisitor(DataWalkerVisitor):
                 namespace=namespace, object_type=object_type, version=version
             )
 
-            found_type_version: Optional[
-                OntologyObjectTypeVersion
-            ] = OntologyObjectTypeVersion.query.filter(
-                OntologyObjectTypeVersion.version == version_number,
-                OntologyObjectTypeVersion.object_type_id == object_type_id,
-            ).first()
+            found_type_version: Optional[OntologyObjectTypeVersion] = (
+                OntologyObjectTypeVersion.query.filter(
+                    OntologyObjectTypeVersion.version == version_number,
+                    OntologyObjectTypeVersion.object_type_id == object_type_id,
+                ).first()
+            )
 
             if (
                 found_type_version is None
