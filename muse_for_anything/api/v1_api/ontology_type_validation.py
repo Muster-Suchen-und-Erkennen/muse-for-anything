@@ -1,27 +1,25 @@
 """Module containing validation functions for object types."""
 
 from dataclasses import dataclass
-from muse_for_anything.db.models.taxonomies import Taxonomy
+from http import HTTPStatus
+from typing import Any, Callable, Deque, Dict, Optional, Sequence, Set, Tuple
+from urllib.parse import urlparse
+
 from flask.globals import request_ctx
-from werkzeug.urls import url_parse
+from flask_babel import gettext
+from flask_smorest import abort
+from jsonschema import Draft7Validator
 from werkzeug.routing import MapAdapter
 
-from http import HTTPStatus
-
 from muse_for_anything.api.json_schema.schema_tools import SchemaWalker
-from typing import Any, Callable, Deque, Dict, Optional, Sequence, Set, Tuple
-from flask_babel import gettext
-from jsonschema import Draft7Validator
-
-from flask_smorest import abort
-
 from muse_for_anything.db.models.ontology_objects import (
     OntologyObjectType,
     OntologyObjectTypeVersion,
 )
-from .models.schema import TYPE_SCHEMA
-from ..json_schema import DataWalker, DataWalkerVisitor, DataVisitorException
+from muse_for_anything.db.models.taxonomies import Taxonomy
 
+from ..json_schema import DataVisitorException, DataWalker, DataWalkerVisitor
+from .models.schema import TYPE_SCHEMA
 
 SCHEMA_VALIDATOR = Draft7Validator(TYPE_SCHEMA)
 
@@ -150,14 +148,19 @@ class RefVisitor(DataWalkerVisitor):
                     f"Unknown local schema reference '{ref}'! No schema with matching id!"
                 )
         else:
-            url = url_parse(data["$ref"])
+            url = urlparse(data["$ref"])
 
             ctx = request_ctx
             if ctx is None:
                 raise DataVisitorException(
                     "No request context to check schema url against!"
                 )
-            url_adapter: MapAdapter = ctx.url_adapter
+            url_adapter: Optional[MapAdapter] = ctx.url_adapter
+            if url_adapter is None:
+                raise DataVisitorException(
+                    "No url adapter found in request context! Unable to check URL."
+                    f"URL: '{url}'"
+                )
             if url.netloc != url_adapter.get_host(None):
                 raise DataVisitorException(
                     "Only references to schemas on the same MUSE4Anything instance allowed! "
