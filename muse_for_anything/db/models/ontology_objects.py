@@ -1,9 +1,10 @@
 """Module containing ontology object table definitions."""
 
 from typing import Any, Dict, List, Optional, cast
-from sqlalchemy.sql.schema import ForeignKey, Column, Index
-from sqlalchemy.orm import relationship
+from sqlalchemy.sql.schema import ForeignKey, Index
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.types import Text
 
 from ..db import DB, MODEL
 from .model_helpers import (
@@ -22,16 +23,13 @@ class OntologyObjectType(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
 
     __tablename__ = "Type"
 
-    namespace_id: Column = DB.Column(DB.Integer, ForeignKey(Namespace.id), nullable=False)
-    current_version_id: Column = DB.Column(
-        DB.Integer, ForeignKey("TypeVersion.id"), nullable=True
-    )
-    is_toplevel_type: Column = DB.Column(DB.Boolean, nullable=False)
-
+    namespace_id: Mapped[int] = mapped_column(ForeignKey("Namespace.id"), nullable=False)
+    current_version_id: Mapped[int] = mapped_column(ForeignKey("TypeVesion.id"), nullable=True)
+    is_toplevel_type: Mapped[int] = mapped_column(nullable=False)
+    
     # relationships
-    namespace: Namespace = relationship(Namespace, innerjoin=True, lazy="selectin")
-    current_version: "OntologyObjectTypeVersion" = relationship(
-        "OntologyObjectTypeVersion",
+    namespace: Mapped[Namespace] = relationship(innerjoin=True, lazy="selectin")
+    current_version: Mapped["OntologyObjectTypeVersion"] = relationship(
         post_update=True,
         innerjoin=True,
         lazy="joined",
@@ -44,14 +42,12 @@ class OntologyObjectType(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
         back_populates="ontology_type",
         primaryjoin="OntologyObjectType.id == OntologyObjectTypeVersion.object_type_id",
     )
-    ontology_objects: "OntologyObject" = relationship(
-        "OntologyObject",
+    ontology_objects: Mapped["OntologyObject"] = relationship(
         lazy="select",
         back_populates="ontology_type",
     )
 
-    referenced_by_types: List["rel.OntologyTypeVersionToType"] = relationship(
-        "OntologyTypeVersionToType",
+    referenced_by_types: Mapped[List["rel.OntologyTypeVersionToType"]] = relationship(
         lazy="select",
         order_by="OntologyTypeVersionToType.id",
         back_populates="type_target",
@@ -114,12 +110,10 @@ class OntologyObjectTypeVersion(MODEL, IdMixin, CreateDeleteMixin):
 
     __tablename__ = "TypeVersion"
 
-    id: Column = DB.Column(DB.Integer, primary_key=True)
-    object_type_id: Column = DB.Column(
-        DB.Integer, ForeignKey(OntologyObjectType.id), nullable=False
-    )
-    version: Column = DB.Column(DB.Integer, nullable=False)
-    data: Column = DB.Column(DB.JSON, nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    object_type_id: Mapped[int] = mapped_column(ForeignKey("OntologyObjectType.id"), nullable=False)
+    version: Mapped[int] = mapped_column(nullable=False)
+    data: Mapped[Text] = mapped_column(DB.JSON, nullable=False)
 
     @declared_attr
     def __table_args__(cls):
@@ -133,43 +127,37 @@ class OntologyObjectTypeVersion(MODEL, IdMixin, CreateDeleteMixin):
         )
 
     # relationships
-    ontology_type: OntologyObjectType = relationship(
-        OntologyObjectType,
+    ontology_type: Mapped[OntologyObjectType] = relationship(
         lazy="select",  # should already be in chache in most cases
         back_populates="versions",
         primaryjoin=OntologyObjectType.id == object_type_id,
     )
-    ontology_object_versions: "OntologyObjectVersion" = relationship(
-        "OntologyObjectVersion",
+    ontology_object_versions: Mapped["OntologyObjectVersion"] = relationship(
         lazy="select",
         back_populates="ontology_type_version",
     )
 
-    imported_types: List["rel.OntologyTypeVersionToTypeVersion"] = relationship(
-        "OntologyTypeVersionToTypeVersion",
+    imported_types: Mapped[List["rel.OntologyTypeVersionToTypeVersion"]] = relationship(
         lazy="select",
         order_by="OntologyTypeVersionToTypeVersion.id",
         back_populates="type_version_source",
         primaryjoin="OntologyObjectTypeVersion.id == OntologyTypeVersionToTypeVersion.type_version_source_id",
     )
-    imported_by_types: List["rel.OntologyTypeVersionToTypeVersion"] = relationship(
-        "OntologyTypeVersionToTypeVersion",
+    imported_by_types: Mapped[List["rel.OntologyTypeVersionToTypeVersion"]] = relationship(
         lazy="select",
         order_by="OntologyTypeVersionToTypeVersion.id",
         back_populates="type_version_target",
         primaryjoin="OntologyObjectTypeVersion.id == OntologyTypeVersionToTypeVersion.type_version_target_id",
     )
 
-    referenced_types: List["rel.OntologyTypeVersionToType"] = relationship(
-        "OntologyTypeVersionToType",
+    referenced_types: Mapped[List["rel.OntologyTypeVersionToType"]] = relationship(
         lazy="select",
         order_by="OntologyTypeVersionToType.id",
         back_populates="type_version_source",
         primaryjoin="OntologyObjectTypeVersion.id == OntologyTypeVersionToType.type_version_source_id",
     )
 
-    referenced_taxonomies: List["rel.OntologyTypeVersionToTaxonomy"] = relationship(
-        "OntologyTypeVersionToTaxonomy",
+    referenced_taxonomies: Mapped[List["rel.OntologyTypeVersionToTaxonomy"]] = relationship(
         lazy="select",
         order_by="OntologyTypeVersionToTaxonomy.id",
         back_populates="type_version_source",
@@ -218,24 +206,18 @@ class OntologyObject(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
 
     __tablename__ = "Object"
 
-    namespace_id: Column = DB.Column(DB.Integer, ForeignKey(Namespace.id), nullable=False)
-    object_type_id: Column = DB.Column(
-        DB.Integer, ForeignKey(OntologyObjectType.id), nullable=False
-    )
-    current_version_id: Column = DB.Column(
-        DB.Integer, ForeignKey("ObjectVersion.id"), nullable=True
-    )
+    namespace_id: Mapped[int] = mapped_column(ForeignKey("Namespace.id"), nullable=False)
+    object_type_id: Mapped[int] = mapped_column(ForeignKey("OnotologyObjectType.id"), nullable=False)
+    current_version_id: Mapped[int] = mapped_column(ForeignKey("ObjectVersion.id"), nullable=True)
 
     # relationships
-    namespace: Namespace = relationship(Namespace, innerjoin=True, lazy="selectin")
-    ontology_type: OntologyObjectType = relationship(
-        OntologyObjectType,
+    namespace: Mapped[Namespace] = relationship(innerjoin=True, lazy="selectin")
+    ontology_type: Mapped[OntologyObjectType] = relationship(
         innerjoin=True,
         lazy="selectin",  # load the type in a seperate query (and maybe benefit from session chache)
         back_populates="ontology_objects",
     )
-    current_version: "OntologyObjectVersion" = relationship(
-        "OntologyObjectVersion",
+    current_version: Mapped["OntologyObjectVersion"] = relationship(
         post_update=True,
         innerjoin=True,
         lazy="joined",
@@ -249,8 +231,7 @@ class OntologyObject(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
         primaryjoin="OntologyObject.id == OntologyObjectVersion.object_id",
     )
 
-    referenced_by_objects: List["rel.OntologyObjectVersionToObject"] = relationship(
-        "OntologyObjectVersionToObject",
+    referenced_by_objects: Mapped[List["rel.OntologyObjectVersionToObject"]] = relationship(
         lazy="select",
         order_by="OntologyObjectVersionToObject.id",
         back_populates="object_target",
@@ -304,14 +285,10 @@ class OntologyObjectVersion(MODEL, IdMixin, NameDescriptionMixin, CreateDeleteMi
 
     __tablename__ = "ObjectVersion"
 
-    object_id: Column = DB.Column(
-        DB.Integer, ForeignKey(OntologyObject.id), nullable=False
-    )
-    version: Column = DB.Column(DB.Integer, nullable=False)
-    object_type_version_id: Column = DB.Column(
-        DB.Integer, ForeignKey(OntologyObjectTypeVersion.id), nullable=False
-    )
-    data: Column = DB.Column(DB.JSON, nullable=False)
+    object_id: Mapped[int] = mapped_column(ForeignKey("OntologyObject.id"), nullable=False)
+    version: Mapped[int] = mapped_column(nullable=False)
+    object_type_version_id: Mapped[int] = mapped_column(ForeignKey("OntologyObjectTypeVersion.id"), nullable=False)
+    data: Mapped[Text] = mapped_column(DB.JSON, nullable=False)
 
     @declared_attr
     def __table_args__(cls):
@@ -322,30 +299,26 @@ class OntologyObjectVersion(MODEL, IdMixin, NameDescriptionMixin, CreateDeleteMi
         )
 
     # relationships
-    ontology_object: OntologyObject = relationship(
-        OntologyObject,
+    ontology_object: Mapped[OntologyObject] = relationship(
         innerjoin=True,
         lazy="select",  # should already be in session cache
         back_populates="versions",
         primaryjoin=OntologyObject.id == object_id,
     )
-    ontology_type_version: OntologyObjectTypeVersion = relationship(
-        OntologyObjectTypeVersion,
+    ontology_type_version: Mapped[OntologyObjectTypeVersion] = relationship(
         innerjoin=True,
         lazy="selectin",  # selectin uses a second (or more) queries and is more memory efficient compared to direct join
         back_populates="ontology_object_versions",
     )
 
-    referenced_objects: List["rel.OntologyObjectVersionToObject"] = relationship(
-        "OntologyObjectVersionToObject",
+    referenced_objects: Mapped[List["rel.OntologyObjectVersionToObject"]] = relationship(
         lazy="select",
         order_by="OntologyObjectVersionToObject.id",
         back_populates="object_version_source",
         primaryjoin="OntologyObjectVersion.id == OntologyObjectVersionToObject.object_version_source_id",
     )
 
-    referenced_taxonomy_items: List["rel.OntologyObjectVersionToTaxonomyItem"] = relationship(
-        "OntologyObjectVersionToTaxonomyItem",
+    referenced_taxonomy_items: Mapped[List["rel.OntologyObjectVersionToTaxonomyItem"]] = relationship(
         lazy="select",
         order_by="OntologyObjectVersionToTaxonomyItem.id",
         back_populates="object_version_source",

@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from muse_for_anything.db.models.taxonomies import Taxonomy
-from flask.globals import _request_ctx_stack
+from flask.globals import request_ctx
 from werkzeug.urls import url_parse
 from werkzeug.routing import MapAdapter
 
@@ -152,7 +152,7 @@ class RefVisitor(DataWalkerVisitor):
         else:
             url = url_parse(data["$ref"])
 
-            ctx = _request_ctx_stack.top
+            ctx = request_ctx
             if ctx is None:
                 raise DataVisitorException(
                     "No request context to check schema url against!"
