@@ -23,9 +23,9 @@ class OntologyObjectType(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
 
     __tablename__ = "Type"
 
-    namespace_id: Mapped[int] = mapped_column(ForeignKey("Namespace.id"), nullable=False)
+    namespace_id: Mapped[int] = mapped_column(ForeignKey(Namespace.id), nullable=False)
     current_version_id: Mapped[int] = mapped_column(
-        ForeignKey("TypeVesion.id"), nullable=True
+        ForeignKey("TypeVersion.id"), nullable=True
     )
     is_toplevel_type: Mapped[int] = mapped_column(nullable=False)
 
@@ -50,6 +50,7 @@ class OntologyObjectType(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
     )
 
     referenced_by_types: Mapped[List["rel.OntologyTypeVersionToType"]] = relationship(
+        "OntologyTypeVersionToType",
         lazy="select",
         order_by="OntologyTypeVersionToType.id",
         back_populates="type_target",
@@ -114,7 +115,7 @@ class OntologyObjectTypeVersion(MODEL, IdMixin, CreateDeleteMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     object_type_id: Mapped[int] = mapped_column(
-        ForeignKey("OntologyObjectType.id"), nullable=False
+        ForeignKey(OntologyObjectType.id), nullable=False
     )
     version: Mapped[int] = mapped_column(nullable=False)
     data: Mapped[Text] = mapped_column(DB.JSON, nullable=False)
@@ -142,6 +143,7 @@ class OntologyObjectTypeVersion(MODEL, IdMixin, CreateDeleteMixin):
     )
 
     imported_types: Mapped[List["rel.OntologyTypeVersionToTypeVersion"]] = relationship(
+        "OntologyTypeVersionToTypeVersion",
         lazy="select",
         order_by="OntologyTypeVersionToTypeVersion.id",
         back_populates="type_version_source",
@@ -149,6 +151,7 @@ class OntologyObjectTypeVersion(MODEL, IdMixin, CreateDeleteMixin):
     )
     imported_by_types: Mapped[List["rel.OntologyTypeVersionToTypeVersion"]] = (
         relationship(
+            "OntologyTypeVersionToTypeVersion",
             lazy="select",
             order_by="OntologyTypeVersionToTypeVersion.id",
             back_populates="type_version_target",
@@ -157,6 +160,7 @@ class OntologyObjectTypeVersion(MODEL, IdMixin, CreateDeleteMixin):
     )
 
     referenced_types: Mapped[List["rel.OntologyTypeVersionToType"]] = relationship(
+        "OntologyTypeVersionToType",
         lazy="select",
         order_by="OntologyTypeVersionToType.id",
         back_populates="type_version_source",
@@ -165,6 +169,7 @@ class OntologyObjectTypeVersion(MODEL, IdMixin, CreateDeleteMixin):
 
     referenced_taxonomies: Mapped[List["rel.OntologyTypeVersionToTaxonomy"]] = (
         relationship(
+            "OntologyTypeVersionToTaxonomy",
             lazy="select",
             order_by="OntologyTypeVersionToTaxonomy.id",
             back_populates="type_version_source",
@@ -214,9 +219,9 @@ class OntologyObject(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
 
     __tablename__ = "Object"
 
-    namespace_id: Mapped[int] = mapped_column(ForeignKey("Namespace.id"), nullable=False)
+    namespace_id: Mapped[int] = mapped_column(ForeignKey(Namespace.id), nullable=False)
     object_type_id: Mapped[int] = mapped_column(
-        ForeignKey("OnotologyObjectType.id"), nullable=False
+        ForeignKey(OntologyObjectType.id), nullable=False
     )
     current_version_id: Mapped[int] = mapped_column(
         ForeignKey("ObjectVersion.id"), nullable=True
@@ -245,6 +250,7 @@ class OntologyObject(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
 
     referenced_by_objects: Mapped[List["rel.OntologyObjectVersionToObject"]] = (
         relationship(
+            "OntologyObjectVersionToObject",
             lazy="select",
             order_by="OntologyObjectVersionToObject.id",
             back_populates="object_target",
@@ -300,11 +306,11 @@ class OntologyObjectVersion(MODEL, IdMixin, NameDescriptionMixin, CreateDeleteMi
     __tablename__ = "ObjectVersion"
 
     object_id: Mapped[int] = mapped_column(
-        ForeignKey("OntologyObject.id"), nullable=False
+        ForeignKey(OntologyObject.id), nullable=False
     )
     version: Mapped[int] = mapped_column(nullable=False)
     object_type_version_id: Mapped[int] = mapped_column(
-        ForeignKey("OntologyObjectTypeVersion.id"), nullable=False
+        ForeignKey(OntologyObjectTypeVersion.id), nullable=False
     )
     data: Mapped[Text] = mapped_column(DB.JSON, nullable=False)
 
@@ -330,6 +336,7 @@ class OntologyObjectVersion(MODEL, IdMixin, NameDescriptionMixin, CreateDeleteMi
     )
 
     referenced_objects: Mapped[List["rel.OntologyObjectVersionToObject"]] = relationship(
+        "OntologyObjectVersionToObject",
         lazy="select",
         order_by="OntologyObjectVersionToObject.id",
         back_populates="object_version_source",
@@ -338,6 +345,7 @@ class OntologyObjectVersion(MODEL, IdMixin, NameDescriptionMixin, CreateDeleteMi
 
     referenced_taxonomy_items: Mapped[List["rel.OntologyObjectVersionToTaxonomyItem"]] = (
         relationship(
+            "OntologyObjectVersionToTaxonomyItem",
             lazy="select",
             order_by="OntologyObjectVersionToTaxonomyItem.id",
             back_populates="object_version_source",

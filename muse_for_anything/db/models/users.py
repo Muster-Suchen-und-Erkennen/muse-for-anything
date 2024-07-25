@@ -158,7 +158,7 @@ class UserRole(MODEL, IdMixin):
 
     __tablename__ = "UserRole"
 
-    user_id: Mapped[int] = mapped_column(ForeignKey("User.id"), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey(User.id), nullable=False)
     role: Mapped[str] = mapped_column(DB.String(64))
 
     # references
@@ -247,7 +247,7 @@ class UserGrant(MODEL, IdMixin):
 
     __tablename__ = "UserGrant"
 
-    user_id: Mapped[int] = mapped_column(ForeignKey("User.id"), nullable=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey(User.id), nullable=True)
     role: Mapped[str] = mapped_column(DB.String(64), index=True)
     resource_type: Mapped[str] = mapped_column(DB.String(64), index=True)
     resource_id: Mapped[int] = mapped_column(index=True)
