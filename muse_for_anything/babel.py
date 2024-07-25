@@ -11,7 +11,6 @@ SUPPORTED_LOCALES = ["de", "en"]
 BABEL = Babel()
 
 
-@BABEL.localeselector
 def get_locale():
     if "lang" in g:
         # check LanguageAccept option in g context
@@ -47,4 +46,4 @@ def inject_lang_from_header():
 
 def register_babel(app: Flask):
     """Register babel to enable translations for this app."""
-    BABEL.init_app(app)
+    BABEL.init_app(app, locale_selector=get_locale)
