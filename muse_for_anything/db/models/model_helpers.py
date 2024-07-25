@@ -52,8 +52,8 @@ class CreateDeleteMixin:
     """Add the columns 'created_on' and 'deleted_on' to track creation and deletion of immutable database entries."""
 
     created_on: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        default_factory=lambda: datetime.now(timezone.utc),
+        DB.DateTime,
+        default=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
     deleted_on: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -67,8 +67,8 @@ class ChangesMixin(CreateDeleteMixin):
     """Add the columns 'created_on', 'updated_on' and 'deleted_on' to track changes to the database entries."""
 
     updated_on: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        default_factory=lambda: datetime.now(timezone.utc),
+        DB.DateTime,
+        default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
