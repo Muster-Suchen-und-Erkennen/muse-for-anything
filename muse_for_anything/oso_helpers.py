@@ -276,6 +276,7 @@ def _authorize_called() -> None:
 
 def _app_context():
     top = request_ctx
+    # TODO Safety check will probably never trigger
     if top is None:
         raise OsoError(
             "Application context doesn't exist. Did you use oso outside the context of a request? "
