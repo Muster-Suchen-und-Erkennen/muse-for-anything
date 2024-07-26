@@ -305,9 +305,7 @@ class OntologyObjectVersion(MODEL, IdMixin, NameDescriptionMixin, CreateDeleteMi
 
     __tablename__ = "ObjectVersion"
 
-    object_id: Mapped[int] = mapped_column(
-        ForeignKey(OntologyObject.id), nullable=False
-    )
+    object_id: Mapped[int] = mapped_column(ForeignKey(OntologyObject.id), nullable=False)
     version: Mapped[int] = mapped_column(nullable=False)
     object_type_version_id: Mapped[int] = mapped_column(
         ForeignKey(OntologyObjectTypeVersion.id), nullable=False

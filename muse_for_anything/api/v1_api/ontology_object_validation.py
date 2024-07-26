@@ -44,10 +44,10 @@ def resolve_type_version_schema_url(url_string: str):
         raise DataVisitorException("No request context to check schema url against!")
     url_adapter: Optional[MapAdapter] = ctx.url_adapter
     if url_adapter is None:
-                raise DataVisitorException(
-                    "No url adapter found in request context! Unable to check URL."
-                    f"URL: '{url}'"
-                )
+        raise DataVisitorException(
+            "No url adapter found in request context! Unable to check URL."
+            f"URL: '{url}'"
+        )
     if url.netloc != url_adapter.get_host(None):
         raise DataVisitorException(
             "Only references to schemas on the same MUSE4Anything instance allowed! "
