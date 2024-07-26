@@ -39,9 +39,9 @@ def resolve_type_version_schema_url(url_string: str):
     # TODO use url cache
     url = urlparse(url_string)
     # url should already be from a validated type!
-    ctx = request_ctx
-    # TODO Safety check will probably never trigger
-    if ctx is None:
+    try:
+        ctx = request_ctx._get_current_object()
+    except RuntimeError:
         raise DataVisitorException("No request context to check schema url against!")
     url_adapter: Optional[MapAdapter] = ctx.url_adapter
     if url_adapter is None:

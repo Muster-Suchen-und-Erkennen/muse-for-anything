@@ -150,8 +150,9 @@ class RefVisitor(DataWalkerVisitor):
         else:
             url = urlparse(data["$ref"])
 
-            ctx = request_ctx
-            if ctx is None:
+            try:
+                ctx = request_ctx._get_current_object()
+            except RuntimeError:
                 raise DataVisitorException(
                     "No request context to check schema url against!"
                 )

@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, NoReturn, Optional, Sequence, Type
 
-from flask import Flask, current_app, g, request
+from flask import Flask, current_app
 from flask.globals import request_ctx, g, request
 from flask.wrappers import Request, Response
 from oso import Oso
@@ -59,8 +59,8 @@ class OsoResource:
 
 class CustomFlaskOso:
 
-    _oso: Oso
-    _app: Flask
+    _oso: Optional[Oso]
+    _app: Optional[Flask]
     _allowed_methods: Optional[Sequence[str]]
 
     def __init__(self, oso: Optional[Oso] = None, app: Optional[Flask] = None) -> None:
@@ -205,7 +205,7 @@ class CustomFlaskOso:
 
     def _require_authorization(self, response: Response) -> Response:
         if not request.url_rule:
-            return Response
+            return response
         if not getattr(_app_context(), "oso_flask_authorize_called", False):
             raise OsoError("Authorize not called.")
         return response
@@ -222,7 +222,9 @@ class CustomFlaskOso:
         if actor is None:
             actor = self._get_current_actor()
 
-        oso: Oso = self.oso
+        oso = self.oso
+        if oso is None:
+            raise ValueError("No instance of oso set!")
         return oso.query_rule("is_admin", resource)
 
     def is_allowed(
@@ -241,7 +243,9 @@ class CustomFlaskOso:
         if action is None:
             action = request.method
 
-        oso: Oso = self.oso
+        oso = self.oso
+        if oso is None:
+            raise ValueError("No instance of oso set!")
         return oso.is_allowed(actor, action, resource)
 
     def get_allowed_actions(
@@ -258,7 +262,9 @@ class CustomFlaskOso:
         if actor is None:
             actor = self._get_current_actor()
 
-        oso: Oso = self.oso
+        oso = self.oso
+        if oso is None:
+            raise ValueError("No instance of oso set!")
         result = oso.get_allowed_actions(actor, resource, allow_wildcard=allow_wildcard)
         if should_cache_result:
             self._allowed_methods = result
@@ -275,14 +281,14 @@ def _authorize_called() -> None:
 
 
 def _app_context():
-    top = request_ctx
-    # TODO Safety check will probably never trigger
-    if top is None:
+    try:
+        context = request_ctx._get_current_object()
+    except RuntimeError:
         raise OsoError(
             "Application context doesn't exist. Did you use oso outside the context of a request? "
             "See https://flask.palletsprojects.com/en/1.1.x/appcontext/#manually-push-a-context"
         )
-    return top
+    return context
 
 
 def register_oso(app: Flask):
