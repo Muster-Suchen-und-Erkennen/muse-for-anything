@@ -1,6 +1,6 @@
 """Module containing the type API endpoints of the v1 API."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from http import HTTPStatus
 from typing import Any, List, Optional
 
@@ -513,7 +513,7 @@ class TypeView(MethodView):
         # only actually delete when not already deleted
         if found_object_type.deleted_on is None:
             # soft delete namespace
-            found_object_type.deleted_on = datetime.utcnow()
+            found_object_type.deleted_on = datetime.now(timezone.utc)
             DB.session.add(found_object_type)
             DB.session.commit()
 

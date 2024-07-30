@@ -3,9 +3,10 @@
 from typing import List, Optional, Set, Union
 
 from flask_babel import gettext
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql.elements import literal
-from sqlalchemy.sql.schema import Column, ForeignKey
+from sqlalchemy.sql.schema import ForeignKey
+from sqlalchemy.types import Text
 
 from .model_helpers import CreateDeleteMixin, ExistsMixin, IdMixin
 from .namespace import Namespace
@@ -55,19 +56,17 @@ class User(MODEL, IdMixin, CreateDeleteMixin, ExistsMixin):
 
     __tablename__ = "User"
 
-    username: Column = DB.Column(DB.String(120), unique=True, index=True)
-    e_mail: Column = DB.Column(DB.Text, unique=True, index=True, nullable=True)
-    password: Column = DB.Column(DB.String(120))
+    username: Mapped[str] = mapped_column(DB.String(120), unique=True, index=True)
+    e_mail: Mapped[Text] = mapped_column(DB.Text, unique=True, index=True, nullable=True)
+    password: Mapped[str] = mapped_column(DB.String(120))
 
     # references
-    roles: List["UserRole"] = relationship(
-        "UserRole",
+    roles: Mapped[List["UserRole"]] = relationship(
         lazy="joined",
         back_populates="user",
     )
 
-    grants: List["UserGrant"] = relationship(
-        "UserGrant",
+    grants: Mapped[List["UserGrant"]] = relationship(
         lazy="select",
         back_populates="user",
     )
@@ -159,12 +158,11 @@ class UserRole(MODEL, IdMixin):
 
     __tablename__ = "UserRole"
 
-    user_id: Column = DB.Column(DB.Integer, ForeignKey(User.id), nullable=False)
-    role: Column = DB.Column(DB.String(64))
+    user_id: Mapped[int] = mapped_column(ForeignKey(User.id), nullable=False)
+    role: Mapped[str] = mapped_column(DB.String(64))
 
     # references
-    user: User = relationship(
-        User,
+    user: Mapped[User] = relationship(
         innerjoin=True,
         lazy="selectin",
         back_populates="roles",
@@ -249,13 +247,12 @@ class UserGrant(MODEL, IdMixin):
 
     __tablename__ = "UserGrant"
 
-    user_id: Column = DB.Column(DB.Integer, ForeignKey(User.id), nullable=True)
-    role: Column = DB.Column(DB.String(64), index=True)
-    resource_type: Column = DB.Column(DB.String(64), index=True)
-    resource_id: Column = DB.Column(DB.Integer(), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey(User.id), nullable=True)
+    role: Mapped[str] = mapped_column(DB.String(64), index=True)
+    resource_type: Mapped[str] = mapped_column(DB.String(64), index=True)
+    resource_id: Mapped[int] = mapped_column(index=True)
 
-    user: User = relationship(
-        User,
+    user: Mapped[User] = relationship(
         innerjoin=True,
         lazy="selectin",
         back_populates="grants",

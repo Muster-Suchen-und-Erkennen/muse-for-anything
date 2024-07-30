@@ -3,7 +3,7 @@
 from typing import Any, Dict, List, Optional, cast
 from sqlalchemy.orm.query import Query
 from sqlalchemy.sql.schema import ForeignKey, Column, Index
-from sqlalchemy.orm import relationship, selectinload
+from sqlalchemy.orm import Mapped, mapped_column, relationship, selectinload
 from sqlalchemy.ext.declarative import declared_attr
 
 from ..db import DB, MODEL
@@ -23,19 +23,19 @@ class Taxonomy(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
 
     __tablename__ = "Taxonomy"
 
-    namespace_id: Column = DB.Column(DB.Integer, ForeignKey(Namespace.id), nullable=False)
+    namespace_id: Mapped[int] = mapped_column(ForeignKey(Namespace.id), nullable=False)
 
     # relationships
     namespace = relationship(Namespace, innerjoin=True, lazy="selectin")
 
-    items: List["TaxonomyItem"] = relationship(
+    items: Mapped[List["TaxonomyItem"]] = relationship(
         "TaxonomyItem",
         lazy="select",  # do not always load this
         order_by="TaxonomyItem.id",
         back_populates="taxonomy",
         primaryjoin="Taxonomy.id == TaxonomyItem.taxonomy_id",
     )
-    current_items: List["TaxonomyItem"] = relationship(
+    current_items: Mapped[List["TaxonomyItem"]] = relationship(
         "TaxonomyItem",
         viewonly=True,
         # lazy="select",  # do not always load this
@@ -44,7 +44,7 @@ class Taxonomy(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
         primaryjoin="and_(Taxonomy.id == TaxonomyItem.taxonomy_id, TaxonomyItem.deleted_on == None)",
     )
 
-    referenced_by_types: List["rel.OntologyTypeVersionToTaxonomy"] = relationship(
+    referenced_by_types: Mapped[List["rel.OntologyTypeVersionToTaxonomy"]] = relationship(
         "OntologyTypeVersionToTaxonomy",
         lazy="select",
         order_by="OntologyTypeVersionToTaxonomy.id",
@@ -83,55 +83,54 @@ class TaxonomyItem(MODEL, IdMixin, ChangesMixin):
 
     __tablename__ = "TaxonomyItem"
 
-    taxonomy_id: Column = DB.Column(DB.Integer, ForeignKey(Taxonomy.id), nullable=False)
-    current_version_id: Column = DB.Column(
-        DB.Integer, ForeignKey("TaxonomyItemVersion.id"), nullable=True
+    taxonomy_id: Mapped[int] = mapped_column(ForeignKey(Taxonomy.id), nullable=False)
+    current_version_id: Mapped[int] = mapped_column(
+        ForeignKey("TaxonomyItemVersion.id"), nullable=True
     )
 
     # relationships
-    taxonomy: Taxonomy = relationship(
-        Taxonomy,
+    taxonomy: Mapped[Taxonomy] = relationship(
         innerjoin=True,
         lazy="selectin",
         back_populates="items",
         sync_backref=False,
     )
-    current_version: "TaxonomyItemVersion" = relationship(
+    current_version: Mapped["TaxonomyItemVersion"] = relationship(
         "TaxonomyItemVersion",
         post_update=True,
         innerjoin=True,
         lazy="joined",
         primaryjoin="TaxonomyItem.current_version_id == TaxonomyItemVersion.id",
     )
-    versions: List["TaxonomyItemVersion"] = relationship(
+    versions: Mapped[List["TaxonomyItemVersion"]] = relationship(
         "TaxonomyItemVersion",
         lazy="select",
         order_by="TaxonomyItemVersion.version",
         back_populates="taxonomy_item",
         primaryjoin="TaxonomyItem.id == TaxonomyItemVersion.taxonomy_item_id",
     )
-    related: List["TaxonomyItemRelation"] = relationship(
+    related: Mapped[List["TaxonomyItemRelation"]] = relationship(
         "TaxonomyItemRelation",
         lazy="select",
         order_by="TaxonomyItemRelation.id",
         back_populates="taxonomy_item_source",
         primaryjoin="TaxonomyItem.id == TaxonomyItemRelation.taxonomy_item_source_id",
     )
-    ancestors: List["TaxonomyItemRelation"] = relationship(
+    ancestors: Mapped[List["TaxonomyItemRelation"]] = relationship(
         "TaxonomyItemRelation",
         lazy="select",
         order_by="TaxonomyItemRelation.id",
         back_populates="taxonomy_item_target",
         primaryjoin="TaxonomyItem.id == TaxonomyItemRelation.taxonomy_item_target_id",
     )
-    current_related: List["TaxonomyItemRelation"] = relationship(
+    current_related: Mapped[List["TaxonomyItemRelation"]] = relationship(
         "TaxonomyItemRelation",
         viewonly=True,
         lazy="selectin",  # deals better with multiple levels of hierarchy
         order_by="TaxonomyItemRelation.id",
         primaryjoin="and_(TaxonomyItem.id == TaxonomyItemRelation.taxonomy_item_source_id, TaxonomyItemRelation.deleted_on == None)",
     )
-    current_ancestors: List["TaxonomyItemRelation"] = relationship(
+    current_ancestors: Mapped[List["TaxonomyItemRelation"]] = relationship(
         "TaxonomyItemRelation",
         viewonly=True,
         lazy="selectin",  # deals better with multiple levels of hierarchy
@@ -139,12 +138,14 @@ class TaxonomyItem(MODEL, IdMixin, ChangesMixin):
         primaryjoin="and_(TaxonomyItem.id == TaxonomyItemRelation.taxonomy_item_target_id, TaxonomyItemRelation.deleted_on == None)",
     )
 
-    referenced_by_objects: List["rel.OntologyObjectVersionToTaxonomyItem"] = relationship(
-        "OntologyObjectVersionToTaxonomyItem",
-        lazy="select",
-        order_by="OntologyObjectVersionToTaxonomyItem.id",
-        back_populates="taxonomy_item_target",
-        primaryjoin="TaxonomyItem.id == OntologyObjectVersionToTaxonomyItem.taxonomy_item_target_id",
+    referenced_by_objects: Mapped[List["rel.OntologyObjectVersionToTaxonomyItem"]] = (
+        relationship(
+            "OntologyObjectVersionToTaxonomyItem",
+            lazy="select",
+            order_by="OntologyObjectVersionToTaxonomyItem.id",
+            back_populates="taxonomy_item_target",
+            primaryjoin="TaxonomyItem.id == OntologyObjectVersionToTaxonomyItem.taxonomy_item_target_id",
+        )
     )
 
     @property
@@ -187,11 +188,11 @@ class TaxonomyItemVersion(MODEL, IdMixin, NameDescriptionMixin, CreateDeleteMixi
 
     __tablename__ = "TaxonomyItemVersion"
 
-    taxonomy_item_id: Column = DB.Column(
-        DB.Integer, ForeignKey(TaxonomyItem.id), nullable=False
+    taxonomy_item_id: Mapped[int] = mapped_column(
+        ForeignKey(TaxonomyItem.id), nullable=False
     )
-    version: Column = DB.Column(DB.Integer, nullable=False)
-    sort_key: Column = DB.Column(DB.Float, nullable=True)
+    version: Mapped[int] = mapped_column(nullable=False)
+    sort_key: Mapped[float] = mapped_column(nullable=True)
 
     @declared_attr
     def __table_args__(cls):
@@ -211,8 +212,7 @@ class TaxonomyItemVersion(MODEL, IdMixin, NameDescriptionMixin, CreateDeleteMixi
         )
 
     # relationships
-    taxonomy_item: TaxonomyItem = relationship(
-        TaxonomyItem,
+    taxonomy_item: Mapped[TaxonomyItem] = relationship(
         innerjoin=True,
         lazy="select",  # normally loaded from the taxonmy item -> less queries needed
         back_populates="versions",
@@ -240,24 +240,22 @@ class TaxonomyItemRelation(MODEL, IdMixin, CreateDeleteMixin):
 
     __tablename__ = "TaxonomyItemRelation"
 
-    taxonomy_item_source_id: Column = DB.Column(
-        DB.Integer, ForeignKey(TaxonomyItem.id), nullable=False
+    taxonomy_item_source_id: Mapped[int] = mapped_column(
+        ForeignKey(TaxonomyItem.id), nullable=False
     )
 
-    taxonomy_item_target_id: Column = DB.Column(
-        DB.Integer, ForeignKey(TaxonomyItem.id), nullable=False
+    taxonomy_item_target_id: Mapped[int] = mapped_column(
+        ForeignKey(TaxonomyItem.id), nullable=False
     )
 
     # relationships
-    taxonomy_item_source: TaxonomyItem = relationship(
-        TaxonomyItem,
+    taxonomy_item_source: Mapped[TaxonomyItem] = relationship(
         lazy="select",  # is nearly always in cache anyway
         back_populates="related",
         primaryjoin=TaxonomyItem.id == taxonomy_item_source_id,
     )
 
-    taxonomy_item_target: TaxonomyItem = relationship(
-        TaxonomyItem,
+    taxonomy_item_target: Mapped[TaxonomyItem] = relationship(
         lazy="select",  # is nearly always in cache anyway
         back_populates="ancestors",
         primaryjoin=TaxonomyItem.id == taxonomy_item_target_id,

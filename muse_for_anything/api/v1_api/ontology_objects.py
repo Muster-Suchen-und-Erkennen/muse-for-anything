@@ -1,6 +1,6 @@
 """Module containing the object API endpoints of the v1 API."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from http import HTTPStatus
 from typing import Any, List, Optional
 
@@ -651,7 +651,7 @@ class ObjectView(MethodView):
         # only actually delete when not already deleted
         if found_object.deleted_on is None:
             # soft delete object
-            found_object.deleted_on = datetime.utcnow()
+            found_object.deleted_on = datetime.now(timezone.utc)
             # TODO soft delete komposition objects (also implement undelete…)
             DB.session.add(found_object)
             DB.session.commit()

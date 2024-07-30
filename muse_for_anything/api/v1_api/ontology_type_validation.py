@@ -1,27 +1,25 @@
 """Module containing validation functions for object types."""
 
 from dataclasses import dataclass
-from muse_for_anything.db.models.taxonomies import Taxonomy
-from flask.globals import _request_ctx_stack
-from werkzeug.urls import url_parse
+from http import HTTPStatus
+from typing import Any, Callable, Deque, Dict, Optional, Sequence, Set, Tuple
+from urllib.parse import urlparse
+
+from flask.globals import request_ctx
+from flask_babel import gettext
+from flask_smorest import abort
+from jsonschema import Draft7Validator
 from werkzeug.routing import MapAdapter
 
-from http import HTTPStatus
-
 from muse_for_anything.api.json_schema.schema_tools import SchemaWalker
-from typing import Any, Callable, Deque, Dict, Optional, Sequence, Set, Tuple
-from flask_babel import gettext
-from jsonschema import Draft7Validator
-
-from flask_smorest import abort
-
 from muse_for_anything.db.models.ontology_objects import (
     OntologyObjectType,
     OntologyObjectTypeVersion,
 )
-from .models.schema import TYPE_SCHEMA
-from ..json_schema import DataWalker, DataWalkerVisitor, DataVisitorException
+from muse_for_anything.db.models.taxonomies import Taxonomy
 
+from ..json_schema import DataVisitorException, DataWalker, DataWalkerVisitor
+from .models.schema import TYPE_SCHEMA
 
 SCHEMA_VALIDATOR = Draft7Validator(TYPE_SCHEMA)
 
@@ -150,14 +148,20 @@ class RefVisitor(DataWalkerVisitor):
                     f"Unknown local schema reference '{ref}'! No schema with matching id!"
                 )
         else:
-            url = url_parse(data["$ref"])
+            url = urlparse(data["$ref"])
 
-            ctx = _request_ctx_stack.top
-            if ctx is None:
+            try:
+                ctx = request_ctx._get_current_object()
+            except RuntimeError:
                 raise DataVisitorException(
                     "No request context to check schema url against!"
                 )
-            url_adapter: MapAdapter = ctx.url_adapter
+            url_adapter: Optional[MapAdapter] = ctx.url_adapter
+            if url_adapter is None:
+                raise DataVisitorException(
+                    "No url adapter found in request context! Unable to check URL."
+                    f"URL: '{url}'"
+                )
             if url.netloc != url_adapter.get_host(None):
                 raise DataVisitorException(
                     "Only references to schemas on the same MUSE4Anything instance allowed! "
@@ -211,12 +215,12 @@ class RefVisitor(DataWalkerVisitor):
                 namespace=namespace, object_type=object_type, version=version
             )
 
-            found_type_version: Optional[
-                OntologyObjectTypeVersion
-            ] = OntologyObjectTypeVersion.query.filter(
-                OntologyObjectTypeVersion.version == version_number,
-                OntologyObjectTypeVersion.object_type_id == object_type_id,
-            ).first()
+            found_type_version: Optional[OntologyObjectTypeVersion] = (
+                OntologyObjectTypeVersion.query.filter(
+                    OntologyObjectTypeVersion.version == version_number,
+                    OntologyObjectTypeVersion.object_type_id == object_type_id,
+                ).first()
+            )
 
             if (
                 found_type_version is None

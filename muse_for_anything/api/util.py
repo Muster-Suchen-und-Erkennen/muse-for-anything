@@ -1,4 +1,5 @@
 """Module containing utilities for flask smorest APIs."""
+
 from typing import Any, Dict
 from flask import url_for
 from flask_smorest import Blueprint

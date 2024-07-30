@@ -3,10 +3,8 @@ from __future__ import with_statement
 import logging
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-
 from alembic import context
+from sqlalchemy import engine_from_config, pool
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -23,9 +21,8 @@ logger = logging.getLogger("alembic.env")
 # target_metadata = mymodel.Base.metadata
 from flask import current_app
 
-current_app.config[
-    "SQLITE_FOREIGN_KEYS"
-] = False  # do NOT use foreign key checking when updating DB
+# do NOT use foreign key checking when updating DB
+current_app.config["SQLITE_FOREIGN_KEYS"] = False
 config.set_main_option(
     "sqlalchemy.url",
     str(current_app.extensions["migrate"].db.engine.url).replace("%", "%%"),
@@ -84,13 +81,17 @@ def run_migrations_online():
     )
 
     with connectable.connect() as connection:
+        extra_kwargs = dict(current_app.extensions["migrate"].configure_args)
+        # remove duplicate args from extra config
+        extra_kwargs.pop("compare_type", None)
+        extra_kwargs.pop("render_as_batch", None)
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
             process_revision_directives=process_revision_directives,
             render_as_batch=True,
             compare_type=True,
-            **current_app.extensions["migrate"].configure_args
+            **extra_kwargs,
         )
 
         with context.begin_transaction():

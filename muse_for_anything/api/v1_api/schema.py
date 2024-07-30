@@ -313,11 +313,11 @@ class TypeSchemaView(MethodView):
             )
 
         type_version_id = int(schema_id)
-        found_object_type_version: Optional[
-            OntologyObjectTypeVersion
-        ] = OntologyObjectTypeVersion.query.filter(
-            OntologyObjectTypeVersion.id == type_version_id
-        ).first()
+        found_object_type_version: Optional[OntologyObjectTypeVersion] = (
+            OntologyObjectTypeVersion.query.filter(
+                OntologyObjectTypeVersion.id == type_version_id
+            ).first()
+        )
 
         if found_object_type_version is None:
             abort(HTTPStatus.NOT_FOUND, message=gettext("Schema id not found."))

@@ -318,7 +318,9 @@ class TaxonomyItemRelationApiObjectGenerator(
             return
 
         return TaxonomyItemRelationData(
-            self=LinkGenerator.get_link_of(resource, query_params=query_params, ignore_deleted=True),
+            self=LinkGenerator.get_link_of(
+                resource, query_params=query_params, ignore_deleted=True
+            ),
             source_item=LinkGenerator.get_link_of(resource.taxonomy_item_source),
             target_item=LinkGenerator.get_link_of(resource.taxonomy_item_target),
             created_on=resource.created_on,

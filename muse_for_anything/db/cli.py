@@ -4,7 +4,6 @@ from typing import Optional
 
 import click
 from flask import Blueprint, Flask, current_app
-from flask.cli import with_appcontext
 
 from ..util.logging import get_logger
 
@@ -22,7 +21,6 @@ DB_COMMAND_LOGGER = "db"
 
 
 @DB_CLI.command("create-db")
-@with_appcontext
 def create_db():
     """Create all db tables."""
     create_db_function(current_app)
@@ -36,7 +34,6 @@ def create_db_function(app: Flask):
 
 @DB_CLI.command("create-admin-user")
 @click.option("-f", "--force", is_flag=True, default=False)
-@with_appcontext
 def create_admin_user_cli(force: bool = False):
     """Create an admin user with username and password 'admin'."""
     result = create_admin_user(current_app, force)
@@ -70,7 +67,6 @@ def create_admin_user(app: Flask, force: bool = False):
 @click.password_option("--password")
 @click.option("-r", "--role", default=None)
 @click.option("-f", "--force", is_flag=True, default=False)
-@with_appcontext
 def create_user_cli(
     username: str, password: str, role: Optional[str] = None, force: bool = False
 ):
@@ -120,7 +116,6 @@ def create_user(
 
 @DB_CLI.command("delete-user")
 @click.option("-u", "--username")
-@with_appcontext
 def delete_user_cli(username: str):
     """Delete the user with the given username."""
     click.confirm(
@@ -151,7 +146,6 @@ def delete_user(app: Flask, username: str):
 
 @DB_CLI.command("list-roles")
 @click.option("-u", "--username", default=None)
-@with_appcontext
 def list_roles_cli(username: Optional[str]):
     """List all user roles.
 
@@ -171,7 +165,6 @@ def list_roles_cli(username: Optional[str]):
 @DB_CLI.command("add-role")
 @click.option("-u", "--username")
 @click.option("-r", "--role")
-@with_appcontext
 def add_user_role_cli(username: str, role: str):
     """Add a role to an existing user."""
     user: Optional[User] = User.query.filter(User.username == username).first()
@@ -187,7 +180,6 @@ def add_user_role_cli(username: str, role: str):
 @DB_CLI.command("remove-role")
 @click.option("-u", "--username")
 @click.option("-r", "--role")
-@with_appcontext
 def remove_user_role_cli(username: str, role: str):
     """Remove a role from an existing user."""
     user: Optional[User] = User.query.filter(User.username == username).first()
@@ -202,7 +194,6 @@ def remove_user_role_cli(username: str, role: str):
 
 
 @DB_CLI.command("drop-db")
-@with_appcontext
 def drop_db():
     """Drop all db tables."""
     drop_db_function(current_app)
@@ -222,7 +213,6 @@ def register_cli_blueprint(app: Flask):
 
 @DB_CLI.command("export-namespace")
 @click.option("-n", "--namespace")
-@with_appcontext
 def map_namespace_to_owl_cli(namespace: int):
     """
     Export the specified namespace to an OWL file.

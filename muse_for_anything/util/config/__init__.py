@@ -1,4 +1,5 @@
 """Module containing default config values."""
+
 from logging import INFO, WARNING
 from os import urandom
 

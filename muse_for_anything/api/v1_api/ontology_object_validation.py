@@ -2,9 +2,10 @@
 
 from dataclasses import dataclass
 
+from urllib.parse import urlparse
+
 from muse_for_anything.db.models.taxonomies import TaxonomyItem
-from flask.globals import _request_ctx_stack
-from werkzeug.urls import url_parse
+from flask.globals import request_ctx
 from werkzeug.routing import MapAdapter
 
 from http import HTTPStatus
@@ -36,12 +37,18 @@ ALLOWED_SCHEMA_ENDPOINTS = set(["api-v1.TypeVersionView"])
 def resolve_type_version_schema_url(url_string: str):
     """Resolver url references without creating any http request by directly querying the database."""
     # TODO use url cache
-    url = url_parse(url_string)
+    url = urlparse(url_string)
     # url should already be from a validated type!
-    ctx = _request_ctx_stack.top
-    if ctx is None:
+    try:
+        ctx = request_ctx._get_current_object()
+    except RuntimeError:
         raise DataVisitorException("No request context to check schema url against!")
-    url_adapter: MapAdapter = ctx.url_adapter
+    url_adapter: Optional[MapAdapter] = ctx.url_adapter
+    if url_adapter is None:
+        raise DataVisitorException(
+            "No url adapter found in request context! Unable to check URL."
+            f"URL: '{url}'"
+        )
     if url.netloc != url_adapter.get_host(None):
         raise DataVisitorException(
             "Only references to schemas on the same MUSE4Anything instance allowed! "
@@ -62,12 +69,12 @@ def resolve_type_version_schema_url(url_string: str):
     version: str = params.get("version")
     if endpoint == "api-v1.TypeVersionView":
 
-        found_type_version: Optional[
-            OntologyObjectTypeVersion
-        ] = OntologyObjectTypeVersion.query.filter(
-            OntologyObjectTypeVersion.version == int(version),
-            OntologyObjectTypeVersion.object_type_id == int(object_type),
-        ).first()
+        found_type_version: Optional[OntologyObjectTypeVersion] = (
+            OntologyObjectTypeVersion.query.filter(
+                OntologyObjectTypeVersion.version == int(version),
+                OntologyObjectTypeVersion.object_type_id == int(object_type),
+            ).first()
+        )
 
         if found_type_version is None:
             raise DataVisitorException(f"Invalid schema ref! Schema '{url}' not found!")
