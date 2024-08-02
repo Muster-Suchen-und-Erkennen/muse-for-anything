@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, TypeVar, Union
 
 from sqlalchemy.orm.query import Query
-from sqlalchemy.sql import column, func
+from sqlalchemy.sql import column, func, select
 from sqlalchemy.sql.expression import and_, asc, desc, or_
 from sqlalchemy.sql.schema import Column
 from sqlalchemy.sql.selectable import CTE
@@ -110,13 +110,17 @@ def get_page_info(
         # always include cursor row
         query_filter = or_(cursor_column == cursor, and_(*filter_criteria))
         item_query = model.query.filter(query_filter).order_by(order_by)
-        cursor_row_cte: CTE = (
+        cursor_row_subq = (
             DB.session.query(
                 row_numbers.label("row"),
                 cursor_column,
             )
             .filter(query_filter)
-            .from_self(column("row"))
+            .subquery()
+        )
+
+        cursor_row_cte: CTE = (
+            select(cursor_row_subq.c.row)
             .filter(cursor_column == cursor)
             .cte("cursor_row")
         )
