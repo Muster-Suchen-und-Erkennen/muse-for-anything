@@ -37,14 +37,13 @@ class OntologyObjectType(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
         lazy="joined",
         primaryjoin="OntologyObjectType.current_version_id == OntologyObjectTypeVersion.id",
     )
-    versions = relationship(
-        "OntologyObjectTypeVersion",
+    versions: Mapped[List["OntologyObjectTypeVersion"]] = relationship(
         lazy="select",
         order_by="OntologyObjectTypeVersion.version",
         back_populates="ontology_type",
         primaryjoin="OntologyObjectType.id == OntologyObjectTypeVersion.object_type_id",
     )
-    ontology_objects: Mapped["OntologyObject"] = relationship(
+    ontology_objects: Mapped[List["OntologyObject"]] = relationship(
         lazy="select",
         back_populates="ontology_type",
     )
@@ -137,7 +136,7 @@ class OntologyObjectTypeVersion(MODEL, IdMixin, CreateDeleteMixin):
         back_populates="versions",
         primaryjoin=OntologyObjectType.id == object_type_id,
     )
-    ontology_object_versions: Mapped["OntologyObjectVersion"] = relationship(
+    ontology_object_versions: Mapped[List["OntologyObjectVersion"]] = relationship(
         lazy="select",
         back_populates="ontology_type_version",
     )
@@ -240,8 +239,7 @@ class OntologyObject(MODEL, IdMixin, NameDescriptionMixin, ChangesMixin):
         lazy="joined",
         primaryjoin="OntologyObject.current_version_id == OntologyObjectVersion.id",
     )
-    versions = relationship(
-        "OntologyObjectVersion",
+    versions: Mapped[List["OntologyObjectVersion"]] = relationship(
         lazy="select",
         order_by="OntologyObjectVersion.version",
         back_populates="ontology_object",
