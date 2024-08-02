@@ -355,6 +355,14 @@ class ObjectsView(MethodView):
                     "Object type is marked as deleted. No new Objects of this type can be created!"
                 ),
             )
+        if found_object_type.current_version is None:
+            # can only create objects of a type which has a current version
+            abort(
+                HTTPStatus.BAD_REQUEST,
+                message=gettext(
+                    "Object type has no current version. No Object can be created!"
+                ),
+            )
         if not found_object_type.is_toplevel_type:
             # can only create objects for non abstract top level object type!
             abort(
