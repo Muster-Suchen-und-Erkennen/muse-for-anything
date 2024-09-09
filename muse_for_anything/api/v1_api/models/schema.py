@@ -541,7 +541,7 @@ JSON_ENUM_PROPERTIES_SCHEMA = {
                 "oneOf": [
                     JSON_BASE_TYPE_NULL_REF,
                     JSON_BASE_TYPE_BOOLEAN_REF,
-                    JSON_BASE_TYPE_INTEGER_REF,
+                    # This cannot be part of oneOf, as it overlaps with number! JSON_BASE_TYPE_INTEGER_REF,
                     JSON_BASE_TYPE_NUMBER_REF,
                     JSON_BASE_TYPE_STRING_REF,
                 ],
