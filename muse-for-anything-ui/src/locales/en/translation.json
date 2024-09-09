@@ -25,6 +25,10 @@
             "ont-object": "Edit Object",
             "ont-taxonomy": "Edit Taxonomy",
             "ont-taxonomy-item": "Edit Item"
+        },
+        "outdated": {
+            "ont-type": "Update Object Type",
+            "ont-object": "Update Object Type"
         }
     },
     "themes": {
@@ -101,7 +105,7 @@
             "ont-taxonomy": "Taxonomies",
             "ont-taxonomy-item": "Taxonomy-Items",
             "ont-taxonomy-item-relation": "Taxonomy-Item-Relations",
-            "ont-taxonomy-item-version": "Taxonomy-Item Versions"
+            "ont-taxonomy-item-version": "Taxonomy-Item Versions",
         },
         "create": {
             "user": "Create User",
@@ -143,6 +147,10 @@
         "export": {
             "ont-namespace": "Export Namespace"
         },
+        "outdated": {
+            "ont-type": "Update Object Type",
+            "ont-object": "Update Object Type"
+        },
         "user": "User",
         "user-role": "User-Role",
         "user-grant": "User-Grant",
@@ -175,6 +183,7 @@
         },
         "keys": {
             "?deleted": "Show deleted",
+            "?outdated": "Show only outdated",
             "?type-id": "Filter by object type"
         }
     },

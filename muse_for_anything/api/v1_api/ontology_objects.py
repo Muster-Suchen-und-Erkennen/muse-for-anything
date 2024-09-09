@@ -9,7 +9,7 @@ from flask.views import MethodView
 from flask_babel import gettext
 from flask_smorest import abort
 from marshmallow.utils import INCLUDE
-from sqlalchemy.sql.expression import or_, select
+from sqlalchemy.sql.expression import or_, select, join
 
 from muse_for_anything.api.pagination_util import (
     PaginationOptions,
@@ -165,6 +165,7 @@ class ObjectsView(MethodView):
         namespace: str,
         search: Optional[str] = None,
         deleted: bool = False,
+        outdated: bool = False,
         **kwargs: Any,
     ):
         """Get the page of objects."""
@@ -196,6 +197,9 @@ class ObjectsView(MethodView):
         if deleted and not is_admin:
             deleted = False
 
+        if outdated and not is_admin:
+            outdated = False
+
         ontology_object_filter = (
             (
                 OntologyObject.deleted_on == None
@@ -223,6 +227,12 @@ class ObjectsView(MethodView):
                     OntologyObject.description.contains(search),
                 ),
             )
+        if outdated:
+            if found_type:
+                ontology_object_filter = (
+                    *ontology_object_filter,
+                    OntologyObject.current_version_id != found_type.current_version_id,
+                )
 
         pagination_info = default_get_page_info(
             OntologyObject,
@@ -258,6 +268,8 @@ class ObjectsView(MethodView):
             filter_query_params["search"] = search
         if deleted:
             filter_query_params["deleted"] = deleted
+        if outdated:
+            filter_query_params["outdated"] = outdated
 
         sort_options = [
             CollectionFilterOption("name"),
@@ -287,6 +299,13 @@ class ObjectsView(MethodView):
             page_resource.filters.append(
                 CollectionFilter(
                     key="?deleted",
+                    type="boolean",
+                    options=[CollectionFilterOption("True")],
+                )
+            )
+            page_resource.filters.append(
+                CollectionFilter(
+                    key="?outdated",
                     type="boolean",
                     options=[CollectionFilterOption("True")],
                 )
