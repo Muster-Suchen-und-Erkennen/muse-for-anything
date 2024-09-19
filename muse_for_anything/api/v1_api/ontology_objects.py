@@ -66,6 +66,7 @@ from ...db.models.namespace import Namespace
 from ...db.models.ontology_objects import (
     OntologyObject,
     OntologyObjectType,
+    OntologyObjectTypeVersion,
     OntologyObjectVersion,
 )
 
@@ -232,9 +233,21 @@ class ObjectsView(MethodView):
                 *ontology_object_filter,
                 OntologyObject.current_version_id.in_(
                     select(OntologyObjectVersion.id)
-                    .where(OntologyObjectVersion.object_type_version_id != found_type.current_version_id)
+                    .join(
+                        OntologyObjectTypeVersion,
+                        OntologyObjectTypeVersion.object_type_id
+                        == OntologyObject.object_type_id,
+                    )
+                    .where(
+                        OntologyObjectTypeVersion.id
+                        == OntologyObjectType.current_version_id
+                    )
+                    .where(
+                        OntologyObjectVersion.object_type_version_id
+                        != OntologyObjectType.current_version_id
+                    )
                     .where(OntologyObjectVersion.id == OntologyObject.current_version_id)
-                )
+                ),
             )
 
         pagination_info = default_get_page_info(
