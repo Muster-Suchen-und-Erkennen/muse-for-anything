@@ -228,11 +228,14 @@ class ObjectsView(MethodView):
                 ),
             )
         if outdated:
-            if found_type:
-                ontology_object_filter = (
-                    *ontology_object_filter,
-                    OntologyObject.current_version_id != found_type.current_version_id,
+            ontology_object_filter = (
+                *ontology_object_filter,
+                OntologyObject.current_version_id.in_(
+                    select(OntologyObjectVersion.id)
+                    .where(OntologyObjectVersion.object_type_version_id != found_type.current_version_id)
+                    .where(OntologyObjectVersion.id == OntologyObject.current_version_id)
                 )
+            )
 
         pagination_info = default_get_page_info(
             OntologyObject,
