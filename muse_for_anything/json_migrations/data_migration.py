@@ -15,6 +15,12 @@ def migrate_object(data_object, target_schema, transformations):
                 except ValueError:
                     # print("Unable to cast \"", data_object['data']['data'], "\" to number!")
                     raise ValueError
+            case "Cast to integer!":
+                try:
+                    data_object["data"]["data"] = int(float(data_object["data"]["data"]))
+                except ValueError:
+                    # print("Unable to cast \"", data_object['data']['data'], "\" to number!")
+                    raise ValueError
             case "Cast to string!":
                 try:
                     data_object["data"]["data"] = str(data_object["data"]["data"])

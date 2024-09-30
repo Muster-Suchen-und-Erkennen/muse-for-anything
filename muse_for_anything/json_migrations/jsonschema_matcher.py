@@ -26,6 +26,11 @@ def match_schema(source, target):
                         transformations.append("Cast to number!")
                     else:
                         transformations.append("Unsupported transformation!")
+                case ["integer"]:
+                    if source_type in [["string"], ["number"], ["boolean"]]:
+                        transformations.append("Cast to integer!")
+                    else:
+                        transformations.append("Unsupported transformation!")
                 case ["string"]:
                     transformations.append("Cast to string!")
                 case _:
