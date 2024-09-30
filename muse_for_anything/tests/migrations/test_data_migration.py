@@ -87,7 +87,7 @@ class TestMigrationToNumber(unittest.TestCase):
                 "name": "Object",
                 "self": {
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                    "name": "IntObject",
+                    "name": "Object",
                     "rel": [],
                     "resourceKey": {
                         "namespaceId": "1",
@@ -134,7 +134,7 @@ class TestMigrationToNumber(unittest.TestCase):
                 "name": "Object",
                 "self": {
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                    "name": "IntObject",
+                    "name": "Object",
                     "rel": [],
                     "resourceKey": {
                         "namespaceId": "1",
@@ -178,7 +178,7 @@ class TestMigrationToNumber(unittest.TestCase):
                 "name": "Object",
                 "self": {
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                    "name": "IntObject",
+                    "name": "Object",
                     "rel": [],
                     "resourceKey": {
                         "namespaceId": "1",
@@ -202,7 +202,7 @@ class TestMigrationToNumber(unittest.TestCase):
                 "name": "Object",
                 "self": {
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                    "name": "IntObject",
+                    "name": "Object",
                     "rel": [],
                     "resourceKey": {
                         "namespaceId": "1",
@@ -254,7 +254,7 @@ class TestMigrationToNumber(unittest.TestCase):
                     "name": "Object",
                     "self": {
                         "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                        "name": "IntObject",
+                        "name": "Object",
                         "rel": [],
                         "resourceKey": {
                             "namespaceId": "1",
@@ -338,7 +338,7 @@ class TestMigrationToInteger(unittest.TestCase):
                 "name": "Object",
                 "self": {
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                    "name": "IntObject",
+                    "name": "Object",
                     "rel": [],
                     "resourceKey": {
                         "namespaceId": "1",
@@ -388,7 +388,6 @@ class TestMigrationToInteger(unittest.TestCase):
         self.assertEqual(15, updated_valid_data_object["data"]["data"])
         self.assertEqual(2, updated_valid_data_object["version"])
 
-
     def test_invalid_from_str_to_int(self):
         source_schema = """
         {
@@ -415,7 +414,7 @@ class TestMigrationToInteger(unittest.TestCase):
                 "name": "Object",
                 "self": {
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                    "name": "IntObject",
+                    "name": "Object",
                     "rel": [],
                     "resourceKey": {
                         "namespaceId": "1",
@@ -459,7 +458,7 @@ class TestMigrationToInteger(unittest.TestCase):
                 "name": "Object",
                 "self": {
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                    "name": "IntObject",
+                    "name": "Object",
                     "rel": [],
                     "resourceKey": {
                         "namespaceId": "1",
@@ -483,7 +482,7 @@ class TestMigrationToInteger(unittest.TestCase):
                 "name": "Object",
                 "self": {
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                    "name": "IntObject",
+                    "name": "Object",
                     "rel": [],
                     "resourceKey": {
                         "namespaceId": "1",
@@ -535,7 +534,7 @@ class TestMigrationToInteger(unittest.TestCase):
                     "name": "Object",
                     "self": {
                         "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                        "name": "IntObject",
+                        "name": "Object",
                         "rel": [],
                         "resourceKey": {
                             "namespaceId": "1",
@@ -619,7 +618,7 @@ class TestMigrationToString(unittest.TestCase):
                 "name": "Object",
                 "self": {
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                    "name": "IntObject",
+                    "name": "Object",
                     "rel": [],
                     "resourceKey": {
                         "namespaceId": "1",
@@ -666,7 +665,7 @@ class TestMigrationToString(unittest.TestCase):
                 "name": "Object",
                 "self": {
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                    "name": "IntObject",
+                    "name": "Object",
                     "rel": [],
                     "resourceKey": {
                         "namespaceId": "1",
@@ -713,7 +712,7 @@ class TestMigrationToString(unittest.TestCase):
                 "name": "Object",
                 "self": {
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                    "name": "IntObject",
+                    "name": "Object",
                     "rel": [],
                     "resourceKey": {
                         "namespaceId": "1",
@@ -773,7 +772,7 @@ class TestMigrationToString(unittest.TestCase):
                 "name": "Object",
                 "self": {
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                    "name": "IntObject",
+                    "name": "Object",
                     "rel": [],
                     "resourceKey": {
                         "namespaceId": "1",
@@ -793,7 +792,6 @@ class TestMigrationToString(unittest.TestCase):
         )
         self.assertEqual("[2, 9, 44]", updated_data_object_true["data"]["data"])
         self.assertEqual(2, updated_data_object_true["version"])
-
 
     def test_from_obj_to_str(self):
         pass
@@ -838,7 +836,7 @@ class TestMigrationToString(unittest.TestCase):
                 "name": "Object",
                 "self": {
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                    "name": "IntObject",
+                    "name": "Object",
                     "rel": [],
                     "resourceKey": {
                         "namespaceId": "1",
@@ -856,8 +854,8 @@ class TestMigrationToString(unittest.TestCase):
         updated_data_object_true = migrate_object(
             data_object, self.target_schema, transformations
         )
-        self.assertEqual("[True, 12, \'Hello\']", updated_data_object_true["data"]["data"])
-        self.assertEqual(2, updated_data_object_true["version"])        
+        self.assertEqual("[True, 12, 'Hello']", updated_data_object_true["data"]["data"])
+        self.assertEqual(2, updated_data_object_true["version"])
 
     def test_from_res_ref_to_str(self):
         pass
