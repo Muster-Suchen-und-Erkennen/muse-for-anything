@@ -27,5 +27,5 @@ def migrate_object(data_object, target_schema, transformations):
                 except ValueError:
                     raise ValueError
     # print(datetime.now(timezone.utc))
-    data_object["version"] = data_object["version"] + 1
+    data_object["data"]["version"] = data_object["data"]["version"] + 1
     return data_object

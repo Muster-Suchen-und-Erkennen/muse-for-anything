@@ -11,32 +11,28 @@ class TestMigrationSameType(unittest.TestCase):
     def test_migration_same_type(self):
         source_schema = """
             {
-            "$ref": "#/definitions/root",
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "abstract": false,
-            "definitions": {
-                "root": {
-                "type": [
-                    "string"
-                ]
-                }
-            },
-            "title": "Type"
+                "$ref": "#/definitions/root",
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "abstract": false,
+                "definitions": {
+                    "root": {
+                        "type": ["string"]
+                    }
+                },
+                "title": "Type"
             }
             """
         target_schema = """
             {
-            "$ref": "#/definitions/root",
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "abstract": false,
-            "definitions": {
-                "root": {
-                "type": [
-                    "string"
-                ]
-                }
-            },
-            "title": "StringType"
+                "$ref": "#/definitions/root",
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "abstract": false,
+                "definitions": {
+                    "root": {
+                        "type": ["string"]
+                    }
+                },
+                "title": "StringType"
             }
             """
         transformations = match_schema(source_schema, target_schema)
@@ -47,34 +43,30 @@ class TestMigrationToNumber(unittest.TestCase):
 
     target_schema = """
         {
-        "$ref": "#/definitions/root",
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "abstract": false,
-        "definitions": {
-            "root": {
-            "type": [
-                "number"
-            ]
-            }
-        },
-        "title": "Type"
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": false,
+            "definitions": {
+                "root": {
+                    "type": ["number"]
+                }
+            },
+            "title": "Type"
         }
     """
 
     def test_valid_from_str_to_number(self):
         source_schema = """
         {
-        "$ref": "#/definitions/root",
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "abstract": false,
-        "definitions": {
-            "root": {
-            "type": [
-                "string"
-            ]
-            }
-        },
-        "title": "Type"
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": false,
+            "definitions": {
+                "root": {
+                    "type": ["string"]
+                }
+            },
+            "title": "Type"
         }
         """
         data_object_valid = """
@@ -95,10 +87,10 @@ class TestMigrationToNumber(unittest.TestCase):
                     },
                     "resourceType": "ont-object",
                     "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
-                }
-            },
-            "updatedOn": "2024-09-27T08:02:44.213790",
-            "version": 1
+                },
+                "updatedOn": "2024-09-27T08:02:44.213790",
+                "version": 1
+            }
         }
         """
         transformations = match_schema(source_schema, self.target_schema)
@@ -106,22 +98,20 @@ class TestMigrationToNumber(unittest.TestCase):
             data_object_valid, self.target_schema, transformations
         )
         self.assertEqual(15.8765, updated_valid_data_object["data"]["data"])
-        self.assertEqual(2, updated_valid_data_object["version"])
+        self.assertEqual(2, updated_valid_data_object["data"]["version"])
 
     def test_invalid_from_str_to_number(self):
         source_schema = """
         {
-        "$ref": "#/definitions/root",
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "abstract": false,
-        "definitions": {
-            "root": {
-            "type": [
-                "string"
-            ]
-            }
-        },
-        "title": "Type"
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": false,
+            "definitions": {
+                "root": {
+                    "type": ["string"]
+                }
+            },
+            "title": "Type"
         }
         """
         data_object_invalid = """
@@ -142,10 +132,10 @@ class TestMigrationToNumber(unittest.TestCase):
                     },
                     "resourceType": "ont-object",
                     "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
-                }
-            },
-            "updatedOn": "2024-09-27T08:02:44.213790",
-            "version": 1
+                },
+                "updatedOn": "2024-09-27T08:02:44.213790",
+                "version": 1
+            }
         }
         """
         transformations = match_schema(source_schema, self.target_schema)
@@ -155,17 +145,15 @@ class TestMigrationToNumber(unittest.TestCase):
     def test_from_bool_to_number(self):
         source_schema = """
         {
-        "$ref": "#/definitions/root",
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "abstract": false,
-        "definitions": {
-            "root": {
-            "type": [
-                "boolean"
-            ]
-            }
-        },
-        "title": "Type"
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": false,
+            "definitions": {
+                "root": {
+                    "type": ["boolean"]
+                }
+            },
+            "title": "Type"
         }
         """
         data_object_true = """
@@ -186,10 +174,10 @@ class TestMigrationToNumber(unittest.TestCase):
                     },
                     "resourceType": "ont-object",
                     "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
-                }
-            },
-            "updatedOn": "2024-09-27T08:02:44.213790",
-            "version": 1
+                },
+                "updatedOn": "2024-09-27T08:02:44.213790",
+                "version": 1
+            }
         }
         """
         data_object_false = """
@@ -210,10 +198,10 @@ class TestMigrationToNumber(unittest.TestCase):
                     },
                     "resourceType": "ont-object",
                     "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
-                }
-            },
-            "updatedOn": "2024-09-27T08:02:44.213790",
-            "version": 1
+                },
+                "updatedOn": "2024-09-27T08:02:44.213790",
+                "version": 1
+            }
         }
         """
         transformations = match_schema(source_schema, self.target_schema)
@@ -224,24 +212,22 @@ class TestMigrationToNumber(unittest.TestCase):
             data_object_false, self.target_schema, transformations
         )
         self.assertEqual(1, updated_data_object_true["data"]["data"])
-        self.assertEqual(2, updated_data_object_true["version"])
+        self.assertEqual(2, updated_data_object_true["data"]["version"])
         self.assertEqual(0, updated_data_object_false["data"]["data"])
-        self.assertEqual(2, updated_data_object_false["version"])
+        self.assertEqual(2, updated_data_object_false["data"]["version"])
 
     def test_from_int_to_number(self):
         source_schema = """
             {
-            "$ref": "#/definitions/root",
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "abstract": false,
-            "definitions": {
-                "root": {
-                "type": [
-                    "integer"
-                ]
-                }
-            },
-            "title": "Type"
+                "$ref": "#/definitions/root",
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "abstract": false,
+                "definitions": {
+                    "root": {
+                        "type": ["integer"]
+                    }
+                },
+                "title": "Type"
             }
             """
         data_object_true = """
@@ -262,10 +248,10 @@ class TestMigrationToNumber(unittest.TestCase):
                         },
                         "resourceType": "ont-object",
                         "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
-                    }
-                },
-                "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1
+                    },
+                    "updatedOn": "2024-09-27T08:02:44.213790",
+                    "version": 1
+                }
             }
             """
         transformations = match_schema(source_schema, self.target_schema)
@@ -273,7 +259,7 @@ class TestMigrationToNumber(unittest.TestCase):
             data_object_true, self.target_schema, transformations
         )
         self.assertEqual(2984.0, updated_data_object_true["data"]["data"])
-        self.assertEqual(2, updated_data_object_true["version"])
+        self.assertEqual(2, updated_data_object_true["data"]["version"])
 
     def test_from_enum_to_number(self):
         pass
@@ -298,34 +284,30 @@ class TestMigrationToInteger(unittest.TestCase):
 
     target_schema = """
         {
-        "$ref": "#/definitions/root",
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "abstract": false,
-        "definitions": {
-            "root": {
-            "type": [
-                "integer"
-            ]
-            }
-        },
-        "title": "Type"
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": false,
+            "definitions": {
+                "root": {
+                    "type": ["integer"]
+                }
+            },
+            "title": "Type"
         }
     """
 
     def test_valid_from_str_to_int(self):
         source_schema = """
         {
-        "$ref": "#/definitions/root",
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "abstract": false,
-        "definitions": {
-            "root": {
-            "type": [
-                "string"
-            ]
-            }
-        },
-        "title": "Type"
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": false,
+            "definitions": {
+                "root": {
+                    "type": ["string"]
+                }
+            },
+            "title": "Type"
         }
         """
         data_object_valid_one = """
@@ -346,10 +328,10 @@ class TestMigrationToInteger(unittest.TestCase):
                     },
                     "resourceType": "ont-object",
                     "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
-                }
-            },
-            "updatedOn": "2024-09-27T08:02:44.213790",
-            "version": 1
+                },
+                "updatedOn": "2024-09-27T08:02:44.213790",
+                "version": 1
+            }
         }
         """
         data_object_valid_two = """
@@ -370,10 +352,10 @@ class TestMigrationToInteger(unittest.TestCase):
                     },
                     "resourceType": "ont-object",
                     "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
-                }
-            },
-            "updatedOn": "2024-09-27T08:02:44.213790",
-            "version": 1
+                },
+                "updatedOn": "2024-09-27T08:02:44.213790",
+                "version": 1
+            }
         }
         """
         transformations = match_schema(source_schema, self.target_schema)
@@ -381,27 +363,25 @@ class TestMigrationToInteger(unittest.TestCase):
             data_object_valid_one, self.target_schema, transformations
         )
         self.assertEqual(15, updated_valid_data_object["data"]["data"])
-        self.assertEqual(2, updated_valid_data_object["version"])
+        self.assertEqual(2, updated_valid_data_object["data"]["version"])
         updated_valid_data_object = migrate_object(
             data_object_valid_two, self.target_schema, transformations
         )
         self.assertEqual(15, updated_valid_data_object["data"]["data"])
-        self.assertEqual(2, updated_valid_data_object["version"])
+        self.assertEqual(2, updated_valid_data_object["data"]["version"])
 
     def test_invalid_from_str_to_int(self):
         source_schema = """
         {
-        "$ref": "#/definitions/root",
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "abstract": false,
-        "definitions": {
-            "root": {
-            "type": [
-                "string"
-            ]
-            }
-        },
-        "title": "Type"
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": false,
+            "definitions": {
+                "root": {
+                    "type": ["string"]
+                }
+            },
+            "title": "Type"
         }
         """
         data_object_invalid = """
@@ -422,10 +402,10 @@ class TestMigrationToInteger(unittest.TestCase):
                     },
                     "resourceType": "ont-object",
                     "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
-                }
-            },
-            "updatedOn": "2024-09-27T08:02:44.213790",
-            "version": 1
+                },
+                "updatedOn": "2024-09-27T08:02:44.213790",
+                "version": 1
+            }
         }
         """
         transformations = match_schema(source_schema, self.target_schema)
@@ -435,17 +415,15 @@ class TestMigrationToInteger(unittest.TestCase):
     def test_from_bool_to_int(self):
         source_schema = """
         {
-        "$ref": "#/definitions/root",
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "abstract": false,
-        "definitions": {
-            "root": {
-            "type": [
-                "boolean"
-            ]
-            }
-        },
-        "title": "Type"
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": false,
+            "definitions": {
+                "root": {
+                    "type": ["boolean"]
+                }
+            },
+            "title": "Type"
         }
         """
         data_object_true = """
@@ -466,10 +444,10 @@ class TestMigrationToInteger(unittest.TestCase):
                     },
                     "resourceType": "ont-object",
                     "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
-                }
-            },
-            "updatedOn": "2024-09-27T08:02:44.213790",
-            "version": 1
+                },
+                "updatedOn": "2024-09-27T08:02:44.213790",
+                "version": 1
+            }
         }
         """
         data_object_false = """
@@ -490,10 +468,10 @@ class TestMigrationToInteger(unittest.TestCase):
                     },
                     "resourceType": "ont-object",
                     "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
-                }
-            },
-            "updatedOn": "2024-09-27T08:02:44.213790",
-            "version": 1
+                },
+                "updatedOn": "2024-09-27T08:02:44.213790",
+                "version": 1
+            }
         }
         """
         transformations = match_schema(source_schema, self.target_schema)
@@ -504,24 +482,22 @@ class TestMigrationToInteger(unittest.TestCase):
             data_object_false, self.target_schema, transformations
         )
         self.assertEqual(1, updated_data_object_true["data"]["data"])
-        self.assertEqual(2, updated_data_object_true["version"])
+        self.assertEqual(2, updated_data_object_true["data"]["version"])
         self.assertEqual(0, updated_data_object_false["data"]["data"])
-        self.assertEqual(2, updated_data_object_false["version"])
+        self.assertEqual(2, updated_data_object_false["data"]["version"])
 
     def test_from_number_to_int(self):
         source_schema = """
             {
-            "$ref": "#/definitions/root",
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "abstract": false,
-            "definitions": {
-                "root": {
-                "type": [
-                    "number"
-                ]
-                }
-            },
-            "title": "Type"
+                "$ref": "#/definitions/root",
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "abstract": false,
+                "definitions": {
+                    "root": {
+                        "type": ["number"]
+                    }
+                },
+                "title": "Type"
             }
             """
         data_object_true = """
@@ -542,10 +518,10 @@ class TestMigrationToInteger(unittest.TestCase):
                         },
                         "resourceType": "ont-object",
                         "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
-                    }
-                },
-                "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1
+                    },
+                    "updatedOn": "2024-09-27T08:02:44.213790",
+                    "version": 1
+                }
             }
             """
         transformations = match_schema(source_schema, self.target_schema)
@@ -553,7 +529,7 @@ class TestMigrationToInteger(unittest.TestCase):
             data_object_true, self.target_schema, transformations
         )
         self.assertEqual(5, updated_data_object_true["data"]["data"])
-        self.assertEqual(2, updated_data_object_true["version"])
+        self.assertEqual(2, updated_data_object_true["data"]["version"])
 
     def test_from_enum_to_int(self):
         pass
@@ -578,34 +554,30 @@ class TestMigrationToString(unittest.TestCase):
 
     target_schema = """
         {
-        "$ref": "#/definitions/root",
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "abstract": false,
-        "definitions": {
-            "root": {
-            "type": [
-                "string"
-            ]
-            }
-        },
-        "title": "Type"
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": false,
+            "definitions": {
+                "root": {
+                    "type": ["string"]
+                }
+            },
+            "title": "Type"
         }
     """
 
     def test_from_int_to_str(self):
         source_schema = """
             {
-            "$ref": "#/definitions/root",
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "abstract": false,
-            "definitions": {
-                "root": {
-                "type": [
-                    "integer"
-                ]
-                }
-            },
-            "title": "Type"
+                "$ref": "#/definitions/root",
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "abstract": false,
+                "definitions": {
+                    "root": {
+                        "type": ["integer"]
+                    }
+                },
+                "title": "Type"
             }
             """
         data_object = """
@@ -626,10 +598,10 @@ class TestMigrationToString(unittest.TestCase):
                     },
                     "resourceType": "ont-object",
                     "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
-                }
-            },
-            "updatedOn": "2024-09-27T08:02:44.213790",
-            "version": 1
+                },
+                "updatedOn": "2024-09-27T08:02:44.213790",
+                "version": 1
+            }
         }
         """
         transformations = match_schema(source_schema, self.target_schema)
@@ -637,22 +609,20 @@ class TestMigrationToString(unittest.TestCase):
             data_object, self.target_schema, transformations
         )
         self.assertEqual("1944", updated_data_object_true["data"]["data"])
-        self.assertEqual(2, updated_data_object_true["version"])
+        self.assertEqual(2, updated_data_object_true["data"]["version"])
 
     def test_from_number_to_str(self):
         source_schema = """
             {
-            "$ref": "#/definitions/root",
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "abstract": false,
-            "definitions": {
-                "root": {
-                "type": [
-                    "number"
-                ]
-                }
-            },
-            "title": "Type"
+                "$ref": "#/definitions/root",
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "abstract": false,
+                "definitions": {
+                    "root": {
+                        "type": ["number"]
+                    }
+                },
+                "title": "Type"
             }
             """
         data_object = """
@@ -673,10 +643,10 @@ class TestMigrationToString(unittest.TestCase):
                     },
                     "resourceType": "ont-object",
                     "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
-                }
-            },
-            "updatedOn": "2024-09-27T08:02:44.213790",
-            "version": 1
+                },
+                "updatedOn": "2024-09-27T08:02:44.213790",
+                "version": 1
+            }
         }
         """
         transformations = match_schema(source_schema, self.target_schema)
@@ -684,22 +654,20 @@ class TestMigrationToString(unittest.TestCase):
             data_object, self.target_schema, transformations
         )
         self.assertEqual("3.14159265359", updated_data_object_true["data"]["data"])
-        self.assertEqual(2, updated_data_object_true["version"])
+        self.assertEqual(2, updated_data_object_true["data"]["version"])
 
     def test_from_bool_to_str(self):
         source_schema = """
             {
-            "$ref": "#/definitions/root",
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "abstract": false,
-            "definitions": {
-                "root": {
-                "type": [
-                    "boolean"
-                ]
-                }
-            },
-            "title": "Type"
+                "$ref": "#/definitions/root",
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "abstract": false,
+                "definitions": {
+                    "root": {
+                        "type": ["boolean"]
+                    }
+                },
+                "title": "Type"
             }
             """
         data_object = """
@@ -720,10 +688,10 @@ class TestMigrationToString(unittest.TestCase):
                     },
                     "resourceType": "ont-object",
                     "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
-                }
-            },
-            "updatedOn": "2024-09-27T08:02:44.213790",
-            "version": 1
+                },
+                "updatedOn": "2024-09-27T08:02:44.213790",
+                "version": 1
+            }
         }
         """
         transformations = match_schema(source_schema, self.target_schema)
@@ -731,7 +699,7 @@ class TestMigrationToString(unittest.TestCase):
             data_object, self.target_schema, transformations
         )
         self.assertEqual("True", updated_data_object_true["data"]["data"])
-        self.assertEqual(2, updated_data_object_true["version"])
+        self.assertEqual(2, updated_data_object_true["data"]["version"])
 
     def test_from_enum_to_str(self):
         pass
@@ -739,23 +707,19 @@ class TestMigrationToString(unittest.TestCase):
     def test_from_array_to_str(self):
         source_schema = """
             {
-            "$ref": "#/definitions/root",
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "abstract": false,
-            "definitions": {
-                "root": {
-                    "arrayType": "array",
-                    "items": {
-                        "type": [
-                            "boolean"
-                        ]
-                    },
-                    "type": [
-                        "array"
-                    ]
-                }
-            },
-            "title": "Type"
+                "$ref": "#/definitions/root",
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "abstract": false,
+                "definitions": {
+                    "root": {
+                        "arrayType": "array",
+                        "items": {
+                            "type": ["boolean"]
+                        },
+                        "type": ["array"]
+                    }
+                },
+                "title": "Type"
             }
             """
         data_object = """
@@ -780,10 +744,10 @@ class TestMigrationToString(unittest.TestCase):
                     },
                     "resourceType": "ont-object",
                     "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
-                }
-            },
-            "updatedOn": "2024-09-27T08:02:44.213790",
-            "version": 1
+                },
+                "updatedOn": "2024-09-27T08:02:44.213790",
+                "version": 1
+            }
         }
         """
         transformations = match_schema(source_schema, self.target_schema)
@@ -791,35 +755,93 @@ class TestMigrationToString(unittest.TestCase):
             data_object, self.target_schema, transformations
         )
         self.assertEqual("[2, 9, 44]", updated_data_object_true["data"]["data"])
-        self.assertEqual(2, updated_data_object_true["version"])
+        self.assertEqual(2, updated_data_object_true["data"]["version"])
 
     def test_from_obj_to_str(self):
-        pass
-
-    def test_from_tuple_to_str(self):
         source_schema = """
-            {
+        {
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
             "abstract": false,
             "definitions": {
                 "root": {
-                    "arrayType": "tuple",
-                    "items": [
-                        {
-                        "type": ["boolean"]
+                    "properties": {
+                        "one": {
+                            "type": ["integer"]
                         },
-                        {
-                        "type": ["integer"]
+                        "three": {
+                            "type": ["boolean"]
                         },
-                        {
-                        "type": ["string"]
+                        "two": {
+                            "type": ["string"]
                         }
-                    ],
-                    "type": ["array"]
-                    }
+                    },
+                    "type": ["object"]
+                }
             },
             "title": "Type"
+        }
+        """
+        data_object = """
+        {
+            "data": {
+                "createdOn": "2024-09-27T08:02:44.203024",
+                "data": {
+                    "one": 42,
+                    "three": true,
+                    "two": "Hello World!"
+                },
+                "deletedOn": null,
+                "description": "",
+                "name": "Object",
+                "self": {
+                    "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
+                    "name": "Object",
+                    "rel": [],
+                    "resourceKey": {
+                        "namespaceId": "1",
+                        "objectId": "13"
+                    },
+                    "resourceType": "ont-object",
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
+                },
+                "updatedOn": "2024-09-27T08:02:44.213790",
+                "version": 1
+            }
+        }
+        """
+        transformations = match_schema(source_schema, self.target_schema)
+        updated_data_object = migrate_object(
+            data_object, self.target_schema, transformations
+        )
+        self.assertEqual("{'one': 42, 'three': True, 'two': 'Hello World!'}", updated_data_object["data"]["data"])
+        self.assertEqual(2, updated_data_object["data"]["version"])
+        
+              
+    def test_from_tuple_to_str(self):
+        source_schema = """
+            {
+                "$ref": "#/definitions/root",
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "abstract": false,
+                "definitions": {
+                    "root": {
+                        "arrayType": "tuple",
+                        "items": [
+                            {
+                                "type": ["boolean"]
+                            },
+                            {
+                                "type": ["integer"]
+                            },
+                            {
+                                "type": ["string"]
+                            }
+                        ],
+                        "type": ["array"]
+                    }
+                },
+                "title": "Type"
             }
             """
         data_object = """
@@ -844,10 +866,10 @@ class TestMigrationToString(unittest.TestCase):
                     },
                     "resourceType": "ont-object",
                     "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
-                }
-            },
-            "updatedOn": "2024-09-27T08:02:44.213790",
-            "version": 1
+                },
+                "updatedOn": "2024-09-27T08:02:44.213790",
+                "version": 1
+            }
         }
         """
         transformations = match_schema(source_schema, self.target_schema)
@@ -855,7 +877,7 @@ class TestMigrationToString(unittest.TestCase):
             data_object, self.target_schema, transformations
         )
         self.assertEqual("[True, 12, 'Hello']", updated_data_object_true["data"]["data"])
-        self.assertEqual(2, updated_data_object_true["version"])
+        self.assertEqual(2, updated_data_object_true["data"]["version"])
 
     def test_from_res_ref_to_str(self):
         pass
