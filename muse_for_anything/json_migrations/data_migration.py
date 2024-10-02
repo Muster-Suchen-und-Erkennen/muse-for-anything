@@ -5,7 +5,6 @@ from jsonschema import Draft7Validator
 
 
 def migrate_object(data_object, target_schema, transformations):
-    data_object = json.loads(data_object)
     # validator = Draft7Validator(target_schema)
     for transformation in transformations:
         match transformation:
@@ -26,6 +25,4 @@ def migrate_object(data_object, target_schema, transformations):
                     data_object["data"]["data"] = str(data_object["data"]["data"])
                 except ValueError:
                     raise ValueError
-    # print(datetime.now(timezone.utc))
-    data_object["data"]["version"] = data_object["data"]["version"] + 1
     return data_object

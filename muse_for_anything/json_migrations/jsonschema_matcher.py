@@ -3,15 +3,8 @@ from pathlib import Path
 import os
 
 
-def load_schema(filepath):
-    with open(filepath, "r") as f:
-        return json.load(f)
-
-
 def match_schema(source, target):
     transformations = []
-    source = json.loads(source)
-    target = json.loads(target)
     source_def = source["definitions"]["root"]
     target_def = target["definitions"]["root"]
     source_type = source_def["type"]
