@@ -13,23 +13,15 @@ class TestMigrationSameType(unittest.TestCase):
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
             "abstract": False,
-            "definitions": {
-                "root": {
-                    "type": ["string"]
-                }
-            },
-            "title": "Type"
+            "definitions": {"root": {"type": ["string"]}},
+            "title": "Type",
         }
         target_schema = {
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
             "abstract": False,
-            "definitions": {
-                "root": {
-                    "type": ["string"]
-                }
-            },
-            "title": "StringType"
+            "definitions": {"root": {"type": ["string"]}},
+            "title": "StringType",
         }
         transformations = match_schema(source_schema, target_schema)
         self.assertEqual(["No type changes!"], transformations)
@@ -41,12 +33,8 @@ class TestMigrationToNumber(unittest.TestCase):
         "$ref": "#/definitions/root",
         "$schema": "http://json-schema.org/draft-07/schema#",
         "abstract": False,
-        "definitions": {
-            "root": {
-                "type": ["number"]
-            }
-        },
-        "title": "Type"
+        "definitions": {"root": {"type": ["number"]}},
+        "title": "Type",
     }
 
     def test_valid_from_str_to_number(self):
@@ -54,12 +42,8 @@ class TestMigrationToNumber(unittest.TestCase):
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
             "abstract": False,
-            "definitions": {
-                "root": {
-                    "type": ["string"]
-                }
-            },
-            "title": "Type"
+            "definitions": {"root": {"type": ["string"]}},
+            "title": "Type",
         }
         data_object_valid = {
             "data": {
@@ -72,15 +56,12 @@ class TestMigrationToNumber(unittest.TestCase):
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
                     "name": "Object",
                     "rel": [],
-                    "resourceKey": {
-                        "namespaceId": "1",
-                        "objectId": "13"
-                    },
+                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
                     "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
                 },
                 "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1
+                "version": 1,
             }
         }
         transformations = match_schema(source_schema, self.target_schema)
@@ -94,12 +75,8 @@ class TestMigrationToNumber(unittest.TestCase):
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
             "abstract": False,
-            "definitions": {
-                "root": {
-                    "type": ["string"]
-                }
-            },
-            "title": "Type"
+            "definitions": {"root": {"type": ["string"]}},
+            "title": "Type",
         }
         data_object_invalid = {
             "data": {
@@ -112,15 +89,12 @@ class TestMigrationToNumber(unittest.TestCase):
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
                     "name": "Object",
                     "rel": [],
-                    "resourceKey": {
-                        "namespaceId": "1",
-                        "objectId": "13"
-                    },
+                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
                     "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
                 },
                 "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1
+                "version": 1,
             }
         }
         transformations = match_schema(source_schema, self.target_schema)
@@ -132,12 +106,8 @@ class TestMigrationToNumber(unittest.TestCase):
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
             "abstract": False,
-            "definitions": {
-                "root": {
-                    "type": ["boolean"]
-                }
-            },
-            "title": "Type"
+            "definitions": {"root": {"type": ["boolean"]}},
+            "title": "Type",
         }
         data_object_true = {
             "data": {
@@ -150,15 +120,12 @@ class TestMigrationToNumber(unittest.TestCase):
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
                     "name": "Object",
                     "rel": [],
-                    "resourceKey": {
-                        "namespaceId": "1",
-                        "objectId": "13"
-                    },
+                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
                     "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
                 },
                 "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1
+                "version": 1,
             }
         }
         data_object_false = {
@@ -172,15 +139,12 @@ class TestMigrationToNumber(unittest.TestCase):
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
                     "name": "Object",
                     "rel": [],
-                    "resourceKey": {
-                        "namespaceId": "1",
-                        "objectId": "13"
-                    },
+                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
                     "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
                 },
                 "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1
+                "version": 1,
             }
         }
         transformations = match_schema(source_schema, self.target_schema)
@@ -198,12 +162,8 @@ class TestMigrationToNumber(unittest.TestCase):
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
             "abstract": False,
-            "definitions": {
-                "root": {
-                    "type": ["integer"]
-                }
-            },
-            "title": "Type"
+            "definitions": {"root": {"type": ["integer"]}},
+            "title": "Type",
         }
         data_object_true = {
             "data": {
@@ -216,15 +176,12 @@ class TestMigrationToNumber(unittest.TestCase):
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
                     "name": "Object",
                     "rel": [],
-                    "resourceKey": {
-                        "namespaceId": "1",
-                        "objectId": "13"
-                    },
+                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
                     "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
                 },
                 "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1
+                "version": 1,
             }
         }
         transformations = match_schema(source_schema, self.target_schema)
@@ -258,12 +215,8 @@ class TestMigrationToInteger(unittest.TestCase):
         "$ref": "#/definitions/root",
         "$schema": "http://json-schema.org/draft-07/schema#",
         "abstract": False,
-        "definitions": {
-            "root": {
-                "type": ["integer"]
-            }
-        },
-        "title": "Type"
+        "definitions": {"root": {"type": ["integer"]}},
+        "title": "Type",
     }
 
     def test_valid_from_str_to_int(self):
@@ -271,12 +224,8 @@ class TestMigrationToInteger(unittest.TestCase):
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
             "abstract": False,
-            "definitions": {
-                "root": {
-                    "type": ["string"]
-                }
-            },
-            "title": "Type"
+            "definitions": {"root": {"type": ["string"]}},
+            "title": "Type",
         }
         data_object_valid_one = {
             "data": {
@@ -289,15 +238,12 @@ class TestMigrationToInteger(unittest.TestCase):
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
                     "name": "Object",
                     "rel": [],
-                    "resourceKey": {
-                        "namespaceId": "1",
-                        "objectId": "13"
-                    },
+                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
                     "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
                 },
                 "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1
+                "version": 1,
             }
         }
         data_object_valid_two = {
@@ -311,15 +257,12 @@ class TestMigrationToInteger(unittest.TestCase):
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
                     "name": "IntObject",
                     "rel": [],
-                    "resourceKey": {
-                        "namespaceId": "1",
-                        "objectId": "13"
-                    },
+                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
                     "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
                 },
                 "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1
+                "version": 1,
             }
         }
         transformations = match_schema(source_schema, self.target_schema)
@@ -337,12 +280,8 @@ class TestMigrationToInteger(unittest.TestCase):
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
             "abstract": False,
-            "definitions": {
-                "root": {
-                    "type": ["string"]
-                }
-            },
-            "title": "Type"
+            "definitions": {"root": {"type": ["string"]}},
+            "title": "Type",
         }
         data_object_invalid = {
             "data": {
@@ -355,15 +294,12 @@ class TestMigrationToInteger(unittest.TestCase):
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
                     "name": "Object",
                     "rel": [],
-                    "resourceKey": {
-                        "namespaceId": "1",
-                        "objectId": "13"
-                    },
+                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
                     "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
                 },
                 "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1
+                "version": 1,
             }
         }
         transformations = match_schema(source_schema, self.target_schema)
@@ -375,12 +311,8 @@ class TestMigrationToInteger(unittest.TestCase):
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
             "abstract": False,
-            "definitions": {
-                "root": {
-                    "type": ["boolean"]
-                }
-            },
-            "title": "Type"
+            "definitions": {"root": {"type": ["boolean"]}},
+            "title": "Type",
         }
         data_object_true = {
             "data": {
@@ -393,15 +325,12 @@ class TestMigrationToInteger(unittest.TestCase):
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
                     "name": "Object",
                     "rel": [],
-                    "resourceKey": {
-                        "namespaceId": "1",
-                        "objectId": "13"
-                    },
+                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
                     "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
                 },
                 "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1
+                "version": 1,
             }
         }
         data_object_false = {
@@ -415,15 +344,12 @@ class TestMigrationToInteger(unittest.TestCase):
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
                     "name": "Object",
                     "rel": [],
-                    "resourceKey": {
-                        "namespaceId": "1",
-                        "objectId": "13"
-                    },
+                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
                     "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
                 },
                 "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1
+                "version": 1,
             }
         }
         transformations = match_schema(source_schema, self.target_schema)
@@ -441,12 +367,8 @@ class TestMigrationToInteger(unittest.TestCase):
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
             "abstract": False,
-            "definitions": {
-                "root": {
-                    "type": ["number"]
-                }
-            },
-            "title": "Type"
+            "definitions": {"root": {"type": ["number"]}},
+            "title": "Type",
         }
         data_object_true = {
             "data": {
@@ -459,15 +381,12 @@ class TestMigrationToInteger(unittest.TestCase):
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
                     "name": "Object",
                     "rel": [],
-                    "resourceKey": {
-                        "namespaceId": "1",
-                        "objectId": "13"
-                    },
+                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
                     "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
                 },
                 "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1
+                "version": 1,
             }
         }
         transformations = match_schema(source_schema, self.target_schema)
@@ -501,12 +420,8 @@ class TestMigrationToString(unittest.TestCase):
         "$ref": "#/definitions/root",
         "$schema": "http://json-schema.org/draft-07/schema#",
         "abstract": False,
-        "definitions": {
-            "root": {
-                "type": ["string"]
-            }
-        },
-        "title": "Type"
+        "definitions": {"root": {"type": ["string"]}},
+        "title": "Type",
     }
 
     def test_from_int_to_str(self):
@@ -514,12 +429,8 @@ class TestMigrationToString(unittest.TestCase):
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
             "abstract": False,
-            "definitions": {
-                "root": {
-                    "type": ["integer"]
-                }
-            },
-            "title": "Type"
+            "definitions": {"root": {"type": ["integer"]}},
+            "title": "Type",
         }
         data_object = {
             "data": {
@@ -532,15 +443,12 @@ class TestMigrationToString(unittest.TestCase):
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
                     "name": "Object",
                     "rel": [],
-                    "resourceKey": {
-                        "namespaceId": "1",
-                        "objectId": "13"
-                    },
+                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
                     "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
                 },
                 "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1
+                "version": 1,
             }
         }
         transformations = match_schema(source_schema, self.target_schema)
@@ -554,12 +462,8 @@ class TestMigrationToString(unittest.TestCase):
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
             "abstract": False,
-            "definitions": {
-                "root": {
-                    "type": ["number"]
-                }
-            },
-            "title": "Type"
+            "definitions": {"root": {"type": ["number"]}},
+            "title": "Type",
         }
         data_object = {
             "data": {
@@ -572,15 +476,12 @@ class TestMigrationToString(unittest.TestCase):
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
                     "name": "Object",
                     "rel": [],
-                    "resourceKey": {
-                        "namespaceId": "1",
-                        "objectId": "13"
-                    },
+                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
                     "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
                 },
                 "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1
+                "version": 1,
             }
         }
         transformations = match_schema(source_schema, self.target_schema)
@@ -594,12 +495,8 @@ class TestMigrationToString(unittest.TestCase):
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
             "abstract": False,
-            "definitions": {
-                "root": {
-                    "type": ["boolean"]
-                }
-            },
-            "title": "Type"
+            "definitions": {"root": {"type": ["boolean"]}},
+            "title": "Type",
         }
         data_object = {
             "data": {
@@ -612,15 +509,12 @@ class TestMigrationToString(unittest.TestCase):
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
                     "name": "Object",
                     "rel": [],
-                    "resourceKey": {
-                        "namespaceId": "1",
-                        "objectId": "13"
-                    },
+                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
                     "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
                 },
                 "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1
+                "version": 1,
             }
         }
         transformations = match_schema(source_schema, self.target_schema)
@@ -634,28 +528,22 @@ class TestMigrationToString(unittest.TestCase):
 
     def test_from_array_to_str(self):
         source_schema = {
-                "$ref": "#/definitions/root",
-                "$schema": "http://json-schema.org/draft-07/schema#",
-                "abstract": False,
-                "definitions": {
-                    "root": {
-                        "arrayType": "array",
-                        "items": {
-                            "type": ["boolean"]
-                        },
-                        "type": ["array"]
-                    }
-                },
-                "title": "Type"
-            }
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {
+                "root": {
+                    "arrayType": "array",
+                    "items": {"type": ["boolean"]},
+                    "type": ["array"],
+                }
+            },
+            "title": "Type",
+        }
         data_object = {
             "data": {
                 "createdOn": "2024-09-27T08:02:44.203024",
-                "data": [
-                    2,
-                    9,
-                    44
-                ],
+                "data": [2, 9, 44],
                 "deletedOn": None,
                 "description": "",
                 "name": "Object",
@@ -663,15 +551,12 @@ class TestMigrationToString(unittest.TestCase):
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
                     "name": "Object",
                     "rel": [],
-                    "resourceKey": {
-                        "namespaceId": "1",
-                        "objectId": "13"
-                    },
+                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
                     "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
                 },
                 "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1
+                "version": 1,
             }
         }
         transformations = match_schema(source_schema, self.target_schema)
@@ -688,29 +573,19 @@ class TestMigrationToString(unittest.TestCase):
             "definitions": {
                 "root": {
                     "properties": {
-                        "one": {
-                            "type": ["integer"]
-                        },
-                        "three": {
-                            "type": ["boolean"]
-                        },
-                        "two": {
-                            "type": ["string"]
-                        }
+                        "one": {"type": ["integer"]},
+                        "three": {"type": ["boolean"]},
+                        "two": {"type": ["string"]},
                     },
-                    "type": ["object"]
+                    "type": ["object"],
                 }
             },
-            "title": "Type"
+            "title": "Type",
         }
         data_object = {
             "data": {
                 "createdOn": "2024-09-27T08:02:44.203024",
-                "data": {
-                    "one": 42,
-                    "three": True,
-                    "two": "Hello World!"
-                },
+                "data": {"one": 42, "three": True, "two": "Hello World!"},
                 "deletedOn": None,
                 "description": "",
                 "name": "Object",
@@ -718,24 +593,23 @@ class TestMigrationToString(unittest.TestCase):
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
                     "name": "Object",
                     "rel": [],
-                    "resourceKey": {
-                        "namespaceId": "1",
-                        "objectId": "13"
-                    },
+                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
                     "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
                 },
                 "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1
+                "version": 1,
             }
         }
         transformations = match_schema(source_schema, self.target_schema)
         updated_data_object = migrate_object(
             data_object, self.target_schema, transformations
         )
-        self.assertEqual("{'one': 42, 'three': True, 'two': 'Hello World!'}", updated_data_object["data"]["data"])
-        
-              
+        self.assertEqual(
+            "{'one': 42, 'three': True, 'two': 'Hello World!'}",
+            updated_data_object["data"]["data"],
+        )
+
     def test_from_tuple_to_str(self):
         source_schema = {
             "$ref": "#/definitions/root",
@@ -745,29 +619,19 @@ class TestMigrationToString(unittest.TestCase):
                 "root": {
                     "arrayType": "tuple",
                     "items": [
-                        {
-                            "type": ["boolean"]
-                        },
-                        {
-                            "type": ["integer"]
-                        },
-                        {
-                            "type": ["string"]
-                        }
+                        {"type": ["boolean"]},
+                        {"type": ["integer"]},
+                        {"type": ["string"]},
                     ],
-                    "type": ["array"]
+                    "type": ["array"],
                 }
             },
-            "title": "Type"
+            "title": "Type",
         }
         data_object = {
             "data": {
                 "createdOn": "2024-09-27T08:02:44.203024",
-                "data": [
-                    True,
-                    12,
-                    "Hello"
-                ],
+                "data": [True, 12, "Hello"],
                 "deletedOn": None,
                 "description": "",
                 "name": "Object",
@@ -775,15 +639,12 @@ class TestMigrationToString(unittest.TestCase):
                     "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
                     "name": "Object",
                     "rel": [],
-                    "resourceKey": {
-                        "namespaceId": "1",
-                        "objectId": "13"
-                    },
+                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
                     "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/"
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
                 },
                 "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1
+                "version": 1,
             }
         }
         transformations = match_schema(source_schema, self.target_schema)
