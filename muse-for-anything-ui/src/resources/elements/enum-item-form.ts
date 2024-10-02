@@ -31,8 +31,6 @@ export class EnumItemForm {
 
     @observable() childValid;
 
-    preferNumber: boolean = false;
-
     // eslint-disable-next-line complexity
     schemaChanged(newValue: NormalizedApiSchema, oldValue) {
         this.valid = false;
@@ -74,8 +72,11 @@ export class EnumItemForm {
     }
 
     initialDataChanged(newValue) {
-        if (newValue !== undefined) {
+        if (newValue === undefined) {
             return;
+        }
+        if (this.selectedChoice == null) {
+            this.updateSelectedSchema(this.initialData);
         }
     }
 
@@ -118,11 +119,7 @@ export class EnumItemForm {
         } else if (value === Boolean(value)) {
             valueType = "Boolean";
         } else if (value === Number(value)) {
-            if (Number.isInteger(value) && !this.preferNumber) {
-                valueType = "Integer";
-            } else {
-                valueType = "Number";
-            }
+            valueType = "Number";
         } else {
             valueType = "String";
         }
@@ -155,8 +152,7 @@ export class EnumItemForm {
         if (normalized.mainType === "boolean") {
             this.value = Boolean(this.value);
         }
-        if (normalized.mainType === "integer" || normalized.mainType === "number") {
-            this.preferNumber = normalized.mainType === "number";
+        if (normalized.mainType === "number") {
             const numberValue = Number(this.value);
             if (this.value === numberValue) {
                 // no value change, trigger manually

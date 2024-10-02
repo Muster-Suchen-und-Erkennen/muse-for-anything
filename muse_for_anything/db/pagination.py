@@ -113,7 +113,7 @@ def get_page_info(
         cursor_row_subq = (
             DB.session.query(
                 row_numbers.label("row"),
-                cursor_column,
+                cursor_column.label("cursor_id"),
             )
             .filter(query_filter)
             .subquery()
@@ -121,7 +121,8 @@ def get_page_info(
 
         cursor_row_cte: CTE = (
             select(cursor_row_subq.c.row)
-            .filter(cursor_column == cursor)
+            .filter(cursor_row_subq.c.cursor_id == cursor)
+            .distinct()
             .cte("cursor_row")
         )
         cursor_row = cursor_row_cte.c.row
