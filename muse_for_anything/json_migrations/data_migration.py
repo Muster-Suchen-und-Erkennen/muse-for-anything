@@ -1,6 +1,3 @@
-from datetime import datetime, timezone
-import json
-
 from jsonschema import Draft7Validator
 
 

@@ -1,8 +1,3 @@
-import json
-from pathlib import Path
-import os
-
-
 def match_schema(source, target):
     transformations = []
     source_def = source["definitions"]["root"]
