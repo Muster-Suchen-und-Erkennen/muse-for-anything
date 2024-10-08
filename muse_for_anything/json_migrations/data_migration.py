@@ -6,20 +6,30 @@ def migrate_object(data_object, target_schema, transformations):
     for transformation in transformations:
         match transformation:
             case "Cast to number!":
-                try:
-                    data_object["data"]["data"] = float(data_object["data"]["data"])
-                except ValueError:
-                    # print("Unable to cast \"", data_object['data']['data'], "\" to number!")
-                    raise ValueError
+                migrate_number(data_object)
             case "Cast to integer!":
-                try:
-                    data_object["data"]["data"] = int(float(data_object["data"]["data"]))
-                except ValueError:
-                    # print("Unable to cast \"", data_object['data']['data'], "\" to number!")
-                    raise ValueError
+                migrate_integer(data_object)
             case "Cast to string!":
-                try:
-                    data_object["data"]["data"] = str(data_object["data"]["data"])
-                except ValueError:
-                    raise ValueError
+                migrate_string(data_object)
     return data_object
+
+
+def migrate_number(data_object):
+    try:
+        data_object["data"]["data"] = float(data_object["data"]["data"])
+    except ValueError:
+        raise ValueError("No transformation to number possible!")
+
+
+def migrate_integer(data_object):
+    try:
+        data_object["data"]["data"] = int(float(data_object["data"]["data"]))
+    except ValueError:
+        raise ValueError("No transformation to integer possible!")
+
+
+def migrate_string(data_object):
+    try:
+        data_object["data"]["data"] = str(data_object["data"]["data"])
+    except ValueError:
+        raise ValueError("No transformation to string possible!")
