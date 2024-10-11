@@ -13,17 +13,17 @@ def match_schema(source, target):
         else:
             match target_type:
                 case ["number"]:
-                    if source_type in [["number"], ["string"], ["integer"], ["boolean"]]:
+                    if source_type in [["boolean"], ["integer"], ["number"], ["string"]]:
                         transformations.append(CAST_TO_NUMBER)
                     else:
                         transformations.append(CAST_TO_ERROR)
                 case ["integer"]:
-                    if source_type in [["integer"], ["string"], ["number"], ["boolean"]]:
+                    if source_type in [["boolean"], ["integer"], ["number"], ["string"]]:
                         transformations.append(CAST_TO_INTEGER)
                     else:
                         transformations.append(CAST_TO_ERROR)
                 case ["boolean"]:
-                    if source_type in [["string"], ["integer"], ["boolean"]]:
+                    if source_type in [["boolean"], ["integer"], ["number"], ["string"]]:
                         transformations.append(CAST_TO_BOOLEAN)
                     else:
                         transformations.append(CAST_TO_ERROR)
