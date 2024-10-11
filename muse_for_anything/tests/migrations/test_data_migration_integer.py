@@ -100,7 +100,9 @@ class TestMigrationToInteger(unittest.TestCase):
             }
         }
         transformations = match_schema(source_schema, self.target_schema)
-        updated_data_object = migrate_object(data_object_invalid, "string", self.target_schema, transformations)
+        updated_data_object = migrate_object(
+            data_object_invalid, "string", self.target_schema, transformations
+        )
         self.assertEqual("HELLO WORLD!", updated_data_object["data"]["data"])
 
     def test_from_bool_to_int(self):
