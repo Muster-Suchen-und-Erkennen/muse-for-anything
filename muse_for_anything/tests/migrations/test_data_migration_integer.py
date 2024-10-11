@@ -64,11 +64,11 @@ class TestMigrationToInteger(unittest.TestCase):
         }
         transformations = match_schema(source_schema, self.target_schema)
         updated_valid_data_object = migrate_object(
-            data_object_valid_one, self.target_schema, transformations
+            data_object_valid_one, "string", self.target_schema, transformations
         )
         self.assertEqual(15, updated_valid_data_object["data"]["data"])
         updated_valid_data_object = migrate_object(
-            data_object_valid_two, self.target_schema, transformations
+            data_object_valid_two, "string", self.target_schema, transformations
         )
         self.assertEqual(15, updated_valid_data_object["data"]["data"])
 
@@ -100,8 +100,8 @@ class TestMigrationToInteger(unittest.TestCase):
             }
         }
         transformations = match_schema(source_schema, self.target_schema)
-        with self.assertRaises(ValueError):
-            migrate_object(data_object_invalid, self.target_schema, transformations)
+        updated_data_object = migrate_object(data_object_invalid, "string", self.target_schema, transformations)
+        self.assertEqual("HELLO WORLD!", updated_data_object["data"]["data"])
 
     def test_from_bool_to_int(self):
         source_schema = {
@@ -151,10 +151,10 @@ class TestMigrationToInteger(unittest.TestCase):
         }
         transformations = match_schema(source_schema, self.target_schema)
         updated_data_object_true = migrate_object(
-            data_object_true, self.target_schema, transformations
+            data_object_true, "boolean", self.target_schema, transformations
         )
         updated_data_object_false = migrate_object(
-            data_object_false, self.target_schema, transformations
+            data_object_false, "boolean", self.target_schema, transformations
         )
         self.assertEqual(1, updated_data_object_true["data"]["data"])
         self.assertEqual(0, updated_data_object_false["data"]["data"])
@@ -188,7 +188,7 @@ class TestMigrationToInteger(unittest.TestCase):
         }
         transformations = match_schema(source_schema, self.target_schema)
         updated_data_object_true = migrate_object(
-            data_object_true, self.target_schema, transformations
+            data_object_true, "number", self.target_schema, transformations
         )
         self.assertEqual(5, updated_data_object_true["data"]["data"])
 

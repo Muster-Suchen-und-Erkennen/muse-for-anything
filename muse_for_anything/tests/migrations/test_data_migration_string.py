@@ -45,7 +45,7 @@ class TestMigrationToString(unittest.TestCase):
         }
         transformations = match_schema(source_schema, self.target_schema)
         updated_data_object_true = migrate_object(
-            data_object, self.target_schema, transformations
+            data_object, "integer", self.target_schema, transformations
         )
         self.assertEqual("1944", updated_data_object_true["data"]["data"])
 
@@ -78,7 +78,7 @@ class TestMigrationToString(unittest.TestCase):
         }
         transformations = match_schema(source_schema, self.target_schema)
         updated_data_object_true = migrate_object(
-            data_object, self.target_schema, transformations
+            data_object, "number", self.target_schema, transformations
         )
         self.assertEqual("3.14159265359", updated_data_object_true["data"]["data"])
 
@@ -111,7 +111,7 @@ class TestMigrationToString(unittest.TestCase):
         }
         transformations = match_schema(source_schema, self.target_schema)
         updated_data_object_true = migrate_object(
-            data_object, self.target_schema, transformations
+            data_object, "boolean", self.target_schema, transformations
         )
         self.assertEqual("True", updated_data_object_true["data"]["data"])
 
@@ -153,7 +153,7 @@ class TestMigrationToString(unittest.TestCase):
         }
         transformations = match_schema(source_schema, self.target_schema)
         updated_data_object_true = migrate_object(
-            data_object, self.target_schema, transformations
+            data_object, "array", self.target_schema, transformations
         )
         self.assertEqual("[2, 9, 44]", updated_data_object_true["data"]["data"])
 
@@ -195,7 +195,7 @@ class TestMigrationToString(unittest.TestCase):
         }
         transformations = match_schema(source_schema, self.target_schema)
         updated_data_object = migrate_object(
-            data_object, self.target_schema, transformations
+            data_object, "object", self.target_schema, transformations
         )
         self.assertEqual(
             "{'one': 42, 'three': True, 'two': 'Hello World!'}",
@@ -241,7 +241,7 @@ class TestMigrationToString(unittest.TestCase):
         }
         transformations = match_schema(source_schema, self.target_schema)
         updated_data_object_true = migrate_object(
-            data_object, self.target_schema, transformations
+            data_object, "tuple", self.target_schema, transformations
         )
         self.assertEqual("[True, 12, 'Hello']", updated_data_object_true["data"]["data"])
 

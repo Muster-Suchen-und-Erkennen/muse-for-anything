@@ -1,6 +1,5 @@
 from muse_for_anything.json_migrations.constants import *
 
-
 def match_schema(source, target):
     transformations = []
     source_def = source["definitions"]["root"]
@@ -13,13 +12,18 @@ def match_schema(source, target):
         else:
             match target_type:
                 case ["number"]:
-                    if source_type["string"] | ["integer"] | ["boolean"]:
+                    if source_type in [["number"], ["string"], ["integer"], ["boolean"]]:
                         transformations.append(CAST_TO_NUMBER)
                     else:
                         transformations.append(CAST_TO_ERROR)
                 case ["integer"]:
-                    if source_type["string"] | ["number"] | ["boolean"]:
+                    if source_type in  [["integer"], ["string"], ["number"], ["boolean"]]:
                         transformations.append(CAST_TO_INTEGER)
+                    else:
+                        transformations.append(CAST_TO_ERROR)
+                case ["boolean"]:
+                    if source_type in [["string"], ["integer"], ["boolean"]]:
+                        transformations.append(CAST_TO_BOOLEAN)
                     else:
                         transformations.append(CAST_TO_ERROR)
                 case ["string"]:

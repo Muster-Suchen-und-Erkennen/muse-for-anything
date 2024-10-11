@@ -45,7 +45,7 @@ class TestMigrationToNumber(unittest.TestCase):
         }
         transformations = match_schema(source_schema, self.target_schema)
         updated_valid_data_object = migrate_object(
-            data_object_valid, self.target_schema, transformations
+            data_object_valid, "string", self.target_schema, transformations
         )
         self.assertEqual(15.8765, updated_valid_data_object["data"]["data"])
 
@@ -77,8 +77,9 @@ class TestMigrationToNumber(unittest.TestCase):
             }
         }
         transformations = match_schema(source_schema, self.target_schema)
-        with self.assertRaises(ValueError):
-            migrate_object(data_object_invalid, self.target_schema, transformations)
+        updated_data_object = migrate_object(data_object_invalid, "string", self.target_schema, transformations)
+        self.assertEqual("HELLO WORLD!", updated_data_object["data"]["data"])
+
 
     def test_from_bool_to_number(self):
         source_schema = {
@@ -128,10 +129,10 @@ class TestMigrationToNumber(unittest.TestCase):
         }
         transformations = match_schema(source_schema, self.target_schema)
         updated_data_object_true = migrate_object(
-            data_object_true, self.target_schema, transformations
+            data_object_true, "boolean", self.target_schema, transformations
         )
         updated_data_object_false = migrate_object(
-            data_object_false, self.target_schema, transformations
+            data_object_false, "boolean", self.target_schema, transformations
         )
         self.assertEqual(1, updated_data_object_true["data"]["data"])
         self.assertEqual(0, updated_data_object_false["data"]["data"])
@@ -165,7 +166,7 @@ class TestMigrationToNumber(unittest.TestCase):
         }
         transformations = match_schema(source_schema, self.target_schema)
         updated_data_object_true = migrate_object(
-            data_object_true, self.target_schema, transformations
+            data_object_true, "integer", self.target_schema, transformations
         )
         self.assertEqual(2984.0, updated_data_object_true["data"]["data"])
 
