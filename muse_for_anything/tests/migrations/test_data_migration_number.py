@@ -43,9 +43,8 @@ class TestMigrationToNumber(unittest.TestCase):
                 "version": 1,
             }
         }
-        transformations = match_schema(source_schema, self.target_schema)
         updated_valid_data_object = migrate_object(
-            data_object_valid, "string", self.target_schema, transformations
+            data_object_valid, "string", source_schema, self.target_schema
         )
         self.assertEqual(15.8765, updated_valid_data_object["data"]["data"])
 
@@ -76,9 +75,8 @@ class TestMigrationToNumber(unittest.TestCase):
                 "version": 1,
             }
         }
-        transformations = match_schema(source_schema, self.target_schema)
         updated_data_object = migrate_object(
-            data_object_invalid, "string", self.target_schema, transformations
+            data_object_invalid, "string", source_schema, self.target_schema
         )
         self.assertEqual("HELLO WORLD!", updated_data_object["data"]["data"])
 
@@ -128,12 +126,11 @@ class TestMigrationToNumber(unittest.TestCase):
                 "version": 1,
             }
         }
-        transformations = match_schema(source_schema, self.target_schema)
         updated_data_object_true = migrate_object(
-            data_object_true, "boolean", self.target_schema, transformations
+            data_object_true, "boolean", source_schema, self.target_schema
         )
         updated_data_object_false = migrate_object(
-            data_object_false, "boolean", self.target_schema, transformations
+            data_object_false, "boolean", source_schema, self.target_schema
         )
         self.assertEqual(1, updated_data_object_true["data"]["data"])
         self.assertEqual(0, updated_data_object_false["data"]["data"])
@@ -165,9 +162,8 @@ class TestMigrationToNumber(unittest.TestCase):
                 "version": 1,
             }
         }
-        transformations = match_schema(source_schema, self.target_schema)
         updated_data_object_true = migrate_object(
-            data_object_true, "integer", self.target_schema, transformations
+            data_object_true, "integer", source_schema, self.target_schema
         )
         self.assertEqual(2984.0, updated_data_object_true["data"]["data"])
 

@@ -62,13 +62,12 @@ class TestMigrationToInteger(unittest.TestCase):
                 "version": 1,
             }
         }
-        transformations = match_schema(source_schema, self.target_schema)
         updated_valid_data_object = migrate_object(
-            data_object_true, "string", self.target_schema, transformations
+            data_object_true, "string", source_schema, self.target_schema
         )
         self.assertEqual(True, updated_valid_data_object["data"]["data"])
         updated_valid_data_object = migrate_object(
-            data_object_false, "string", self.target_schema, transformations
+            data_object_false, "string", source_schema, self.target_schema
         )
         self.assertEqual(False, updated_valid_data_object["data"]["data"])
 
@@ -119,12 +118,11 @@ class TestMigrationToInteger(unittest.TestCase):
                 "version": 1,
             }
         }
-        transformations = match_schema(source_schema, self.target_schema)
         updated_data_object_true = migrate_object(
-            data_object_true, "integer", self.target_schema, transformations
+            data_object_true, "integer", source_schema, self.target_schema
         )
         updated_data_object_false = migrate_object(
-            data_object_false, "integer", self.target_schema, transformations
+            data_object_false, "integer", source_schema, self.target_schema
         )
         self.assertEqual(True, updated_data_object_true["data"]["data"])
         self.assertEqual(False, updated_data_object_false["data"]["data"])
@@ -156,9 +154,8 @@ class TestMigrationToInteger(unittest.TestCase):
                 "version": 1,
             }
         }
-        transformations = match_schema(source_schema, self.target_schema)
         updated_data_object_true = migrate_object(
-            data_object_true, "number", self.target_schema, transformations
+            data_object_true, "number", source_schema, self.target_schema
         )
         self.assertEqual(True, updated_data_object_true["data"]["data"])
 

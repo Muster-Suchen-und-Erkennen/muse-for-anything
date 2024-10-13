@@ -1,9 +1,11 @@
 from jsonschema import Draft7Validator
+from muse_for_anything.json_migrations.jsonschema_matcher import match_schema
 import muse_for_anything.json_migrations.constants as constants
 
 
-def migrate_object(data_object, old_type, target_schema, transformations):
+def migrate_object(data_object, old_type, source_schema, target_schema):
     # validator = Draft7Validator(target_schema)
+    transformations = match_schema(source_schema, target_schema)
     updated_data_object = data_object
     for transformation in transformations:
         try:
