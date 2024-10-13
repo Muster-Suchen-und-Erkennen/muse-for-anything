@@ -71,7 +71,6 @@ class TestMigrationToInteger(unittest.TestCase):
         )
         self.assertEqual(False, updated_false_data_object["data"]["data"])
 
-    
     def test_from_int_to_bool(self):
         source_schema = {
             "$ref": "#/definitions/root",
