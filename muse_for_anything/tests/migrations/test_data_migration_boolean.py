@@ -62,14 +62,14 @@ class TestMigrationToInteger(unittest.TestCase):
                 "version": 1,
             }
         }
-        updated_valid_data_object = migrate_object(
+        updated_true_data_object = migrate_object(
             data_object_true, "string", source_schema, self.target_schema
         )
-        self.assertEqual(True, updated_valid_data_object["data"]["data"])
-        updated_valid_data_object = migrate_object(
+        self.assertEqual(True, updated_true_data_object["data"]["data"])
+        updated_false_data_object = migrate_object(
             data_object_false, "string", source_schema, self.target_schema
         )
-        self.assertEqual(False, updated_valid_data_object["data"]["data"])
+        self.assertEqual(False, updated_false_data_object["data"]["data"])
 
     
     def test_from_int_to_bool(self):
