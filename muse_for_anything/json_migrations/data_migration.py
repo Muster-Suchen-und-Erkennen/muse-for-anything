@@ -46,6 +46,8 @@ def migrate_to_number(data, old_type, cap_at_limit: bool = False):
                     data = float(data[0])
                 except ValueError:
                     raise ValueError("No transformation to number possible!")
+            else:
+                raise ValueError("No transformation to number possible!")
     return data
 
 
@@ -57,7 +59,7 @@ def migrate_to_integer(data, old_type):
             try:
                 data = int(data)
             except ValueError:
-                raise ValueError("No transformation to number possible!")
+                raise ValueError("No transformation to integer possible!")
         case "boolean" | "string":
             try:
                 data = int(float(data))
@@ -66,9 +68,11 @@ def migrate_to_integer(data, old_type):
         case "array":
             if len(data) == 1:
                 try:
-                    data = float(data[0])
+                    data = int(float(data[0]))
                 except ValueError:
-                    raise ValueError("No transformation to number possible!")
+                    raise ValueError("No transformation to integer possible!")
+            else:
+                raise ValueError("No transformation to integer possible!")
     return data
 
 

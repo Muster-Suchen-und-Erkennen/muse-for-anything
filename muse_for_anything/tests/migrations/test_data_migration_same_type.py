@@ -1,5 +1,4 @@
-from muse_for_anything.json_migrations.data_migration import migrate_object
-from muse_for_anything.json_migrations.jsonschema_matcher import match_schema
+from muse_for_anything.json_migrations.data_migration import *
 
 import unittest
 
