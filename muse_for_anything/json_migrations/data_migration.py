@@ -4,6 +4,7 @@ import muse_for_anything.json_migrations.constants as constants
 
 
 def migrate_object(data_object, old_type, source_schema, target_schema):
+    # TODO Add check with validator whether object satisfies schema
     # validator = Draft7Validator(target_schema)
     transformations = match_schema(source_schema, target_schema)
     data = data_object["data"]["data"]
@@ -35,7 +36,7 @@ def migrate_to_number(data, old_type, cap_at_limit: bool = False):
                 data = float(data)
             except ValueError:
                 raise ValueError("No transformation to number possible!")
-        case "string" | "boolean" | "string":
+        case "boolean" | "string":
             try:
                 data = float(data)
             except ValueError:
@@ -55,7 +56,6 @@ def migrate_to_integer(data, old_type):
     match old_type:
         case "number" | "integer":
             # TODO Implement potential cut off at limit
-            # For now, no adaptations necessary, just check with draftvalidator
             try:
                 data = int(data)
             except ValueError:

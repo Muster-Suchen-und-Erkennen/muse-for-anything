@@ -249,9 +249,9 @@ class TestMigrationToInteger(unittest.TestCase):
         )
         self.assertEqual([13, 14, 15], updated_data_object_invalid["data"]["data"])
         """
-        self.assertEqual(13, migrate_to_number(data_object_valid["data"]["data"], "array"))
+        self.assertEqual(13, migrate_to_integer(data_object_valid["data"]["data"], "array"))
         with self.assertRaises(ValueError):
-            migrate_to_number(data_object_invalid["data"]["data"], "array")
+            migrate_to_integer(data_object_invalid["data"]["data"], "array")
 
     def test_from_obj_to_int(self):
         pass
