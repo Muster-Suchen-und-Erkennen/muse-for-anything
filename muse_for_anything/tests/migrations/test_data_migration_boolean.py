@@ -162,7 +162,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
             "abstract": False,
-            "definitions": {"root": {"type": ["number"]}},
+            "definitions": {"root": {"enum": ["all", True, 1234.56, None]}},
             "title": "Type",
         }
         data_object_true = {

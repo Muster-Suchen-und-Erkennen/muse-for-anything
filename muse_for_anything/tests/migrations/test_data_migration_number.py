@@ -172,7 +172,7 @@ class TestMigrationToNumber(unittest.TestCase):
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
             "abstract": False,
-            "definitions": {"root": {"type": ["number"]}},
+            "definitions": {"root": {"enum": ["all", True, 1234.56, None]}},
             "title": "Type",
         }
         data_object_valid = {
@@ -235,7 +235,13 @@ class TestMigrationToNumber(unittest.TestCase):
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
             "abstract": False,
-            "definitions": {"root": {"type": ["number"]}},
+            "definitions": {
+                "root": {
+                    "arrayType": "array",
+                    "items": {"type": ["float"]},
+                    "type": ["array"],
+                }
+            },
             "title": "Type",
         }
         data_object_valid = {
@@ -301,7 +307,11 @@ class TestMigrationToNumber(unittest.TestCase):
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
             "abstract": False,
-            "definitions": {"root": {"type": ["number"]}},
+            "definitions": {
+                "arrayType": "tuple",
+                "items": [{"type": ["string"]}, {"type": ["float"]}],
+                "type": ["array"],
+            },
             "title": "Type",
         }
         data_object_valid = {
