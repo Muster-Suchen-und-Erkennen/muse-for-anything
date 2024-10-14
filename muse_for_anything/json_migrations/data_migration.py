@@ -49,6 +49,19 @@ def migrate_to_number(data, old_type, cap_at_limit: bool = False):
                     raise ValueError("No transformation to number possible!")
             else:
                 raise ValueError("No transformation to number possible!")
+        case "tuple":
+            count_of_numbers = 0
+            transformed_data = None
+            for entry in data:
+                try:
+                    transformed_data = float(entry)
+                    count_of_numbers += 1
+                except ValueError:
+                    pass
+            if count_of_numbers == 1:
+                data = transformed_data
+            else:
+                raise ValueError("No transformation to number possible!")
     return data
 
 
@@ -71,6 +84,19 @@ def migrate_to_integer(data, old_type):
                     data = int(float(data[0]))
                 except ValueError:
                     raise ValueError("No transformation to integer possible!")
+            else:
+                raise ValueError("No transformation to integer possible!")
+        case "tuple":
+            count_of_numbers = 0
+            transformed_data = None
+            for entry in data:
+                try:
+                    transformed_data = int(float(entry))
+                    count_of_numbers += 1
+                except ValueError:
+                    pass
+            if count_of_numbers == 1:
+                data = transformed_data
             else:
                 raise ValueError("No transformation to integer possible!")
     return data
