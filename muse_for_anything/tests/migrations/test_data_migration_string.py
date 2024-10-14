@@ -112,7 +112,68 @@ class TestMigrationToString(unittest.TestCase):
         self.assertEqual("True", updated_data_object_true["data"]["data"])
 
     def test_from_enum_to_str(self):
-        pass
+        # TODO: update test case to use migrate_object(), not migrate_to_number()
+        source_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {"root": {"type": ["number"]}},
+            "title": "Type",
+        }
+        data_object_one = {
+            "data": {
+                "createdOn": "2024-09-27T08:02:44.203024",
+                "data": 1234.56789,
+                "deletedOn": None,
+                "description": "",
+                "name": "Object",
+                "self": {
+                    "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
+                    "name": "Object",
+                    "rel": [],
+                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
+                    "resourceType": "ont-object",
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
+                },
+                "updatedOn": "2024-09-27T08:02:44.213790",
+                "version": 1,
+            }
+        }
+        data_object_two = {
+            "data": {
+                "createdOn": "2024-09-27T08:02:44.203024",
+                "data": "hello world",
+                "deletedOn": None,
+                "description": "",
+                "name": "Object",
+                "self": {
+                    "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
+                    "name": "Object",
+                    "rel": [],
+                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
+                    "resourceType": "ont-object",
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
+                },
+                "updatedOn": "2024-09-27T08:02:44.213790",
+                "version": 1,
+            }
+        }
+        """
+        updated_data_object_one = migrate_object(
+            data_object_one, "enum", source_schema, self.target_schema
+        )
+        self.assertEqual(1234.56789, updated_data_object_valid["data"]["data"])
+        updated_data_object_two = migrate_object(
+            data_object_two, "enum", source_schema, self.target_schema
+        )
+        self.assertEqual("hello world", updated_data_object_two["data"]["data"])
+        """
+        self.assertEqual(
+            "1234.56789", migrate_to_string(data_object_one["data"]["data"], "enum")
+        )
+        self.assertEqual(
+            "hello world", migrate_to_string(data_object_two["data"]["data"], "enum")
+        )
 
     def test_from_array_to_str(self):
         source_schema = {
