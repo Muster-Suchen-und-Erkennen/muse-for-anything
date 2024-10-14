@@ -167,7 +167,65 @@ class TestMigrationToNumber(unittest.TestCase):
         self.assertEqual(2984.0, updated_data_object_true["data"]["data"])
 
     def test_from_enum_to_number(self):
-        pass
+        # TODO: update test case to use migrate_object(), not migrate_to_integer()
+        source_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {"root": {"type": ["number"]}},
+            "title": "Type",
+        }
+        data_object_valid = {
+            "data": {
+                "createdOn": "2024-09-27T08:02:44.203024",
+                "data": 1234.56789,
+                "deletedOn": None,
+                "description": "",
+                "name": "Object",
+                "self": {
+                    "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
+                    "name": "Object",
+                    "rel": [],
+                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
+                    "resourceType": "ont-object",
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
+                },
+                "updatedOn": "2024-09-27T08:02:44.213790",
+                "version": 1,
+            }
+        }
+        data_object_invalid = {
+            "data": {
+                "createdOn": "2024-09-27T08:02:44.203024",
+                "data": "hello world",
+                "deletedOn": None,
+                "description": "",
+                "name": "Object",
+                "self": {
+                    "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
+                    "name": "Object",
+                    "rel": [],
+                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
+                    "resourceType": "ont-object",
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
+                },
+                "updatedOn": "2024-09-27T08:02:44.213790",
+                "version": 1,
+            }
+        }
+        """
+        updated_data_object_valid = migrate_object(
+            data_object_valid, "array", source_schema, self.target_schema
+        )
+        self.assertEqual(1234.56789, updated_data_object_valid["data"]["data"])
+        updated_data_object_invalid = migrate_object(
+            data_object_invalid, "array", source_schema, self.target_schema
+        )
+        self.assertEqual("hello world", updated_data_object_invalid["data"]["data"])
+        """
+        self.assertEqual(1234.56789, migrate_to_number(data_object_valid["data"]["data"], "enum"))
+        with self.assertRaises(ValueError):
+            migrate_to_number(data_object_invalid["data"]["data"], "enum")
 
     def test_from_array_to_number(self):
         # TODO: update test case to use migrate_object(), not migrate_to_number()

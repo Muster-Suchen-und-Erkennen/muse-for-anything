@@ -158,8 +158,40 @@ class TestMigrationToInteger(unittest.TestCase):
         self.assertEqual(True, updated_data_object_true["data"]["data"])
 
     def test_from_enum_to_bool(self):
-        pass
-
+        source_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {"root": {"type": ["number"]}},
+            "title": "Type",
+        }
+        data_object_true = {
+            "data": {
+                "createdOn": "2024-09-27T08:02:44.203024",
+                "data": True,
+                "deletedOn": None,
+                "description": "",
+                "name": "Object",
+                "self": {
+                    "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
+                    "name": "Object",
+                    "rel": [],
+                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
+                    "resourceType": "ont-object",
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
+                },
+                "updatedOn": "2024-09-27T08:02:44.213790",
+                "version": 1,
+            }
+        }
+        """
+        updated_data_object_true = migrate_object(
+            data_object_true, "number", source_schema, self.target_schema
+        )
+        self.assertEqual(True, updated_data_object_true["data"]["data"])
+        """
+        self.assertEqual(True, migrate_to_boolean(data_object_true["data"]["data"], "enum"))
+        
     def test_from_array_to_bool(self):
         pass
 

@@ -31,12 +31,11 @@ def migrate_to_number(data, old_type, cap_at_limit: bool = False):
     match old_type:
         case "number" | "integer":
             # TODO Implement potential cut off at limit
-            # For now, no adaptations necessary, just check with draftvalidator
             try:
                 data = float(data)
             except ValueError:
                 raise ValueError("No transformation to number possible!")
-        case "boolean" | "string":
+        case "boolean" | "string" | "enum":
             try:
                 data = float(data)
             except ValueError:
@@ -73,7 +72,7 @@ def migrate_to_integer(data, old_type):
                 data = int(data)
             except ValueError:
                 raise ValueError("No transformation to integer possible!")
-        case "boolean" | "string":
+        case "boolean" | "string" | "enum":
             try:
                 data = int(float(data))
             except ValueError:
@@ -127,9 +126,8 @@ def migrate_to_string(data, old_type):
 
 def migrate_to_boolean(data, old_type):
     match old_type:
-        case "number" | "integer" | "string":
+        case "number" | "integer" | "string" | "enum":
             # TODO Implement potential cut off at limit
-            # For now, no adaptations necessary, just check with draftvalidator
             try:
                 data = bool(data)
             except ValueError:
