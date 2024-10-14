@@ -167,7 +167,7 @@ class TestMigrationToNumber(unittest.TestCase):
         self.assertEqual(2984.0, updated_data_object_true["data"]["data"])
 
     def test_from_enum_to_number(self):
-        # TODO: update test case to use migrate_object(), not migrate_to_integer()
+        # TODO: update test case to use migrate_object(), not migrate_to_number()
         source_schema = {
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -223,7 +223,9 @@ class TestMigrationToNumber(unittest.TestCase):
         )
         self.assertEqual("hello world", updated_data_object_invalid["data"]["data"])
         """
-        self.assertEqual(1234.56789, migrate_to_number(data_object_valid["data"]["data"], "enum"))
+        self.assertEqual(
+            1234.56789, migrate_to_number(data_object_valid["data"]["data"], "enum")
+        )
         with self.assertRaises(ValueError):
             migrate_to_number(data_object_invalid["data"]["data"], "enum")
 
@@ -284,7 +286,9 @@ class TestMigrationToNumber(unittest.TestCase):
         )
         self.assertEqual([13, 14, 15], updated_data_object_invalid["data"]["data"])
         """
-        self.assertEqual(13.4334, migrate_to_number(data_object_valid["data"]["data"], "array"))
+        self.assertEqual(
+            13.4334, migrate_to_number(data_object_valid["data"]["data"], "array")
+        )
         with self.assertRaises(ValueError):
             migrate_to_number(data_object_invalid["data"]["data"], "array")
 
@@ -292,7 +296,7 @@ class TestMigrationToNumber(unittest.TestCase):
         pass
 
     def test_from_tuple_to_number(self):
-        # TODO: update test case to use migrate_object(), not migrate_to_integer()
+        # TODO: update test case to use migrate_object(), not migrate_to_number()
         source_schema = {
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -348,7 +352,9 @@ class TestMigrationToNumber(unittest.TestCase):
         )
         self.assertEqual([13, 14, 15], updated_data_object_invalid["data"]["data"])
         """
-        self.assertEqual(123.456, migrate_to_number(data_object_valid["data"]["data"], "tuple"))
+        self.assertEqual(
+            123.456, migrate_to_number(data_object_valid["data"]["data"], "tuple")
+        )
         with self.assertRaises(ValueError):
             migrate_to_number(data_object_invalid["data"]["data"], "tuple")
 

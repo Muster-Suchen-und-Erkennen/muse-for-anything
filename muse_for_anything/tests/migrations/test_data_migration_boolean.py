@@ -190,8 +190,10 @@ class TestMigrationToInteger(unittest.TestCase):
         )
         self.assertEqual(True, updated_data_object_true["data"]["data"])
         """
-        self.assertEqual(True, migrate_to_boolean(data_object_true["data"]["data"], "enum"))
-        
+        self.assertEqual(
+            True, migrate_to_boolean(data_object_true["data"]["data"], "enum")
+        )
+
     def test_from_array_to_bool(self):
         pass
 

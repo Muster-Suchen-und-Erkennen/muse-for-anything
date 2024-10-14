@@ -189,7 +189,7 @@ class TestMigrationToInteger(unittest.TestCase):
         )
         self.assertEqual(5, updated_data_object_true["data"]["data"])
 
-    def test_from_enum_to_int(self):        
+    def test_from_enum_to_int(self):
         # TODO: update test case to use migrate_object(), not migrate_to_integer()
         source_schema = {
             "$ref": "#/definitions/root",
@@ -246,7 +246,9 @@ class TestMigrationToInteger(unittest.TestCase):
         )
         self.assertEqual("hello world", updated_data_object_invalid["data"]["data"])
         """
-        self.assertEqual(1234, migrate_to_integer(data_object_valid["data"]["data"], "enum"))
+        self.assertEqual(
+            1234, migrate_to_integer(data_object_valid["data"]["data"], "enum")
+        )
         with self.assertRaises(ValueError):
             migrate_to_integer(data_object_invalid["data"]["data"], "enum")
 
@@ -307,7 +309,9 @@ class TestMigrationToInteger(unittest.TestCase):
         )
         self.assertEqual([13, 14, 15], updated_data_object_invalid["data"]["data"])
         """
-        self.assertEqual(13, migrate_to_integer(data_object_valid["data"]["data"], "array"))
+        self.assertEqual(
+            13, migrate_to_integer(data_object_valid["data"]["data"], "array")
+        )
         with self.assertRaises(ValueError):
             migrate_to_integer(data_object_invalid["data"]["data"], "array")
 
@@ -371,7 +375,9 @@ class TestMigrationToInteger(unittest.TestCase):
         )
         self.assertEqual([13, 14, 15], updated_data_object_invalid["data"]["data"])
         """
-        self.assertEqual(123, migrate_to_integer(data_object_valid["data"]["data"], "tuple"))
+        self.assertEqual(
+            123, migrate_to_integer(data_object_valid["data"]["data"], "tuple")
+        )
         with self.assertRaises(ValueError):
             migrate_to_integer(data_object_invalid["data"]["data"], "tuple")
 
