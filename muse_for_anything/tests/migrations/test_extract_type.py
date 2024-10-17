@@ -190,7 +190,6 @@ class TestTypeExtraction(unittest.TestCase):
         with self.assertRaises(ValueError):
             extract_type(schema)
 
-
     def test_extract_nullable_type(self):
         schema = {
             "$ref": "#/definitions/root",
@@ -200,6 +199,7 @@ class TestTypeExtraction(unittest.TestCase):
             "title": "Type",
         }
         self.assertEqual(("string", True), extract_type(schema))
+
 
 if __name__ == "__main__":
     unittest.main()
