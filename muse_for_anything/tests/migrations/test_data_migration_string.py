@@ -112,7 +112,6 @@ class TestMigrationToString(unittest.TestCase):
         self.assertEqual("True", updated_data_object_true["data"]["data"])
 
     def test_from_enum_to_str(self):
-        # TODO: update test case to use migrate_object(), not migrate_to_number()
         source_schema = {
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -158,22 +157,14 @@ class TestMigrationToString(unittest.TestCase):
                 "version": 1,
             }
         }
-        """
         updated_data_object_one = migrate_object(
             data_object_one, source_schema, self.target_schema
         )
-        self.assertEqual(1234.56789, updated_data_object_valid["data"]["data"])
+        self.assertEqual("1234.56789", updated_data_object_one["data"]["data"])
         updated_data_object_two = migrate_object(
             data_object_two, source_schema, self.target_schema
         )
         self.assertEqual("hello world", updated_data_object_two["data"]["data"])
-        """
-        self.assertEqual(
-            "1234.56789", migrate_to_string(data_object_one["data"]["data"], "enum")
-        )
-        self.assertEqual(
-            "hello world", migrate_to_string(data_object_two["data"]["data"], "enum")
-        )
 
     def test_from_array_to_str(self):
         source_schema = {

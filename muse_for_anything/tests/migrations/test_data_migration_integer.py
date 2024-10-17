@@ -189,8 +189,7 @@ class TestMigrationToInteger(unittest.TestCase):
         )
         self.assertEqual(5, updated_data_object_true["data"]["data"])
 
-    def test_from_enum_to_int(self):
-        # TODO: update test case to use migrate_object(), not migrate_to_integer()
+    def test_from_enum_to_int(self):  #
         source_schema = {
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -236,7 +235,6 @@ class TestMigrationToInteger(unittest.TestCase):
                 "version": 1,
             }
         }
-        """
         updated_data_object_valid = migrate_object(
             data_object_valid, source_schema, self.target_schema
         )
@@ -245,15 +243,8 @@ class TestMigrationToInteger(unittest.TestCase):
             data_object_invalid, source_schema, self.target_schema
         )
         self.assertEqual("hello world", updated_data_object_invalid["data"]["data"])
-        """
-        self.assertEqual(
-            1234, migrate_to_integer(data_object_valid["data"]["data"], "enum")
-        )
-        with self.assertRaises(ValueError):
-            migrate_to_integer(data_object_invalid["data"]["data"], "enum")
 
     def test_from_array_to_int(self):
-        # TODO: update test case to use migrate_object(), not migrate_to_integer()
         source_schema = {
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -305,7 +296,6 @@ class TestMigrationToInteger(unittest.TestCase):
                 "version": 1,
             }
         }
-        """
         updated_data_object_valid = migrate_object(
             data_object_valid, source_schema, self.target_schema
         )
@@ -314,26 +304,21 @@ class TestMigrationToInteger(unittest.TestCase):
             data_object_invalid, source_schema, self.target_schema
         )
         self.assertEqual([13, 14, 15], updated_data_object_invalid["data"]["data"])
-        """
-        self.assertEqual(
-            13, migrate_to_integer(data_object_valid["data"]["data"], "array")
-        )
-        with self.assertRaises(ValueError):
-            migrate_to_integer(data_object_invalid["data"]["data"], "array")
 
     def test_from_obj_to_int(self):
         pass
 
     def test_from_tuple_to_int(self):
-        # TODO: update test case to use migrate_object(), not migrate_to_integer()
         source_schema = {
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
             "abstract": False,
             "definitions": {
-                "arrayType": "tuple",
-                "items": [{"type": ["string"]}, {"type": ["float"]}],
-                "type": ["array"],
+                "root": {
+                    "arrayType": "tuple",
+                    "items": [{"type": ["string"]}, {"type": ["float"]}],
+                    "type": ["array"],
+                }
             },
             "title": "Type",
         }
@@ -375,21 +360,16 @@ class TestMigrationToInteger(unittest.TestCase):
                 "version": 1,
             }
         }
-        """
         updated_data_object_valid = migrate_object(
             data_object_valid, source_schema, self.target_schema
         )
-        self.assertEqual(13, updated_data_object_valid["data"]["data"])
+        self.assertEqual(123, updated_data_object_valid["data"]["data"])
         updated_data_object_invalid = migrate_object(
             data_object_invalid, source_schema, self.target_schema
         )
-        self.assertEqual([13, 14, 15], updated_data_object_invalid["data"]["data"])
-        """
         self.assertEqual(
-            123, migrate_to_integer(data_object_valid["data"]["data"], "tuple")
+            [True, False, "hello world"], updated_data_object_invalid["data"]["data"]
         )
-        with self.assertRaises(ValueError):
-            migrate_to_integer(data_object_invalid["data"]["data"], "tuple")
 
     def test_from_res_ref_to_int(self):
         pass
