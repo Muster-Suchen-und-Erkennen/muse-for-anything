@@ -1,6 +1,5 @@
 from jsonschema import Draft7Validator
 from muse_for_anything.json_migrations.jsonschema_matcher import match_schema
-import muse_for_anything.json_migrations.constants as c
 
 
 def migrate_object(data_object, source_schema, target_schema):

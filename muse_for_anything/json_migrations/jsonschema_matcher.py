@@ -1,6 +1,3 @@
-from muse_for_anything.json_migrations.constants import *
-
-
 def extract_type(schema):
     definitions = schema["definitions"]["root"]
     keys = definitions.keys()
