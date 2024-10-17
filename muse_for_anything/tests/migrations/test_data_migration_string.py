@@ -296,6 +296,41 @@ class TestMigrationToString(unittest.TestCase):
     def test_from_schema_ref_to_str(self):
         pass
 
+    def test_to_string_error(self):
+        source_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {
+                "root": {"$ref": "#/definitions/0"},
+                "0": {"type": ["integer"]},
+            },
+            "title": "Type",
+        }
+        data_object = {
+            "data": {
+                "createdOn": "2024-09-27T08:02:44.203024",
+                "data": 1944,
+                "deletedOn": None,
+                "description": "",
+                "name": "Object",
+                "self": {
+                    "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
+                    "name": "Object",
+                    "rel": [],
+                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
+                    "resourceType": "ont-object",
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
+                },
+                "updatedOn": "2024-09-27T08:02:44.213790",
+                "version": 1,
+            }
+        }
+        with self.assertRaises(ValueError):
+            updated_data_object = migrate_object(
+                data_object, source_schema, self.target_schema
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
