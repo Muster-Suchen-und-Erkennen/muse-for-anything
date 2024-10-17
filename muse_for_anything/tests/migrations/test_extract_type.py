@@ -18,7 +18,7 @@ class TestTypeExtraction(unittest.TestCase):
             },
             "title": "Type",
         }
-        self.assertEqual("array", extract_type(schema))
+        self.assertEqual(("array", False), extract_type(schema))
 
     def test_extract_boolean(self):
         schema = {
@@ -28,7 +28,7 @@ class TestTypeExtraction(unittest.TestCase):
             "definitions": {"root": {"type": ["boolean"]}},
             "title": "Type",
         }
-        self.assertEqual("boolean", extract_type(schema))
+        self.assertEqual(("boolean", False), extract_type(schema))
 
     def test_extract_enum(self):
         schema = {
@@ -38,7 +38,7 @@ class TestTypeExtraction(unittest.TestCase):
             "definitions": {"root": {"enum": ["all", True, 1234.56, None]}},
             "title": "Type",
         }
-        self.assertEqual("enum", extract_type(schema))
+        self.assertEqual(("enum", False), extract_type(schema))
 
     def test_extract_integer(self):
         schema = {
@@ -48,7 +48,7 @@ class TestTypeExtraction(unittest.TestCase):
             "definitions": {"root": {"type": ["integer"]}},
             "title": "Type",
         }
-        self.assertEqual("integer", extract_type(schema))
+        self.assertEqual(("integer", False), extract_type(schema))
 
     def test_extract_number(self):
         schema = {
@@ -58,7 +58,7 @@ class TestTypeExtraction(unittest.TestCase):
             "definitions": {"root": {"type": ["number"]}},
             "title": "Type",
         }
-        self.assertEqual("number", extract_type(schema))
+        self.assertEqual(("number", False), extract_type(schema))
 
     def test_extract_object(self):
         schema = {
@@ -77,7 +77,7 @@ class TestTypeExtraction(unittest.TestCase):
             },
             "title": "Type",
         }
-        self.assertEqual("object", extract_type(schema))
+        self.assertEqual(("object", False), extract_type(schema))
 
     def test_extract_resource_reference(self):
         schema = {
@@ -89,7 +89,7 @@ class TestTypeExtraction(unittest.TestCase):
             },
             "title": "Type",
         }
-        self.assertEqual("resourceReference", extract_type(schema))
+        self.assertEqual(("resourceReference", False), extract_type(schema))
 
     def test_extract_schema_ref(self):
         schema = {
@@ -103,7 +103,7 @@ class TestTypeExtraction(unittest.TestCase):
             },
             "title": "Type",
         }
-        self.assertEqual("schemaReference", extract_type(schema))
+        self.assertEqual(("schemaReference", False), extract_type(schema))
 
     def test_extract_string(self):
         schema = {
@@ -113,7 +113,7 @@ class TestTypeExtraction(unittest.TestCase):
             "definitions": {"root": {"type": ["string"]}},
             "title": "Type",
         }
-        self.assertEqual("string", extract_type(schema))
+        self.assertEqual(("string", False), extract_type(schema))
 
     def test_extract_tuple(self):
         schema = {
@@ -133,7 +133,7 @@ class TestTypeExtraction(unittest.TestCase):
             },
             "title": "Type",
         }
-        self.assertEqual("tuple", extract_type(schema))
+        self.assertEqual(("tuple", False), extract_type(schema))
 
     def test_extract_unknown_object_type(self):
         schema = {
@@ -190,6 +190,16 @@ class TestTypeExtraction(unittest.TestCase):
         with self.assertRaises(ValueError):
             extract_type(schema)
 
+
+    def test_extract_nullable_type(self):
+        schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {"root": {"type": ["string", "null"]}},
+            "title": "Type",
+        }
+        self.assertEqual(("string", True), extract_type(schema))
 
 if __name__ == "__main__":
     unittest.main()
