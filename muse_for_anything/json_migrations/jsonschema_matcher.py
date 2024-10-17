@@ -48,8 +48,8 @@ def extract_type(schema):
 
 def match_schema(source, target):
     transformations = []
-    source_type = extract_type(source)[0]
-    target_type = extract_type(target)[0]
+    source_type, source_nullable = extract_type(source)
+    target_type, target_nullable = extract_type(target)
     if source_type and target_type:
         if source_type == target_type:
             transformations.append("No type changes!")
@@ -74,4 +74,10 @@ def match_schema(source, target):
                     transformations.append(CAST_TO_STRING)
                 case _:
                     transformations.append(CAST_TO_ERROR)
-    return transformations
+    return {
+        "transformations": transformations,
+        "source_type": source_type,
+        "source_nullable": source_nullable,
+        "target_type": target_type,
+        "target_nullable": target_nullable,
+    }

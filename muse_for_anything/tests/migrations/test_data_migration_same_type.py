@@ -23,7 +23,7 @@ class TestMigrationSameType(unittest.TestCase):
             "title": "StringType",
         }
         transformations = match_schema(source_schema, target_schema)
-        self.assertEqual(["No type changes!"], transformations)
+        self.assertEqual(["No type changes!"], transformations["transformations"])
 
 
 if __name__ == "__main__":

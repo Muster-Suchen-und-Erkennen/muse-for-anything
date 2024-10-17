@@ -43,7 +43,7 @@ class TestMigrationToString(unittest.TestCase):
             }
         }
         updated_data_object_true = migrate_object(
-            data_object, "integer", source_schema, self.target_schema
+            data_object, source_schema, self.target_schema
         )
         self.assertEqual("1944", updated_data_object_true["data"]["data"])
 
@@ -75,7 +75,7 @@ class TestMigrationToString(unittest.TestCase):
             }
         }
         updated_data_object_true = migrate_object(
-            data_object, "number", source_schema, self.target_schema
+            data_object, source_schema, self.target_schema
         )
         self.assertEqual("3.14159265359", updated_data_object_true["data"]["data"])
 
@@ -107,7 +107,7 @@ class TestMigrationToString(unittest.TestCase):
             }
         }
         updated_data_object_true = migrate_object(
-            data_object, "boolean", source_schema, self.target_schema
+            data_object, source_schema, self.target_schema
         )
         self.assertEqual("True", updated_data_object_true["data"]["data"])
 
@@ -160,11 +160,11 @@ class TestMigrationToString(unittest.TestCase):
         }
         """
         updated_data_object_one = migrate_object(
-            data_object_one, "enum", source_schema, self.target_schema
+            data_object_one, source_schema, self.target_schema
         )
         self.assertEqual(1234.56789, updated_data_object_valid["data"]["data"])
         updated_data_object_two = migrate_object(
-            data_object_two, "enum", source_schema, self.target_schema
+            data_object_two, source_schema, self.target_schema
         )
         self.assertEqual("hello world", updated_data_object_two["data"]["data"])
         """
@@ -209,7 +209,7 @@ class TestMigrationToString(unittest.TestCase):
             }
         }
         updated_data_object_true = migrate_object(
-            data_object, "array", source_schema, self.target_schema
+            data_object, source_schema, self.target_schema
         )
         self.assertEqual("[2, 9, 44]", updated_data_object_true["data"]["data"])
 
@@ -250,7 +250,7 @@ class TestMigrationToString(unittest.TestCase):
             }
         }
         updated_data_object = migrate_object(
-            data_object, "object", source_schema, self.target_schema
+            data_object, source_schema, self.target_schema
         )
         self.assertEqual(
             "{'one': 42, 'three': True, 'two': 'Hello World!'}",
@@ -295,7 +295,7 @@ class TestMigrationToString(unittest.TestCase):
             }
         }
         updated_data_object_true = migrate_object(
-            data_object, "tuple", source_schema, self.target_schema
+            data_object, source_schema, self.target_schema
         )
         self.assertEqual("[True, 12, 'Hello']", updated_data_object_true["data"]["data"])
 

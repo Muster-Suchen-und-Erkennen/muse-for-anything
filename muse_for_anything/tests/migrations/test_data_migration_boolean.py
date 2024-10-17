@@ -62,11 +62,11 @@ class TestMigrationToInteger(unittest.TestCase):
             }
         }
         updated_true_data_object = migrate_object(
-            data_object_true, "string", source_schema, self.target_schema
+            data_object_true, source_schema, self.target_schema
         )
         self.assertEqual(True, updated_true_data_object["data"]["data"])
         updated_false_data_object = migrate_object(
-            data_object_false, "string", source_schema, self.target_schema
+            data_object_false, source_schema, self.target_schema
         )
         self.assertEqual(False, updated_false_data_object["data"]["data"])
 
@@ -117,10 +117,10 @@ class TestMigrationToInteger(unittest.TestCase):
             }
         }
         updated_data_object_true = migrate_object(
-            data_object_true, "integer", source_schema, self.target_schema
+            data_object_true, source_schema, self.target_schema
         )
         updated_data_object_false = migrate_object(
-            data_object_false, "integer", source_schema, self.target_schema
+            data_object_false, source_schema, self.target_schema
         )
         self.assertEqual(True, updated_data_object_true["data"]["data"])
         self.assertEqual(False, updated_data_object_false["data"]["data"])
@@ -153,7 +153,7 @@ class TestMigrationToInteger(unittest.TestCase):
             }
         }
         updated_data_object_true = migrate_object(
-            data_object_true, "number", source_schema, self.target_schema
+            data_object_true, source_schema, self.target_schema
         )
         self.assertEqual(True, updated_data_object_true["data"]["data"])
 
@@ -186,7 +186,7 @@ class TestMigrationToInteger(unittest.TestCase):
         }
         """
         updated_data_object_true = migrate_object(
-            data_object_true, "number", source_schema, self.target_schema
+            data_object_true, source_schema, self.target_schema
         )
         self.assertEqual(True, updated_data_object_true["data"]["data"])
         """
