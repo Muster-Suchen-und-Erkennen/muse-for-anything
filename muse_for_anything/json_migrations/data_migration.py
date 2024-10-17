@@ -2,23 +2,28 @@ from jsonschema import Draft7Validator
 from muse_for_anything.json_migrations.jsonschema_matcher import match_schema
 
 
-def migrate_object(data_object, old_type, source_schema, target_schema):
+def migrate_object(data_object, source_schema, target_schema):
     # TODO Add check with validator whether object satisfies schema
     # validator = Draft7Validator(target_schema)
-    transformations = match_schema(source_schema, target_schema)
+    migration_plan = match_schema(source_schema, target_schema)
+    transformations = migration_plan["transformations"]
+    source_type = migration_plan["source_type"]
+    source_nullable = migration_plan["source_nullable"]
+    target_type = migration_plan["target_type"]
+    target_nullable = migration_plan["target_nullable"]
     data = data_object["data"]["data"]
     updated_data = None
     for transformation in transformations:
         try:
             match transformation:
                 case c.CAST_TO_NUMBER:
-                    updated_data = migrate_to_number(data, old_type)
+                    updated_data = migrate_to_number(data, source_type)
                 case c.CAST_TO_INTEGER:
-                    updated_data = migrate_to_integer(data, old_type)
+                    updated_data = migrate_to_integer(data, source_type)
                 case c.CAST_TO_STRING:
-                    updated_data = migrate_to_string(data, old_type)
+                    updated_data = migrate_to_string(data, source_type)
                 case c.CAST_TO_BOOLEAN:
-                    updated_data = migrate_to_boolean(data, old_type)
+                    updated_data = migrate_to_boolean(data, source_type)
         except ValueError:
             continue
     if updated_data is not None:
@@ -26,8 +31,8 @@ def migrate_object(data_object, old_type, source_schema, target_schema):
     return data_object
 
 
-def migrate_to_number(data, old_type, cap_at_limit: bool = False):
-    match old_type:
+def migrate_to_number(data, source_type, cap_at_limit: bool = False):
+    match source_type:
         case "number" | "integer":
             # TODO Implement potential cut off at limit
             try:
@@ -63,8 +68,8 @@ def migrate_to_number(data, old_type, cap_at_limit: bool = False):
     return data
 
 
-def migrate_to_integer(data, old_type):
-    match old_type:
+def migrate_to_integer(data, source_type):
+    match source_type:
         case "number" | "integer":
             # TODO Implement potential cut off at limit
             try:
@@ -100,8 +105,8 @@ def migrate_to_integer(data, old_type):
     return data
 
 
-def migrate_to_string(data, old_type):
-    match old_type:
+def migrate_to_string(data, source_type):
+    match source_type:
         case (
             "array"
             | "boolean"
@@ -123,8 +128,8 @@ def migrate_to_string(data, old_type):
     return data
 
 
-def migrate_to_boolean(data, old_type):
-    match old_type:
+def migrate_to_boolean(data, source_type):
+    match source_type:
         case "number" | "integer" | "string" | "enum":
             # TODO Implement potential cut off at limit
             try:
@@ -134,17 +139,17 @@ def migrate_to_boolean(data, old_type):
     return data
 
 
-def migrate_to_enum(data, old_type):
+def migrate_to_enum(data, source_type):
     pass
 
 
-def migrate_to_array(data, old_type):
+def migrate_to_array(data, source_type):
     pass
 
 
-def migrate_to_object(data, old_type):
+def migrate_to_object(data, source_type):
     pass
 
 
-def migrate_to_tuple(data, old_type):
+def migrate_to_tuple(data, source_type):
     pass
