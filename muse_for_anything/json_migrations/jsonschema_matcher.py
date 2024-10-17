@@ -27,7 +27,7 @@ def extract_type(schema):
                     else:
                         raise ValueError("Unknown array type!")
                 else:
-                    raise ValueError("Unknown array type!")
+                    raise ValueError("No array type given!")
             case ["boolean"]:
                 return "boolean"
             case ["integer"]:

@@ -135,6 +135,61 @@ class TestTypeExtraction(unittest.TestCase):
         }
         self.assertEqual("tuple", extract_type(schema))
 
+    def test_extract_unknown_object_type(self):
+        schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {"root": {"type": ["object"], "customType": "customObject"}},
+            "title": "Type",
+        }
+        with self.assertRaises(ValueError):
+            extract_type(schema)
+
+    def test_extract_unknown_array_type(self):
+        schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {"root": {"type": ["array"]}},
+            "title": "Type",
+        }
+        with self.assertRaises(ValueError):
+            extract_type(schema)
+
+    def test_extract_wrong_array_type(self):
+        schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {"root": {"type": ["array"], "arrayType": "StringArray"}},
+            "title": "Type",
+        }
+        with self.assertRaises(ValueError):
+            extract_type(schema)
+
+    def test_extract_unknown_type(self):
+        schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {"root": {"type": ["person"]}},
+            "title": "Type",
+        }
+        with self.assertRaises(ValueError):
+            extract_type(schema)
+
+    def test_extract_no_type(self):
+        schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {"root": {"age": 42}},
+            "title": "Type",
+        }
+        with self.assertRaises(ValueError):
+            extract_type(schema)
+
 
 if __name__ == "__main__":
     unittest.main()
