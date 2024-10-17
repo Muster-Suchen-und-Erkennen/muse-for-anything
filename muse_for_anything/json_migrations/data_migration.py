@@ -1,31 +1,32 @@
 from jsonschema import Draft7Validator
 from muse_for_anything.json_migrations.jsonschema_matcher import match_schema
+import muse_for_anything.json_migrations.constants as c
 
 
 def migrate_object(data_object, source_schema, target_schema):
     # TODO Add check with validator whether object satisfies schema
     # validator = Draft7Validator(target_schema)
     migration_plan = match_schema(source_schema, target_schema)
-    transformations = migration_plan["transformations"]
+    if migration_plan["unsupported_conversion"]:
+        raise ValueError("Unsupported transformation attempted!")
     source_type = migration_plan["source_type"]
     source_nullable = migration_plan["source_nullable"]
     target_type = migration_plan["target_type"]
     target_nullable = migration_plan["target_nullable"]
     data = data_object["data"]["data"]
     updated_data = None
-    for transformation in transformations:
-        try:
-            match transformation:
-                case c.CAST_TO_NUMBER:
-                    updated_data = migrate_to_number(data, source_type)
-                case c.CAST_TO_INTEGER:
-                    updated_data = migrate_to_integer(data, source_type)
-                case c.CAST_TO_STRING:
-                    updated_data = migrate_to_string(data, source_type)
-                case c.CAST_TO_BOOLEAN:
-                    updated_data = migrate_to_boolean(data, source_type)
-        except ValueError:
-            continue
+    try:
+        match target_type:
+            case "number":
+                updated_data = migrate_to_number(data, source_type)
+            case "integer":
+                updated_data = migrate_to_integer(data, source_type)
+            case "string":
+                updated_data = migrate_to_string(data, source_type)
+            case "boolean":
+                updated_data = migrate_to_boolean(data, source_type)
+    except ValueError:
+        return data_object
     if updated_data is not None:
         data_object["data"]["data"] = updated_data
     return data_object

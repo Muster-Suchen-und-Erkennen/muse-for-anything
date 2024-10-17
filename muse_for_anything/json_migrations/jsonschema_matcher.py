@@ -47,35 +47,52 @@ def extract_type(schema):
 
 
 def match_schema(source, target):
-    transformations = []
+    unsupported_conversion = False
     source_type, source_nullable = extract_type(source)
     target_type, target_nullable = extract_type(target)
     if source_type and target_type:
-        if source_type == target_type:
-            transformations.append("No type changes!")
-        else:
-            match target_type:
-                case "number":
-                    if source_type in ["boolean", "integer", "number", "string"]:
-                        transformations.append(CAST_TO_NUMBER)
-                    else:
-                        transformations.append(CAST_TO_ERROR)
-                case "integer":
-                    if source_type in ["boolean", "integer", "number", "string"]:
-                        transformations.append(CAST_TO_INTEGER)
-                    else:
-                        transformations.append(CAST_TO_ERROR)
-                case "boolean":
-                    if source_type in ["boolean", "integer", "number", "string"]:
-                        transformations.append(CAST_TO_BOOLEAN)
-                    else:
-                        transformations.append(CAST_TO_ERROR)
-                case "string":
-                    transformations.append(CAST_TO_STRING)
-                case _:
-                    transformations.append(CAST_TO_ERROR)
+        match target_type:
+            case "number":
+                if source_type not in [
+                    "array",
+                    "boolean",
+                    "enum",
+                    "integer",
+                    "number",
+                    "string",
+                    "tuple",
+                ]:
+                    unsupported_conversion = True
+            case "integer":
+                if source_type not in [
+                    "array",
+                    "boolean",
+                    "enum",
+                    "integer",
+                    "number",
+                    "string",
+                    "tuple",
+                ]:
+                    unsupported_conversion = True
+            case "boolean":
+                if source_type not in ["boolean", "integer", "number", "string"]:
+                    unsupported_conversion = True
+            case "string":
+                if source_type not in [
+                    "array",
+                    "boolean",
+                    "enum",
+                    "integer",
+                    "number",
+                    "object",
+                    "string",
+                    "tuple",
+                ]:
+                    unsupported_conversion = True
+            case _:
+                unsupported_conversion = True
     return {
-        "transformations": transformations,
+        "unsupported_conversion": unsupported_conversion,
         "source_type": source_type,
         "source_nullable": source_nullable,
         "target_type": target_type,
