@@ -1,6 +1,5 @@
 from jsonschema import Draft7Validator
 from muse_for_anything.json_migrations.jsonschema_matcher import match_schema
-import muse_for_anything.json_migrations.constants as constants
 
 
 def migrate_object(data_object, old_type, source_schema, target_schema):
@@ -12,13 +11,13 @@ def migrate_object(data_object, old_type, source_schema, target_schema):
     for transformation in transformations:
         try:
             match transformation:
-                case constants.CAST_TO_NUMBER:
+                case c.CAST_TO_NUMBER:
                     updated_data = migrate_to_number(data, old_type)
-                case constants.CAST_TO_INTEGER:
+                case c.CAST_TO_INTEGER:
                     updated_data = migrate_to_integer(data, old_type)
-                case constants.CAST_TO_STRING:
+                case c.CAST_TO_STRING:
                     updated_data = migrate_to_string(data, old_type)
-                case constants.CAST_TO_BOOLEAN:
+                case c.CAST_TO_BOOLEAN:
                     updated_data = migrate_to_boolean(data, old_type)
         except ValueError:
             continue
