@@ -2,8 +2,6 @@ from muse_for_anything.json_migrations.data_migration import *
 
 import unittest
 
-# TODO a lot more cases
-
 
 class TestMigrationToString(unittest.TestCase):
 
@@ -111,7 +109,7 @@ class TestMigrationToString(unittest.TestCase):
         )
         self.assertEqual("True", updated_data_object["data"]["data"])
 
-    def test_from_enum_to_str(self):
+    def test_from_enum_to_str_one(self):
         source_schema = {
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -119,7 +117,7 @@ class TestMigrationToString(unittest.TestCase):
             "definitions": {"root": {"enum": ["all", True, 1234.56, None]}},
             "title": "Type",
         }
-        data_object_one = {
+        data_object = {
             "data": {
                 "createdOn": "2024-09-27T08:02:44.203024",
                 "data": 1234.56789,
@@ -138,7 +136,20 @@ class TestMigrationToString(unittest.TestCase):
                 "version": 1,
             }
         }
-        data_object_two = {
+        updated_data_object = migrate_object(
+            data_object, source_schema, self.target_schema
+        )
+        self.assertEqual("1234.56789", updated_data_object["data"]["data"])
+
+    def test_from_enum_to_str_two(self):
+        source_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {"root": {"enum": ["all", True, 1234.56, None]}},
+            "title": "Type",
+        }
+        data_object = {
             "data": {
                 "createdOn": "2024-09-27T08:02:44.203024",
                 "data": "hello world",
@@ -157,14 +168,10 @@ class TestMigrationToString(unittest.TestCase):
                 "version": 1,
             }
         }
-        updated_data_object_one = migrate_object(
-            data_object_one, source_schema, self.target_schema
+        updated_data_object = migrate_object(
+            data_object, source_schema, self.target_schema
         )
-        self.assertEqual("1234.56789", updated_data_object_one["data"]["data"])
-        updated_data_object_two = migrate_object(
-            data_object_two, source_schema, self.target_schema
-        )
-        self.assertEqual("hello world", updated_data_object_two["data"]["data"])
+        self.assertEqual("hello world", updated_data_object["data"]["data"])
 
     def test_from_array_to_str(self):
         source_schema = {

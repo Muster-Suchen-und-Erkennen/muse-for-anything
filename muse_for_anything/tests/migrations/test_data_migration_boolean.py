@@ -2,8 +2,6 @@ from muse_for_anything.json_migrations.data_migration import *
 
 import unittest
 
-# TODO a lot more cases
-
 
 class TestMigrationToInteger(unittest.TestCase):
 
@@ -15,7 +13,7 @@ class TestMigrationToInteger(unittest.TestCase):
         "title": "Type",
     }
 
-    def test_from_str_to_bool(self):
+    def test_from_str_to_bool_true(self):
         source_schema = {
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -23,7 +21,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "definitions": {"root": {"type": ["string"]}},
             "title": "Type",
         }
-        data_object_true = {
+        data_object = {
             "data": {
                 "createdOn": "2024-09-27T08:02:44.203024",
                 "data": "15",
@@ -42,7 +40,20 @@ class TestMigrationToInteger(unittest.TestCase):
                 "version": 1,
             }
         }
-        data_object_false = {
+        updated_data_object = migrate_object(
+            data_object, source_schema, self.target_schema
+        )
+        self.assertEqual(True, updated_data_object["data"]["data"])
+
+    def test_from_str_to_bool_false(self):
+        source_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {"root": {"type": ["string"]}},
+            "title": "Type",
+        }
+        data_object = {
             "data": {
                 "createdOn": "2024-09-27T08:02:44.203024",
                 "data": "",
@@ -61,16 +72,12 @@ class TestMigrationToInteger(unittest.TestCase):
                 "version": 1,
             }
         }
-        updated_true_data_object = migrate_object(
-            data_object_true, source_schema, self.target_schema
+        updated_data_object = migrate_object(
+            data_object, source_schema, self.target_schema
         )
-        self.assertEqual(True, updated_true_data_object["data"]["data"])
-        updated_false_data_object = migrate_object(
-            data_object_false, source_schema, self.target_schema
-        )
-        self.assertEqual(False, updated_false_data_object["data"]["data"])
+        self.assertEqual(False, updated_data_object["data"]["data"])
 
-    def test_from_int_to_bool(self):
+    def test_from_int_to_bool_true(self):
         source_schema = {
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -78,7 +85,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "definitions": {"root": {"type": ["integer"]}},
             "title": "Type",
         }
-        data_object_true = {
+        data_object = {
             "data": {
                 "createdOn": "2024-09-27T08:02:44.203024",
                 "data": 23,
@@ -97,7 +104,20 @@ class TestMigrationToInteger(unittest.TestCase):
                 "version": 1,
             }
         }
-        data_object_false = {
+        updated_data_object = migrate_object(
+            data_object, source_schema, self.target_schema
+        )
+        self.assertEqual(True, updated_data_object["data"]["data"])
+        
+    def test_from_int_to_bool_false(self):
+        source_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {"root": {"type": ["integer"]}},
+            "title": "Type",
+        }
+        data_object = {
             "data": {
                 "createdOn": "2024-09-27T08:02:44.203024",
                 "data": 0,
@@ -116,14 +136,10 @@ class TestMigrationToInteger(unittest.TestCase):
                 "version": 1,
             }
         }
-        updated_data_object_true = migrate_object(
-            data_object_true, source_schema, self.target_schema
+        updated_data_object = migrate_object(
+            data_object, source_schema, self.target_schema
         )
-        updated_data_object_false = migrate_object(
-            data_object_false, source_schema, self.target_schema
-        )
-        self.assertEqual(True, updated_data_object_true["data"]["data"])
-        self.assertEqual(False, updated_data_object_false["data"]["data"])
+        self.assertEqual(False, updated_data_object["data"]["data"])
 
     def test_from_number_to_bool(self):
         source_schema = {
@@ -133,7 +149,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "definitions": {"root": {"type": ["number"]}},
             "title": "Type",
         }
-        data_object_true = {
+        data_object = {
             "data": {
                 "createdOn": "2024-09-27T08:02:44.203024",
                 "data": 5.7436555,
@@ -152,12 +168,12 @@ class TestMigrationToInteger(unittest.TestCase):
                 "version": 1,
             }
         }
-        updated_data_object_true = migrate_object(
-            data_object_true, source_schema, self.target_schema
+        updated_data_object = migrate_object(
+            data_object, source_schema, self.target_schema
         )
-        self.assertEqual(True, updated_data_object_true["data"]["data"])
+        self.assertEqual(True, updated_data_object["data"]["data"])
 
-    def test_from_enum_to_bool(self):
+    def test_from_enum_to_bool_true(self):
         source_schema = {
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -165,7 +181,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "definitions": {"root": {"enum": ["all", True, 1234.56, None]}},
             "title": "Type",
         }
-        data_object_valid_true = {
+        data_object = {
             "data": {
                 "createdOn": "2024-09-27T08:02:44.203024",
                 "data": True,
@@ -184,7 +200,20 @@ class TestMigrationToInteger(unittest.TestCase):
                 "version": 1,
             }
         }
-        data_object_valid_false = {
+        updated_data_object = migrate_object(
+            data_object, source_schema, self.target_schema
+        )
+        self.assertEqual(True, updated_data_object["data"]["data"])
+        
+    def test_from_enum_to_bool_false(self):
+        source_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {"root": {"enum": ["all", True, 1234.56, None]}},
+            "title": "Type",
+        }
+        data_object = {
             "data": {
                 "createdOn": "2024-09-27T08:02:44.203024",
                 "data": None,
@@ -203,7 +232,20 @@ class TestMigrationToInteger(unittest.TestCase):
                 "version": 1,
             }
         }
-        data_object_string = {
+        updated_data_object = migrate_object(
+            data_object, source_schema, self.target_schema
+        )
+        self.assertEqual(False, updated_data_object["data"]["data"])
+        
+    def test_from_enum_to_bool_string(self):
+        source_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {"root": {"enum": ["all", True, 1234.56, None]}},
+            "title": "Type",
+        }
+        data_object = {
             "data": {
                 "createdOn": "2024-09-27T08:02:44.203024",
                 "data": "all",
@@ -222,20 +264,12 @@ class TestMigrationToInteger(unittest.TestCase):
                 "version": 1,
             }
         }
-        updated_data_object_valid_true = migrate_object(
-            data_object_valid_true, source_schema, self.target_schema
+        updated_data_object = migrate_object(
+            data_object, source_schema, self.target_schema
         )
-        self.assertEqual(True, updated_data_object_valid_true["data"]["data"])
-        updated_data_object_valid_false = migrate_object(
-            data_object_valid_false, source_schema, self.target_schema
-        )
-        self.assertEqual(False, updated_data_object_valid_false["data"]["data"])
-        updated_data_object_string = migrate_object(
-            data_object_string, source_schema, self.target_schema
-        )
-        self.assertEqual(True, updated_data_object_string["data"]["data"])
+        self.assertEqual(True, updated_data_object["data"]["data"])
 
-    def test_from_array_to_bool(self):
+    def test_from_array_to_bool_true(self):
         source_schema = {
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -249,7 +283,7 @@ class TestMigrationToInteger(unittest.TestCase):
             },
             "title": "Type",
         }
-        data_object_true = {
+        data_object = {
             "data": {
                 "createdOn": "2024-09-27T08:02:44.203024",
                 "data": [2, 9, 44],
@@ -268,11 +302,26 @@ class TestMigrationToInteger(unittest.TestCase):
                 "version": 1,
             }
         }
-        updated_data_object_true = migrate_object(
-            data_object_true, source_schema, self.target_schema
+        updated_data_object = migrate_object(
+            data_object, source_schema, self.target_schema
         )
-        self.assertEqual(True, updated_data_object_true["data"]["data"])
-        data_object_false = {
+        self.assertEqual(True, updated_data_object["data"]["data"])
+        
+    def test_from_array_to_bool_false(self):
+        source_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {
+                "root": {
+                    "arrayType": "array",
+                    "items": {"type": ["integer"]},
+                    "type": ["array"],
+                }
+            },
+            "title": "Type",
+        }
+        data_object = {
             "data": {
                 "createdOn": "2024-09-27T08:02:44.203024",
                 "data": [],
@@ -291,15 +340,15 @@ class TestMigrationToInteger(unittest.TestCase):
                 "version": 1,
             }
         }
-        updated_data_object_false = migrate_object(
-            data_object_false, source_schema, self.target_schema
+        updated_data_object = migrate_object(
+            data_object, source_schema, self.target_schema
         )
-        self.assertEqual(False, updated_data_object_false["data"]["data"])
+        self.assertEqual(False, updated_data_object["data"]["data"])
 
     def test_from_obj_to_bool(self):
         pass
 
-    def test_from_tuple_to_bool(self):
+    def test_from_tuple_to_bool_true(self):
         source_schema = {
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -317,7 +366,7 @@ class TestMigrationToInteger(unittest.TestCase):
             },
             "title": "Type",
         }
-        data_object_true = {
+        data_object = {
             "data": {
                 "createdOn": "2024-09-27T08:02:44.203024",
                 "data": [True, 12, "Hello"],
@@ -336,7 +385,30 @@ class TestMigrationToInteger(unittest.TestCase):
                 "version": 1,
             }
         }
-        data_object_false = {
+        updated_data_object = migrate_object(
+            data_object, source_schema, self.target_schema
+        )
+        self.assertEqual(True, updated_data_object["data"]["data"])
+        
+    def test_from_tuple_to_bool_false(self):
+        source_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {
+                "root": {
+                    "arrayType": "tuple",
+                    "items": [
+                        {"type": ["boolean"]},
+                        {"type": ["integer"]},
+                        {"type": ["string"]},
+                    ],
+                    "type": ["array"],
+                }
+            },
+            "title": "Type",
+        }
+        data_object = {
             "data": {
                 "createdOn": "2024-09-27T08:02:44.203024",
                 "data": [False, 42, "Test"],
@@ -355,15 +427,10 @@ class TestMigrationToInteger(unittest.TestCase):
                 "version": 1,
             }
         }
-
-        updated_data_object_true = migrate_object(
-            data_object_true, source_schema, self.target_schema
+        updated_data_object = migrate_object(
+            data_object, source_schema, self.target_schema
         )
-        self.assertEqual(True, updated_data_object_true["data"]["data"])
-        updated_data_object_false = migrate_object(
-            data_object_false, source_schema, self.target_schema
-        )
-        self.assertEqual(False, updated_data_object_false["data"]["data"])
+        self.assertEqual(False, updated_data_object["data"]["data"])
 
     def test_from_res_ref_to_bool(self):
         pass
@@ -402,9 +469,7 @@ class TestMigrationToInteger(unittest.TestCase):
             }
         }
         with self.assertRaises(ValueError):
-            updated_data_object = migrate_object(
-                data_object, source_schema, self.target_schema
-            )
+            migrate_object(data_object, source_schema, self.target_schema)
 
 
 if __name__ == "__main__":
