@@ -130,7 +130,7 @@ def migrate_to_string(data, source_type):
 
 def migrate_to_boolean(data, source_type):
     match source_type:
-        case "number" | "integer" | "string" | "enum":
+        case "array" | "boolean" | "enum" | "integer" | "number" | "string":
             # TODO Implement potential cut off at limit
             try:
                 data = bool(data)
