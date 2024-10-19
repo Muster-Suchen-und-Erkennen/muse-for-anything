@@ -135,7 +135,7 @@ def migrate_to_boolean(data, source_type):
                 data = bool(data)
             except ValueError:
                 raise ValueError("No transformation to boolean possible!")
-        case "array"  | "tuple":
+        case "array" | "tuple":
             if False in data or len(data) == 0:
                 data = False
             else:

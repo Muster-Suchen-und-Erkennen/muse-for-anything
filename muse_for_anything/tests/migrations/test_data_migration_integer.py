@@ -412,5 +412,6 @@ class TestMigrationToInteger(unittest.TestCase):
                 data_object, source_schema, self.target_schema
             )
 
+
 if __name__ == "__main__":
     unittest.main()

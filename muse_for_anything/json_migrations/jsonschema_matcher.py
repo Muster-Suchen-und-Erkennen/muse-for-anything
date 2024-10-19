@@ -72,7 +72,15 @@ def match_schema(source, target):
                 ]:
                     unsupported_conversion = True
             case "boolean":
-                if source_type not in ["array", "boolean", "enum", "integer", "number", "tuple", "string"]:
+                if source_type not in [
+                    "array",
+                    "boolean",
+                    "enum",
+                    "integer",
+                    "number",
+                    "tuple",
+                    "string",
+                ]:
                     unsupported_conversion = True
             case "string":
                 if source_type not in [

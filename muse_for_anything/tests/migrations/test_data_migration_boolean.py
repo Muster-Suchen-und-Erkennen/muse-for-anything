@@ -355,7 +355,7 @@ class TestMigrationToInteger(unittest.TestCase):
                 "version": 1,
             }
         }
-        
+
         updated_data_object_true = migrate_object(
             data_object_true, source_schema, self.target_schema
         )
@@ -405,6 +405,7 @@ class TestMigrationToInteger(unittest.TestCase):
             updated_data_object = migrate_object(
                 data_object, source_schema, self.target_schema
             )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -42,10 +42,10 @@ class TestMigrationToString(unittest.TestCase):
                 "version": 1,
             }
         }
-        updated_data_object_true = migrate_object(
+        updated_data_object = migrate_object(
             data_object, source_schema, self.target_schema
         )
-        self.assertEqual("1944", updated_data_object_true["data"]["data"])
+        self.assertEqual("1944", updated_data_object["data"]["data"])
 
     def test_from_number_to_str(self):
         source_schema = {
@@ -74,10 +74,10 @@ class TestMigrationToString(unittest.TestCase):
                 "version": 1,
             }
         }
-        updated_data_object_true = migrate_object(
+        updated_data_object = migrate_object(
             data_object, source_schema, self.target_schema
         )
-        self.assertEqual("3.14159265359", updated_data_object_true["data"]["data"])
+        self.assertEqual("3.14159265359", updated_data_object["data"]["data"])
 
     def test_from_bool_to_str(self):
         source_schema = {
@@ -106,10 +106,10 @@ class TestMigrationToString(unittest.TestCase):
                 "version": 1,
             }
         }
-        updated_data_object_true = migrate_object(
+        updated_data_object = migrate_object(
             data_object, source_schema, self.target_schema
         )
-        self.assertEqual("True", updated_data_object_true["data"]["data"])
+        self.assertEqual("True", updated_data_object["data"]["data"])
 
     def test_from_enum_to_str(self):
         source_schema = {
@@ -285,10 +285,10 @@ class TestMigrationToString(unittest.TestCase):
                 "version": 1,
             }
         }
-        updated_data_object_true = migrate_object(
+        updated_data_object = migrate_object(
             data_object, source_schema, self.target_schema
         )
-        self.assertEqual("[True, 12, 'Hello']", updated_data_object_true["data"]["data"])
+        self.assertEqual("[True, 12, 'Hello']", updated_data_object["data"]["data"])
 
     def test_from_res_ref_to_str(self):
         pass
@@ -327,9 +327,7 @@ class TestMigrationToString(unittest.TestCase):
             }
         }
         with self.assertRaises(ValueError):
-            updated_data_object = migrate_object(
-                data_object, source_schema, self.target_schema
-            )
+            migrate_object(data_object, source_schema, self.target_schema)
 
 
 if __name__ == "__main__":
