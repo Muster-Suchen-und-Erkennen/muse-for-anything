@@ -199,10 +199,10 @@ class TestMigrationToString(unittest.TestCase):
                 "version": 1,
             }
         }
-        updated_data_object_true = migrate_object(
+        updated_data_object = migrate_object(
             data_object, source_schema, self.target_schema
         )
-        self.assertEqual("[2, 9, 44]", updated_data_object_true["data"]["data"])
+        self.assertEqual("[2, 9, 44]", updated_data_object["data"]["data"])
 
     def test_from_obj_to_str(self):
         source_schema = {
