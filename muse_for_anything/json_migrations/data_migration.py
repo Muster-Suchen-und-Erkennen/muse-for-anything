@@ -15,15 +15,16 @@ def migrate_object(data_object, source_schema, target_schema):
     data = data_object["data"]["data"]
     updated_data = None
     try:
-        match target_type:
-            case "number":
-                updated_data = migrate_to_number(data, source_type)
-            case "integer":
-                updated_data = migrate_to_integer(data, source_type)
-            case "string":
-                updated_data = migrate_to_string(data, source_type)
-            case "boolean":
-                updated_data = migrate_to_boolean(data, source_type)
+        if target_type == "array":
+            updated_data = migrate_to_array(data, source_type, target_nullable)
+        elif target_type == "boolean":
+            updated_data = migrate_to_boolean(data, source_type, target_nullable)
+        elif target_type == "integer":
+            updated_data = migrate_to_integer(data, source_type, target_nullable)
+        elif target_type == "number":
+            updated_data = migrate_to_number(data, source_type, target_nullable)
+        elif target_type == "string":
+            updated_data = migrate_to_string(data, source_type, target_nullable)
     except ValueError:
         return data_object
     if updated_data is not None:
@@ -31,15 +32,10 @@ def migrate_object(data_object, source_schema, target_schema):
     return data_object
 
 
-def migrate_to_number(data, source_type, cap_at_limit: bool = False):
+def migrate_to_number(data, source_type, target_nullable, cap_at_limit: bool = False):
     match source_type:
-        case "number" | "integer":
+        case "boolean" | "enum" | "number" | "integer" | "string":
             # TODO Implement potential cut off at limit
-            try:
-                data = float(data)
-            except ValueError:
-                raise ValueError("No transformation to number possible!")
-        case "boolean" | "string" | "enum":
             try:
                 data = float(data)
             except ValueError:
@@ -49,9 +45,13 @@ def migrate_to_number(data, source_type, cap_at_limit: bool = False):
                 try:
                     data = float(data[0])
                 except ValueError:
-                    raise ValueError("No transformation to number possible!")
+                    raise ValueError(
+                        "No transformation from this array with one entry to number possible!"
+                    )
             else:
-                raise ValueError("No transformation to number possible!")
+                raise ValueError(
+                    "No transformation from longer arrays to number possible!"
+                )
         case "tuple":
             count_of_numbers = 0
             transformed_data = None
@@ -64,21 +64,16 @@ def migrate_to_number(data, source_type, cap_at_limit: bool = False):
             if count_of_numbers == 1:
                 data = transformed_data
             else:
-                raise ValueError("No transformation to number possible!")
+                raise ValueError("No transformation from this tuple to number possible!")
     return data
 
 
-def migrate_to_integer(data, source_type):
+def migrate_to_integer(data, source_type, target_nullable):
     match source_type:
-        case "number" | "integer":
+        case "boolean" | "enum" | "number" | "integer" | "string":
             # TODO Implement potential cut off at limit
             try:
                 data = int(data)
-            except ValueError:
-                raise ValueError("No transformation to integer possible!")
-        case "boolean" | "string" | "enum":
-            try:
-                data = int(float(data))
             except ValueError:
                 raise ValueError("No transformation to integer possible!")
         case "array":
@@ -86,9 +81,13 @@ def migrate_to_integer(data, source_type):
                 try:
                     data = int(float(data[0]))
                 except ValueError:
-                    raise ValueError("No transformation to integer possible!")
+                    raise ValueError(
+                        "No transformation from this array with one entry to integer possible!"
+                    )
             else:
-                raise ValueError("No transformation to integer possible!")
+                raise ValueError(
+                    "No transformation from longer arrays to integer possible!"
+                )
         case "tuple":
             count_of_numbers = 0
             transformed_data = None
@@ -101,11 +100,11 @@ def migrate_to_integer(data, source_type):
             if count_of_numbers == 1:
                 data = transformed_data
             else:
-                raise ValueError("No transformation to integer possible!")
+                raise ValueError("No transformation from this tuple to integer possible!")
     return data
 
 
-def migrate_to_string(data, source_type):
+def migrate_to_string(data, source_type, target_nullable):
     match source_type:
         case (
             "array"
@@ -128,7 +127,7 @@ def migrate_to_string(data, source_type):
     return data
 
 
-def migrate_to_boolean(data, source_type):
+def migrate_to_boolean(data, source_type, target_nullable):
     match source_type:
         case "boolean" | "enum" | "integer" | "number" | "string":
             try:
@@ -136,24 +135,27 @@ def migrate_to_boolean(data, source_type):
             except ValueError:
                 raise ValueError("No transformation to boolean possible!")
         case "array" | "tuple":
-            if False in data or len(data) == 0:
-                data = False
-            else:
-                data = bool(data)
+            try:
+                if False in data or len(data) == 0:
+                    data = False
+                else:
+                    data = bool(data)
+            except ValueError:
+                raise ValueError("No transformation to boolean possible!")
     return data
 
 
-def migrate_to_enum(data, source_type):
+def migrate_to_enum(data, source_type, target_nullable):
     pass
 
 
-def migrate_to_array(data, source_type):
+def migrate_to_array(data, source_type, target_nullable):
     pass
 
 
-def migrate_to_object(data, source_type):
+def migrate_to_object(data, source_type, target_nullable):
     pass
 
 
-def migrate_to_tuple(data, source_type):
+def migrate_to_tuple(data, source_type, target_nullable):
     pass
