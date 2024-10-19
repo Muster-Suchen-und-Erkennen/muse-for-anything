@@ -78,8 +78,8 @@ def match_schema(source, target):
                     "enum",
                     "integer",
                     "number",
-                    "tuple",
                     "string",
+                    "tuple",
                 ]:
                     unsupported_conversion = True
             case "string":
