@@ -274,7 +274,7 @@ class TestMigrationToNumber(unittest.TestCase):
             data_object, source_schema, self.target_schema
         )
         self.assertEqual(13.4334, updated_data_object["data"]["data"])
-        
+
     def test_from_array_to_number_array_invalid(self):
         source_schema = {
             "$ref": "#/definitions/root",

@@ -44,7 +44,7 @@ class TestMigrationToInteger(unittest.TestCase):
             data_object, source_schema, self.target_schema
         )
         self.assertEqual(15, updated_data_object["data"]["data"])
-        
+
     def test_valid_from_str_to_int_two(self):
         source_schema = {
             "$ref": "#/definitions/root",
@@ -344,7 +344,7 @@ class TestMigrationToInteger(unittest.TestCase):
             data_object, source_schema, self.target_schema
         )
         self.assertEqual([13, 14, 15], updated_data_object["data"]["data"])
-    
+
     def test_from_obj_to_int(self):
         pass
 

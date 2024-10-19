@@ -108,7 +108,7 @@ class TestMigrationToInteger(unittest.TestCase):
             data_object, source_schema, self.target_schema
         )
         self.assertEqual(True, updated_data_object["data"]["data"])
-        
+
     def test_from_int_to_bool_false(self):
         source_schema = {
             "$ref": "#/definitions/root",
@@ -204,7 +204,7 @@ class TestMigrationToInteger(unittest.TestCase):
             data_object, source_schema, self.target_schema
         )
         self.assertEqual(True, updated_data_object["data"]["data"])
-        
+
     def test_from_enum_to_bool_false(self):
         source_schema = {
             "$ref": "#/definitions/root",
@@ -236,7 +236,7 @@ class TestMigrationToInteger(unittest.TestCase):
             data_object, source_schema, self.target_schema
         )
         self.assertEqual(False, updated_data_object["data"]["data"])
-        
+
     def test_from_enum_to_bool_string(self):
         source_schema = {
             "$ref": "#/definitions/root",
@@ -306,7 +306,7 @@ class TestMigrationToInteger(unittest.TestCase):
             data_object, source_schema, self.target_schema
         )
         self.assertEqual(True, updated_data_object["data"]["data"])
-        
+
     def test_from_array_to_bool_false(self):
         source_schema = {
             "$ref": "#/definitions/root",
@@ -389,7 +389,7 @@ class TestMigrationToInteger(unittest.TestCase):
             data_object, source_schema, self.target_schema
         )
         self.assertEqual(True, updated_data_object["data"]["data"])
-        
+
     def test_from_tuple_to_bool_false(self):
         source_schema = {
             "$ref": "#/definitions/root",
