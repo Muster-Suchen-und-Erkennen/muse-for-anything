@@ -73,7 +73,7 @@ def migrate_to_integer(data, source_type, target_nullable):
         case "boolean" | "enum" | "number" | "integer" | "string":
             # TODO Implement potential cut off at limit
             try:
-                data = int(data)
+                data = int(float(data))
             except ValueError:
                 raise ValueError("No transformation to integer possible!")
         case "array":
