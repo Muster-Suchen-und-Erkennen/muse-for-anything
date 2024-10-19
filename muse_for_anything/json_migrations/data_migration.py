@@ -130,12 +130,16 @@ def migrate_to_string(data, source_type):
 
 def migrate_to_boolean(data, source_type):
     match source_type:
-        case "array" | "boolean" | "enum" | "integer" | "number" | "string":
-            # TODO Implement potential cut off at limit
+        case "boolean" | "enum" | "integer" | "number" | "string":
             try:
                 data = bool(data)
             except ValueError:
                 raise ValueError("No transformation to boolean possible!")
+        case "array"  | "tuple":
+            if False in data or len(data) == 0:
+                data = False
+            else:
+                data = bool(data)
     return data
 
 
