@@ -16,7 +16,10 @@ def migrate_object(data_object, source_schema, target_schema):
     updated_data = None
     try:
         if target_type == "array":
-            updated_data = migrate_to_array(data, source_type, target_nullable)
+            array_data_type = target_schema["definitions"]["root"]["items"]["type"]
+            updated_data = migrate_to_array(
+                data, source_type, target_nullable, array_data_type
+            )
         elif target_type == "boolean":
             updated_data = migrate_to_boolean(data, source_type, target_nullable)
         elif target_type == "integer":
@@ -149,8 +152,23 @@ def migrate_to_enum(data, source_type, target_nullable):
     pass
 
 
-def migrate_to_array(data, source_type, target_nullable):
-    pass
+def migrate_to_array(data, source_type, target_nullable, array_data_type):
+    elements_nullable = False
+    if "null" in array_data_type:
+        elements_nullable = True
+        array_data_type.remove("null")
+    try:
+        if array_data_type[0] == "boolean":
+            data = [migrate_to_boolean(data, source_type, elements_nullable)]
+        elif array_data_type[0] == "integer":
+            data = [migrate_to_integer(data, source_type, elements_nullable)]
+        elif array_data_type[0] == "number":
+            data = [migrate_to_number(data, source_type, elements_nullable)]
+        elif array_data_type[0] == "string":
+            data = [migrate_to_string(data, source_type, elements_nullable)]
+    except ValueError:
+        raise ValueError("No transformation to array possible!")
+    return data
 
 
 def migrate_to_object(data, source_type, target_nullable):

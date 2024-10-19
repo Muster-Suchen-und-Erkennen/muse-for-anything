@@ -49,6 +49,9 @@ def match_schema(source, target):
     target_type, target_nullable = extract_type(target)
     if source_type and target_type:
         match target_type:
+            case "array":
+                if source_type not in ["boolean", "integer", "number", "string"]:
+                    unsupported_conversion = True
             case "number":
                 if source_type not in [
                     "array",
