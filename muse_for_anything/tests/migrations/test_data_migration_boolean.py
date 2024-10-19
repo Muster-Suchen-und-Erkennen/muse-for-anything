@@ -165,7 +165,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "definitions": {"root": {"enum": ["all", True, 1234.56, None]}},
             "title": "Type",
         }
-        data_object_true = {
+        data_object_valid_true = {
             "data": {
                 "createdOn": "2024-09-27T08:02:44.203024",
                 "data": True,
@@ -184,15 +184,56 @@ class TestMigrationToInteger(unittest.TestCase):
                 "version": 1,
             }
         }
-        """
-        updated_data_object_true = migrate_object(
-            data_object_true, source_schema, self.target_schema
+        data_object_valid_false = {
+            "data": {
+                "createdOn": "2024-09-27T08:02:44.203024",
+                "data": None,
+                "deletedOn": None,
+                "description": "",
+                "name": "Object",
+                "self": {
+                    "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
+                    "name": "Object",
+                    "rel": [],
+                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
+                    "resourceType": "ont-object",
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
+                },
+                "updatedOn": "2024-09-27T08:02:44.213790",
+                "version": 1,
+            }
+        }
+        data_object_string = {
+            "data": {
+                "createdOn": "2024-09-27T08:02:44.203024",
+                "data": "all",
+                "deletedOn": None,
+                "description": "",
+                "name": "Object",
+                "self": {
+                    "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
+                    "name": "Object",
+                    "rel": [],
+                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
+                    "resourceType": "ont-object",
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
+                },
+                "updatedOn": "2024-09-27T08:02:44.213790",
+                "version": 1,
+            }
+        }
+        updated_data_object_valid_true = migrate_object(
+            data_object_valid_true, source_schema, self.target_schema
         )
-        self.assertEqual(True, updated_data_object_true["data"]["data"])
-        """
-        self.assertEqual(
-            True, migrate_to_boolean(data_object_true["data"]["data"], "enum")
+        self.assertEqual(True, updated_data_object_valid_true["data"]["data"])
+        updated_data_object_valid_false = migrate_object(
+            data_object_valid_false, source_schema, self.target_schema
         )
+        self.assertEqual(False, updated_data_object_valid_false["data"]["data"])
+        updated_data_object_string = migrate_object(
+            data_object_string, source_schema, self.target_schema
+        )
+        self.assertEqual(True, updated_data_object_string["data"]["data"])
 
     def test_from_array_to_bool(self):
         pass

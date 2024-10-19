@@ -135,7 +135,7 @@ def migrate_to_boolean(data, source_type):
             try:
                 data = bool(data)
             except ValueError:
-                raise ValueError("No transformation to number possible!")
+                raise ValueError("No transformation to boolean possible!")
     return data
 
 
