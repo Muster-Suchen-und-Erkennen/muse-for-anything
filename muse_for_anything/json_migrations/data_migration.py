@@ -22,6 +22,9 @@ def migrate_object(data_object, source_schema, target_schema):
             )
         elif target_type == "boolean":
             updated_data = migrate_to_boolean(data, source_type, target_nullable)
+        elif target_type == "enum":
+            allowed_values = target_schema["definitions"]["root"]["enum"]
+            updated_data = migrate_to_enum(data, target_nullable, allowed_values)
         elif target_type == "integer":
             updated_data = migrate_to_integer(data, source_type, target_nullable)
         elif target_type == "number":
@@ -148,8 +151,15 @@ def migrate_to_boolean(data, source_type, target_nullable):
     return data
 
 
-def migrate_to_enum(data, source_type, target_nullable):
-    pass
+def migrate_to_enum(data, target_nullable, allowed_values):
+    if isinstance(data, float):
+        data = int(data)
+    elif isinstance(data, list) and len(data) == 1:
+        data = data[0]
+    if data in allowed_values:
+        return data
+    else:
+        raise ValueError("No transformation to enum possible!")
 
 
 def migrate_to_array(data, source_type, target_nullable, array_data_type):
