@@ -353,7 +353,9 @@ class TestMigrationToInteger(unittest.TestCase):
             "definitions": {
                 "root": {
                     "properties": {
-                        "intprop": {"type": ["integer"],},
+                        "intprop": {
+                            "type": ["integer"],
+                        },
                     },
                     "type": ["object"],
                 }
@@ -420,7 +422,7 @@ class TestMigrationToInteger(unittest.TestCase):
             data_object, source_schema, self.target_schema
         )
         self.assertEqual(False, updated_data_object["data"]["data"])
-        
+
     def test_from_obj_to_bool_complex_object_true(self):
         source_schema = {
             "$ref": "#/definitions/root",
@@ -429,8 +431,12 @@ class TestMigrationToInteger(unittest.TestCase):
             "definitions": {
                 "root": {
                     "properties": {
-                        "intprop": {"type": ["integer"],},
-                        "boolprop": {"type": ["boolean"],},
+                        "intprop": {
+                            "type": ["integer"],
+                        },
+                        "boolprop": {
+                            "type": ["boolean"],
+                        },
                     },
                     "type": ["object"],
                 }
@@ -460,7 +466,7 @@ class TestMigrationToInteger(unittest.TestCase):
             data_object, source_schema, self.target_schema
         )
         self.assertEqual(True, updated_data_object["data"]["data"])
-        
+
     def test_from_obj_to_bool_complex_object_false(self):
         source_schema = {
             "$ref": "#/definitions/root",
@@ -469,8 +475,12 @@ class TestMigrationToInteger(unittest.TestCase):
             "definitions": {
                 "root": {
                     "properties": {
-                        "intprop": {"type": ["integer"],},
-                        "boolprop": {"type": ["boolean"],},
+                        "intprop": {
+                            "type": ["integer"],
+                        },
+                        "boolprop": {
+                            "type": ["boolean"],
+                        },
                     },
                     "type": ["object"],
                 }
@@ -500,7 +510,7 @@ class TestMigrationToInteger(unittest.TestCase):
             data_object, source_schema, self.target_schema
         )
         self.assertEqual(False, updated_data_object["data"]["data"])
-        
+
     def test_from_obj_to_bool_complex_object_invalid(self):
         source_schema = {
             "$ref": "#/definitions/root",
@@ -509,8 +519,12 @@ class TestMigrationToInteger(unittest.TestCase):
             "definitions": {
                 "root": {
                     "properties": {
-                        "intprop": {"type": ["integer"],},
-                        "stringprop": {"type": ["string"],},
+                        "intprop": {
+                            "type": ["integer"],
+                        },
+                        "stringprop": {
+                            "type": ["string"],
+                        },
                     },
                     "type": ["object"],
                 }
@@ -539,7 +553,10 @@ class TestMigrationToInteger(unittest.TestCase):
         updated_data_object = migrate_object(
             data_object, source_schema, self.target_schema
         )
-        self.assertEqual({"intprop": 42, "stringprop": "hello world"}, updated_data_object["data"]["data"])
+        self.assertEqual(
+            {"intprop": 42, "stringprop": "hello world"},
+            updated_data_object["data"]["data"],
+        )
 
     def test_from_tuple_to_bool_true(self):
         source_schema = {

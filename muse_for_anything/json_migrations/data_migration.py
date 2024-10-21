@@ -58,7 +58,7 @@ def migrate_to_number(data, source_type, target_nullable, cap_at_limit: bool = F
             else:
                 raise ValueError(
                     "No transformation from longer arrays to number possible!"
-                )     
+                )
         case "object":
             if len(data) == 0:
                 data = 0.0
@@ -69,13 +69,13 @@ def migrate_to_number(data, source_type, target_nullable, cap_at_limit: bool = F
                 amount_of_numbers = 0
                 temporary = None
                 for key, value in data.items():
-                        try:
-                            temporary = float(data[key])
-                            amount_of_numbers += 1
-                        except:
-                            continue
+                    try:
+                        temporary = float(data[key])
+                        amount_of_numbers += 1
+                    except:
+                        continue
                 if amount_of_numbers == 1:
-                    data = temporary       
+                    data = temporary
         case "tuple":
             count_of_numbers = 0
             transformed_data = None
@@ -122,11 +122,11 @@ def migrate_to_integer(data, source_type, target_nullable):
                 amount_of_ints = 0
                 temporary = None
                 for key, value in data.items():
-                        try:
-                            temporary = int(float(data[key]))
-                            amount_of_ints += 1
-                        except:
-                            continue
+                    try:
+                        temporary = int(float(data[key]))
+                        amount_of_ints += 1
+                    except:
+                        continue
                 if amount_of_ints == 1:
                     data = temporary
         case "tuple":
