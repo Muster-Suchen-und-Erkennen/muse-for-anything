@@ -1,5 +1,6 @@
 from jsonschema import Draft7Validator
 from muse_for_anything.json_migrations.jsonschema_matcher import match_schema
+import numbers
 
 
 def migrate_object(data_object, source_schema, target_schema):
@@ -57,7 +58,24 @@ def migrate_to_number(data, source_type, target_nullable, cap_at_limit: bool = F
             else:
                 raise ValueError(
                     "No transformation from longer arrays to number possible!"
-                )            
+                )     
+        case "object":
+            if len(data) == 0:
+                data = 0.0
+            elif len(data) == 1:
+                for value in data.values():
+                    data = float(value)
+            else:
+                amount_of_numbers = 0
+                temporary = None
+                for key, value in data.items():
+                        try:
+                            temporary = float(data[key])
+                            amount_of_numbers += 1
+                        except:
+                            continue
+                if amount_of_numbers == 1:
+                    data = temporary       
         case "tuple":
             count_of_numbers = 0
             transformed_data = None
@@ -94,6 +112,23 @@ def migrate_to_integer(data, source_type, target_nullable):
                 raise ValueError(
                     "No transformation from longer arrays to integer possible!"
                 )
+        case "object":
+            if len(data) == 0:
+                data = 0
+            elif len(data) == 1:
+                for value in data.values():
+                    data = int(float(value))
+            else:
+                amount_of_ints = 0
+                temporary = None
+                for key, value in data.items():
+                        try:
+                            temporary = int(float(data[key]))
+                            amount_of_ints += 1
+                        except:
+                            continue
+                if amount_of_ints == 1:
+                    data = temporary
         case "tuple":
             count_of_numbers = 0
             transformed_data = None

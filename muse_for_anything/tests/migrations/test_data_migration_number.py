@@ -313,8 +313,177 @@ class TestMigrationToNumber(unittest.TestCase):
         )
         self.assertEqual([13.21, 14, 15.142], updated_data_object["data"]["data"])
 
-    def test_from_obj_to_number(self):
-        pass
+    def test_from_obj_to_number_simple_object(self):
+        source_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {
+                "root": {
+                    "properties": {
+                        "intprop": {
+                            "type": ["string"],
+                        },
+                    },
+                    "type": ["object"],
+                }
+            },
+            "title": "Type",
+        }
+        data_object = {
+            "data": {
+                "createdOn": "2024-09-27T08:02:44.203024",
+                "data": {"intprop": "42"},
+                "deletedOn": None,
+                "description": "",
+                "name": "Object",
+                "self": {
+                    "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
+                    "name": "Object",
+                    "rel": [],
+                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
+                    "resourceType": "ont-object",
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
+                },
+                "updatedOn": "2024-09-27T08:02:44.213790",
+                "version": 1,
+            }
+        }
+        updated_data_object = migrate_object(
+            data_object, source_schema, self.target_schema
+        )
+        self.assertEqual(42.0, updated_data_object["data"]["data"])
+
+    def test_from_obj_to_number_no_object(self):
+        source_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {
+                "root": {
+                    "properties": {},
+                    "type": ["object"],
+                }
+            },
+            "title": "Type",
+        }
+        data_object = {
+            "data": {
+                "createdOn": "2024-09-27T08:02:44.203024",
+                "data": {},
+                "deletedOn": None,
+                "description": "",
+                "name": "Object",
+                "self": {
+                    "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
+                    "name": "Object",
+                    "rel": [],
+                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
+                    "resourceType": "ont-object",
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
+                },
+                "updatedOn": "2024-09-27T08:02:44.213790",
+                "version": 1,
+            }
+        }
+        updated_data_object = migrate_object(
+            data_object, source_schema, self.target_schema
+        )
+        self.assertEqual(0.0, updated_data_object["data"]["data"])
+
+    def test_from_obj_to_number_complex_object(self):
+        source_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {
+                "root": {
+                    "properties": {
+                        "numberprop": {
+                            "type": ["number"],
+                        },
+                        "stringprop": {
+                            "type": ["string"],
+                        },
+                    },
+                    "type": ["object"],
+                }
+            },
+            "title": "Type",
+        }
+        data_object = {
+            "data": {
+                "createdOn": "2024-09-27T08:02:44.203024",
+                "data": {"numberprop": 42.213, "stringprop": "this is not an integer"},
+                "deletedOn": None,
+                "description": "",
+                "name": "Object",
+                "self": {
+                    "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
+                    "name": "Object",
+                    "rel": [],
+                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
+                    "resourceType": "ont-object",
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
+                },
+                "updatedOn": "2024-09-27T08:02:44.213790",
+                "version": 1,
+            }
+        }
+        updated_data_object = migrate_object(
+            data_object, source_schema, self.target_schema
+        )
+        self.assertEqual(42.213, updated_data_object["data"]["data"])
+
+    def test_from_obj_to_number_complex_object_invalid(self):
+        source_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {
+                "root": {
+                    "properties": {
+                        "stringpropone": {
+                            "type": ["string"],
+                        },
+                        "stringproptwo": {
+                            "type": ["string"],
+                        },
+                    },
+                    "type": ["object"],
+                }
+            },
+            "title": "Type",
+        }
+        data_object = {
+            "data": {
+                "createdOn": "2024-09-27T08:02:44.203024",
+                "data": {
+                    "stringpropone": "this is a test",
+                    "stringproptwo": "hello world",
+                },
+                "deletedOn": None,
+                "description": "",
+                "name": "Object",
+                "self": {
+                    "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
+                    "name": "Object",
+                    "rel": [],
+                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
+                    "resourceType": "ont-object",
+                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
+                },
+                "updatedOn": "2024-09-27T08:02:44.213790",
+                "version": 1,
+            }
+        }
+        updated_data_object = migrate_object(
+            data_object, source_schema, self.target_schema
+        )
+        self.assertEqual(
+            {"stringpropone": "this is a test", "stringproptwo": "hello world"},
+            updated_data_object["data"]["data"],
+        )
 
     def test_from_tuple_to_number_valid(self):
         source_schema = {
