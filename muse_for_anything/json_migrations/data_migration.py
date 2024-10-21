@@ -57,7 +57,7 @@ def migrate_to_number(data, source_type, target_nullable, cap_at_limit: bool = F
             else:
                 raise ValueError(
                     "No transformation from longer arrays to number possible!"
-                )
+                )            
         case "tuple":
             count_of_numbers = 0
             transformed_data = None
@@ -140,6 +140,21 @@ def migrate_to_boolean(data, source_type, target_nullable):
                 data = bool(data)
             except ValueError:
                 raise ValueError("No transformation to boolean possible!")
+        case "object":
+            if len(data) == 0:
+                data = False
+            elif len(data) == 1:
+                for value in data.values():
+                    data = bool(value)
+            else:
+                amount_of_booleans = 0
+                temporary = None
+                for key, value in data.items():
+                    if value == True or value == False:
+                        amount_of_booleans += 1
+                        temporary = data[key]
+                if amount_of_booleans == 1:
+                    data = temporary
         case "array" | "tuple":
             try:
                 if False in data or len(data) == 0:

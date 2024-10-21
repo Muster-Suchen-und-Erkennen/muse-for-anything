@@ -71,6 +71,7 @@ def match_schema(source, target):
                     "enum",
                     "integer",
                     "number",
+                    "object",
                     "string",
                     "tuple",
                 ]:
@@ -82,6 +83,7 @@ def match_schema(source, target):
                     "enum",
                     "integer",
                     "number",
+                    "object",
                     "string",
                     "tuple",
                 ]:
@@ -93,6 +95,7 @@ def match_schema(source, target):
                     "enum",
                     "integer",
                     "number",
+                    "object",
                     "string",
                     "tuple",
                 ]:
