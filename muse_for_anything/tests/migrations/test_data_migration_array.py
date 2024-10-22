@@ -69,11 +69,11 @@ class TestMigrationToArray(unittest.TestCase):
             "definitions": {"root": {"type": ["string"]}},
             "title": "Type",
         }
-        data_object = "15"
-        updated_data_object = migrate_object(
-            data_object, source_schema, self.target_schema_number
+        data = "15"
+        updated_data = migrate_object(
+            data, source_schema, self.target_schema_number
         )
-        self.assertEqual([15.0], updated_data_object)
+        self.assertEqual([15.0], updated_data)
 
     def test_from_str_to_list_string(self):
         source_schema = {
@@ -83,11 +83,11 @@ class TestMigrationToArray(unittest.TestCase):
             "definitions": {"root": {"type": ["string"]}},
             "title": "Type",
         }
-        data_object = "15"
-        updated_data_object = migrate_object(
-            data_object, source_schema, self.target_schema_string
+        data = "15"
+        updated_data = migrate_object(
+            data, source_schema, self.target_schema_string
         )
-        self.assertEqual(["15"], updated_data_object)
+        self.assertEqual(["15"], updated_data)
 
     def test_from_str_to_list_error(self):
         source_schema = {
@@ -97,11 +97,11 @@ class TestMigrationToArray(unittest.TestCase):
             "definitions": {"root": {"type": ["string"]}},
             "title": "Type",
         }
-        data_object = "hello world!"
-        updated_data_object = migrate_object(
-            data_object, source_schema, self.target_schema_number
+        data = "hello world!"
+        updated_data = migrate_object(
+            data, source_schema, self.target_schema_number
         )
-        self.assertEqual("hello world!", updated_data_object)
+        self.assertEqual("hello world!", updated_data)
 
     def test_from_bool_to_list_number(self):
         source_schema = {
@@ -111,11 +111,11 @@ class TestMigrationToArray(unittest.TestCase):
             "definitions": {"root": {"type": ["boolean"]}},
             "title": "Type",
         }
-        data_object = True
-        updated_data_object = migrate_object(
-            data_object, source_schema, self.target_schema_number
+        data = True
+        updated_data = migrate_object(
+            data, source_schema, self.target_schema_number
         )
-        self.assertEqual([1.0], updated_data_object)
+        self.assertEqual([1.0], updated_data)
 
     def test_from_bool_to_list_string(self):
         source_schema = {
@@ -125,11 +125,11 @@ class TestMigrationToArray(unittest.TestCase):
             "definitions": {"root": {"type": ["boolean"]}},
             "title": "Type",
         }
-        data_object = False
-        updated_data_object = migrate_object(
-            data_object, source_schema, self.target_schema_string
+        data = False
+        updated_data = migrate_object(
+            data, source_schema, self.target_schema_string
         )
-        self.assertEqual(["False"], updated_data_object)
+        self.assertEqual(["False"], updated_data)
 
     def test_from_int_to_list_number(self):
         source_schema = {
@@ -139,11 +139,11 @@ class TestMigrationToArray(unittest.TestCase):
             "definitions": {"root": {"type": ["integer"]}},
             "title": "Type",
         }
-        data_object = 1944
-        updated_data_object = migrate_object(
-            data_object, source_schema, self.target_schema_number
+        data = 1944
+        updated_data = migrate_object(
+            data, source_schema, self.target_schema_number
         )
-        self.assertEqual([1944.0], updated_data_object)
+        self.assertEqual([1944.0], updated_data)
 
     def test_from_int_to_list_string(self):
         source_schema = {
@@ -153,11 +153,11 @@ class TestMigrationToArray(unittest.TestCase):
             "definitions": {"root": {"type": ["integer"]}},
             "title": "Type",
         }
-        data_object = 1944
-        updated_data_object = migrate_object(
-            data_object, source_schema, self.target_schema_string
+        data = 1944
+        updated_data = migrate_object(
+            data, source_schema, self.target_schema_string
         )
-        self.assertEqual(["1944"], updated_data_object)
+        self.assertEqual(["1944"], updated_data)
 
     def test_from_number_to_list_boolean(self):
         source_schema = {
@@ -167,11 +167,11 @@ class TestMigrationToArray(unittest.TestCase):
             "definitions": {"root": {"type": ["number"]}},
             "title": "Type",
         }
-        data_object = 24.987
-        updated_data_object = migrate_object(
-            data_object, source_schema, self.target_schema_boolean
+        data = 24.987
+        updated_data = migrate_object(
+            data, source_schema, self.target_schema_boolean
         )
-        self.assertEqual([True], updated_data_object)
+        self.assertEqual([True], updated_data)
 
     def test_from_number_to_list_integer(self):
         source_schema = {
@@ -181,11 +181,11 @@ class TestMigrationToArray(unittest.TestCase):
             "definitions": {"root": {"type": ["number"]}},
             "title": "Type",
         }
-        data_object = 45.8763
-        updated_data_object = migrate_object(
-            data_object, source_schema, self.target_schema_integer
+        data = 45.8763
+        updated_data = migrate_object(
+            data, source_schema, self.target_schema_integer
         )
-        self.assertEqual([45], updated_data_object)
+        self.assertEqual([45], updated_data)
 
     def test_to_array_error(self):
         source_schema = {
@@ -198,9 +198,9 @@ class TestMigrationToArray(unittest.TestCase):
             },
             "title": "Type",
         }
-        data_object = 1944
+        data = 1944
         with self.assertRaises(ValueError):
-            migrate_object(data_object, source_schema, self.target_schema_number)
+            migrate_object(data, source_schema, self.target_schema_number)
 
 
 if __name__ == "__main__":

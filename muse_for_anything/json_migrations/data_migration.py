@@ -2,7 +2,7 @@ from jsonschema import Draft7Validator
 from muse_for_anything.json_migrations.jsonschema_matcher import match_schema
 
 
-def migrate_object(data_object, source_schema, target_schema):
+def migrate_object(data, source_schema, target_schema):
     # TODO Add check with validator whether object satisfies schema
     # validator = Draft7Validator(target_schema)
     migration_plan = match_schema(source_schema, target_schema)
@@ -12,29 +12,29 @@ def migrate_object(data_object, source_schema, target_schema):
     source_nullable = migration_plan["source_nullable"]
     target_type = migration_plan["target_type"]
     target_nullable = migration_plan["target_nullable"]
-    updated_data_object = None
+    updated_data = None
     try:
         if target_type == "array":
             array_data_type = target_schema["definitions"]["root"]["items"]["type"]
-            updated_data_object = migrate_to_array(
-                data_object, source_type, target_nullable, array_data_type
+            updated_data = migrate_to_array(
+                data, source_type, target_nullable, array_data_type
             )
         elif target_type == "boolean":
-            updated_data_object = migrate_to_boolean(data_object, source_type, target_nullable)
+            updated_data = migrate_to_boolean(data, source_type, target_nullable)
         elif target_type == "enum":
             allowed_values = target_schema["definitions"]["root"]["enum"]
-            updated_data_object = migrate_to_enum(data_object, target_nullable, allowed_values)
+            updated_data = migrate_to_enum(data, target_nullable, allowed_values)
         elif target_type == "integer":
-            updated_data_object = migrate_to_integer(data_object, source_type, target_nullable)
+            updated_data = migrate_to_integer(data, source_type, target_nullable)
         elif target_type == "number":
-            updated_data_object = migrate_to_number(data_object, source_type, target_nullable)
+            updated_data = migrate_to_number(data, source_type, target_nullable)
         elif target_type == "string":
-            updated_data_object = migrate_to_string(data_object, source_type, target_nullable)
+            updated_data = migrate_to_string(data, source_type, target_nullable)
     except ValueError:
-        return data_object
-    if updated_data_object is not None:
-        data_object = updated_data_object
-    return data_object
+        return data
+    if updated_data is not None:
+        data = updated_data
+    return data
 
 
 def migrate_to_number(data, source_type, target_nullable, cap_at_limit: bool = False):

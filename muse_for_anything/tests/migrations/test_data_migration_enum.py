@@ -27,11 +27,11 @@ class TestMigrationToInteger(unittest.TestCase):
             },
             "title": "Type",
         }
-        data_object = [False]
-        updated_data_object = migrate_object(
-            data_object, source_schema, self.target_schema
+        data = [False]
+        updated_data = migrate_object(
+            data, source_schema, self.target_schema
         )
-        self.assertEqual(False, updated_data_object)
+        self.assertEqual(False, updated_data)
 
     def test_from_array_to_enum_invalid(self):
         source_schema = {
@@ -47,11 +47,11 @@ class TestMigrationToInteger(unittest.TestCase):
             },
             "title": "Type",
         }
-        data_object = [13, 16, 18]
-        updated_data_object = migrate_object(
-            data_object, source_schema, self.target_schema
+        data = [13, 16, 18]
+        updated_data = migrate_object(
+            data, source_schema, self.target_schema
         )
-        self.assertEqual([13, 16, 18], updated_data_object)
+        self.assertEqual([13, 16, 18], updated_data)
 
     def test_from_boolean_to_enum_valid(self):
         source_schema = {
@@ -61,11 +61,11 @@ class TestMigrationToInteger(unittest.TestCase):
             "definitions": {"root": {"type": ["boolean"]}},
             "title": "Type",
         }
-        data_object = False
-        updated_data_object = migrate_object(
-            data_object, source_schema, self.target_schema
+        data = False
+        updated_data = migrate_object(
+            data, source_schema, self.target_schema
         )
-        self.assertEqual(False, updated_data_object)
+        self.assertEqual(False, updated_data)
 
     def test_from_boolean_to_enum_invalid(self):
         source_schema = {
@@ -75,11 +75,11 @@ class TestMigrationToInteger(unittest.TestCase):
             "definitions": {"root": {"type": ["boolean"]}},
             "title": "Type",
         }
-        data_object = True
-        updated_data_object = migrate_object(
-            data_object, source_schema, self.target_schema
+        data = True
+        updated_data = migrate_object(
+            data, source_schema, self.target_schema
         )
-        self.assertEqual(True, updated_data_object)
+        self.assertEqual(True, updated_data)
 
     def test_from_enum_to_enum_valid(self):
         source_schema = {
@@ -89,11 +89,11 @@ class TestMigrationToInteger(unittest.TestCase):
             "definitions": {"root": {"enum": [False, "hello world"]}},
             "title": "Type",
         }
-        data_object = False
-        updated_data_object = migrate_object(
-            data_object, source_schema, self.target_schema
+        data = False
+        updated_data = migrate_object(
+            data, source_schema, self.target_schema
         )
-        self.assertEqual(False, updated_data_object)
+        self.assertEqual(False, updated_data)
 
     def test_from_enum_to_enum_invalid(self):
         source_schema = {
@@ -103,11 +103,11 @@ class TestMigrationToInteger(unittest.TestCase):
             "definitions": {"root": {"enum": [True, None, 1944, "hello world"]}},
             "title": "Type",
         }
-        data_object = True
-        updated_data_object = migrate_object(
-            data_object, source_schema, self.target_schema
+        data = True
+        updated_data = migrate_object(
+            data, source_schema, self.target_schema
         )
-        self.assertEqual(True, updated_data_object)
+        self.assertEqual(True, updated_data)
 
     def test_from_integer_to_enum_valid(self):
         source_schema = {
@@ -117,11 +117,11 @@ class TestMigrationToInteger(unittest.TestCase):
             "definitions": {"root": {"type": ["integer"]}},
             "title": "Type",
         }
-        data_object = 1944
-        updated_data_object = migrate_object(
-            data_object, source_schema, self.target_schema
+        data = 1944
+        updated_data = migrate_object(
+            data, source_schema, self.target_schema
         )
-        self.assertEqual(1944, updated_data_object)
+        self.assertEqual(1944, updated_data)
 
     def test_from_integer_to_enum_invalid(self):
         source_schema = {
@@ -131,11 +131,11 @@ class TestMigrationToInteger(unittest.TestCase):
             "definitions": {"root": {"type": ["integer"]}},
             "title": "Type",
         }
-        data_object = 944
-        updated_data_object = migrate_object(
-            data_object, source_schema, self.target_schema
+        data = 944
+        updated_data = migrate_object(
+            data, source_schema, self.target_schema
         )
-        self.assertEqual(944, updated_data_object)
+        self.assertEqual(944, updated_data)
 
     def test_from_number_to_enum_valid(self):
         source_schema = {
@@ -145,11 +145,11 @@ class TestMigrationToInteger(unittest.TestCase):
             "definitions": {"root": {"type": ["number"]}},
             "title": "Type",
         }
-        data_object = 1944.4491
-        updated_data_object = migrate_object(
-            data_object, source_schema, self.target_schema
+        data = 1944.4491
+        updated_data = migrate_object(
+            data, source_schema, self.target_schema
         )
-        self.assertEqual(1944, updated_data_object)
+        self.assertEqual(1944, updated_data)
 
     def test_from_number_to_enum_invalid(self):
         source_schema = {
@@ -159,11 +159,11 @@ class TestMigrationToInteger(unittest.TestCase):
             "definitions": {"root": {"type": ["number"]}},
             "title": "Type",
         }
-        data_object = 123456789
-        updated_data_object = migrate_object(
-            data_object, source_schema, self.target_schema
+        data = 123456789
+        updated_data = migrate_object(
+            data, source_schema, self.target_schema
         )
-        self.assertEqual(123456789, updated_data_object)
+        self.assertEqual(123456789, updated_data)
 
     def test_from_object_to_enum_invalid(self):
         source_schema = {
@@ -182,13 +182,13 @@ class TestMigrationToInteger(unittest.TestCase):
             },
             "title": "Type",
         }
-        data_object = {"one": 42, "three": True, "two": "Hello World!"}
-        updated_data_object = migrate_object(
-            data_object, source_schema, self.target_schema
+        data = {"one": 42, "three": True, "two": "Hello World!"}
+        updated_data = migrate_object(
+            data, source_schema, self.target_schema
         )
         self.assertEqual(
             {"one": 42, "three": True, "two": "Hello World!"},
-            updated_data_object,
+            updated_data,
         )
 
     def test_from_string_to_enum_valid(self):
@@ -199,11 +199,11 @@ class TestMigrationToInteger(unittest.TestCase):
             "definitions": {"root": {"type": ["string"]}},
             "title": "Type",
         }
-        data_object = "hello world"
-        updated_data_object = migrate_object(
-            data_object, source_schema, self.target_schema
+        data = "hello world"
+        updated_data = migrate_object(
+            data, source_schema, self.target_schema
         )
-        self.assertEqual("hello world", updated_data_object)
+        self.assertEqual("hello world", updated_data)
 
     def test_from_string_to_enum_invalid(self):
         source_schema = {
@@ -213,11 +213,11 @@ class TestMigrationToInteger(unittest.TestCase):
             "definitions": {"root": {"type": ["string"]}},
             "title": "Type",
         }
-        data_object = "hellow orld"
-        updated_data_object = migrate_object(
-            data_object, source_schema, self.target_schema
+        data = "hellow orld"
+        updated_data = migrate_object(
+            data, source_schema, self.target_schema
         )
-        self.assertEqual("hellow orld", updated_data_object)
+        self.assertEqual("hellow orld", updated_data)
 
     def test_from_tuple_to_enum_valid(self):
         source_schema = {
@@ -233,11 +233,11 @@ class TestMigrationToInteger(unittest.TestCase):
             },
             "title": "Type",
         }
-        data_object = "hello world"
-        updated_data_object = migrate_object(
-            data_object, source_schema, self.target_schema
+        data = "hello world"
+        updated_data = migrate_object(
+            data, source_schema, self.target_schema
         )
-        self.assertEqual("hello world", updated_data_object)
+        self.assertEqual("hello world", updated_data)
 
     def test_from_tuple_to_enum_invalid(self):
         source_schema = {
@@ -254,11 +254,11 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
 
-        data_object = ["hello world", 42.42]
-        updated_data_object = migrate_object(
-            data_object, source_schema, self.target_schema
+        data = ["hello world", 42.42]
+        updated_data = migrate_object(
+            data, source_schema, self.target_schema
         )
-        self.assertEqual(["hello world", 42.42], updated_data_object)
+        self.assertEqual(["hello world", 42.42], updated_data)
         
     def test_to_enum_error(self):
         source_schema = {
@@ -271,9 +271,9 @@ class TestMigrationToInteger(unittest.TestCase):
             },
             "title": "Type",
         }
-        data_object = 1944
+        data = 1944
         with self.assertRaises(ValueError):
-            migrate_object(data_object, source_schema, self.target_schema)
+            migrate_object(data, source_schema, self.target_schema)
 
 
 if __name__ == "__main__":
