@@ -1,5 +1,8 @@
+import copy
+
 def extract_type(schema):
-    definitions = schema["definitions"]["root"]
+    temp_schema = copy.deepcopy(schema)
+    definitions = temp_schema["definitions"]["root"]
     keys = definitions.keys()
     nullable = False
     if "enum" in keys:
