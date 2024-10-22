@@ -12,29 +12,28 @@ def migrate_object(data_object, source_schema, target_schema):
     source_nullable = migration_plan["source_nullable"]
     target_type = migration_plan["target_type"]
     target_nullable = migration_plan["target_nullable"]
-    data = data_object["data"]["data"]
-    updated_data = None
+    updated_data_object = None
     try:
         if target_type == "array":
             array_data_type = target_schema["definitions"]["root"]["items"]["type"]
-            updated_data = migrate_to_array(
-                data, source_type, target_nullable, array_data_type
+            updated_data_object = migrate_to_array(
+                data_object, source_type, target_nullable, array_data_type
             )
         elif target_type == "boolean":
-            updated_data = migrate_to_boolean(data, source_type, target_nullable)
+            updated_data_object = migrate_to_boolean(data_object, source_type, target_nullable)
         elif target_type == "enum":
             allowed_values = target_schema["definitions"]["root"]["enum"]
-            updated_data = migrate_to_enum(data, target_nullable, allowed_values)
+            updated_data_object = migrate_to_enum(data_object, target_nullable, allowed_values)
         elif target_type == "integer":
-            updated_data = migrate_to_integer(data, source_type, target_nullable)
+            updated_data_object = migrate_to_integer(data_object, source_type, target_nullable)
         elif target_type == "number":
-            updated_data = migrate_to_number(data, source_type, target_nullable)
+            updated_data_object = migrate_to_number(data_object, source_type, target_nullable)
         elif target_type == "string":
-            updated_data = migrate_to_string(data, source_type, target_nullable)
+            updated_data_object = migrate_to_string(data_object, source_type, target_nullable)
     except ValueError:
         return data_object
-    if updated_data is not None:
-        data_object["data"]["data"] = updated_data
+    if updated_data_object is not None:
+        data_object = updated_data_object
     return data_object
 
 

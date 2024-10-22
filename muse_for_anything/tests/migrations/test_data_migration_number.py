@@ -21,29 +21,11 @@ class TestMigrationToNumber(unittest.TestCase):
             "definitions": {"root": {"type": ["string"]}},
             "title": "Type",
         }
-        data_object = {
-            "data": {
-                "createdOn": "2024-09-27T08:02:44.203024",
-                "data": "15.8765",
-                "deletedOn": None,
-                "description": "",
-                "name": "Object",
-                "self": {
-                    "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                    "name": "Object",
-                    "rel": [],
-                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
-                    "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
-                },
-                "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1,
-            }
-        }
+        data_object = "15.8765"
         updated_data_object = migrate_object(
             data_object, source_schema, self.target_schema
         )
-        self.assertEqual(15.8765, updated_data_object["data"]["data"])
+        self.assertEqual(15.8765, updated_data_object)
 
     def test_invalid_from_str_to_number(self):
         source_schema = {
@@ -53,29 +35,11 @@ class TestMigrationToNumber(unittest.TestCase):
             "definitions": {"root": {"type": ["string"]}},
             "title": "Type",
         }
-        data_object = {
-            "data": {
-                "createdOn": "2024-09-27T08:02:44.203024",
-                "data": "HELLO WORLD!",
-                "deletedOn": None,
-                "description": "",
-                "name": "Object",
-                "self": {
-                    "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                    "name": "Object",
-                    "rel": [],
-                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
-                    "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
-                },
-                "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1,
-            }
-        }
+        data_object = "HELLO WORLD!"
         updated_data_object = migrate_object(
             data_object, source_schema, self.target_schema
         )
-        self.assertEqual("HELLO WORLD!", updated_data_object["data"]["data"])
+        self.assertEqual("HELLO WORLD!", updated_data_object)
 
     def test_from_bool_to_number_true(self):
         source_schema = {
@@ -85,29 +49,11 @@ class TestMigrationToNumber(unittest.TestCase):
             "definitions": {"root": {"type": ["boolean"]}},
             "title": "Type",
         }
-        data_object = {
-            "data": {
-                "createdOn": "2024-09-27T08:02:44.203024",
-                "data": True,
-                "deletedOn": None,
-                "description": "",
-                "name": "Object",
-                "self": {
-                    "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                    "name": "Object",
-                    "rel": [],
-                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
-                    "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
-                },
-                "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1,
-            }
-        }
+        data_object = True
         updated_data_object = migrate_object(
             data_object, source_schema, self.target_schema
         )
-        self.assertEqual(1, updated_data_object["data"]["data"])
+        self.assertEqual(1, updated_data_object)
 
     def test_from_bool_to_number_false(self):
         source_schema = {
@@ -117,29 +63,11 @@ class TestMigrationToNumber(unittest.TestCase):
             "definitions": {"root": {"type": ["boolean"]}},
             "title": "Type",
         }
-        data_object = {
-            "data": {
-                "createdOn": "2024-09-27T08:02:44.203024",
-                "data": False,
-                "deletedOn": None,
-                "description": "",
-                "name": "Object",
-                "self": {
-                    "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                    "name": "Object",
-                    "rel": [],
-                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
-                    "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
-                },
-                "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1,
-            }
-        }
+        data_object = False
         updated_data_object = migrate_object(
             data_object, source_schema, self.target_schema
         )
-        self.assertEqual(0, updated_data_object["data"]["data"])
+        self.assertEqual(0, updated_data_object)
 
     def test_from_int_to_number(self):
         source_schema = {
@@ -149,29 +77,11 @@ class TestMigrationToNumber(unittest.TestCase):
             "definitions": {"root": {"type": ["integer"]}},
             "title": "Type",
         }
-        data_object = {
-            "data": {
-                "createdOn": "2024-09-27T08:02:44.203024",
-                "data": 2984,
-                "deletedOn": None,
-                "description": "",
-                "name": "Object",
-                "self": {
-                    "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                    "name": "Object",
-                    "rel": [],
-                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
-                    "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
-                },
-                "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1,
-            }
-        }
+        data_object = 2984
         updated_data_object = migrate_object(
             data_object, source_schema, self.target_schema
         )
-        self.assertEqual(2984.0, updated_data_object["data"]["data"])
+        self.assertEqual(2984.0, updated_data_object)
 
     def test_from_enum_to_number_valid(self):
         source_schema = {
@@ -181,29 +91,11 @@ class TestMigrationToNumber(unittest.TestCase):
             "definitions": {"root": {"enum": ["all", True, 1234.56, None]}},
             "title": "Type",
         }
-        data_object = {
-            "data": {
-                "createdOn": "2024-09-27T08:02:44.203024",
-                "data": 1234.56789,
-                "deletedOn": None,
-                "description": "",
-                "name": "Object",
-                "self": {
-                    "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                    "name": "Object",
-                    "rel": [],
-                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
-                    "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
-                },
-                "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1,
-            }
-        }
+        data_object = 1234.56789
         updated_data_object = migrate_object(
             data_object, source_schema, self.target_schema
         )
-        self.assertEqual(1234.56789, updated_data_object["data"]["data"])
+        self.assertEqual(1234.56789, updated_data_object)
 
     def test_from_enum_to_number_invalid(self):
         source_schema = {
@@ -213,29 +105,11 @@ class TestMigrationToNumber(unittest.TestCase):
             "definitions": {"root": {"enum": ["all", True, 1234.56, None]}},
             "title": "Type",
         }
-        data_object = {
-            "data": {
-                "createdOn": "2024-09-27T08:02:44.203024",
-                "data": "hello world",
-                "deletedOn": None,
-                "description": "",
-                "name": "Object",
-                "self": {
-                    "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                    "name": "Object",
-                    "rel": [],
-                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
-                    "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
-                },
-                "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1,
-            }
-        }
+        data_object = "hello world"
         updated_data_object = migrate_object(
             data_object, source_schema, self.target_schema
         )
-        self.assertEqual("hello world", updated_data_object["data"]["data"])
+        self.assertEqual("hello world", updated_data_object)
 
     def test_from_array_to_number_array_valid(self):
         source_schema = {
@@ -251,29 +125,11 @@ class TestMigrationToNumber(unittest.TestCase):
             },
             "title": "Type",
         }
-        data_object = {
-            "data": {
-                "createdOn": "2024-09-27T08:02:44.203024",
-                "data": [13.4334],
-                "deletedOn": None,
-                "description": "",
-                "name": "Object",
-                "self": {
-                    "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                    "name": "Object",
-                    "rel": [],
-                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
-                    "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
-                },
-                "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1,
-            }
-        }
+        data_object = [13.4334]
         updated_data_object = migrate_object(
             data_object, source_schema, self.target_schema
         )
-        self.assertEqual(13.4334, updated_data_object["data"]["data"])
+        self.assertEqual(13.4334, updated_data_object)
 
     def test_from_array_to_number_array_invalid(self):
         source_schema = {
@@ -289,29 +145,11 @@ class TestMigrationToNumber(unittest.TestCase):
             },
             "title": "Type",
         }
-        data_object = {
-            "data": {
-                "createdOn": "2024-09-27T08:02:44.203024",
-                "data": [13.21, 14, 15.142],
-                "deletedOn": None,
-                "description": "",
-                "name": "Object",
-                "self": {
-                    "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                    "name": "Object",
-                    "rel": [],
-                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
-                    "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
-                },
-                "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1,
-            }
-        }
+        data_object = [13.21, 14, 15.142]
         updated_data_object = migrate_object(
             data_object, source_schema, self.target_schema
         )
-        self.assertEqual([13.21, 14, 15.142], updated_data_object["data"]["data"])
+        self.assertEqual([13.21, 14, 15.142], updated_data_object)
 
     def test_from_obj_to_number_simple_object(self):
         source_schema = {
@@ -330,29 +168,11 @@ class TestMigrationToNumber(unittest.TestCase):
             },
             "title": "Type",
         }
-        data_object = {
-            "data": {
-                "createdOn": "2024-09-27T08:02:44.203024",
-                "data": {"intprop": "42"},
-                "deletedOn": None,
-                "description": "",
-                "name": "Object",
-                "self": {
-                    "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                    "name": "Object",
-                    "rel": [],
-                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
-                    "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
-                },
-                "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1,
-            }
-        }
+        data_object = {"intprop": "42"}
         updated_data_object = migrate_object(
             data_object, source_schema, self.target_schema
         )
-        self.assertEqual(42.0, updated_data_object["data"]["data"])
+        self.assertEqual(42.0, updated_data_object)
 
     def test_from_obj_to_number_no_object(self):
         source_schema = {
@@ -367,29 +187,11 @@ class TestMigrationToNumber(unittest.TestCase):
             },
             "title": "Type",
         }
-        data_object = {
-            "data": {
-                "createdOn": "2024-09-27T08:02:44.203024",
-                "data": {},
-                "deletedOn": None,
-                "description": "",
-                "name": "Object",
-                "self": {
-                    "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                    "name": "Object",
-                    "rel": [],
-                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
-                    "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
-                },
-                "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1,
-            }
-        }
+        data_object = {}
         updated_data_object = migrate_object(
             data_object, source_schema, self.target_schema
         )
-        self.assertEqual(0.0, updated_data_object["data"]["data"])
+        self.assertEqual(0.0, updated_data_object)
 
     def test_from_obj_to_number_complex_object(self):
         source_schema = {
@@ -411,29 +213,11 @@ class TestMigrationToNumber(unittest.TestCase):
             },
             "title": "Type",
         }
-        data_object = {
-            "data": {
-                "createdOn": "2024-09-27T08:02:44.203024",
-                "data": {"numberprop": 42.213, "stringprop": "this is not an integer"},
-                "deletedOn": None,
-                "description": "",
-                "name": "Object",
-                "self": {
-                    "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                    "name": "Object",
-                    "rel": [],
-                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
-                    "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
-                },
-                "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1,
-            }
-        }
+        data_object = {"numberprop": 42.213, "stringprop": "this is not an integer"}
         updated_data_object = migrate_object(
             data_object, source_schema, self.target_schema
         )
-        self.assertEqual(42.213, updated_data_object["data"]["data"])
+        self.assertEqual(42.213, updated_data_object)
 
     def test_from_obj_to_number_complex_object_invalid(self):
         source_schema = {
@@ -456,33 +240,15 @@ class TestMigrationToNumber(unittest.TestCase):
             "title": "Type",
         }
         data_object = {
-            "data": {
-                "createdOn": "2024-09-27T08:02:44.203024",
-                "data": {
                     "stringpropone": "this is a test",
                     "stringproptwo": "hello world",
-                },
-                "deletedOn": None,
-                "description": "",
-                "name": "Object",
-                "self": {
-                    "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                    "name": "Object",
-                    "rel": [],
-                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
-                    "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
-                },
-                "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1,
-            }
-        }
+                }
         updated_data_object = migrate_object(
             data_object, source_schema, self.target_schema
         )
         self.assertEqual(
             {"stringpropone": "this is a test", "stringproptwo": "hello world"},
-            updated_data_object["data"]["data"],
+            updated_data_object
         )
 
     def test_from_tuple_to_number_valid(self):
@@ -499,29 +265,11 @@ class TestMigrationToNumber(unittest.TestCase):
             },
             "title": "Type",
         }
-        data_object = {
-            "data": {
-                "createdOn": "2024-09-27T08:02:44.203024",
-                "data": ["hello world", 123.456],
-                "deletedOn": None,
-                "description": "",
-                "name": "Object",
-                "self": {
-                    "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                    "name": "Object",
-                    "rel": [],
-                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
-                    "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
-                },
-                "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1,
-            }
-        }
+        data_object = ["hello world", 123.456]
         updated_data_object = migrate_object(
             data_object, source_schema, self.target_schema
         )
-        self.assertEqual(123.456, updated_data_object["data"]["data"])
+        self.assertEqual(123.456, updated_data_object)
 
     def test_from_tuple_to_number_invalid(self):
         source_schema = {
@@ -537,30 +285,12 @@ class TestMigrationToNumber(unittest.TestCase):
             },
             "title": "Type",
         }
-        data_object = {
-            "data": {
-                "createdOn": "2024-09-27T08:02:44.203024",
-                "data": [True, False, "hello world"],
-                "deletedOn": None,
-                "description": "",
-                "name": "Object",
-                "self": {
-                    "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                    "name": "Object",
-                    "rel": [],
-                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
-                    "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
-                },
-                "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1,
-            }
-        }
+        data_object = [True, False, "hello world"]
         updated_data_object = migrate_object(
             data_object, source_schema, self.target_schema
         )
         self.assertEqual(
-            [True, False, "hello world"], updated_data_object["data"]["data"]
+            [True, False, "hello world"], updated_data_object
         )
 
     def test_from_res_ref_to_number(self):
@@ -580,25 +310,7 @@ class TestMigrationToNumber(unittest.TestCase):
             },
             "title": "Type",
         }
-        data_object = {
-            "data": {
-                "createdOn": "2024-09-27T08:02:44.203024",
-                "data": 1944,
-                "deletedOn": None,
-                "description": "",
-                "name": "Object",
-                "self": {
-                    "href": "http://localhost:5000/api/v1/namespaces/1/objects/13/",
-                    "name": "Object",
-                    "rel": [],
-                    "resourceKey": {"namespaceId": "1", "objectId": "13"},
-                    "resourceType": "ont-object",
-                    "schema": "http://localhost:5000/api/v1/schemas/ontology/27/",
-                },
-                "updatedOn": "2024-09-27T08:02:44.213790",
-                "version": 1,
-            }
-        }
+        data_object = 1944
         with self.assertRaises(ValueError):
             migrate_object(data_object, source_schema, self.target_schema)
 
