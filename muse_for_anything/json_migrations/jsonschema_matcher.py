@@ -1,5 +1,6 @@
 import copy
 
+
 def extract_type(schema):
     temp_schema = copy.deepcopy(schema)
     definitions = temp_schema["definitions"]["root"]
