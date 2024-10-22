@@ -22,9 +22,7 @@ class TestMigrationToString(unittest.TestCase):
             "title": "Type",
         }
         data = 1944
-        updated_data = migrate_object(
-            data, source_schema, self.target_schema
-        )
+        updated_data = migrate_object(data, source_schema, self.target_schema)
         self.assertEqual("1944", updated_data)
 
     def test_from_number_to_str(self):
@@ -36,9 +34,7 @@ class TestMigrationToString(unittest.TestCase):
             "title": "Type",
         }
         data = 3.14159265359
-        updated_data = migrate_object(
-            data, source_schema, self.target_schema
-        )
+        updated_data = migrate_object(data, source_schema, self.target_schema)
         self.assertEqual("3.14159265359", updated_data)
 
     def test_from_bool_to_str(self):
@@ -50,9 +46,7 @@ class TestMigrationToString(unittest.TestCase):
             "title": "Type",
         }
         data = True
-        updated_data = migrate_object(
-            data, source_schema, self.target_schema
-        )
+        updated_data = migrate_object(data, source_schema, self.target_schema)
         self.assertEqual("True", updated_data)
 
     def test_from_enum_to_str_one(self):
@@ -64,9 +58,7 @@ class TestMigrationToString(unittest.TestCase):
             "title": "Type",
         }
         data = 1234.56789
-        updated_data = migrate_object(
-            data, source_schema, self.target_schema
-        )
+        updated_data = migrate_object(data, source_schema, self.target_schema)
         self.assertEqual("1234.56789", updated_data)
 
     def test_from_enum_to_str_two(self):
@@ -78,9 +70,7 @@ class TestMigrationToString(unittest.TestCase):
             "title": "Type",
         }
         data = "hello world"
-        updated_data = migrate_object(
-            data, source_schema, self.target_schema
-        )
+        updated_data = migrate_object(data, source_schema, self.target_schema)
         self.assertEqual("hello world", updated_data)
 
     def test_from_array_to_str(self):
@@ -98,9 +88,7 @@ class TestMigrationToString(unittest.TestCase):
             "title": "Type",
         }
         data = [2, 9, 44]
-        updated_data = migrate_object(
-            data, source_schema, self.target_schema
-        )
+        updated_data = migrate_object(data, source_schema, self.target_schema)
         self.assertEqual("[2, 9, 44]", updated_data)
 
     def test_from_obj_to_str(self):
@@ -121,9 +109,7 @@ class TestMigrationToString(unittest.TestCase):
             "title": "Type",
         }
         data = {"one": 42, "three": True, "two": "Hello World!"}
-        updated_data = migrate_object(
-            data, source_schema, self.target_schema
-        )
+        updated_data = migrate_object(data, source_schema, self.target_schema)
         self.assertEqual(
             "{'one': 42, 'three': True, 'two': 'Hello World!'}",
             updated_data,
@@ -148,9 +134,7 @@ class TestMigrationToString(unittest.TestCase):
             "title": "Type",
         }
         data = [True, 12, "Hello"]
-        updated_data = migrate_object(
-            data, source_schema, self.target_schema
-        )
+        updated_data = migrate_object(data, source_schema, self.target_schema)
         self.assertEqual("[True, 12, 'Hello']", updated_data)
 
     def test_from_res_ref_to_str(self):

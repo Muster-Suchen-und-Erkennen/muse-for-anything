@@ -22,9 +22,7 @@ class TestMigrationToNumber(unittest.TestCase):
             "title": "Type",
         }
         data = "15.8765"
-        updated_data = migrate_object(
-            data, source_schema, self.target_schema
-        )
+        updated_data = migrate_object(data, source_schema, self.target_schema)
         self.assertEqual(15.8765, updated_data)
 
     def test_invalid_from_str_to_number(self):
@@ -36,9 +34,7 @@ class TestMigrationToNumber(unittest.TestCase):
             "title": "Type",
         }
         data = "HELLO WORLD!"
-        updated_data = migrate_object(
-            data, source_schema, self.target_schema
-        )
+        updated_data = migrate_object(data, source_schema, self.target_schema)
         self.assertEqual("HELLO WORLD!", updated_data)
 
     def test_from_bool_to_number_true(self):
@@ -50,9 +46,7 @@ class TestMigrationToNumber(unittest.TestCase):
             "title": "Type",
         }
         data = True
-        updated_data = migrate_object(
-            data, source_schema, self.target_schema
-        )
+        updated_data = migrate_object(data, source_schema, self.target_schema)
         self.assertEqual(1, updated_data)
 
     def test_from_bool_to_number_false(self):
@@ -64,9 +58,7 @@ class TestMigrationToNumber(unittest.TestCase):
             "title": "Type",
         }
         data = False
-        updated_data = migrate_object(
-            data, source_schema, self.target_schema
-        )
+        updated_data = migrate_object(data, source_schema, self.target_schema)
         self.assertEqual(0, updated_data)
 
     def test_from_int_to_number(self):
@@ -78,9 +70,7 @@ class TestMigrationToNumber(unittest.TestCase):
             "title": "Type",
         }
         data = 2984
-        updated_data = migrate_object(
-            data, source_schema, self.target_schema
-        )
+        updated_data = migrate_object(data, source_schema, self.target_schema)
         self.assertEqual(2984.0, updated_data)
 
     def test_from_enum_to_number_valid(self):
@@ -92,9 +82,7 @@ class TestMigrationToNumber(unittest.TestCase):
             "title": "Type",
         }
         data = 1234.56789
-        updated_data = migrate_object(
-            data, source_schema, self.target_schema
-        )
+        updated_data = migrate_object(data, source_schema, self.target_schema)
         self.assertEqual(1234.56789, updated_data)
 
     def test_from_enum_to_number_invalid(self):
@@ -106,9 +94,7 @@ class TestMigrationToNumber(unittest.TestCase):
             "title": "Type",
         }
         data = "hello world"
-        updated_data = migrate_object(
-            data, source_schema, self.target_schema
-        )
+        updated_data = migrate_object(data, source_schema, self.target_schema)
         self.assertEqual("hello world", updated_data)
 
     def test_from_array_to_number_array_valid(self):
@@ -126,9 +112,7 @@ class TestMigrationToNumber(unittest.TestCase):
             "title": "Type",
         }
         data = [13.4334]
-        updated_data = migrate_object(
-            data, source_schema, self.target_schema
-        )
+        updated_data = migrate_object(data, source_schema, self.target_schema)
         self.assertEqual(13.4334, updated_data)
 
     def test_from_array_to_number_array_invalid(self):
@@ -146,9 +130,7 @@ class TestMigrationToNumber(unittest.TestCase):
             "title": "Type",
         }
         data = [13.21, 14, 15.142]
-        updated_data = migrate_object(
-            data, source_schema, self.target_schema
-        )
+        updated_data = migrate_object(data, source_schema, self.target_schema)
         self.assertEqual([13.21, 14, 15.142], updated_data)
 
     def test_from_obj_to_number_simple_object(self):
@@ -169,9 +151,7 @@ class TestMigrationToNumber(unittest.TestCase):
             "title": "Type",
         }
         data = {"intprop": "42"}
-        updated_data = migrate_object(
-            data, source_schema, self.target_schema
-        )
+        updated_data = migrate_object(data, source_schema, self.target_schema)
         self.assertEqual(42.0, updated_data)
 
     def test_from_obj_to_number_no_object(self):
@@ -188,9 +168,7 @@ class TestMigrationToNumber(unittest.TestCase):
             "title": "Type",
         }
         data = {}
-        updated_data = migrate_object(
-            data, source_schema, self.target_schema
-        )
+        updated_data = migrate_object(data, source_schema, self.target_schema)
         self.assertEqual(0.0, updated_data)
 
     def test_from_obj_to_number_complex_object(self):
@@ -214,9 +192,7 @@ class TestMigrationToNumber(unittest.TestCase):
             "title": "Type",
         }
         data = {"numberprop": 42.213, "stringprop": "this is not an integer"}
-        updated_data = migrate_object(
-            data, source_schema, self.target_schema
-        )
+        updated_data = migrate_object(data, source_schema, self.target_schema)
         self.assertEqual(42.213, updated_data)
 
     def test_from_obj_to_number_complex_object_invalid(self):
@@ -240,15 +216,13 @@ class TestMigrationToNumber(unittest.TestCase):
             "title": "Type",
         }
         data = {
-                    "stringpropone": "this is a test",
-                    "stringproptwo": "hello world",
-                }
-        updated_data = migrate_object(
-            data, source_schema, self.target_schema
-        )
+            "stringpropone": "this is a test",
+            "stringproptwo": "hello world",
+        }
+        updated_data = migrate_object(data, source_schema, self.target_schema)
         self.assertEqual(
             {"stringpropone": "this is a test", "stringproptwo": "hello world"},
-            updated_data
+            updated_data,
         )
 
     def test_from_tuple_to_number_valid(self):
@@ -266,9 +240,7 @@ class TestMigrationToNumber(unittest.TestCase):
             "title": "Type",
         }
         data = ["hello world", 123.456]
-        updated_data = migrate_object(
-            data, source_schema, self.target_schema
-        )
+        updated_data = migrate_object(data, source_schema, self.target_schema)
         self.assertEqual(123.456, updated_data)
 
     def test_from_tuple_to_number_invalid(self):
@@ -286,12 +258,8 @@ class TestMigrationToNumber(unittest.TestCase):
             "title": "Type",
         }
         data = [True, False, "hello world"]
-        updated_data = migrate_object(
-            data, source_schema, self.target_schema
-        )
-        self.assertEqual(
-            [True, False, "hello world"], updated_data
-        )
+        updated_data = migrate_object(data, source_schema, self.target_schema)
+        self.assertEqual([True, False, "hello world"], updated_data)
 
     def test_from_res_ref_to_number(self):
         pass
