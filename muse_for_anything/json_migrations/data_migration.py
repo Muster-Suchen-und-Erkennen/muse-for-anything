@@ -1,3 +1,4 @@
+import numbers
 from jsonschema import Draft7Validator
 from muse_for_anything.json_migrations.jsonschema_matcher import match_schema
 
@@ -200,8 +201,12 @@ def migrate_to_boolean(data, source_type, target_nullable):
 
 
 def migrate_to_enum(data, target_nullable, allowed_values):
-    if isinstance(data, float):
-        data = int(data)
+    if isinstance(data, numbers.Number):
+        temp_data = data
+        for value in allowed_values:
+            if isinstance(value, numbers.Number) and round(value) == round(temp_data):
+                temp_data = value
+        data = temp_data
     elif isinstance(data, list) and len(data) == 1:
         data = data[0]
     if data in allowed_values:
