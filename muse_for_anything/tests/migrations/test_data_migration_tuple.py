@@ -3,7 +3,7 @@ from muse_for_anything.json_migrations.data_migration import *
 import unittest
 
 
-class TestMigrationToArray(unittest.TestCase):
+class TestMigrationToTuple(unittest.TestCase):
 
     target_schema_simple_string = {
         "$ref": "#/definitions/root",
