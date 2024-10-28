@@ -119,6 +119,9 @@ def match_schema(source, target):
             case "tuple":
                 if source_type not in ["boolean", "integer", "number", "string"]:
                     unsupported_conversion = True
+            case "object":
+                if source_type not in ["boolean", "integer", "number", "string"]:
+                    unsupported_conversion = True
             case _:
                 unsupported_conversion = True
     return {

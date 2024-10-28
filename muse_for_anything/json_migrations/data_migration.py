@@ -37,6 +37,10 @@ def migrate_object(data, source_schema, target_schema):
             updated_data = migrate_to_tuple(
                 data, source_type, source_schema, target_schema, target_nullable
             )
+        elif target_type == "object":
+            updated_data = migrate_to_object(
+                data, source_type, source_schema, target_schema, target_nullable
+            )
     except ValueError:
         return data
     if updated_data is not None:
@@ -240,7 +244,55 @@ def migrate_to_array(data, source_type, source_schema, array_data_type, target_n
 
 
 def migrate_to_object(data, source_type, source_schema, target_schema, target_nullable):
-    pass
+    match source_type:
+        case "boolean" | "integer" | "number" | "string":
+            if len(target_schema["definitions"]["root"]["properties"]) == 1:
+                try:
+                    prop_name = next(
+                        iter(target_schema["definitions"]["root"]["properties"])
+                    )
+                    prop_type = target_schema["definitions"]["root"]["properties"][
+                        prop_name
+                    ]["type"]
+                    item_nullable = False
+                    if "null" in prop_type:
+                        item_nullable = True
+                        prop_type.remove("null")
+                    if "boolean" in prop_type:
+                        data = {
+                            prop_name: migrate_to_boolean(
+                                data, source_type, item_nullable
+                            )
+                        }
+                    elif "integer" in prop_type:
+                        data = {
+                            prop_name: migrate_to_integer(
+                                data, source_type, item_nullable
+                            )
+                        }
+                    elif "number" in prop_type:
+                        data = {
+                            prop_name: migrate_to_number(data, source_type, item_nullable)
+                        }
+                    elif "string" in prop_type:
+                        data = {
+                            prop_name: migrate_to_string(
+                                data, source_type, source_schema, item_nullable
+                            )
+                        }
+                    else:
+                        raise ValueError("No transformation to tuple possible!")
+                except ValueError:
+                    raise ValueError("No transformation to enum possible!")
+        case "enum":
+            pass
+        case "object":
+            pass
+        case "array":
+            pass
+        case "tuple":
+            pass
+    return data
 
 
 def migrate_to_tuple(data, source_type, source_schema, target_schema, target_nullable):
@@ -248,31 +300,18 @@ def migrate_to_tuple(data, source_type, source_schema, target_schema, target_nul
         case "boolean" | "integer" | "number" | "string":
             if len(target_schema["definitions"]["root"]["items"]) == 1:
                 try:
+                    type = target_schema["definitions"]["root"]["items"][0]["type"]
                     item_nullable = False
-                    if "null" in target_schema["definitions"]["root"]["items"][0]["type"]:
+                    if "null" in type:
                         item_nullable = True
-                        target_schema["definitions"]["root"]["items"][0]["type"].remove(
-                            "null"
-                        )
-                    if (
-                        target_schema["definitions"]["root"]["items"][0]["type"][0]
-                        == "boolean"
-                    ):
+                        type.remove("null")
+                    if "boolean" in type:
                         data = [migrate_to_boolean(data, source_type, item_nullable)]
-                    elif (
-                        target_schema["definitions"]["root"]["items"][0]["type"][0]
-                        == "integer"
-                    ):
+                    elif "integer" in type:
                         data = [migrate_to_integer(data, source_type, item_nullable)]
-                    elif (
-                        target_schema["definitions"]["root"]["items"][0]["type"][0]
-                        == "number"
-                    ):
+                    elif "number" in type:
                         data = [migrate_to_number(data, source_type, item_nullable)]
-                    elif (
-                        target_schema["definitions"]["root"]["items"][0]["type"][0]
-                        == "string"
-                    ):
+                    elif "string" in type:
                         data = [
                             migrate_to_string(
                                 data, source_type, source_schema, item_nullable
