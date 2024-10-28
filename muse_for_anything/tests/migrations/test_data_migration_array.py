@@ -85,7 +85,7 @@ class TestMigrationToArray(unittest.TestCase):
         updated_data = migrate_object(data, source_schema, self.target_schema_string)
         self.assertEqual(["15"], updated_data)
 
-    def test_from_str_to_array_error(self):
+    def test_from_str_to_array_invalid(self):
         source_schema = {
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -169,7 +169,7 @@ class TestMigrationToArray(unittest.TestCase):
         updated_data = migrate_object(data, source_schema, self.target_schema_integer)
         self.assertEqual([45], updated_data)
 
-    def test_to_array_error(self):
+    def test_to_array_invalid(self):
         source_schema = {
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
