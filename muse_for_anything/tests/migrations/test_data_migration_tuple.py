@@ -20,7 +20,7 @@ class TestMigrationToArray(unittest.TestCase):
         },
         "title": "Type",
     }
-    
+
     target_schema_simple_integer = {
         "$ref": "#/definitions/root",
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -54,7 +54,7 @@ class TestMigrationToArray(unittest.TestCase):
         },
         "title": "Type",
     }
-    
+
     def test_from_str_to_tuple(self):
         source_schema = {
             "$ref": "#/definitions/root",
@@ -64,7 +64,9 @@ class TestMigrationToArray(unittest.TestCase):
             "title": "Type",
         }
         data = "15"
-        updated_data = migrate_object(data, source_schema, self.target_schema_simple_string)
+        updated_data = migrate_object(
+            data, source_schema, self.target_schema_simple_string
+        )
         self.assertEqual(["15"], updated_data)
 
     def test_from_str_to_tuple_invalid(self):
@@ -88,7 +90,9 @@ class TestMigrationToArray(unittest.TestCase):
             "title": "Type",
         }
         data = True
-        updated_data = migrate_object(data, source_schema, self.target_schema_simple_integer)
+        updated_data = migrate_object(
+            data, source_schema, self.target_schema_simple_integer
+        )
         self.assertEqual([1], updated_data)
 
     def test_from_bool_to_tuple_invalid(self):
@@ -112,7 +116,9 @@ class TestMigrationToArray(unittest.TestCase):
             "title": "Type",
         }
         data = 1944
-        updated_data = migrate_object(data, source_schema, self.target_schema_simple_string)
+        updated_data = migrate_object(
+            data, source_schema, self.target_schema_simple_string
+        )
         self.assertEqual(["1944"], updated_data)
 
     def test_from_int_to_tuple_invalid(self):
@@ -136,7 +142,9 @@ class TestMigrationToArray(unittest.TestCase):
             "title": "Type",
         }
         data = 24.987
-        updated_data = migrate_object(data, source_schema, self.target_schema_simple_integer)
+        updated_data = migrate_object(
+            data, source_schema, self.target_schema_simple_integer
+        )
         self.assertEqual([24], updated_data)
 
     def test_from_number_to_tuple_invalid(self):
