@@ -18,19 +18,19 @@ def migrate_object(data, source_schema, target_schema):
         if target_type == "array":
             array_data_type = target_schema["definitions"]["root"]["items"]["type"]
             updated_data = migrate_to_array(
-                data, source_type, target_nullable, array_data_type
+                data, source_type, source_schema, array_data_type, target_nullable
             )
         elif target_type == "boolean":
             updated_data = migrate_to_boolean(data, source_type, target_nullable)
         elif target_type == "enum":
             allowed_values = target_schema["definitions"]["root"]["enum"]
-            updated_data = migrate_to_enum(data, target_nullable, allowed_values)
+            updated_data = migrate_to_enum(data, allowed_values, target_nullable)
         elif target_type == "integer":
             updated_data = migrate_to_integer(data, source_type, target_nullable)
         elif target_type == "number":
             updated_data = migrate_to_number(data, source_type, target_nullable)
         elif target_type == "string":
-            updated_data = migrate_to_string(data, source_type, target_nullable)
+            updated_data = migrate_to_string(data, source_type, source_schema, target_nullable)
     except ValueError:
         return data
     if updated_data is not None:
@@ -38,7 +38,7 @@ def migrate_object(data, source_schema, target_schema):
     return data
 
 
-def migrate_to_number(data, source_type, target_nullable, cap_at_limit: bool = False):
+def migrate_to_number(data, source_type, target_nullable):
     match source_type:
         case "boolean" | "enum" | "number" | "integer" | "string":
             # TODO Implement potential cut off at limit
@@ -144,7 +144,7 @@ def migrate_to_integer(data, source_type, target_nullable):
     return data
 
 
-def migrate_to_string(data, source_type, target_nullable):
+def migrate_to_string(data, source_type, source_schema, target_nullable):
     match source_type:
         case (
             "array"
@@ -152,7 +152,6 @@ def migrate_to_string(data, source_type, target_nullable):
             | "enum"
             | "integer"
             | "number"
-            | "object"
             | "string"
             | "tuple"
         ):
@@ -160,6 +159,12 @@ def migrate_to_string(data, source_type, target_nullable):
                 data = str(data)
             except ValueError:
                 raise ValueError("No transformation to string possible!")
+        case "object":
+            data_string = ""
+            properties = source_schema["definitions"]["root"]["properties"]
+            for property in properties.keys():
+                data_string += property + ": " + str(data[property]) + ", "
+            data = data_string[:-2]
         case "$ref":
             # TODO Implement check whether ref to string?
             # Probably unnecessary if refs are resolved beforehand
@@ -200,7 +205,7 @@ def migrate_to_boolean(data, source_type, target_nullable):
     return data
 
 
-def migrate_to_enum(data, target_nullable, allowed_values):
+def migrate_to_enum(data, allowed_values, target_nullable):
     if isinstance(data, numbers.Number):
         temp_data = data
         for value in allowed_values:
@@ -215,7 +220,7 @@ def migrate_to_enum(data, target_nullable, allowed_values):
         raise ValueError("No transformation to enum possible!")
 
 
-def migrate_to_array(data, source_type, target_nullable, array_data_type):
+def migrate_to_array(data, source_type, source_schema, array_data_type, target_nullable):
     elements_nullable = False
     if "null" in array_data_type:
         elements_nullable = True
@@ -228,15 +233,15 @@ def migrate_to_array(data, source_type, target_nullable, array_data_type):
         elif array_data_type[0] == "number":
             data = [migrate_to_number(data, source_type, elements_nullable)]
         elif array_data_type[0] == "string":
-            data = [migrate_to_string(data, source_type, elements_nullable)]
+            data = [migrate_to_string(data, source_type, source_schema, elements_nullable)]
     except ValueError:
         raise ValueError("No transformation to array possible!")
     return data
 
 
-def migrate_to_object(data, source_type, target_nullable):
+def migrate_to_object(data, source_type, source_schema, target_nullable):
     pass
 
 
-def migrate_to_tuple(data, source_type, target_nullable):
+def migrate_to_tuple(data, source_type, source_schema, target_nullable):
     pass
