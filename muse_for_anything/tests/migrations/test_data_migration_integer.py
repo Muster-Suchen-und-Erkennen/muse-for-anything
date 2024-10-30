@@ -22,7 +22,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = "15"
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(15, updated_data)
 
     def test_valid_from_str_to_int_two(self):
@@ -34,7 +34,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = "15.79"
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(15, updated_data)
 
     def test_invalid_from_str_to_int(self):
@@ -46,7 +46,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = "HELLO WORLD!"
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual("HELLO WORLD!", updated_data)
 
     def test_from_bool_to_int_true(self):
@@ -58,7 +58,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = True
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(1, updated_data)
 
     def test_from_bool_to_int_false(self):
@@ -70,7 +70,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = False
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(0, updated_data)
 
     def test_from_number_to_int(self):
@@ -82,7 +82,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = 5.7436555
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(5, updated_data)
 
     def test_from_enum_to_int_valid(self):  #
@@ -94,7 +94,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = 1234
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(1234, updated_data)
 
     def test_from_enum_to_int_invalid(self):  #
@@ -106,7 +106,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = "hello world"
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual("hello world", updated_data)
 
     def test_from_array_to_int_valid(self):
@@ -124,7 +124,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = [13]
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(13, updated_data)
 
     def test_from_array_to_int_invalid(self):
@@ -142,7 +142,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = [13, 14, 15]
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual([13, 14, 15], updated_data)
 
     def test_from_obj_to_int_simple_object(self):
@@ -163,7 +163,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = {"intprop": "42"}
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(42, updated_data)
 
     def test_from_obj_to_int_no_object(self):
@@ -180,7 +180,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = {}
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(0, updated_data)
 
     def test_from_obj_to_int_complex_object(self):
@@ -204,7 +204,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = {"intprop": 42, "stringprop": "this is not an integer"}
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(42, updated_data)
 
     def test_from_obj_to_bool_complex_object_invalid(self):
@@ -228,7 +228,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = {"stringpropone": "this is a test", "stringproptwo": "hello world"}
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(
             {"stringpropone": "this is a test", "stringproptwo": "hello world"},
             updated_data,
@@ -249,7 +249,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = ["hello world", 123.456]
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(123, updated_data)
 
     def test_from_tuple_to_int_invalid(self):
@@ -267,7 +267,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = [True, False, "hello world"]
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual([True, False, "hello world"], updated_data)
 
     def test_from_res_ref_to_int(self):
@@ -289,7 +289,7 @@ class TestMigrationToInteger(unittest.TestCase):
         }
         data = 1944
         with self.assertRaises(ValueError):
-            migrate_object(data, source_schema, self.target_schema)
+            migrate_data(data, source_schema, self.target_schema)
 
 
 if __name__ == "__main__":

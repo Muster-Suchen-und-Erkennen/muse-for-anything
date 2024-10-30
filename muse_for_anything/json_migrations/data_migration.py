@@ -3,7 +3,7 @@ from jsonschema import Draft7Validator
 from muse_for_anything.json_migrations.jsonschema_matcher import match_schema
 
 
-def migrate_object(data, source_schema, target_schema):
+def migrate_data(data, source_schema, target_schema):
     # TODO Add check with validator whether object satisfies schema
     # validator = Draft7Validator(target_schema)
     migration_plan = match_schema(source_schema, target_schema)
@@ -246,14 +246,11 @@ def migrate_to_array(data, source_type, source_schema, array_data_type, target_n
 def migrate_to_object(data, source_type, source_schema, target_schema, target_nullable):
     match source_type:
         case "boolean" | "integer" | "number" | "string":
-            if len(target_schema["definitions"]["root"]["properties"]) == 1:
+            properties = target_schema["definitions"]["root"]["properties"]
+            if len(properties) == 1:
                 try:
-                    prop_name = next(
-                        iter(target_schema["definitions"]["root"]["properties"])
-                    )
-                    prop_type = target_schema["definitions"]["root"]["properties"][
-                        prop_name
-                    ]["type"]
+                    prop_name = next(iter(properties))
+                    prop_type = properties[prop_name]["type"]
                     item_nullable = False
                     if "null" in prop_type:
                         item_nullable = True
@@ -290,8 +287,6 @@ def migrate_to_object(data, source_type, source_schema, target_schema, target_nu
             pass
         case "array":
             pass
-        case "tuple":
-            pass
     return data
 
 
@@ -322,8 +317,6 @@ def migrate_to_tuple(data, source_type, source_schema, target_schema, target_nul
                 except ValueError:
                     raise ValueError("No transformation to enum possible!")
         case "enum":
-            pass
-        case "object":
             pass
         case "array":
             pass

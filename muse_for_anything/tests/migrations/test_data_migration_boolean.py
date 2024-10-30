@@ -22,7 +22,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = "15"
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(True, updated_data)
 
     def test_from_str_to_bool_false(self):
@@ -34,7 +34,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = ""
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(False, updated_data)
 
     def test_from_int_to_bool_true(self):
@@ -46,7 +46,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = 23
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(True, updated_data)
 
     def test_from_int_to_bool_false(self):
@@ -58,7 +58,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = 0
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(False, updated_data)
 
     def test_from_number_to_bool(self):
@@ -70,7 +70,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = 5.7436555
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(True, updated_data)
 
     def test_from_enum_to_bool_true(self):
@@ -82,7 +82,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = True
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(True, updated_data)
 
     def test_from_enum_to_bool_false(self):
@@ -94,7 +94,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = None
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(False, updated_data)
 
     def test_from_enum_to_bool_string(self):
@@ -106,7 +106,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = "all"
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(True, updated_data)
 
     def test_from_array_to_bool_true(self):
@@ -124,7 +124,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = [2, 9, 44]
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(True, updated_data)
 
     def test_from_array_to_bool_false(self):
@@ -142,7 +142,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = []
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(False, updated_data)
 
     def test_from_obj_to_bool_simple_object(self):
@@ -163,7 +163,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = {"intprop": 42}
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(True, updated_data)
 
     def test_from_obj_to_bool_no_object(self):
@@ -180,7 +180,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = {}
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(False, updated_data)
 
     def test_from_obj_to_bool_complex_object_true(self):
@@ -204,7 +204,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = {"intprop": 42, "boolprop": True}
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(True, updated_data)
 
     def test_from_obj_to_bool_complex_object_false(self):
@@ -228,7 +228,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = {"intprop": 42, "boolprop": False}
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(False, updated_data)
 
     def test_from_obj_to_bool_complex_object_invalid(self):
@@ -252,7 +252,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = {"intprop": 42, "stringprop": "hello world"}
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(
             {"intprop": 42, "stringprop": "hello world"},
             updated_data,
@@ -277,7 +277,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = [True, 12, "Hello"]
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(True, updated_data)
 
     def test_from_tuple_to_bool_false(self):
@@ -299,7 +299,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = [False, 42, "Test"]
-        updated_data = migrate_object(data, source_schema, self.target_schema)
+        updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(False, updated_data)
 
     def test_from_res_ref_to_bool(self):
@@ -321,7 +321,7 @@ class TestMigrationToInteger(unittest.TestCase):
         }
         data = 1944
         with self.assertRaises(ValueError):
-            migrate_object(data, source_schema, self.target_schema)
+            migrate_data(data, source_schema, self.target_schema)
 
 
 if __name__ == "__main__":

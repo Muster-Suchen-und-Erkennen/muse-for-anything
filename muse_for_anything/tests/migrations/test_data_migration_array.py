@@ -70,7 +70,7 @@ class TestMigrationToArray(unittest.TestCase):
             "title": "Type",
         }
         data = "15"
-        updated_data = migrate_object(data, source_schema, self.target_schema_number)
+        updated_data = migrate_data(data, source_schema, self.target_schema_number)
         self.assertEqual([15.0], updated_data)
 
     def test_from_str_to_array_string(self):
@@ -82,7 +82,7 @@ class TestMigrationToArray(unittest.TestCase):
             "title": "Type",
         }
         data = "15"
-        updated_data = migrate_object(data, source_schema, self.target_schema_string)
+        updated_data = migrate_data(data, source_schema, self.target_schema_string)
         self.assertEqual(["15"], updated_data)
 
     def test_from_str_to_array_invalid(self):
@@ -94,7 +94,7 @@ class TestMigrationToArray(unittest.TestCase):
             "title": "Type",
         }
         data = "hello world!"
-        updated_data = migrate_object(data, source_schema, self.target_schema_number)
+        updated_data = migrate_data(data, source_schema, self.target_schema_number)
         self.assertEqual("hello world!", updated_data)
 
     def test_from_bool_to_array_number(self):
@@ -106,7 +106,7 @@ class TestMigrationToArray(unittest.TestCase):
             "title": "Type",
         }
         data = True
-        updated_data = migrate_object(data, source_schema, self.target_schema_number)
+        updated_data = migrate_data(data, source_schema, self.target_schema_number)
         self.assertEqual([1.0], updated_data)
 
     def test_from_bool_to_array_string(self):
@@ -118,7 +118,7 @@ class TestMigrationToArray(unittest.TestCase):
             "title": "Type",
         }
         data = False
-        updated_data = migrate_object(data, source_schema, self.target_schema_string)
+        updated_data = migrate_data(data, source_schema, self.target_schema_string)
         self.assertEqual(["False"], updated_data)
 
     def test_from_int_to_array_number(self):
@@ -130,7 +130,7 @@ class TestMigrationToArray(unittest.TestCase):
             "title": "Type",
         }
         data = 1944
-        updated_data = migrate_object(data, source_schema, self.target_schema_number)
+        updated_data = migrate_data(data, source_schema, self.target_schema_number)
         self.assertEqual([1944.0], updated_data)
 
     def test_from_int_to_array_string(self):
@@ -142,7 +142,7 @@ class TestMigrationToArray(unittest.TestCase):
             "title": "Type",
         }
         data = 1944
-        updated_data = migrate_object(data, source_schema, self.target_schema_string)
+        updated_data = migrate_data(data, source_schema, self.target_schema_string)
         self.assertEqual(["1944"], updated_data)
 
     def test_from_number_to_array_boolean(self):
@@ -154,7 +154,7 @@ class TestMigrationToArray(unittest.TestCase):
             "title": "Type",
         }
         data = 24.987
-        updated_data = migrate_object(data, source_schema, self.target_schema_boolean)
+        updated_data = migrate_data(data, source_schema, self.target_schema_boolean)
         self.assertEqual([True], updated_data)
 
     def test_from_number_to_array_integer(self):
@@ -166,7 +166,7 @@ class TestMigrationToArray(unittest.TestCase):
             "title": "Type",
         }
         data = 45.8763
-        updated_data = migrate_object(data, source_schema, self.target_schema_integer)
+        updated_data = migrate_data(data, source_schema, self.target_schema_integer)
         self.assertEqual([45], updated_data)
 
     def test_to_array_invalid(self):
@@ -182,7 +182,7 @@ class TestMigrationToArray(unittest.TestCase):
         }
         data = 1944
         with self.assertRaises(ValueError):
-            migrate_object(data, source_schema, self.target_schema_number)
+            migrate_data(data, source_schema, self.target_schema_number)
 
 
 if __name__ == "__main__":
