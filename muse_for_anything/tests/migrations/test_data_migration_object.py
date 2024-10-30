@@ -57,9 +57,7 @@ class TestMigrationToObject(unittest.TestCase):
             "title": "Type",
         }
         data = "15"
-        updated_data = migrate_data(
-            data, source_schema, self.target_schema_simple_string
-        )
+        updated_data = migrate_data(data, source_schema, self.target_schema_simple_string)
         self.assertEqual({"stringprop": "15"}, updated_data)
 
     def test_from_str_to_object_invalid(self):
@@ -83,9 +81,7 @@ class TestMigrationToObject(unittest.TestCase):
             "title": "Type",
         }
         data = True
-        updated_data = migrate_data(
-            data, source_schema, self.target_schema_simple_number
-        )
+        updated_data = migrate_data(data, source_schema, self.target_schema_simple_number)
         self.assertEqual({"numberprop": 1.0}, updated_data)
 
     def test_from_bool_to_object_invalid(self):
@@ -109,9 +105,7 @@ class TestMigrationToObject(unittest.TestCase):
             "title": "Type",
         }
         data = 1944
-        updated_data = migrate_data(
-            data, source_schema, self.target_schema_simple_string
-        )
+        updated_data = migrate_data(data, source_schema, self.target_schema_simple_string)
         self.assertEqual({"stringprop": "1944"}, updated_data)
 
     def test_from_int_to_object_invalid(self):
@@ -135,9 +129,7 @@ class TestMigrationToObject(unittest.TestCase):
             "title": "Type",
         }
         data = 24.987
-        updated_data = migrate_data(
-            data, source_schema, self.target_schema_simple_number
-        )
+        updated_data = migrate_data(data, source_schema, self.target_schema_simple_number)
         self.assertEqual({"numberprop": 24.987}, updated_data)
 
     def test_from_number_to_object_invalid(self):

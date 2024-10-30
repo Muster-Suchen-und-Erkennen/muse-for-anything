@@ -64,9 +64,7 @@ class TestMigrationToTuple(unittest.TestCase):
             "title": "Type",
         }
         data = "15"
-        updated_data = migrate_data(
-            data, source_schema, self.target_schema_simple_string
-        )
+        updated_data = migrate_data(data, source_schema, self.target_schema_simple_string)
         self.assertEqual(["15"], updated_data)
 
     def test_from_str_to_tuple_invalid(self):
@@ -116,9 +114,7 @@ class TestMigrationToTuple(unittest.TestCase):
             "title": "Type",
         }
         data = 1944
-        updated_data = migrate_data(
-            data, source_schema, self.target_schema_simple_string
-        )
+        updated_data = migrate_data(data, source_schema, self.target_schema_simple_string)
         self.assertEqual(["1944"], updated_data)
 
     def test_from_int_to_tuple_invalid(self):
