@@ -163,11 +163,8 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = {"one": 42, "three": True, "two": "Hello World!"}
-        updated_data = migrate_data(data, source_schema, self.target_schema)
-        self.assertEqual(
-            {"one": 42, "three": True, "two": "Hello World!"},
-            updated_data,
-        )
+        with self.assertRaises(ValueError):
+            migrate_data(data, source_schema, self.target_schema)
 
     def test_from_string_to_enum_valid(self):
         source_schema = {
