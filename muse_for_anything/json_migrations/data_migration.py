@@ -4,8 +4,26 @@ from muse_for_anything.json_migrations.jsonschema_matcher import match_schema
 
 
 def migrate_data(data, source_schema, target_schema):
+    """Using a migration plan, data conforming to the source schema is migrated
+    to conform to the target schema if possible.
+
+    Args:
+        data: Data stored in a MUSE4Anything object
+        source_schema (dict): The source JSONSchema
+        target_schema (dict): The target JSONSchema
+
+    Raises:
+        ValueError: If transformation is not supported or possible to execute.
+
+    Returns:
+        If the update was successful, the updated data is returned, otherwise the
+        original data is returned.
+    """
     # TODO Add check with validator whether object satisfies schema
+    # Maybe also outside of this method
     # validator = Draft7Validator(target_schema)
+    
+    # Get necessary information from the match_schema method
     migration_plan = match_schema(source_schema, target_schema)
     if migration_plan["unsupported_conversion"]:
         raise ValueError("Unsupported transformation attempted!")
@@ -15,7 +33,9 @@ def migrate_data(data, source_schema, target_schema):
     target_nullable = migration_plan["target_nullable"]
     updated_data = None
     try:
+        # Call appropriate method depending on target schema main type
         if target_type == "array":
+            # Array needs additional information on element type
             array_data_type = target_schema["definitions"]["root"]["items"]["type"]
             updated_data = migrate_to_array(
                 data, source_type, source_schema, array_data_type, target_nullable
@@ -23,6 +43,7 @@ def migrate_data(data, source_schema, target_schema):
         elif target_type == "boolean":
             updated_data = migrate_to_boolean(data, source_type, target_nullable)
         elif target_type == "enum":
+            # Enum needs the allowed values
             allowed_values = target_schema["definitions"]["root"]["enum"]
             updated_data = migrate_to_enum(data, allowed_values, target_nullable)
         elif target_type == "integer":
@@ -42,13 +63,25 @@ def migrate_data(data, source_schema, target_schema):
                 data, source_type, source_schema, target_schema, target_nullable
             )
     except ValueError:
+        # TODO: Change to raise error further to indicate that update unsuccessful!
         return data
-    if updated_data is not None:
-        data = updated_data
-    return data
+    return updated_data
 
 
 def migrate_to_number(data, source_type, target_nullable):
+    """Takes data and transforms it to a number/float instance.
+
+    Args:
+        data: Data potentially represented as a non-float
+        source_type (str): Source type of data
+        target_nullable (bool): Indicates whether data can be null/None
+
+    Raises:
+        ValueError: If transformation to number was not possible
+
+    Returns:
+        float: data represented as a float
+    """
     match source_type:
         case "boolean" | "enum" | "number" | "integer" | "string":
             # TODO Implement potential cut off at limit
@@ -102,6 +135,19 @@ def migrate_to_number(data, source_type, target_nullable):
 
 
 def migrate_to_integer(data, source_type, target_nullable):
+    """Takes data and transforms it to an integer instance.
+
+    Args:
+        data: Data potentially represented as a non-integer
+        source_type (str): Source type of data
+        target_nullable (bool): Indicates whether data can be null/None
+
+    Raises:
+        ValueError: If transformation to integer was not possible
+
+    Returns:
+        int: data represented as an integer
+    """
     match source_type:
         case "boolean" | "enum" | "number" | "integer" | "string":
             # TODO Implement potential cut off at limit
@@ -155,6 +201,20 @@ def migrate_to_integer(data, source_type, target_nullable):
 
 
 def migrate_to_string(data, source_type, source_schema, target_nullable):
+    """Takes data and transforms it to a string instance.
+
+    Args:
+        data: Data potentially represented as a non-string
+        source_type (str): Source type of data
+        source_schema (dict): Source JSONSchema to allow better conversion
+        target_nullable (bool): Indicates whether data can be null/None
+
+    Raises:
+        ValueError: If transformation to string was not possible
+
+    Returns:
+        str: data represented as a string
+    """    
     match source_type:
         case "array" | "boolean" | "enum" | "integer" | "number" | "string" | "tuple":
             try:
@@ -175,6 +235,19 @@ def migrate_to_string(data, source_type, source_schema, target_nullable):
 
 
 def migrate_to_boolean(data, source_type, target_nullable):
+    """Takes data and transforms it to a boolean instance.
+
+    Args:
+        data: Data potentially represented as a non-boolean
+        source_type (str): Source type of data
+        target_nullable (bool): Indicates whether data can be null/None
+
+    Raises:
+        ValueError: If transformation to boolean was not possible
+
+    Returns:
+        bool: data represented as a boolean
+    """
     match source_type:
         case "boolean" | "enum" | "integer" | "number" | "string":
             try:
@@ -208,6 +281,20 @@ def migrate_to_boolean(data, source_type, target_nullable):
 
 
 def migrate_to_enum(data, allowed_values, target_nullable):
+    """Takes data and ensures it conforms to the allowed values of the
+    defined enum.
+
+    Args:
+        data: Data potentially not part of the enum
+        allowed_values (list): A list of values accepted in the enum
+        target_nullable (bool): Indicates whether data can be null/None
+
+    Raises:
+        ValueError: If data is not part of the defined enum
+
+    Returns:
+        _type_: data fitted to the enum
+    """
     if isinstance(data, numbers.Number):
         temp_data = data
         for value in allowed_values:
@@ -223,6 +310,21 @@ def migrate_to_enum(data, allowed_values, target_nullable):
 
 
 def migrate_to_array(data, source_type, source_schema, array_data_type, target_nullable):
+    """Takes data and transforms it to an array instance.
+
+    Args:
+        data: Data potentially represented as a non-array
+        source_type (str): Source type of data
+        source_schema (dict): Source JSONSchema to allow better conversion
+        array_data_type (str): Indicates the data type of the elements of an array
+        target_nullable (bool): Indicates whether data can be null/None
+
+    Raises:
+        ValueError: If transformation to array was not possible
+
+    Returns:
+        list: data represented as an array
+    """
     elements_nullable = False
     if "null" in array_data_type:
         elements_nullable = True
@@ -244,6 +346,21 @@ def migrate_to_array(data, source_type, source_schema, array_data_type, target_n
 
 
 def migrate_to_object(data, source_type, source_schema, target_schema, target_nullable):
+    """Takes data and transforms it to an object instance.
+
+    Args:
+        data: Data potentially represented as a non-object
+        source_type (str): Source type of data
+        source_schema (dict): Source JSONSchema to allow better conversion
+        target_schema (dict): Target JSONSchema to allow better conversion
+        target_nullable (bool): Indicates whether data can be null/None
+
+    Raises:
+        ValueError: If transformation to object was not possible
+
+    Returns:
+        dict: Data represented as an object
+    """
     match source_type:
         case "boolean" | "integer" | "number" | "string":
             properties = target_schema["definitions"]["root"]["properties"]
@@ -281,16 +398,27 @@ def migrate_to_object(data, source_type, source_schema, target_schema, target_nu
                         raise ValueError("No transformation to tuple possible!")
                 except ValueError:
                     raise ValueError("No transformation to enum possible!")
-        case "enum":
-            pass
         case "object":
-            pass
-        case "array":
             pass
     return data
 
 
 def migrate_to_tuple(data, source_type, source_schema, target_schema, target_nullable):
+    """Takes data and transforms it to a tuple instance.
+
+    Args:
+        data: Data potentially represented as a non-tuple
+        source_type (str): Source type of data
+        source_schema (dict): Source JSONSchema to allow better conversion
+        target_schema (dict): Target JSONSchema to allow better conversion
+        target_nullable (bool): Indicates whether data can be null/None
+
+    Raises:
+        ValueError: If transformation to tuple was not possible
+
+    Returns:
+        list: Data represented as a tuple
+    """
     match source_type:
         case "boolean" | "integer" | "number" | "string":
             if len(target_schema["definitions"]["root"]["items"]) == 1:
@@ -316,8 +444,6 @@ def migrate_to_tuple(data, source_type, source_schema, target_schema, target_nul
                         raise ValueError("No transformation to tuple possible!")
                 except ValueError:
                     raise ValueError("No transformation to enum possible!")
-        case "enum":
-            pass
         case "array":
             pass
         case "tuple":
