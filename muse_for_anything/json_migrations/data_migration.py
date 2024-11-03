@@ -406,6 +406,7 @@ def migrate_to_object(data, source_type, source_schema, target_schema, target_nu
             for prop, prop_type in source_properties.items():
                 # Matching properties in source and target schema
                 if prop in target_properties:
+                    # Only migrate properties with type changes
                     if prop_type != target_properties[prop]:
                         if target_properties[prop][0] == "boolean":
                             data[prop] = migrate_to_boolean(
@@ -435,11 +436,36 @@ def migrate_to_object(data, source_type, source_schema, target_schema, target_nu
             for prop, prop_type in target_properties.items():
                 if prop not in source_properties:
                     props_to_add.append(prop)
-            for prop in props_to_add:
-                if target_properties[prop][1]:
-                    data[prop] = None
-            for prop in props_to_del:
-                del data[prop]
+            if len(props_to_add) == 1 and len(props_to_del) == 1:
+                source_type = source_properties[props_to_del[0]]
+                target_type = target_properties[props_to_add[0]]
+                if target_type[0] == "boolean":
+                    data[props_to_add[0]] = migrate_to_boolean(
+                        data[props_to_del[0]], source_type[0], target_type[1]
+                    )
+                if target_type[0] == "integer":
+                    data[props_to_add[0]] = migrate_to_integer(
+                        data[props_to_del[0]], source_type[0], target_type[1]
+                    )
+                if target_type[0] == "number":
+                    data[props_to_add[0]] = migrate_to_number(
+                        data[props_to_del[0]], source_type[0], target_type[1]
+                    )
+                if target_type[0] == "string":
+                    # TODO: Pass correct source schema!
+                    data[props_to_add[0]] = migrate_to_string(
+                        data[props_to_del[0]],
+                        source_type[0],
+                        source_schema,
+                        target_type[1],
+                    )
+                del data[props_to_del[0]]
+            else:
+                for prop in props_to_add:
+                    if target_properties[prop][1]:
+                        data[prop] = None
+                for prop in props_to_del:
+                    del data[prop]
     return data
 
 
