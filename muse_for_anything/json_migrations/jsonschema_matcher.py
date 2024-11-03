@@ -72,7 +72,7 @@ def match_schema(source, target):
     the schemas and whether elements are nullable are returned. \n
     Unsupported conversions are: \n
     array to enum, array to object, enum to array, enum object, enum to tuple,
-    object to array, object to enum, object to tuple, tuple to enum, and 
+    object to array, object to enum, object to tuple, tuple to enum, and
     tuple to object. These might need an intermediate conversion step, e. g.
     via boolean, integer, number, or string.
 
@@ -160,7 +160,13 @@ def match_schema(source, target):
                 if source_type not in ["boolean", "integer", "number", "string"]:
                     unsupported_conversion = True
             case "object":
-                if source_type not in ["boolean", "integer", "number", "string"]:
+                if source_type not in [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "object",
+                    "string",
+                ]:
                     unsupported_conversion = True
             case _:
                 unsupported_conversion = True

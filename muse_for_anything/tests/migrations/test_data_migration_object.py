@@ -144,6 +144,27 @@ class TestMigrationToObject(unittest.TestCase):
         updated_data = migrate_data(data, source_schema, self.target_schema_complex)
         self.assertEqual(45.8763, updated_data)
 
+    def test_from_object_to_object_same_props(self):
+        source_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {
+                "root": {
+                    "properties": {
+                        "one": {"type": ["integer"]},
+                        "three": {"type": ["boolean"]},
+                        "two": {"type": ["number"]},
+                    },
+                    "type": ["object"],
+                }
+            },
+            "title": "Type",
+        }
+        data = {"one": 42, "two": 31.876, "three": True}
+        updated_data = migrate_data(data, source_schema, self.target_schema_complex)
+        self.assertEqual({"one": 42, "two": "31.876", "three": True}, updated_data)
+
     def test_to_object_error(self):
         source_schema = {
             "$ref": "#/definitions/root",

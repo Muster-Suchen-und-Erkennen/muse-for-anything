@@ -22,7 +22,7 @@ def migrate_data(data, source_schema, target_schema):
     # TODO Add check with validator whether object satisfies schema
     # Maybe also outside of this method
     # validator = Draft7Validator(target_schema)
-    
+
     # Get necessary information from the match_schema method
     migration_plan = match_schema(source_schema, target_schema)
     if migration_plan["unsupported_conversion"]:
@@ -214,7 +214,7 @@ def migrate_to_string(data, source_type, source_schema, target_nullable):
 
     Returns:
         str: data represented as a string
-    """    
+    """
     match source_type:
         case "array" | "boolean" | "enum" | "integer" | "number" | "string" | "tuple":
             try:
@@ -399,8 +399,43 @@ def migrate_to_object(data, source_type, source_schema, target_schema, target_nu
                 except ValueError:
                     raise ValueError("No transformation to enum possible!")
         case "object":
-            pass
+            source_properties = get_object_properties(source_schema)
+            target_properties = get_object_properties(target_schema)
+            for prop, prop_type in source_properties.items():
+                if prop in target_properties:
+                    if prop_type != target_properties[prop]:
+                        if target_properties[prop][0] == "boolean":
+                            data[prop] = migrate_to_boolean(
+                                data[prop], prop_type, target_properties[prop][1]
+                            )
+                        if target_properties[prop][0] == "integer":
+                            data[prop] = migrate_to_integer(
+                                data[prop], prop_type, target_properties[prop][1]
+                            )
+                        if target_properties[prop][0] == "number":
+                            data[prop] = migrate_to_number(
+                                data[prop], prop_type, target_properties[prop][1]
+                            )
+                        if target_properties[prop][0] == "string":
+                            # TODO: Need to correct passing of source_schema, should be sub-schema of property (relevant esp for object)
+                            data[prop] = migrate_to_string(
+                                data[prop],
+                                prop_type[0],
+                                source_schema,
+                                target_properties[prop][1],
+                            )
     return data
+
+
+def get_object_properties(schema):
+    properties = dict()
+    for prop, schema in schema["definitions"]["root"]["properties"].items():
+        is_nullable = False
+        if "null" in schema["type"][0]:
+            is_nullable = True
+            schema["type"][0].remove("null")
+        properties[prop] = schema["type"][0], is_nullable
+    return properties
 
 
 def migrate_to_tuple(data, source_type, source_schema, target_schema, target_nullable):
