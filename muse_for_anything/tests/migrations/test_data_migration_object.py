@@ -38,7 +38,7 @@ class TestMigrationToObject(unittest.TestCase):
         "definitions": {
             "root": {
                 "properties": {
-                    "one": {"type": ["integer"]},
+                    "one": {"type": ["integer", "null"]},
                     "three": {"type": ["boolean"]},
                     "two": {"type": ["string"]},
                 },
@@ -165,7 +165,7 @@ class TestMigrationToObject(unittest.TestCase):
         updated_data = migrate_data(data, source_schema, self.target_schema_complex)
         self.assertEqual({"one": 42, "two": "31.876", "three": True}, updated_data)
 
-    def test_from_object_to_object_remove_props(self):
+    def test_from_object_to_object_remove_prop(self):
         source_schema = {
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -186,6 +186,26 @@ class TestMigrationToObject(unittest.TestCase):
         data = {"one": 42, "two": "hello world", "three": True, "four": False}
         updated_data = migrate_data(data, source_schema, self.target_schema_complex)
         self.assertEqual({"one": 42, "two": "hello world", "three": True}, updated_data)
+
+    def test_from_object_to_object_add_prop(self):
+        source_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {
+                "root": {
+                    "properties": {
+                        "three": {"type": ["boolean"]},
+                        "two": {"type": ["string"]},
+                    },
+                    "type": ["object"],
+                }
+            },
+            "title": "Type",
+        }
+        data = {"two": "hello world", "three": True}
+        updated_data = migrate_data(data, source_schema, self.target_schema_complex)
+        self.assertEqual({"one": None, "two": "hello world", "three": True}, updated_data)
 
     def test_to_object_error(self):
         source_schema = {

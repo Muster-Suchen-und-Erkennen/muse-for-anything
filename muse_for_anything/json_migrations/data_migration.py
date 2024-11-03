@@ -401,6 +401,8 @@ def migrate_to_object(data, source_type, source_schema, target_schema, target_nu
         case "object":
             source_properties = get_object_properties(source_schema)
             target_properties = get_object_properties(target_schema)
+            props_to_del = []
+            props_to_add = []
             for prop, prop_type in source_properties.items():
                 # Matching properties in source and target schema
                 if prop in target_properties:
@@ -427,9 +429,17 @@ def migrate_to_object(data, source_type, source_schema, target_schema, target_nu
                             )
                 # Properties that are in source but not in target
                 else:
-                    # Simple case - delete entry in object
-                    del data[prop]
-
+                    # Will be compared to new properties for potential migration
+                    props_to_del.append(prop)
+            # Find new properties
+            for prop, prop_type in target_properties.items():
+                if prop not in source_properties:
+                    props_to_add.append(prop)
+            for prop in props_to_add:
+                if target_properties[prop][1]:
+                    data[prop] = None
+            for prop in props_to_del:
+                del data[prop]
     return data
 
 
@@ -437,9 +447,9 @@ def get_object_properties(schema):
     properties = dict()
     for prop, schema in schema["definitions"]["root"]["properties"].items():
         is_nullable = False
-        if "null" in schema["type"][0]:
+        if "null" in schema["type"]:
             is_nullable = True
-            schema["type"][0].remove("null")
+            schema["type"].remove("null")
         properties[prop] = schema["type"][0], is_nullable
     return properties
 
