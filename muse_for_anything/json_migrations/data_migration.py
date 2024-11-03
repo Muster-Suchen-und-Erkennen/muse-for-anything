@@ -402,6 +402,7 @@ def migrate_to_object(data, source_type, source_schema, target_schema, target_nu
             source_properties = get_object_properties(source_schema)
             target_properties = get_object_properties(target_schema)
             for prop, prop_type in source_properties.items():
+                # Matching properties in source and target schema
                 if prop in target_properties:
                     if prop_type != target_properties[prop]:
                         if target_properties[prop][0] == "boolean":
@@ -424,6 +425,11 @@ def migrate_to_object(data, source_type, source_schema, target_schema, target_nu
                                 source_schema,
                                 target_properties[prop][1],
                             )
+                # Properties that are in source but not in target
+                else:
+                    # Simple case - delete entry in object
+                    del data[prop]
+
     return data
 
 
