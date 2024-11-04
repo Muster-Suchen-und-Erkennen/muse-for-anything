@@ -462,6 +462,7 @@ def migrate_to_object(data, source_type, source_schema, target_schema, target_nu
                 del data[props_to_del[0]]
             else:
                 for prop in props_to_add:
+                    # TODO: Default data values?
                     if target_properties[prop][1]:
                         data[prop] = None
                 for prop in props_to_del:
@@ -524,5 +525,37 @@ def migrate_to_tuple(data, source_type, source_schema, target_schema, target_nul
         case "array":
             pass
         case "tuple":
-            pass
+            source_items = source_schema["definitions"]["root"]["items"]
+            target_items = target_schema["definitions"]["root"]["items"]
+            counter = 0
+            for source_item, target_item in zip(source_items, target_items):
+                source_item_type = next(
+                    (t for t in source_item["type"] if t != "null"), None
+                )
+                target_item_nullable = False
+                if "null" in target_item["type"]:
+                    target_item_nullable = True
+                    target_item["type"].remove("null")
+                target_item_type = target_item["type"][0]
+                if target_item_type == "boolean":
+                    data[counter] = migrate_to_boolean(
+                        data[counter], source_item_type, target_item_nullable
+                    )
+                elif target_item_type == "integer":
+                    data[counter] = migrate_to_integer(
+                        data[counter], source_item_type, target_item_nullable
+                    )
+                elif target_item_type == "number":
+                    data[counter] = migrate_to_number(
+                        data[counter], source_item_type, target_item_nullable
+                    )
+                elif target_item_type == "string":
+                    # TODO: Correct passing of source schema
+                    data[counter] = migrate_to_string(
+                        data[counter],
+                        source_item_type,
+                        source_schema,
+                        target_item_nullable,
+                    )
+                counter += 1
     return data

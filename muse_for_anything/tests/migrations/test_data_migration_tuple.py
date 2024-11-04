@@ -155,6 +155,28 @@ class TestMigrationToTuple(unittest.TestCase):
         updated_data = migrate_data(data, source_schema, self.target_schema_complex)
         self.assertEqual(45.8763, updated_data)
 
+    def test_from_tuple_to_tuple_type_change(self):
+        source_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {
+                "root": {
+                    "arrayType": "tuple",
+                    "items": [
+                        {"type": ["integer"]},
+                        {"type": ["integer"]},
+                        {"type": ["string"]},
+                    ],
+                    "type": ["array"],
+                }
+            },
+            "title": "Type",
+        }
+        data = [0, 54, "hello world"]
+        updated_data = migrate_data(data, source_schema, self.target_schema_complex)
+        self.assertEqual([False, 54, "hello world"], updated_data)
+
     def test_to_tuple_error(self):
         source_schema = {
             "$ref": "#/definitions/root",
