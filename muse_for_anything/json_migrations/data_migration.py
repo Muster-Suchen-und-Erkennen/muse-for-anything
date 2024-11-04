@@ -325,18 +325,16 @@ def migrate_to_array(data, source_type, source_schema, array_data_type, target_n
     Returns:
         list: data represented as an array
     """
-    elements_nullable = False
-    if "null" in array_data_type:
-        elements_nullable = True
-        array_data_type.remove("null")
+    elements_nullable = "null" in array_data_type
+    elements_data_type = next(t for t in array_data_type if t != "null")
     try:
-        if array_data_type[0] == "boolean":
+        if elements_data_type == "boolean":
             data = [migrate_to_boolean(data, source_type, elements_nullable)]
-        elif array_data_type[0] == "integer":
+        elif elements_data_type == "integer":
             data = [migrate_to_integer(data, source_type, elements_nullable)]
-        elif array_data_type[0] == "number":
+        elif elements_data_type == "number":
             data = [migrate_to_number(data, source_type, elements_nullable)]
-        elif array_data_type[0] == "string":
+        elif elements_data_type == "string":
             data = [
                 migrate_to_string(data, source_type, source_schema, elements_nullable)
             ]
@@ -367,28 +365,26 @@ def migrate_to_object(data, source_type, source_schema, target_schema, target_nu
             if len(properties) == 1:
                 try:
                     prop_name = next(iter(properties))
-                    prop_type = properties[prop_name]["type"]
-                    item_nullable = False
-                    if "null" in prop_type:
-                        item_nullable = True
-                        prop_type.remove("null")
-                    if "boolean" in prop_type:
+                    prop_def = properties[prop_name]["type"]
+                    item_nullable = "null" in prop_def
+                    prop_type = next(t for t in prop_def if t != "null")
+                    if prop_type == "boolean":
                         data = {
                             prop_name: migrate_to_boolean(
                                 data, source_type, item_nullable
                             )
                         }
-                    elif "integer" in prop_type:
+                    elif prop_type == "integer":
                         data = {
                             prop_name: migrate_to_integer(
                                 data, source_type, item_nullable
                             )
                         }
-                    elif "number" in prop_type:
+                    elif prop_type == "number":
                         data = {
                             prop_name: migrate_to_number(data, source_type, item_nullable)
                         }
-                    elif "string" in prop_type:
+                    elif prop_type == "string":
                         data = {
                             prop_name: migrate_to_string(
                                 data, source_type, source_schema, item_nullable
@@ -473,11 +469,9 @@ def migrate_to_object(data, source_type, source_schema, target_schema, target_nu
 def get_object_properties(schema):
     properties = dict()
     for prop, schema in schema["definitions"]["root"]["properties"].items():
-        is_nullable = False
-        if "null" in schema["type"]:
-            is_nullable = True
-            schema["type"].remove("null")
-        properties[prop] = schema["type"][0], is_nullable
+        is_nullable = "null" in schema["type"]
+        prop_type = next(t for t in schema["type"] if t != "null")
+        properties[prop] = prop_type, is_nullable
     return properties
 
 
@@ -502,17 +496,15 @@ def migrate_to_tuple(data, source_type, source_schema, target_schema, target_nul
             if len(target_schema["definitions"]["root"]["items"]) == 1:
                 try:
                     type = target_schema["definitions"]["root"]["items"][0]["type"]
-                    item_nullable = False
-                    if "null" in type:
-                        item_nullable = True
-                        type.remove("null")
-                    if "boolean" in type:
+                    item_nullable = "null" in type
+                    item_type = next(t for t in type if t != "null")
+                    if item_type == "boolean":
                         data = [migrate_to_boolean(data, source_type, item_nullable)]
-                    elif "integer" in type:
+                    elif item_type == "integer":
                         data = [migrate_to_integer(data, source_type, item_nullable)]
-                    elif "number" in type:
+                    elif item_type == "number":
                         data = [migrate_to_number(data, source_type, item_nullable)]
-                    elif "string" in type:
+                    elif item_type == "string":
                         data = [
                             migrate_to_string(
                                 data, source_type, source_schema, item_nullable
@@ -530,13 +522,12 @@ def migrate_to_tuple(data, source_type, source_schema, target_schema, target_nul
             counter = 0
             for source_item, target_item in zip(source_items, target_items):
                 source_item_type = next(
-                    (t for t in source_item["type"] if t != "null"), None
+                    t for t in source_item["type"] if t != "null"
                 )
-                target_item_nullable = False
-                if "null" in target_item["type"]:
-                    target_item_nullable = True
-                    target_item["type"].remove("null")
-                target_item_type = target_item["type"][0]
+                target_item_nullable = "null" in target_item["type"]
+                target_item_type = next(
+                    t for t in target_item["type"][0] if t != "null"
+                )
                 if target_item_type == "boolean":
                     data[counter] = migrate_to_boolean(
                         data[counter], source_item_type, target_item_nullable
