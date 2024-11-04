@@ -460,28 +460,26 @@ def migrate_to_object(data, source_type, source_schema, target_schema, target_nu
             for prop, prop_type in source_properties.items():
                 # Matching properties in source and target schema
                 if prop in target_properties:
-                    # Only migrate properties with type changes
-                    if prop_type != target_properties[prop]:
-                        if target_properties[prop][0] == "boolean":
-                            data[prop] = migrate_to_boolean(
-                                data[prop], prop_type, target_properties[prop][1]
-                            )
-                        if target_properties[prop][0] == "integer":
-                            data[prop] = migrate_to_integer(
-                                data[prop], prop_type, target_properties[prop][1]
-                            )
-                        if target_properties[prop][0] == "number":
-                            data[prop] = migrate_to_number(
-                                data[prop], prop_type, target_properties[prop][1]
-                            )
-                        if target_properties[prop][0] == "string":
-                            # TODO: Need to correct passing of source_schema, should be sub-schema of property (relevant esp for object)
-                            data[prop] = migrate_to_string(
-                                data[prop],
-                                prop_type[0],
-                                source_schema,
-                                target_properties[prop][1],
-                            )
+                    if target_properties[prop][0] == "boolean":
+                        data[prop] = migrate_to_boolean(
+                            data[prop], prop_type, target_properties[prop][1]
+                        )
+                    if target_properties[prop][0] == "integer":
+                        data[prop] = migrate_to_integer(
+                            data[prop], prop_type, target_properties[prop][1]
+                        )
+                    if target_properties[prop][0] == "number":
+                        data[prop] = migrate_to_number(
+                            data[prop], prop_type, target_properties[prop][1]
+                        )
+                    if target_properties[prop][0] == "string":
+                        # TODO: Need to correct passing of source_schema, should be sub-schema of property (relevant esp for object)
+                        data[prop] = migrate_to_string(
+                            data[prop],
+                            prop_type[0],
+                            source_schema,
+                            target_properties[prop][1],
+                        )
                 # Properties that are in source but not in target
                 else:
                     # Will be compared to new properties for potential migration
