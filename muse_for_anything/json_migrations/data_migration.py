@@ -515,19 +515,45 @@ def migrate_to_tuple(data, source_type, source_schema, target_schema, target_nul
                 except ValueError:
                     raise ValueError("No transformation to enum possible!")
         case "array":
-            pass
+            source_item_type = next(
+                t
+                for t in source_schema["definitions"]["root"]["items"]["type"]
+                if t != "null"
+            )
+            target_items = target_schema["definitions"]["root"]["items"]
+            counter = 0
+            for target_item in target_items:
+                target_item_nullable = "null" in target_item["type"]
+                target_item_type = next(t for t in target_item["type"] if t != "null")
+                if target_item_type == "boolean":
+                    data[counter] = migrate_to_boolean(
+                        data[counter], source_item_type, target_item_nullable
+                    )
+                elif target_item_type == "integer":
+                    data[counter] = migrate_to_integer(
+                        data[counter], source_item_type, target_item_nullable
+                    )
+                elif target_item_type == "number":
+                    data[counter] = migrate_to_number(
+                        data[counter], source_item_type, target_item_nullable
+                    )
+                elif target_item_type == "string":
+                    # TODO: Correct passing of source schema
+                    data[counter] = migrate_to_string(
+                        data[counter],
+                        source_item_type,
+                        source_schema,
+                        target_item_nullable,
+                    )
+                counter += 1
         case "tuple":
             source_items = source_schema["definitions"]["root"]["items"]
             target_items = target_schema["definitions"]["root"]["items"]
             counter = 0
             for source_item, target_item in zip(source_items, target_items):
-                source_item_type = next(
-                    t for t in source_item["type"] if t != "null"
-                )
+                source_item_type = next(t for t in source_item["type"] if t != "null")
                 target_item_nullable = "null" in target_item["type"]
-                target_item_type = next(
-                    t for t in target_item["type"][0] if t != "null"
-                )
+                target_item_type = next(t for t in target_item["type"] if t != "null")
                 if target_item_type == "boolean":
                     data[counter] = migrate_to_boolean(
                         data[counter], source_item_type, target_item_nullable

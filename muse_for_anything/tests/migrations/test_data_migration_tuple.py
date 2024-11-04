@@ -244,7 +244,7 @@ class TestMigrationToTuple(unittest.TestCase):
         updated_data = migrate_data(data, source_schema, self.target_schema_complex)
         self.assertEqual([False, 54, "42"], updated_data)
 
-    def test_from_tuple_to_tuple_combination_one(self):
+    def test_from_tuple_to_tuple_combination_two(self):
         source_schema = {
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -264,6 +264,24 @@ class TestMigrationToTuple(unittest.TestCase):
         data = ["", "54"]
         updated_data = migrate_data(data, source_schema, self.target_schema_complex)
         self.assertEqual([False, 54, None], updated_data)
+
+    def test_from_array_to_tuple_valid(self):
+        source_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {
+                "root": {
+                    "arrayType": "array",
+                    "items": {"type": ["integer", "null"]},
+                    "type": ["array"],
+                }
+            },
+            "title": "Type",
+        }
+        data = [2, 9, 44]
+        updated_data = migrate_data(data, source_schema, self.target_schema_complex)
+        self.assertEqual([True, 9, "44"], updated_data)
 
     def test_to_tuple_error(self):
         source_schema = {
