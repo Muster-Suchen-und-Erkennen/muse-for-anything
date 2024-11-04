@@ -168,6 +168,29 @@ class TestMigrationToArray(unittest.TestCase):
         data = 45.8763
         updated_data = migrate_data(data, source_schema, self.target_schema_integer)
         self.assertEqual([45], updated_data)
+        
+    def test_from_tuple_to_array(self):
+        source_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {
+                "root": {
+                    "arrayType": "tuple",
+                    "items": [
+                        {"type": ["number"]},
+                        {"type": ["integer"]},
+                        {"type": ["integer"]},
+                        {"type": ["boolean"]},
+                    ],
+                    "type": ["array"],
+                }
+            },
+            "title": "Type",
+        }
+        data = [0.0, 54, 42, True]
+        updated_data = migrate_data(data, source_schema, self.target_schema_string)
+        self.assertEqual(["0.0", "54", "42", "True"], updated_data)
 
     def test_to_array_invalid(self):
         source_schema = {

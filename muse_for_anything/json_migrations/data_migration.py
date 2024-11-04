@@ -327,19 +327,41 @@ def migrate_to_array(data, source_type, source_schema, array_data_type, target_n
     """
     elements_nullable = "null" in array_data_type
     elements_data_type = next(t for t in array_data_type if t != "null")
-    try:
-        if elements_data_type == "boolean":
-            data = [migrate_to_boolean(data, source_type, elements_nullable)]
-        elif elements_data_type == "integer":
-            data = [migrate_to_integer(data, source_type, elements_nullable)]
-        elif elements_data_type == "number":
-            data = [migrate_to_number(data, source_type, elements_nullable)]
-        elif elements_data_type == "string":
-            data = [
-                migrate_to_string(data, source_type, source_schema, elements_nullable)
-            ]
-    except ValueError:
-        raise ValueError("No transformation to array possible!")
+    match source_type:
+        case "boolean" | "integer" | "number" | "string":
+            try:
+                if elements_data_type == "boolean":
+                    data = [migrate_to_boolean(data, source_type, elements_nullable)]
+                elif elements_data_type == "integer":
+                    data = [migrate_to_integer(data, source_type, elements_nullable)]
+                elif elements_data_type == "number":
+                    data = [migrate_to_number(data, source_type, elements_nullable)]
+                elif elements_data_type == "string":
+                    data = [
+                        migrate_to_string(
+                            data, source_type, source_schema, elements_nullable
+                        )
+                    ]
+            except ValueError:
+                raise ValueError("No transformation to array possible!")
+            
+        case "array":
+            pass
+        case "tuple":
+            source_items_types = source_schema["definitions"]["root"]["items"]
+            for index, (data_element, data_element_def) in enumerate(zip(data, source_items_types)):
+                data_element_nullable = "null" in data_element_def["type"]
+                data_element_type = next(t for t in data_element_def["type"] if t != "null")
+                if elements_data_type == "boolean":
+                    data[index] = migrate_to_boolean(data_element, data_element_type, data_element_nullable)
+                elif elements_data_type == "integer":
+                    data[index] = migrate_to_integer(data_element, data_element_type, data_element_nullable)
+                elif elements_data_type == "number":
+                    data[index] = migrate_to_number(data_element, data_element_type, data_element_nullable)
+                elif elements_data_type == "string":
+                    data[index] = migrate_to_string(
+                            data_element, data_element_type, source_schema, data_element_nullable
+                        )
     return data
 
 
@@ -515,11 +537,8 @@ def migrate_to_tuple(data, source_type, source_schema, target_schema, target_nul
                 except ValueError:
                     raise ValueError("No transformation to enum possible!")
         case "array":
-            source_item_type = next(
-                t
-                for t in source_schema["definitions"]["root"]["items"]["type"]
-                if t != "null"
-            )
+            array_type_def = source_schema["definitions"]["root"]["items"]["type"]
+            source_item_type = next(t for t in array_type_def if t != "null")
             target_items = target_schema["definitions"]["root"]["items"]
             counter = 0
             for target_item in target_items:
