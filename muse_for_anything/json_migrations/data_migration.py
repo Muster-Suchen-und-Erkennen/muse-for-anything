@@ -558,4 +558,10 @@ def migrate_to_tuple(data, source_type, source_schema, target_schema, target_nul
                         target_item_nullable,
                     )
                 counter += 1
+            for i in range(len(target_items), len(source_items)):
+                data.pop(i)
+            for i in range(len(source_items), len(target_items)):
+                # TODO: Add default values?
+                if "null" in target_items[i]["type"]:
+                    data.append(None)
     return data
