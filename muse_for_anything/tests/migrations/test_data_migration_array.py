@@ -168,7 +168,7 @@ class TestMigrationToArray(unittest.TestCase):
         data = 45.8763
         updated_data = migrate_data(data, source_schema, self.target_schema_integer)
         self.assertEqual([45], updated_data)
-        
+
     def test_from_tuple_to_array(self):
         source_schema = {
             "$ref": "#/definitions/root",
@@ -191,6 +191,20 @@ class TestMigrationToArray(unittest.TestCase):
         data = [0.0, 54, 42, True]
         updated_data = migrate_data(data, source_schema, self.target_schema_string)
         self.assertEqual(["0.0", "54", "42", "True"], updated_data)
+
+    def test_from_array_to_array_simple_one(self):
+        data = [False, True, False, True]
+        updated_data = migrate_data(
+            data, self.target_schema_boolean, self.target_schema_integer
+        )
+        self.assertEqual([0, 1, 0, 1], updated_data)
+
+    def test_from_array_to_array_simple_two(self):
+        data = [42, 187, 1944, 555, 968, 6742]
+        updated_data = migrate_data(
+            data, self.target_schema_integer, self.target_schema_string
+        )
+        self.assertEqual(["42", "187", "1944", "555", "968", "6742"], updated_data)
 
     def test_to_array_invalid(self):
         source_schema = {

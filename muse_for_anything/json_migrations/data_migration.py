@@ -344,24 +344,60 @@ def migrate_to_array(data, source_type, source_schema, array_data_type, target_n
                     ]
             except ValueError:
                 raise ValueError("No transformation to array possible!")
-            
+
         case "array":
-            pass
+            source_array_def = source_schema["definitions"]["root"]["items"]["type"]
+            source_elements_type = next(t for t in source_array_def if t != "null")
+            if elements_data_type == "boolean":
+                data = [
+                    migrate_to_boolean(element, source_elements_type, elements_nullable)
+                    for element in data
+                ]
+            elif elements_data_type == "integer":
+                data = [
+                    migrate_to_integer(element, source_elements_type, elements_nullable)
+                    for element in data
+                ]
+            elif elements_data_type == "number":
+                data = [
+                    migrate_to_number(element, source_elements_type, elements_nullable)
+                    for element in data
+                ]
+            elif elements_data_type == "string":
+                data = [
+                    migrate_to_string(
+                        element, source_elements_type, source_schema, elements_nullable
+                    )
+                    for element in data
+                ]
         case "tuple":
             source_items_types = source_schema["definitions"]["root"]["items"]
-            for index, (data_element, data_element_def) in enumerate(zip(data, source_items_types)):
+            for index, (data_element, data_element_def) in enumerate(
+                zip(data, source_items_types)
+            ):
                 data_element_nullable = "null" in data_element_def["type"]
-                data_element_type = next(t for t in data_element_def["type"] if t != "null")
+                data_element_type = next(
+                    t for t in data_element_def["type"] if t != "null"
+                )
                 if elements_data_type == "boolean":
-                    data[index] = migrate_to_boolean(data_element, data_element_type, data_element_nullable)
+                    data[index] = migrate_to_boolean(
+                        data_element, data_element_type, data_element_nullable
+                    )
                 elif elements_data_type == "integer":
-                    data[index] = migrate_to_integer(data_element, data_element_type, data_element_nullable)
+                    data[index] = migrate_to_integer(
+                        data_element, data_element_type, data_element_nullable
+                    )
                 elif elements_data_type == "number":
-                    data[index] = migrate_to_number(data_element, data_element_type, data_element_nullable)
+                    data[index] = migrate_to_number(
+                        data_element, data_element_type, data_element_nullable
+                    )
                 elif elements_data_type == "string":
                     data[index] = migrate_to_string(
-                            data_element, data_element_type, source_schema, data_element_nullable
-                        )
+                        data_element,
+                        data_element_type,
+                        source_schema,
+                        data_element_nullable,
+                    )
     return data
 
 
