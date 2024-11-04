@@ -189,7 +189,7 @@ class TestMigrationToTuple(unittest.TestCase):
                         {"type": ["boolean"]},
                         {"type": ["integer"]},
                         {"type": ["string"]},
-                        {"type": ["boolean"]}
+                        {"type": ["boolean"]},
                     ],
                     "type": ["array"],
                 }
@@ -199,7 +199,7 @@ class TestMigrationToTuple(unittest.TestCase):
         data = [False, 54, "hello world", True]
         updated_data = migrate_data(data, source_schema, self.target_schema_complex)
         self.assertEqual([False, 54, "hello world"], updated_data)
-        
+
     def test_from_tuple_to_tuple_add_element(self):
         source_schema = {
             "$ref": "#/definitions/root",
@@ -218,6 +218,50 @@ class TestMigrationToTuple(unittest.TestCase):
             "title": "Type",
         }
         data = [False, 54]
+        updated_data = migrate_data(data, source_schema, self.target_schema_complex)
+        self.assertEqual([False, 54, None], updated_data)
+
+    def test_from_tuple_to_tuple_combination_one(self):
+        source_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {
+                "root": {
+                    "arrayType": "tuple",
+                    "items": [
+                        {"type": ["number"]},
+                        {"type": ["integer"]},
+                        {"type": ["integer"]},
+                        {"type": ["boolean"]},
+                    ],
+                    "type": ["array"],
+                }
+            },
+            "title": "Type",
+        }
+        data = [0.0, 54, 42, True]
+        updated_data = migrate_data(data, source_schema, self.target_schema_complex)
+        self.assertEqual([False, 54, "42"], updated_data)
+
+    def test_from_tuple_to_tuple_combination_one(self):
+        source_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {
+                "root": {
+                    "arrayType": "tuple",
+                    "items": [
+                        {"type": ["string"]},
+                        {"type": ["string"]},
+                    ],
+                    "type": ["array"],
+                }
+            },
+            "title": "Type",
+        }
+        data = ["", "54"]
         updated_data = migrate_data(data, source_schema, self.target_schema_complex)
         self.assertEqual([False, 54, None], updated_data)
 
