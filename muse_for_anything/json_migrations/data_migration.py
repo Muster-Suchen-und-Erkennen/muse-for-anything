@@ -482,12 +482,12 @@ def migrate_to_object(data, source_type, source_schema, target_schema, target_nu
                         )
                 # Properties that are in source but not in target
                 else:
-                    # Will be compared to new properties for potential migration
                     props_to_del.append(prop)
             # Find new properties
             for prop, prop_type in target_properties.items():
                 if prop not in source_properties:
                     props_to_add.append(prop)
+            # One prop added, one deleted, likely name changes
             if len(props_to_add) == 1 and len(props_to_del) == 1:
                 source_type = source_properties[props_to_del[0]]
                 target_type = target_properties[props_to_add[0]]
@@ -512,11 +512,14 @@ def migrate_to_object(data, source_type, source_schema, target_schema, target_nu
                         target_type[1],
                     )
                 del data[props_to_del[0]]
+            # More than one added or deleted
             else:
+                # Add all new properties
                 for prop in props_to_add:
                     # TODO: Default data values?
                     if target_properties[prop][1]:
                         data[prop] = None
+                # Delete all old properties
                 for prop in props_to_del:
                     del data[prop]
     return data
