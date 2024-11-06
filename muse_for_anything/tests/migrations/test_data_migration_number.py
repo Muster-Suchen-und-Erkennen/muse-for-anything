@@ -2,6 +2,8 @@ from muse_for_anything.json_migrations.data_migration import *
 
 import unittest
 
+from muse_for_anything.json_migrations.jsonschema_matcher import match_schema
+
 
 class TestMigrationToNumber(unittest.TestCase):
 
@@ -13,7 +15,7 @@ class TestMigrationToNumber(unittest.TestCase):
         "title": "Type",
     }
 
-    def test_valid_from_str_to_number(self):
+    def test_from_str_to_number_valid(self):
         source_schema = {
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -25,7 +27,7 @@ class TestMigrationToNumber(unittest.TestCase):
         updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(15.8765, updated_data)
 
-    def test_invalid_from_str_to_number(self):
+    def test_from_str_to_number_invalid(self):
         source_schema = {
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -34,8 +36,8 @@ class TestMigrationToNumber(unittest.TestCase):
             "title": "Type",
         }
         data = "HELLO WORLD!"
-        updated_data = migrate_data(data, source_schema, self.target_schema)
-        self.assertEqual("HELLO WORLD!", updated_data)
+        with self.assertRaises(ValueError):
+            migrate_data(data, source_schema, self.target_schema)
 
     def test_from_bool_to_number_true(self):
         source_schema = {
@@ -94,8 +96,8 @@ class TestMigrationToNumber(unittest.TestCase):
             "title": "Type",
         }
         data = "hello world"
-        updated_data = migrate_data(data, source_schema, self.target_schema)
-        self.assertEqual("hello world", updated_data)
+        with self.assertRaises(ValueError):
+            migrate_data(data, source_schema, self.target_schema)
 
     def test_from_array_to_number_array_valid(self):
         source_schema = {
@@ -130,8 +132,8 @@ class TestMigrationToNumber(unittest.TestCase):
             "title": "Type",
         }
         data = [13.21, 14, 15.142]
-        updated_data = migrate_data(data, source_schema, self.target_schema)
-        self.assertEqual([13.21, 14, 15.142], updated_data)
+        with self.assertRaises(ValueError):
+            migrate_data(data, source_schema, self.target_schema)
 
     def test_from_obj_to_number_simple_object(self):
         source_schema = {
@@ -219,11 +221,8 @@ class TestMigrationToNumber(unittest.TestCase):
             "stringpropone": "this is a test",
             "stringproptwo": "hello world",
         }
-        updated_data = migrate_data(data, source_schema, self.target_schema)
-        self.assertEqual(
-            {"stringpropone": "this is a test", "stringproptwo": "hello world"},
-            updated_data,
-        )
+        with self.assertRaises(ValueError):
+            migrate_data(data, source_schema, self.target_schema)
 
     def test_from_tuple_to_number_valid(self):
         source_schema = {
@@ -258,8 +257,8 @@ class TestMigrationToNumber(unittest.TestCase):
             "title": "Type",
         }
         data = [True, False, "hello world"]
-        updated_data = migrate_data(data, source_schema, self.target_schema)
-        self.assertEqual([True, False, "hello world"], updated_data)
+        with self.assertRaises(ValueError):
+            migrate_data(data, source_schema, self.target_schema)
 
     def test_from_res_ref_to_number(self):
         pass
@@ -278,9 +277,8 @@ class TestMigrationToNumber(unittest.TestCase):
             },
             "title": "Type",
         }
-        data = 1944
-        with self.assertRaises(ValueError):
-            migrate_data(data, source_schema, self.target_schema)
+        migration_plan = match_schema(source_schema, self.target_schema)
+        self.assertEqual(True, migration_plan["unsupported_conversion"])
 
 
 if __name__ == "__main__":

@@ -2,6 +2,8 @@ from muse_for_anything.json_migrations.data_migration import *
 
 import unittest
 
+from muse_for_anything.json_migrations.jsonschema_matcher import match_schema
+
 
 class TestMigrationToTuple(unittest.TestCase):
 
@@ -76,8 +78,8 @@ class TestMigrationToTuple(unittest.TestCase):
             "title": "Type",
         }
         data = "hello world!"
-        updated_data = migrate_data(data, source_schema, self.target_schema_complex)
-        self.assertEqual("hello world!", updated_data)
+        with self.assertRaises(ValueError):
+            migrate_data(data, source_schema, self.target_schema_complex)
 
     def test_from_bool_to_tuple(self):
         source_schema = {
@@ -102,8 +104,8 @@ class TestMigrationToTuple(unittest.TestCase):
             "title": "Type",
         }
         data = False
-        updated_data = migrate_data(data, source_schema, self.target_schema_complex)
-        self.assertEqual(False, updated_data)
+        with self.assertRaises(ValueError):
+            migrate_data(data, source_schema, self.target_schema_complex)
 
     def test_from_int_to_tuple(self):
         source_schema = {
@@ -126,8 +128,8 @@ class TestMigrationToTuple(unittest.TestCase):
             "title": "Type",
         }
         data = 1944
-        updated_data = migrate_data(data, source_schema, self.target_schema_complex)
-        self.assertEqual(1944, updated_data)
+        with self.assertRaises(ValueError):
+            migrate_data(data, source_schema, self.target_schema_complex)
 
     def test_from_number_to_tuple(self):
         source_schema = {
@@ -152,8 +154,8 @@ class TestMigrationToTuple(unittest.TestCase):
             "title": "Type",
         }
         data = 45.8763
-        updated_data = migrate_data(data, source_schema, self.target_schema_complex)
-        self.assertEqual(45.8763, updated_data)
+        with self.assertRaises(ValueError):
+            migrate_data(data, source_schema, self.target_schema_complex)
 
     def test_from_tuple_to_tuple_type_change(self):
         source_schema = {
@@ -283,6 +285,24 @@ class TestMigrationToTuple(unittest.TestCase):
         updated_data = migrate_data(data, source_schema, self.target_schema_complex)
         self.assertEqual([True, 9, "44"], updated_data)
 
+    def test_from_array_to_tuple_invalid(self):
+        source_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {
+                "root": {
+                    "arrayType": "array",
+                    "items": {"type": ["integer", "null"]},
+                    "type": ["array"],
+                }
+            },
+            "title": "Type",
+        }
+        data = [2, 9, 44, 45]
+        with self.assertRaises(ValueError):
+            migrate_data(data, source_schema, self.target_schema_complex)
+
     def test_to_tuple_error(self):
         source_schema = {
             "$ref": "#/definitions/root",
@@ -294,9 +314,8 @@ class TestMigrationToTuple(unittest.TestCase):
             },
             "title": "Type",
         }
-        data = 1944
-        with self.assertRaises(ValueError):
-            migrate_data(data, source_schema, self.target_schema_complex)
+        migration_plan = match_schema(source_schema, self.target_schema_complex)
+        self.assertEqual(True, migration_plan["unsupported_conversion"])
 
 
 if __name__ == "__main__":

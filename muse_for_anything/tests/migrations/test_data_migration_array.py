@@ -2,6 +2,8 @@ from muse_for_anything.json_migrations.data_migration import *
 
 import unittest
 
+from muse_for_anything.json_migrations.jsonschema_matcher import match_schema
+
 
 class TestMigrationToArray(unittest.TestCase):
 
@@ -94,8 +96,8 @@ class TestMigrationToArray(unittest.TestCase):
             "title": "Type",
         }
         data = "hello world!"
-        updated_data = migrate_data(data, source_schema, self.target_schema_number)
-        self.assertEqual("hello world!", updated_data)
+        with self.assertRaises(ValueError):
+            migrate_data(data, source_schema, self.target_schema_number)
 
     def test_from_bool_to_array_number(self):
         source_schema = {
@@ -217,9 +219,8 @@ class TestMigrationToArray(unittest.TestCase):
             },
             "title": "Type",
         }
-        data = 1944
-        with self.assertRaises(ValueError):
-            migrate_data(data, source_schema, self.target_schema_number)
+        migration_plan = match_schema(source_schema, self.target_schema_boolean)
+        self.assertEqual(True, migration_plan["unsupported_conversion"])
 
 
 if __name__ == "__main__":

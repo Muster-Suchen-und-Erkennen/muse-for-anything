@@ -16,9 +16,7 @@ def extract_type(schema):
         (can be enum, schemaReference, resourceReference, object, array, tuple,
         boolean, integer, number, or string)
     """
-    temp_schema = copy.deepcopy(schema)
-    definitions = temp_schema["definitions"]["root"]
-    keys = definitions.keys()
+    keys = schema.keys()
     nullable = False
     # Enum and $ref are defined separately, not in type
     if "enum" in keys:
@@ -28,40 +26,38 @@ def extract_type(schema):
     # Handling of other types
     elif "type" in keys:
         # Check if elements nullable
-        if "null" in definitions["type"]:
-            nullable = True
-            definitions["type"].remove("null")
-        match definitions["type"]:
-            case ["object"]:
-                # ResourceReference also defined as object
-                if "customType" in keys:
-                    if definitions["customType"] == "resourceReference":
-                        return "resourceReference", nullable
-                    else:
-                        raise ValueError("Unknown object type!")
+        nullable = "null" in schema["type"]
+        data_type = next(t for t in schema["type"] if t != "null")
+        if data_type == "object":
+            # ResourceReference also defined as object
+            if "customType" in keys:
+                if schema["customType"] == "resourceReference":
+                    return "resourceReference", nullable
                 else:
-                    return "object", nullable
-            case ["array"]:
-                # Tuple and Array identified by arrayType entry
-                if "arrayType" in keys:
-                    if definitions["arrayType"] == "array":
-                        return "array", nullable
-                    elif definitions["arrayType"] == "tuple":
-                        return "tuple", nullable
-                    else:
-                        raise ValueError("Unknown array type!")
+                    raise ValueError("Unknown object type!")
+            else:
+                return "object", nullable
+        elif data_type == "array":
+            # Tuple and Array identified by arrayType entry
+            if "arrayType" in keys:
+                if schema["arrayType"] == "array":
+                    return "array", nullable
+                elif schema["arrayType"] == "tuple":
+                    return "tuple", nullable
                 else:
-                    raise ValueError("No array type given!")
-            case ["boolean"]:
-                return "boolean", nullable
-            case ["integer"]:
-                return "integer", nullable
-            case ["number"]:
-                return "number", nullable
-            case ["string"]:
-                return "string", nullable
-            case _:
-                raise ValueError("Unknown type!")
+                    raise ValueError("Unknown array type!")
+            else:
+                raise ValueError("No array type given!")
+        elif data_type == "boolean":
+            return "boolean", nullable
+        elif data_type == "integer":
+            return "integer", nullable
+        elif data_type == "number":
+            return "number", nullable
+        elif data_type == "string":
+            return "string", nullable
+        else:
+            raise ValueError("Unknown type!")
     else:
         raise ValueError("No type definition found!")
 

@@ -2,6 +2,8 @@ from muse_for_anything.json_migrations.data_migration import *
 
 import unittest
 
+from muse_for_anything.json_migrations.jsonschema_matcher import match_schema
+
 
 class TestMigrationToObject(unittest.TestCase):
 
@@ -69,8 +71,8 @@ class TestMigrationToObject(unittest.TestCase):
             "title": "Type",
         }
         data = "hello world!"
-        updated_data = migrate_data(data, source_schema, self.target_schema_complex)
-        self.assertEqual("hello world!", updated_data)
+        with self.assertRaises(ValueError):
+            migrate_data(data, source_schema, self.target_schema_complex)
 
     def test_from_bool_to_object(self):
         source_schema = {
@@ -93,8 +95,8 @@ class TestMigrationToObject(unittest.TestCase):
             "title": "Type",
         }
         data = False
-        updated_data = migrate_data(data, source_schema, self.target_schema_complex)
-        self.assertEqual(False, updated_data)
+        with self.assertRaises(ValueError):
+            migrate_data(data, source_schema, self.target_schema_complex)
 
     def test_from_int_to_object(self):
         source_schema = {
@@ -117,8 +119,8 @@ class TestMigrationToObject(unittest.TestCase):
             "title": "Type",
         }
         data = 1944
-        updated_data = migrate_data(data, source_schema, self.target_schema_complex)
-        self.assertEqual(1944, updated_data)
+        with self.assertRaises(ValueError):
+            migrate_data(data, source_schema, self.target_schema_complex)
 
     def test_from_number_to_object(self):
         source_schema = {
@@ -141,8 +143,8 @@ class TestMigrationToObject(unittest.TestCase):
             "title": "Type",
         }
         data = 45.8763
-        updated_data = migrate_data(data, source_schema, self.target_schema_complex)
-        self.assertEqual(45.8763, updated_data)
+        with self.assertRaises(ValueError):
+            migrate_data(data, source_schema, self.target_schema_complex)
 
     def test_from_object_to_object_same_props(self):
         source_schema = {
@@ -260,9 +262,8 @@ class TestMigrationToObject(unittest.TestCase):
             },
             "title": "Type",
         }
-        data = 1944
-        with self.assertRaises(ValueError):
-            migrate_data(data, source_schema, self.target_schema_complex)
+        migration_plan = match_schema(source_schema, self.target_schema_complex)
+        self.assertEqual(True, migration_plan["unsupported_conversion"])
 
 
 if __name__ == "__main__":
