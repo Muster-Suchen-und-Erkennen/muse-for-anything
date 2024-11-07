@@ -56,7 +56,7 @@ class TestRecursiveMigration(unittest.TestCase):
             updated_data,
         )
 
-    def test_array_to_array(self):
+    def test_array_to_array_one(self):
         source_schema = {
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -103,6 +103,86 @@ class TestRecursiveMigration(unittest.TestCase):
                 [0, 0, 0],
                 [1, 1, 1, 0, 0, 1],
             ],
+            updated_data,
+        )
+
+    def test_array_to_array_two(self):
+        source_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {
+                "root": {
+                    "arrayType": "array",
+                    "items": {
+                        "arrayType": "array",
+                        "items": {"type": ["boolean"]},
+                        "type": ["array"],
+                    },
+                    "type": ["array"],
+                }
+            },
+            "title": "Type",
+        }
+        target_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {
+                "root": {
+                    "arrayType": "array",
+                    "items": {"type": ["integer"]},
+                    "type": ["array"],
+                }
+            },
+            "title": "Type",
+        }
+        data = [
+            [False],
+            [False],
+            [True],
+        ]
+        updated_data = migrate_data(data, source_schema, target_schema)
+        self.assertEqual(
+            [0, 0, 1],
+            updated_data,
+        )
+
+    def test_array_to_array_three(self):
+        source_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {
+                "root": {
+                    "arrayType": "array",
+                    "items": {"type": ["boolean"]},
+                    "type": ["array"],
+                }
+            },
+            "title": "Type",
+        }
+        target_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {
+                "root": {
+                    "arrayType": "array",
+                    "items": {
+                        "arrayType": "array",
+                        "items": {"type": ["integer"]},
+                        "type": ["array"],
+                    },
+                    "type": ["array"],
+                }
+            },
+            "title": "Type",
+        }
+        data = [True, False, False, True]
+        updated_data = migrate_data(data, source_schema, target_schema)
+        self.assertEqual(
+            [[1], [0], [0], [1]],
             updated_data,
         )
 
