@@ -186,6 +186,120 @@ class TestRecursiveMigration(unittest.TestCase):
             updated_data,
         )
 
+    def test_tuple_to_tuple_one(self):
+        source_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {
+                "root": {
+                    "arrayType": "tuple",
+                    "items": [
+                        {
+                            "arrayType": "array",
+                            "items": {"type": ["integer"]},
+                            "type": ["array"],
+                        },
+                        {"type": ["integer"]},
+                        {"type": ["string", "null"]},
+                    ],
+                    "type": ["array"],
+                }
+            },
+            "title": "Type",
+        }
+        target_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {
+                "root": {
+                    "arrayType": "tuple",
+                    "items": [
+                        {
+                            "arrayType": "array",
+                            "items": {"type": ["string"]},
+                            "type": ["array"],
+                        },
+                        {"type": ["integer"]},
+                        {"type": ["string", "null"]},
+                    ],
+                    "type": ["array"],
+                }
+            },
+            "title": "Type",
+        }
+        data = [[1, 2, 3, 4, 5], 42, "hello world"]
+        updated_data = migrate_data(data, source_schema, target_schema)
+        self.assertEqual(
+            [["1", "2", "3", "4", "5"], 42, "hello world"],
+            updated_data,
+        )
+
+    def test_tuple_to_tuple_two(self):
+        source_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {
+                "root": {
+                    "arrayType": "tuple",
+                    "items": [
+                        {
+                            "arrayType": "array",
+                            "items": {
+                                "arrayType": "tuple",
+                                "items": [
+                                    {"type": ["boolean"]},
+                                    {"type": ["integer"]},
+                                    {"type": ["string", "null"]},
+                                ],
+                                "type": ["array"],
+                            },
+                            "type": ["array"],
+                        },
+                        {"type": ["integer"]},
+                    ],
+                    "type": ["array"],
+                },
+            },
+            "title": "Type",
+        }
+        target_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {
+                "root": {
+                    "arrayType": "tuple",
+                    "items": [
+                        {
+                            "arrayType": "array",
+                            "items": {
+                                "arrayType": "tuple",
+                                "items": [
+                                    {"type": ["integer"]},
+                                    {"type": ["boolean"]},
+                                    {"type": ["string", "null"]},
+                                ],
+                                "type": ["array"],
+                            },
+                            "type": ["array"],
+                        },
+                        {"type": ["string"]},
+                    ],
+                    "type": ["array"],
+                },
+            },
+            "title": "Type",
+        }
+        data = [[[False, 0, "hi"], [True, 3, "bye"], [False, 9, "sun"]], 42]
+        updated_data = migrate_data(data, source_schema, target_schema)
+        self.assertEqual(
+            [[[0, False, "hi"], [1, True, "bye"], [0, True, "sun"]], "42"],
+            updated_data,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
