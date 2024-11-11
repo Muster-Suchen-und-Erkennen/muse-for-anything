@@ -7,7 +7,7 @@ def migrate_data(data, source_schema, target_schema):
     """Data conforming to the source schema is migrated to the target schema if possible.
 
     Args:
-        data: Data stored in a MUSE4Anything object
+        data: Data stored in a MUSE4Anything object, also holds root schemas for ref resolve
         source_schema (dict): The source JSONSchema
         target_schema (dict): The target JSONSchema
 
@@ -15,8 +15,7 @@ def migrate_data(data, source_schema, target_schema):
         ValueError: If transformation is not supported or possible to execute.
 
     Returns:
-        If the update was successful, the updated data is returned, otherwise the
-        original data is returned.
+        If the update was successful, the updated data is returned
     """
     # TODO Add check with validator whether object satisfies schema
     # Maybe also outside of this method

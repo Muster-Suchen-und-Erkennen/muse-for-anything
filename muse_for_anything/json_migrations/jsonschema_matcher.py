@@ -79,6 +79,10 @@ def match_schema(root_schemas, source, target, depth=0):
     Returns:
         bool: Returns True if schemas could be matched, else False
     """
+    if "definitions" in source:
+        source = source["definitions"]["root"]
+    if "definitions" in target:
+        target = target["definitions"]["root"]
     if depth > 100:
         raise ValueError("Schema nested too deep")
     source_type, source_nullable = extract_type(source)
