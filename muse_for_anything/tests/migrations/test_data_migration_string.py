@@ -156,8 +156,12 @@ class TestMigrationToString(unittest.TestCase):
             },
             "title": "Type",
         }
-        migration_plan = match_schema(source_schema, self.target_schema)
-        self.assertEqual(True, migration_plan["unsupported_conversion"])
+        self.assertEqual(
+            False,
+            match_schema(
+                (source_schema, self.target_schema), source_schema, self.target_schema
+            ),
+        )
 
 
 if __name__ == "__main__":

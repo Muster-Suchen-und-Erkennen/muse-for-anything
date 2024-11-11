@@ -219,8 +219,14 @@ class TestMigrationToArray(unittest.TestCase):
             },
             "title": "Type",
         }
-        migration_plan = match_schema(source_schema, self.target_schema_boolean)
-        self.assertEqual(True, migration_plan["unsupported_conversion"])
+        self.assertEqual(
+            False,
+            match_schema(
+                (source_schema, self.target_schema_boolean),
+                source_schema,
+                self.target_schema_boolean,
+            ),
+        )
 
 
 if __name__ == "__main__":

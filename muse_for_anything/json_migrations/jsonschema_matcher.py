@@ -62,128 +62,163 @@ def extract_type(schema):
         raise ValueError("No type definition found!")
 
 
-def match_schema(source, target):
+def match_schema(root_schemas, source, target):
     """Going from the source schema, it is checked whether a conversion to
-    the target schema is possible. That information and also the types of
-    the schemas and whether elements are nullable are returned. \n
+    the target schema is possible.
     Unsupported conversions are: \n
-    array to enum, array to object, enum to array, enum object, enum to tuple,
+    array to enum, array to object, enum to array, enum to object, enum to tuple,
     object to array, object to enum, object to tuple, tuple to enum, and
     tuple to object. These might need an intermediate conversion step, e. g.
     via boolean, integer, number, or string.
 
     Args:
+        root_schemas (tuple): A tuple of the root source schema and root target schema
         source (dict): The source JSONSchema
         target (dict): The target JSONSchema
 
     Returns:
-        dict: A dictionary with five keys \n
-        "unsupported_conversion": indicates whether the conversion is possible or not, \n
-        "source_type": indicates the source schema's main type, \n
-        "source_nullable": indicates whether elements in the source schema are nullable, \n
-        "target_type": indicate the target schema's main type, \n
-        "target_nullable": indicates whether elements in the target schema are nullable
+        bool: Returns True if schemas could be matched, else False
     """
-    unsupported_conversion = False
     source_type, source_nullable = extract_type(source)
     target_type, target_nullable = extract_type(target)
     # Check if both schemas have valid types
+    # TODO: Implement "sanity checks" for updates
     if source_type and target_type:
-        match target_type:
-            case "array":
-                if source_type not in [
-                    "array",
-                    "boolean",
-                    "integer",
-                    "number",
-                    "string",
-                    "tuple",
-                ]:
-                    unsupported_conversion = True
-            case "enum":
-                if source_type not in [
-                    "array",
-                    "boolean",
-                    "enum",
-                    "integer",
-                    "number",
-                    "string",
-                    "tuple",
-                ]:
-                    unsupported_conversion = True
-            case "number":
-                if source_type not in [
-                    "array",
-                    "boolean",
-                    "enum",
-                    "integer",
-                    "number",
-                    "object",
-                    "string",
-                    "tuple",
-                ]:
-                    unsupported_conversion = True
-            case "integer":
-                if source_type not in [
-                    "array",
-                    "boolean",
-                    "enum",
-                    "integer",
-                    "number",
-                    "object",
-                    "string",
-                    "tuple",
-                ]:
-                    unsupported_conversion = True
-            case "boolean":
-                if source_type not in [
-                    "array",
-                    "boolean",
-                    "enum",
-                    "integer",
-                    "number",
-                    "object",
-                    "string",
-                    "tuple",
-                ]:
-                    unsupported_conversion = True
-            case "string":
-                if source_type not in [
-                    "array",
-                    "boolean",
-                    "enum",
-                    "integer",
-                    "number",
-                    "object",
-                    "string",
-                    "tuple",
-                ]:
-                    unsupported_conversion = True
-            case "tuple":
-                if source_type not in [
-                    "array",
-                    "boolean",
-                    "integer",
-                    "number",
-                    "string",
-                    "tuple",
-                ]:
-                    unsupported_conversion = True
-            case "object":
-                if source_type not in [
-                    "boolean",
-                    "integer",
-                    "number",
-                    "object",
-                    "string",
-                ]:
-                    unsupported_conversion = True
-            case _:
-                unsupported_conversion = True
-    return {
-        "unsupported_conversion": unsupported_conversion,
-        "source_type": source_type,
-        "source_nullable": source_nullable,
-        "target_type": target_type,
-        "target_nullable": target_nullable,
-    }
+        if target_type == "number":
+            match source_type:
+                case "boolean" | "enum" | "integer" | "number" | "string":
+                    return True
+                case "array":
+                    return True
+                case "tuple":
+                    return True
+                case "object":
+                    return True
+                case _:
+                    return False
+        elif target_type == "integer":
+            match source_type:
+                case "boolean" | "enum" | "integer" | "number" | "string":
+                    return True
+                case "array":
+                    return True
+                case "tuple":
+                    return True
+                case "object":
+                    return True
+                case _:
+                    return False
+        elif target_type == "boolean":
+            match source_type:
+                case "boolean" | "enum" | "integer" | "number" | "string":
+                    return True
+                case "array" | "tuple":
+                    return True
+                case "object":
+                    return True
+                case _:
+                    return False
+        elif target_type == "string":
+            match source_type:
+                case (
+                    "array"
+                    | "boolean"
+                    | "enum"
+                    | "integer"
+                    | "number"
+                    | "string"
+                    | "tuple"
+                ):
+                    return True
+                case "object":
+                    return True
+                case _:
+                    return False
+        elif target_type == "array":
+            target_array_schema = target["items"]
+            match source_type:
+                case "boolean" | "integer" | "number" | "string":
+                    return match_schema(root_schemas, source, target_array_schema)
+                case "array":
+                    source_array_schema = source["items"]
+                    return match_schema(
+                        root_schemas, source_array_schema, target_array_schema
+                    )
+                case "tuple":
+                    source_items_types = source["items"]
+                    for item_type in source_items_types:
+                        valid = match_schema(root_schemas, item_type, target_array_schema)
+                        if not valid:
+                            # One of the elements is not matchable
+                            return False
+                    return True
+                case _:
+                    return False
+        elif target_type == "enum":
+            match source_type:
+                case "array" | "boolean" | "integer" | "number" | "string" | "tuple":
+                    return True
+                case _:
+                    return False
+        elif target_type == "tuple":
+            target_items_types = target["items"]
+            match source_type:
+                case "boolean" | "integer" | "number" | "string":
+                    if len(target_items_types) == 1:
+                        return match_schema(root_schemas, source, target_array_schema)
+                    else:
+                        return False
+                case "array":
+                    source_array_schema = source["items"]
+                    for item_type in target_items_types:
+                        valid = match_schema(root_schemas, source_array_schema, item_type)
+                        if not valid:
+                            return False
+                    return True
+                case "tuple":
+                    source_items_types = source["items"]
+                    for source_type, target_type in zip(
+                        source_items_types, target_items_types
+                    ):
+                        valid = match_schema(root_schemas, source_type, target_type)
+                        if not valid:
+                            return False
+                    return True
+                case _:
+                    return False
+        elif target_type == "object":
+            target_properties = target["properties"]
+            match source_type:
+                case "boolean" | "integer" | "number" | "string":
+                    return True
+                case "object":
+                    source_properties = source["properties"]
+                    common_properties = (
+                        target_properties.keys() & source_properties.keys()
+                    )
+                    new_properties = target_properties.keys() - source_properties.keys()
+                    deleted_properties = (
+                        source_properties.keys() - target_properties.keys()
+                    )
+                    for prop in common_properties:
+                        valid = match_schema(
+                            root_schemas, source_properties[prop], target_properties[prop]
+                        )
+                        if not valid:
+                            return False
+                    if len(new_properties) == 1 and len(deleted_properties) == 1:
+                        new_prop = next(iter(new_properties))
+                        deleted_prop = next(iter(deleted_properties))
+                        valid = match_schema(
+                            root_schemas,
+                            source_properties[deleted_prop],
+                            target_properties[new_prop],
+                        )
+                        if not valid:
+                            return False
+                    return True
+                case _:
+                    return False
+    else:
+        return False
+    return False

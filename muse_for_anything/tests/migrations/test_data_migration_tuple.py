@@ -314,8 +314,14 @@ class TestMigrationToTuple(unittest.TestCase):
             },
             "title": "Type",
         }
-        migration_plan = match_schema(source_schema, self.target_schema_complex)
-        self.assertEqual(True, migration_plan["unsupported_conversion"])
+        self.assertEqual(
+            False,
+            match_schema(
+                (source_schema, self.target_schema_complex),
+                source_schema,
+                self.target_schema_complex,
+            ),
+        )
 
 
 if __name__ == "__main__":
