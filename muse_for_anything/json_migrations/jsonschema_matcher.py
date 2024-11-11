@@ -62,7 +62,7 @@ def extract_type(schema):
         raise ValueError("No type definition found!")
 
 
-def match_schema(root_schemas, source, target):
+def match_schema(root_schemas, source, target, depth=0):
     """Going from the source schema, it is checked whether a conversion to
     the target schema is possible.
     Unsupported conversions are: \n
@@ -79,6 +79,8 @@ def match_schema(root_schemas, source, target):
     Returns:
         bool: Returns True if schemas could be matched, else False
     """
+    if depth > 100:
+        raise ValueError("Schema nested too deep")
     source_type, source_nullable = extract_type(source)
     target_type, target_nullable = extract_type(target)
     # Check if both schemas have valid types
@@ -138,16 +140,20 @@ def match_schema(root_schemas, source, target):
             target_array_schema = target["items"]
             match source_type:
                 case "boolean" | "integer" | "number" | "string":
-                    return match_schema(root_schemas, source, target_array_schema)
+                    return match_schema(
+                        root_schemas, source, target_array_schema, depth + 1
+                    )
                 case "array":
                     source_array_schema = source["items"]
                     return match_schema(
-                        root_schemas, source_array_schema, target_array_schema
+                        root_schemas, source_array_schema, target_array_schema, depth + 1
                     )
                 case "tuple":
                     source_items_types = source["items"]
                     for item_type in source_items_types:
-                        valid = match_schema(root_schemas, item_type, target_array_schema)
+                        valid = match_schema(
+                            root_schemas, item_type, target_array_schema, depth + 1
+                        )
                         if not valid:
                             # One of the elements is not matchable
                             return False
@@ -165,13 +171,17 @@ def match_schema(root_schemas, source, target):
             match source_type:
                 case "boolean" | "integer" | "number" | "string":
                     if len(target_items_types) == 1:
-                        return match_schema(root_schemas, source, target_array_schema)
+                        return match_schema(
+                            root_schemas, source, target_array_schema, depth + 1
+                        )
                     else:
                         return False
                 case "array":
                     source_array_schema = source["items"]
                     for item_type in target_items_types:
-                        valid = match_schema(root_schemas, source_array_schema, item_type)
+                        valid = match_schema(
+                            root_schemas, source_array_schema, item_type, depth + 1
+                        )
                         if not valid:
                             return False
                     return True
@@ -180,7 +190,9 @@ def match_schema(root_schemas, source, target):
                     for source_type, target_type in zip(
                         source_items_types, target_items_types
                     ):
-                        valid = match_schema(root_schemas, source_type, target_type)
+                        valid = match_schema(
+                            root_schemas, source_type, target_type, depth + 1
+                        )
                         if not valid:
                             return False
                     return True
@@ -202,7 +214,10 @@ def match_schema(root_schemas, source, target):
                     )
                     for prop in common_properties:
                         valid = match_schema(
-                            root_schemas, source_properties[prop], target_properties[prop]
+                            root_schemas,
+                            source_properties[prop],
+                            target_properties[prop],
+                            depth + 1,
                         )
                         if not valid:
                             return False
@@ -213,6 +228,7 @@ def match_schema(root_schemas, source, target):
                             root_schemas,
                             source_properties[deleted_prop],
                             target_properties[new_prop],
+                            depth + 1,
                         )
                         if not valid:
                             return False
