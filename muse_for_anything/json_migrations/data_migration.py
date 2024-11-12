@@ -15,15 +15,18 @@ def migrate_data(
     """Data conforming to the source schema is migrated to the target schema if possible.
 
     Args:
-        data: Data stored in a MUSE4Anything object, also holds root schemas for ref resolve
-        source_schema (dict): The source JSONSchema
-        target_schema (dict): The target JSONSchema
+        data: Data stored in a MUSE4Anything object
+        source_schema (dict): Source JSONSchema
+        target_schema (dict): Target JSONSchema
+        source_root (Optional[dict], optional): Root source JSONSchema, used for reference resolving. Defaults to None.
+        target_root (Optional[dict], optional): Root target JSONSchema, used for reference resolving. Defaults to None.
+        depth (int, optional): Depth counter for recursion, stops at 100. Defaults to 0.
 
     Raises:
-        ValueError: If transformation is not supported or possible to execute.
+        ValueError: If transformation is not supported or possible to execute
 
     Returns:
-        If the update was successful, the updated data is returned
+        Updated data, if update was successful
     """
     # TODO Add check with validator whether object satisfies schema
     # Maybe also outside of this method
@@ -100,7 +103,6 @@ def migrate_to_number(data, source_type: str):
     Args:
         data: Data potentially represented as a non-float
         source_type (str): Source type of data
-        target_nullable (bool): Indicates whether data can be null/None
 
     Raises:
         ValueError: If transformation to number was not possible
@@ -170,7 +172,6 @@ def migrate_to_integer(data, source_type: str):
     Args:
         data: Data potentially represented as a non-integer
         source_type (str): Source type of data
-        target_nullable (bool): Indicates whether data can be null/None
 
     Raises:
         ValueError: If transformation to integer was not possible
@@ -241,7 +242,6 @@ def migrate_to_string(data, source_type: str, source_schema: dict):
         data: Data potentially represented as a non-string
         source_type (str): Source type of data
         source_schema (dict): Source JSONSchema to allow better conversion
-        target_nullable (bool): Indicates whether data can be null/None
 
     Raises:
         ValueError: If transformation to string was not possible
@@ -270,7 +270,6 @@ def migrate_to_boolean(data, source_type: str):
     Args:
         data: Data potentially represented as a non-boolean
         source_type (str): Source type of data
-        target_nullable (bool): Indicates whether data can be null/None
 
     Raises:
         ValueError: If transformation to boolean was not possible
@@ -317,7 +316,6 @@ def migrate_to_enum(data, allowed_values: list):
     Args:
         data: Data potentially not part of the enum
         allowed_values (list): A list of values accepted in the enum
-        target_nullable (bool): Indicates whether data can be null/None
 
     Raises:
         ValueError: If data is not part of the defined enum
@@ -354,11 +352,10 @@ def migrate_to_array(
         data: Data potentially represented as a non-array
         source_type (str): Source type of data
         source_schema (dict): Source JSONSchema to allow better conversion
-        array_data_type (str): Indicates the data type of the elements of an array
-        target_nullable (bool): Indicates whether data can be null/None
-
-    Raises:
-        ValueError: If transformation to array was not possible
+        target_array_schema (dict): Indicates the data type of the elements of an array
+        source_root (dict): Root source JSONSchema, used for reference resolving
+        target_root (dict): Root target JSONSchema, used for reference resolving
+        depth (int): Depth counter for recursion, stops at 100
 
     Returns:
         list: data represented as an array
@@ -415,8 +412,10 @@ def migrate_to_object(
         data: Data potentially represented as a non-object
         source_type (str): Source type of data
         source_schema (dict): Source JSONSchema to allow better conversion
-        target_schema (dict): Target JSONSchema to allow better conversion
-        target_nullable (bool): Indicates whether data can be null/None
+        target_object_schema (dict): Target JSONSchema to allow better conversion
+        source_root (dict): Root source JSONSchema, used for reference resolving
+        target_root (dict): Root target JSONSchema, used for reference resolving
+        depth (int): Depth counter for recursion, stops at 100
 
     Raises:
         ValueError: If transformation to object was not possible
@@ -502,8 +501,10 @@ def migrate_to_tuple(
         data: Data potentially represented as a non-tuple
         source_type (str): Source type of data
         source_schema (dict): Source JSONSchema to allow better conversion
-        target_schema (dict): Target JSONSchema to allow better conversion
-        target_nullable (bool): Indicates whether data can be null/None
+        target_tuple_schema (list): Target JSONSchema to allow better conversion
+        source_root (dict): Root source JSONSchema, used for reference resolving
+        target_root (dict): Root target JSONSchema, used for reference resolving
+        depth (int): Depth counter for recursion, stops at 100
 
     Raises:
         ValueError: If transformation to tuple was not possible

@@ -7,7 +7,7 @@ def extract_type(schema: dict):
     whether or not elements are nullable
 
     Args:
-        schema (dict): A JSONSchema saved in a python dict
+        schema (dict): A JSONSchema saved as python dict
 
     Raises:
         ValueError: When schema does not include a known type definition
@@ -70,8 +70,7 @@ def match_schema(
     target_root: Optional[dict] = None,
     depth: int = 0,
 ):
-    """Going from the source schema, it is checked whether a conversion to
-    the target schema is possible.
+    """Going from the source schema, it is checked whether a conversion to the target schema is possible.
     Unsupported conversions are: \n
     array to enum, array to object, enum to array, enum to object, enum to tuple,
     object to array, object to enum, object to tuple, tuple to enum, and
@@ -79,9 +78,14 @@ def match_schema(
     via boolean, integer, number, or string.
 
     Args:
-        root_schemas (tuple): A tuple of the root source schema and root target schema
-        source (dict): The source JSONSchema
-        target (dict): The target JSONSchema
+        source_schema (dict): Source JSONSchema
+        target_schema (dict): Target JSONSchema
+        source_root (Optional[dict], optional): Root source JSONSchema, used for reference resolving. Defaults to None.
+        target_root (Optional[dict], optional): Root target JSONSchema, used for reference resolving. Defaults to None.
+        depth (int, optional): Depth counter for recursion, stops at 100. Defaults to 0.
+
+    Raises:
+        ValueError: If a schema is nested too deep.
 
     Returns:
         bool: Returns True if schemas could be matched, else False
