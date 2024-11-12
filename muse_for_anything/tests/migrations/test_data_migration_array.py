@@ -208,7 +208,7 @@ class TestMigrationToArray(unittest.TestCase):
         )
         self.assertEqual(["42", "187", "1944", "555", "968", "6742"], updated_data)
 
-    def test_to_array_invalid(self):
+    def test_to_array_error(self):
         source_schema = {
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -222,7 +222,6 @@ class TestMigrationToArray(unittest.TestCase):
         self.assertEqual(
             False,
             match_schema(
-                (source_schema, self.target_schema_boolean),
                 source_schema,
                 self.target_schema_boolean,
             ),

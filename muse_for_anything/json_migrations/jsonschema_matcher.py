@@ -1,7 +1,8 @@
 import copy
+from typing import Optional
 
 
-def extract_type(schema):
+def extract_type(schema: dict):
     """Extract the type of a given schema and indicates
     whether or not elements are nullable
 
@@ -62,7 +63,13 @@ def extract_type(schema):
         raise ValueError("No type definition found!")
 
 
-def match_schema(root_schemas, source, target, depth=0):
+def match_schema(
+    source_schema: dict,
+    target_schema: dict,
+    source_root: Optional[dict] = None,
+    target_root: Optional[dict] = None,
+    depth: int = 0,
+):
     """Going from the source schema, it is checked whether a conversion to
     the target schema is possible.
     Unsupported conversions are: \n
@@ -79,17 +86,19 @@ def match_schema(root_schemas, source, target, depth=0):
     Returns:
         bool: Returns True if schemas could be matched, else False
     """
-    if "definitions" in source:
-        source = source["definitions"]["root"]
-    if "definitions" in target:
-        target = target["definitions"]["root"]
     if depth > 100:
         raise ValueError("Schema nested too deep")
-    source_type, source_nullable = extract_type(source)
-    target_type, target_nullable = extract_type(target)
+    if source_root is None:
+        source_root = source_schema
+        source_schema = source_schema["definitions"]["root"]
+    if target_root is None:
+        target_root = target_schema
+        target_schema = target_schema["definitions"]["root"]
+    source_type, source_nullable = extract_type(source_schema)
+    target_type, target_nullable = extract_type(target_schema)
     # Check if both schemas have valid types
-    # TODO: Implement "sanity checks" for updates
     if source_type and target_type:
+        # TODO: Implement "sanity checks" for updates on all types
         if target_type == "number":
             match source_type:
                 case "boolean" | "enum" | "integer" | "number" | "string":
@@ -141,22 +150,34 @@ def match_schema(root_schemas, source, target, depth=0):
                 case _:
                     return False
         elif target_type == "array":
-            target_array_schema = target["items"]
+            target_array_schema = target_schema["items"]
             match source_type:
                 case "boolean" | "integer" | "number" | "string":
                     return match_schema(
-                        root_schemas, source, target_array_schema, depth + 1
+                        source_schema,
+                        target_array_schema,
+                        source_root=source_root,
+                        target_root=target_root,
+                        depth=depth + 1,
                     )
                 case "array":
-                    source_array_schema = source["items"]
+                    source_array_schema = source_schema["items"]
                     return match_schema(
-                        root_schemas, source_array_schema, target_array_schema, depth + 1
+                        source_array_schema,
+                        target_array_schema,
+                        source_root=source_root,
+                        target_root=target_root,
+                        depth=depth + 1,
                     )
                 case "tuple":
-                    source_items_types = source["items"]
+                    source_items_types = source_schema["items"]
                     for item_type in source_items_types:
                         valid = match_schema(
-                            root_schemas, item_type, target_array_schema, depth + 1
+                            item_type,
+                            target_array_schema,
+                            source_root=source_root,
+                            target_root=target_root,
+                            depth=depth + 1,
                         )
                         if not valid:
                             # One of the elements is not matchable
@@ -171,31 +192,43 @@ def match_schema(root_schemas, source, target, depth=0):
                 case _:
                     return False
         elif target_type == "tuple":
-            target_items_types = target["items"]
+            target_items_types = target_schema["items"]
             match source_type:
                 case "boolean" | "integer" | "number" | "string":
                     if len(target_items_types) == 1:
                         return match_schema(
-                            root_schemas, source, target_array_schema, depth + 1
+                            source_schema,
+                            target_array_schema,
+                            source_root=source_root,
+                            target_root=target_root,
+                            depth=depth + 1,
                         )
                     else:
                         return False
                 case "array":
-                    source_array_schema = source["items"]
+                    source_array_schema = source_schema["items"]
                     for item_type in target_items_types:
                         valid = match_schema(
-                            root_schemas, source_array_schema, item_type, depth + 1
+                            source_array_schema,
+                            item_type,
+                            source_root=source_root,
+                            target_root=target_root,
+                            depth=depth + 1,
                         )
                         if not valid:
                             return False
                     return True
                 case "tuple":
-                    source_items_types = source["items"]
+                    source_items_types = source_schema["items"]
                     for source_type, target_type in zip(
                         source_items_types, target_items_types
                     ):
                         valid = match_schema(
-                            root_schemas, source_type, target_type, depth + 1
+                            source_type,
+                            target_type,
+                            source_root=source_root,
+                            target_root=target_root,
+                            depth=depth + 1,
                         )
                         if not valid:
                             return False
@@ -203,12 +236,12 @@ def match_schema(root_schemas, source, target, depth=0):
                 case _:
                     return False
         elif target_type == "object":
-            target_properties = target["properties"]
+            target_properties = target_schema["properties"]
             match source_type:
                 case "boolean" | "integer" | "number" | "string":
                     return True
                 case "object":
-                    source_properties = source["properties"]
+                    source_properties = source_schema["properties"]
                     common_properties = (
                         target_properties.keys() & source_properties.keys()
                     )
@@ -218,10 +251,11 @@ def match_schema(root_schemas, source, target, depth=0):
                     )
                     for prop in common_properties:
                         valid = match_schema(
-                            root_schemas,
                             source_properties[prop],
                             target_properties[prop],
-                            depth + 1,
+                            source_root=source_root,
+                            target_root=target_root,
+                            depth=depth + 1,
                         )
                         if not valid:
                             return False
@@ -229,10 +263,11 @@ def match_schema(root_schemas, source, target, depth=0):
                         new_prop = next(iter(new_properties))
                         deleted_prop = next(iter(deleted_properties))
                         valid = match_schema(
-                            root_schemas,
                             source_properties[deleted_prop],
                             target_properties[new_prop],
-                            depth + 1,
+                            source_root=source_root,
+                            target_root=target_root,
+                            depth=depth + 1,
                         )
                         if not valid:
                             return False

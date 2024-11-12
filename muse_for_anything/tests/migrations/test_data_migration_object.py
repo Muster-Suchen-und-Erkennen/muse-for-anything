@@ -265,7 +265,6 @@ class TestMigrationToObject(unittest.TestCase):
         self.assertEqual(
             False,
             match_schema(
-                (source_schema, self.target_schema_complex),
                 source_schema,
                 self.target_schema_complex,
             ),

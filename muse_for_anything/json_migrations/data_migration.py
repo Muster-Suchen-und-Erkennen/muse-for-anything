@@ -1,9 +1,17 @@
 import numbers
+from typing import Optional
 from jsonschema import Draft7Validator
 from muse_for_anything.json_migrations.jsonschema_matcher import extract_type
 
 
-def migrate_data(data, source_schema, target_schema):
+def migrate_data(
+    data,
+    source_schema: dict,
+    target_schema: dict,
+    source_root: Optional[dict] = None,
+    target_root: Optional[dict] = None,
+    depth: int = 0,
+):
     """Data conforming to the source schema is migrated to the target schema if possible.
 
     Args:
@@ -20,13 +28,17 @@ def migrate_data(data, source_schema, target_schema):
     # TODO Add check with validator whether object satisfies schema
     # Maybe also outside of this method
     # validator = Draft7Validator(target_schema)
-    if not isinstance(data, tuple):
-        data = data, source_schema, target_schema
+    if depth > 100:
+        raise ValueError("Data is too nested to migrate!")
+    if source_root is None:
+        source_root = source_schema
         source_schema = source_schema["definitions"]["root"]
+    if target_root is None:
+        target_root = target_schema
         target_schema = target_schema["definitions"]["root"]
 
     target_type, target_nullable = extract_type(target_schema)
-    if data[0] is None and target_nullable:
+    if data is None and target_nullable:
         return None
     source_type, source_nullable = extract_type(source_schema)
     updated_data = None
@@ -36,7 +48,13 @@ def migrate_data(data, source_schema, target_schema):
             # Array needs additional information on element type
             target_array_schema = target_schema["items"]
             updated_data = migrate_to_array(
-                data, source_type, source_schema, target_array_schema
+                data,
+                source_type,
+                source_schema,
+                target_array_schema,
+                source_root=source_root,
+                target_root=target_root,
+                depth=depth + 1,
             )
         elif target_type == "boolean":
             updated_data = migrate_to_boolean(data, source_type)
@@ -52,11 +70,23 @@ def migrate_data(data, source_schema, target_schema):
             updated_data = migrate_to_string(data, source_type, source_schema)
         elif target_type == "tuple":
             updated_data = migrate_to_tuple(
-                data, source_type, source_schema, target_schema
+                data,
+                source_type,
+                source_schema,
+                target_schema,
+                source_root=source_root,
+                target_root=target_root,
+                depth=depth + 1,
             )
         elif target_type == "object":
             updated_data = migrate_to_object(
-                data, source_type, source_schema, target_schema
+                data,
+                source_type,
+                source_schema,
+                target_schema,
+                source_root=source_root,
+                target_root=target_root,
+                depth=depth + 1,
             )
     except ValueError:
         # TODO: Change to raise error further to indicate that update unsuccessful!
@@ -64,7 +94,7 @@ def migrate_data(data, source_schema, target_schema):
     return updated_data
 
 
-def migrate_to_number(data_object, source_type):
+def migrate_to_number(data, source_type: str):
     """Takes data and transforms it to a number/float instance.
 
     Args:
@@ -78,7 +108,6 @@ def migrate_to_number(data_object, source_type):
     Returns:
         float: data represented as a float
     """
-    data = data_object[0]
     match source_type:
         case "boolean" | "enum" | "number" | "integer" | "string":
             # TODO Implement potential cut off at limit
@@ -135,7 +164,7 @@ def migrate_to_number(data_object, source_type):
     return data
 
 
-def migrate_to_integer(data_object, source_type):
+def migrate_to_integer(data, source_type: str):
     """Takes data and transforms it to an integer instance.
 
     Args:
@@ -149,7 +178,6 @@ def migrate_to_integer(data_object, source_type):
     Returns:
         int: data represented as an integer
     """
-    data = data_object[0]
     match source_type:
         case "boolean" | "enum" | "number" | "integer" | "string":
             # TODO Implement potential cut off at limit
@@ -206,7 +234,7 @@ def migrate_to_integer(data_object, source_type):
     return data
 
 
-def migrate_to_string(data_object, source_type, source_schema):
+def migrate_to_string(data, source_type: str, source_schema: dict):
     """Takes data and transforms it to a string instance.
 
     Args:
@@ -221,7 +249,6 @@ def migrate_to_string(data_object, source_type, source_schema):
     Returns:
         str: data represented as a string
     """
-    data = data_object[0]
     match source_type:
         case "array" | "boolean" | "enum" | "integer" | "number" | "string" | "tuple":
             try:
@@ -237,7 +264,7 @@ def migrate_to_string(data_object, source_type, source_schema):
     return data
 
 
-def migrate_to_boolean(data_object, source_type):
+def migrate_to_boolean(data, source_type: str):
     """Takes data and transforms it to a boolean instance.
 
     Args:
@@ -251,7 +278,6 @@ def migrate_to_boolean(data_object, source_type):
     Returns:
         bool: data represented as a boolean
     """
-    data = data_object[0]
     match source_type:
         case "boolean" | "enum" | "integer" | "number" | "string":
             try:
@@ -284,7 +310,7 @@ def migrate_to_boolean(data_object, source_type):
     return data
 
 
-def migrate_to_enum(data_object, allowed_values):
+def migrate_to_enum(data, allowed_values: list):
     """Takes data and ensures it conforms to the allowed values of the
     defined enum.
 
@@ -299,7 +325,6 @@ def migrate_to_enum(data_object, allowed_values):
     Returns:
         _type_: data fitted to the enum
     """
-    data = data_object[0]
     if isinstance(data, numbers.Number):
         temp_data = data
         for value in allowed_values:
@@ -314,7 +339,15 @@ def migrate_to_enum(data_object, allowed_values):
         raise ValueError("No transformation to enum possible!")
 
 
-def migrate_to_array(data_object, source_type, source_schema, target_array_schema):
+def migrate_to_array(
+    data,
+    source_type: str,
+    source_schema: dict,
+    target_array_schema: dict,
+    source_root: dict,
+    target_root: dict,
+    depth: int,
+):
     """Takes data and transforms it to an array instance.
 
     Args:
@@ -330,26 +363,52 @@ def migrate_to_array(data_object, source_type, source_schema, target_array_schem
     Returns:
         list: data represented as an array
     """
-    data, root_schema, target_schema = data_object
     match source_type:
         case "boolean" | "integer" | "number" | "string":
-            data = [migrate_data(data_object, source_schema, target_array_schema)]
+            data = [
+                migrate_data(
+                    data,
+                    source_schema,
+                    target_array_schema,
+                    source_root=source_root,
+                    target_root=target_root,
+                    depth=depth + 1,
+                )
+            ]
         case "array":
             source_array_schema = source_schema["items"]
             for i, element in enumerate(data):
-                data_object = (element, root_schema, target_schema)
                 data[i] = migrate_data(
-                    data_object, source_array_schema, target_array_schema
+                    element,
+                    source_array_schema,
+                    target_array_schema,
+                    source_root=source_root,
+                    target_root=target_root,
+                    depth=depth + 1,
                 )
         case "tuple":
             source_items_types = source_schema["items"]
             for i, element in enumerate(zip(data, source_items_types)):
-                data_object = (element[0], root_schema, target_schema)
-                data[i] = migrate_data(data_object, element[1], target_array_schema)
+                data[i] = migrate_data(
+                    element[0],
+                    element[1],
+                    target_array_schema,
+                    source_root=source_root,
+                    target_root=target_root,
+                    depth=depth + 1,
+                )
     return data
 
 
-def migrate_to_object(data_object, source_type, source_schema, target_object_schema):
+def migrate_to_object(
+    data,
+    source_type: str,
+    source_schema: dict,
+    target_object_schema: dict,
+    source_root: dict,
+    target_root: dict,
+    depth: int,
+):
     """Takes data and transforms it to an object instance.
 
     Args:
@@ -365,7 +424,6 @@ def migrate_to_object(data_object, source_type, source_schema, target_object_sch
     Returns:
         dict: Data represented as an object
     """
-    data, root_schema, target_schema = data_object
     target_properties = target_object_schema["properties"]
     match source_type:
         case "boolean" | "integer" | "number" | "string":
@@ -373,27 +431,41 @@ def migrate_to_object(data_object, source_type, source_schema, target_object_sch
                 raise ValueError("No transformation to complex object possible!")
             prop_name = next(iter(target_properties))
             prop_type = target_properties[prop_name]
-            data_object = (data, root_schema, target_schema)
-            data = {prop_name: migrate_data(data_object, source_schema, prop_type)}
+            data = {
+                prop_name: migrate_data(
+                    data,
+                    source_schema,
+                    prop_type,
+                    source_root=source_root,
+                    target_root=target_root,
+                    depth=depth + 1,
+                )
+            }
         case "object":
             source_properties = source_schema["properties"]
             common_properties = target_properties.keys() & source_properties.keys()
             new_properties = target_properties.keys() - source_properties.keys()
             deleted_properties = source_properties.keys() - target_properties.keys()
             for prop in common_properties:
-                data_object = (data[prop], root_schema, target_schema)
                 data[prop] = migrate_data(
-                    data_object, source_properties[prop], target_properties[prop]
+                    data[prop],
+                    source_properties[prop],
+                    target_properties[prop],
+                    source_root=source_root,
+                    target_root=target_root,
+                    depth=depth + 1,
                 )
             # One prop added, one deleted, likely name changes
             if len(new_properties) == 1 and len(deleted_properties) == 1:
                 new_property = next(iter(new_properties))
                 deleted_property = next(iter(deleted_properties))
-                data_object = (data[deleted_property], root_schema, target_schema)
                 data[new_property] = migrate_data(
-                    data_object,
+                    data[deleted_property],
                     source_properties[deleted_property],
                     target_properties[new_property],
+                    source_root=source_root,
+                    target_root=target_root,
+                    depth=depth + 1,
                 )
                 del data[deleted_property]
             # More than one added or deleted
@@ -401,15 +473,29 @@ def migrate_to_object(data_object, source_type, source_schema, target_object_sch
                 # Add all new properties
                 for prop in new_properties:
                     # TODO: default values?
-                    data_object = (None, root_schema, target_schema)
-                    data[prop] = migrate_data(data_object, None, target_properties[prop])
+                    data[prop] = migrate_data(
+                        None,
+                        None,
+                        target_properties[prop],
+                        source_root=source_root,
+                        target_root=target_root,
+                        depth=depth + 1,
+                    )
                 # Delete all old properties
                 for prop in deleted_properties:
                     del data[prop]
     return data
 
 
-def migrate_to_tuple(data_object, source_type, source_schema, target_tuple_schema):
+def migrate_to_tuple(
+    data,
+    source_type: str,
+    source_schema: dict,
+    target_tuple_schema: list,
+    source_root: dict,
+    target_root: dict,
+    depth: int,
+):
     """Takes data and transforms it to a tuple instance.
 
     Args:
@@ -425,12 +511,20 @@ def migrate_to_tuple(data_object, source_type, source_schema, target_tuple_schem
     Returns:
         list: Data represented as a tuple
     """
-    data, root_schema, target_schema = data_object
     target_items = target_tuple_schema["items"]
     match source_type:
         case "boolean" | "integer" | "number" | "string":
             if len(target_items) == 1:
-                data = [migrate_data(data_object, source_schema, target_items[0])]
+                data = [
+                    migrate_data(
+                        data,
+                        source_schema,
+                        target_items[0],
+                        source_root=source_root,
+                        target_root=target_root,
+                        depth=depth + 1,
+                    )
+                ]
             else:
                 raise ValueError("No transformation to enum possible!")
         case "array":
@@ -438,19 +532,39 @@ def migrate_to_tuple(data_object, source_type, source_schema, target_tuple_schem
             if len(data) != len(target_items):
                 raise ValueError("No transformation from array to tuple possible!")
             for i, element in enumerate(data):
-                data_object = (element, root_schema, target_schema)
-                data[i] = migrate_data(data_object, source_array_schema, target_items[i])
+                data[i] = migrate_data(
+                    element,
+                    source_array_schema,
+                    target_items[i],
+                    source_root=source_root,
+                    target_root=target_root,
+                    depth=depth + 1,
+                )
         case "tuple":
             source_items = source_schema["items"]
             for i, (source_item, target_item) in enumerate(
                 zip(source_items, target_items)
             ):
-                data_object = (data[i], root_schema, target_schema)
-                data[i] = migrate_data(data_object, source_item, target_item)
+                data[i] = migrate_data(
+                    data[i],
+                    source_item,
+                    target_item,
+                    source_root=source_root,
+                    target_root=target_root,
+                    depth=depth + 1,
+                )
             for i in range(len(target_items), len(source_items)):
                 data.pop(i)
             for i in range(len(source_items), len(target_items)):
                 # TODO: default values?
-                data_object = (None, root_schema, target_schema)
-                data.append(migrate_data(data_object, None, target_items[i]))
+                data.append(
+                    migrate_data(
+                        None,
+                        None,
+                        target_items[i],
+                        source_root=source_root,
+                        target_root=target_root,
+                        depth=depth + 1,
+                    )
+                )
     return data

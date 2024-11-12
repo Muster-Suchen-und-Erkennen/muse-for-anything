@@ -288,9 +288,7 @@ class TestMigrationToInteger(unittest.TestCase):
         }
         self.assertEqual(
             False,
-            match_schema(
-                (source_schema, self.target_schema), source_schema, self.target_schema
-            ),
+            match_schema(source_schema, self.target_schema),
         )
 
 
