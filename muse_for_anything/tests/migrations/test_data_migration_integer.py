@@ -129,6 +129,24 @@ class TestMigrationToInteger(unittest.TestCase):
         updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(13, updated_data)
 
+    def test_from_array_to_int_empty(self):
+        source_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {
+                "root": {
+                    "arrayType": "array",
+                    "items": {"type": ["integer"]},
+                    "type": ["array"],
+                }
+            },
+            "title": "Type",
+        }
+        data = []
+        updated_data = migrate_data(data, source_schema, self.target_schema)
+        self.assertEqual(0, updated_data)
+
     def test_from_array_to_int_invalid(self):
         source_schema = {
             "$ref": "#/definitions/root",
@@ -155,7 +173,7 @@ class TestMigrationToInteger(unittest.TestCase):
             "definitions": {
                 "root": {
                     "properties": {
-                        "intprop": {
+                        "stringprop": {
                             "type": ["string"],
                         },
                     },
@@ -164,7 +182,7 @@ class TestMigrationToInteger(unittest.TestCase):
             },
             "title": "Type",
         }
-        data = {"intprop": "42"}
+        data = {"stringprop": "42.21"}
         updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(42, updated_data)
 
@@ -185,31 +203,7 @@ class TestMigrationToInteger(unittest.TestCase):
         updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(0, updated_data)
 
-    def test_from_obj_to_int_complex_object(self):
-        source_schema = {
-            "$ref": "#/definitions/root",
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "abstract": False,
-            "definitions": {
-                "root": {
-                    "properties": {
-                        "intprop": {
-                            "type": ["integer"],
-                        },
-                        "stringprop": {
-                            "type": ["string"],
-                        },
-                    },
-                    "type": ["object"],
-                }
-            },
-            "title": "Type",
-        }
-        data = {"intprop": 42, "stringprop": "this is not an integer"}
-        updated_data = migrate_data(data, source_schema, self.target_schema)
-        self.assertEqual(42, updated_data)
-
-    def test_from_obj_to_bool_complex_object_invalid(self):
+    def test_from_obj_to_int_complex_object_invalid(self):
         source_schema = {
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -241,13 +235,13 @@ class TestMigrationToInteger(unittest.TestCase):
             "definitions": {
                 "root": {
                     "arrayType": "tuple",
-                    "items": [{"type": ["string"]}, {"type": ["float"]}],
+                    "items": [{"type": ["float"]}],
                     "type": ["array"],
                 }
             },
             "title": "Type",
         }
-        data = ["hello world", 123.456]
+        data = [123.456]
         updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(123, updated_data)
 

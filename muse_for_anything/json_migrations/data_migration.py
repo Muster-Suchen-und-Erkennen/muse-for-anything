@@ -113,56 +113,22 @@ def migrate_to_number(data, source_type: str):
     match source_type:
         case "boolean" | "enum" | "number" | "integer" | "string":
             # TODO Implement potential cut off at limit
-            try:
-                data = float(data)
-            except ValueError:
-                raise ValueError("No transformation to number possible!")
-        case "array":
-            if len(data) == 1:
-                try:
-                    data = float(data[0])
-                except ValueError:
-                    raise ValueError(
-                        "No transformation from this array with one entry to number possible!"
-                    )
+            data = float(data)
+        case "array" | "tuple":
+            if len(data) == 0:
+                data = 0.0
+            elif len(data) == 1:
+                data = float(data[0])
             else:
-                raise ValueError(
-                    "No transformation from longer arrays to number possible!"
-                )
+                raise ValueError("No transformation to number possible!")
         case "object":
             if len(data) == 0:
                 data = 0.0
             elif len(data) == 1:
-                for value in data.values():
-                    data = float(value)
+                value = next(iter(data.values()))
+                data = float(value)
             else:
-                amount_of_numbers = 0
-                temporary = None
-                for key, value in data.items():
-                    try:
-                        temporary = float(data[key])
-                        amount_of_numbers += 1
-                    except:
-                        continue
-                if amount_of_numbers == 1:
-                    data = temporary
-                else:
-                    raise ValueError(
-                        "No transformation from this object to number possible!"
-                    )
-        case "tuple":
-            count_of_numbers = 0
-            transformed_data = None
-            for entry in data:
-                try:
-                    transformed_data = float(entry)
-                    count_of_numbers += 1
-                except ValueError:
-                    pass
-            if count_of_numbers == 1:
-                data = transformed_data
-            else:
-                raise ValueError("No transformation from this tuple to number possible!")
+                raise ValueError("No transformation from this object to number possible!")
     return data
 
 
@@ -182,56 +148,24 @@ def migrate_to_integer(data, source_type: str):
     match source_type:
         case "boolean" | "enum" | "number" | "integer" | "string":
             # TODO Implement potential cut off at limit
-            try:
-                data = int(float(data))
-            except ValueError:
-                raise ValueError("No transformation to integer possible!")
-        case "array":
-            if len(data) == 1:
-                try:
-                    data = int(float(data[0]))
-                except ValueError:
-                    raise ValueError(
-                        "No transformation from this array with one entry to integer possible!"
-                    )
-            else:
-                raise ValueError(
-                    "No transformation from longer arrays to integer possible!"
-                )
-        case "object":
+            data = int(float(data))
+        case "array" | "tuple":
             if len(data) == 0:
                 data = 0
             elif len(data) == 1:
-                for value in data.values():
-                    data = int(float(value))
+                data = int(float(data[0]))
             else:
-                amount_of_ints = 0
-                temporary = None
-                for key, value in data.items():
-                    try:
-                        temporary = int(float(data[key]))
-                        amount_of_ints += 1
-                    except:
-                        continue
-                if amount_of_ints == 1:
-                    data = temporary
-                else:
-                    raise ValueError(
-                        "No transformation from this object to integer possible!"
-                    )
-        case "tuple":
-            count_of_numbers = 0
-            transformed_data = None
-            for entry in data:
-                try:
-                    transformed_data = int(float(entry))
-                    count_of_numbers += 1
-                except ValueError:
-                    pass
-            if count_of_numbers == 1:
-                data = transformed_data
+                raise ValueError("No transformation to integer possible!")
+        case "object":
+            if len(data) == 0:
+                data = 0.0
+            elif len(data) == 1:
+                value = next(iter(data.values()))
+                data = int(float(value))
             else:
-                raise ValueError("No transformation from this tuple to integer possible!")
+                raise ValueError(
+                    "No transformation from this object to integer possible!"
+                )
     return data
 
 
@@ -287,25 +221,17 @@ def migrate_to_boolean(data, source_type: str):
             if len(data) == 0:
                 data = False
             elif len(data) == 1:
-                for value in data.values():
-                    data = bool(value)
+                value = next(iter(data.values()))
+                data = bool(value)
             else:
-                amount_of_booleans = 0
-                temporary = None
-                for key, value in data.items():
-                    if value == True or value == False:
-                        amount_of_booleans += 1
-                        temporary = data[key]
-                if amount_of_booleans == 1:
-                    data = temporary
-        case "array" | "tuple":
-            try:
-                if False in data or len(data) == 0:
-                    data = False
-                else:
-                    data = bool(data)
-            except ValueError:
                 raise ValueError("No transformation to boolean possible!")
+        case "array" | "tuple":
+            if len(data) == 0:
+                data = False
+            elif len(data) == 1:
+                data = bool(data[0])
+            else:
+                data = bool(data)
     return data
 
 

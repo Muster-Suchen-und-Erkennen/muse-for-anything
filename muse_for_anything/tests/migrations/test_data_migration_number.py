@@ -117,6 +117,24 @@ class TestMigrationToNumber(unittest.TestCase):
         updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(13.4334, updated_data)
 
+    def test_from_array_to_number_empty(self):
+        source_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {
+                "root": {
+                    "arrayType": "array",
+                    "items": {"type": ["integer"]},
+                    "type": ["array"],
+                }
+            },
+            "title": "Type",
+        }
+        data = []
+        updated_data = migrate_data(data, source_schema, self.target_schema)
+        self.assertEqual(0.0, updated_data)
+
     def test_from_array_to_number_array_invalid(self):
         source_schema = {
             "$ref": "#/definitions/root",
@@ -173,30 +191,6 @@ class TestMigrationToNumber(unittest.TestCase):
         updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(0.0, updated_data)
 
-    def test_from_obj_to_number_complex_object(self):
-        source_schema = {
-            "$ref": "#/definitions/root",
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "abstract": False,
-            "definitions": {
-                "root": {
-                    "properties": {
-                        "numberprop": {
-                            "type": ["number"],
-                        },
-                        "stringprop": {
-                            "type": ["string"],
-                        },
-                    },
-                    "type": ["object"],
-                }
-            },
-            "title": "Type",
-        }
-        data = {"numberprop": 42.213, "stringprop": "this is not an integer"}
-        updated_data = migrate_data(data, source_schema, self.target_schema)
-        self.assertEqual(42.213, updated_data)
-
     def test_from_obj_to_number_complex_object_invalid(self):
         source_schema = {
             "$ref": "#/definitions/root",
@@ -232,15 +226,15 @@ class TestMigrationToNumber(unittest.TestCase):
             "definitions": {
                 "root": {
                     "arrayType": "tuple",
-                    "items": [{"type": ["string"]}, {"type": ["float"]}],
+                    "items": [{"type": ["string"]}],
                     "type": ["array"],
                 }
             },
             "title": "Type",
         }
-        data = ["hello world", 123.456]
+        data = ["3.1587945"]
         updated_data = migrate_data(data, source_schema, self.target_schema)
-        self.assertEqual(123.456, updated_data)
+        self.assertEqual(3.1587945, updated_data)
 
     def test_from_tuple_to_number_invalid(self):
         source_schema = {

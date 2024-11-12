@@ -185,31 +185,7 @@ class TestMigrationToInteger(unittest.TestCase):
         updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(False, updated_data)
 
-    def test_from_obj_to_bool_complex_object_true(self):
-        source_schema = {
-            "$ref": "#/definitions/root",
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "abstract": False,
-            "definitions": {
-                "root": {
-                    "properties": {
-                        "intprop": {
-                            "type": ["integer"],
-                        },
-                        "boolprop": {
-                            "type": ["boolean"],
-                        },
-                    },
-                    "type": ["object"],
-                }
-            },
-            "title": "Type",
-        }
-        data = {"intprop": 42, "boolprop": True}
-        updated_data = migrate_data(data, source_schema, self.target_schema)
-        self.assertEqual(True, updated_data)
-
-    def test_from_obj_to_bool_complex_object_false(self):
+    def test_from_obj_to_bool_complex_object(self):
         source_schema = {
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -230,8 +206,8 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = {"intprop": 42, "boolprop": False}
-        updated_data = migrate_data(data, source_schema, self.target_schema)
-        self.assertEqual(False, updated_data)
+        with self.assertRaises(ValueError):
+            migrate_data(data, source_schema, self.target_schema)
 
     def test_from_obj_to_bool_complex_object_invalid(self):
         source_schema = {
@@ -254,13 +230,10 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = {"intprop": 42, "stringprop": "hello world"}
-        updated_data = migrate_data(data, source_schema, self.target_schema)
-        self.assertEqual(
-            {"intprop": 42, "stringprop": "hello world"},
-            updated_data,
-        )
+        with self.assertRaises(ValueError):
+            migrate_data(data, source_schema, self.target_schema)
 
-    def test_from_tuple_to_bool_true(self):
+    def test_from_tuple_to_bool_true_one(self):
         source_schema = {
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -282,7 +255,7 @@ class TestMigrationToInteger(unittest.TestCase):
         updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(True, updated_data)
 
-    def test_from_tuple_to_bool_false(self):
+    def test_from_tuple_to_bool_true_two(self):
         source_schema = {
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -302,7 +275,7 @@ class TestMigrationToInteger(unittest.TestCase):
         }
         data = [False, 42, "Test"]
         updated_data = migrate_data(data, source_schema, self.target_schema)
-        self.assertEqual(False, updated_data)
+        self.assertEqual(True, updated_data)
 
     def test_from_res_ref_to_bool(self):
         pass
