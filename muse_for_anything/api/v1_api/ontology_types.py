@@ -9,7 +9,8 @@ from flask.views import MethodView
 from flask_babel import gettext
 from flask_smorest import abort
 from marshmallow.utils import INCLUDE
-from sqlalchemy.sql.expression import or_
+from sqlalchemy import text
+from sqlalchemy.sql.expression import or_, select
 
 from muse_for_anything.api.pagination_util import (
     PaginationOptions,
@@ -42,6 +43,7 @@ from muse_for_anything.api.v1_api.request_helpers import (
 from muse_for_anything.db.models.users import User
 from muse_for_anything.json_migrations.jsonschema_matcher import match_schema
 from muse_for_anything.oso_helpers import FLASK_OSO, OsoResource
+from muse_for_anything.tasks.migration import run_schema_match
 
 from .generators import type_version  # noqa
 from .models.ontology import ObjectTypePageParamsSchema, ObjectTypeSchema
@@ -64,7 +66,11 @@ from ...db.models.object_relation_tables import (
     OntologyTypeVersionToType,
     OntologyTypeVersionToTypeVersion,
 )
-from ...db.models.ontology_objects import OntologyObjectType, OntologyObjectTypeVersion
+from ...db.models.ontology_objects import (
+    OntologyObject,
+    OntologyObjectType,
+    OntologyObjectTypeVersion,
+)
 
 # import type specific generators to load them
 from .generators import type as type_  # noqa
@@ -441,7 +447,16 @@ class TypeView(MethodView):
         DB.session.add(object_type_version)
         DB.session.add(found_object_type)
         DB.session.commit()
-        # TODO Start migration
+
+        # Start migration on all objects of updated type
+        q = (
+            select(OntologyObject.id)
+            .where(OntologyObject.namespace_id == namespace)
+            .where(OntologyObject.object_type_id == found_object_type.id)
+        )
+        data_objects_ids = DB.session.execute(q).scalars().all()
+        run_schema_match.s(data_objects_ids=data_objects_ids).apply_async()
+
         object_type_response = ApiResponseGenerator.get_api_response(
             found_object_type, link_to_relations=TYPE_EXTRA_LINK_RELATIONS
         )

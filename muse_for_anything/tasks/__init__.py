@@ -15,4 +15,4 @@
 from celery import Celery
 from flask import Flask
 
-from .tasks import example_task
+from .migration import run_schema_match

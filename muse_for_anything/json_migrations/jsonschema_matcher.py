@@ -66,6 +66,7 @@ def extract_type(schema: dict):
 def match_schema(
     source_schema: dict,
     target_schema: dict,
+    *,
     source_root: Optional[dict] = None,
     target_root: Optional[dict] = None,
     depth: int = 0,
