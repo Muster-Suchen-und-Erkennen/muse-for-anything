@@ -19,11 +19,11 @@ def extract_type(schema: dict):
     """
     keys = schema.keys()
     nullable = False
-    # Enum and $ref are defined separately, not in type
-    if "enum" in keys:
-        return "enum", nullable
-    elif "$ref" in keys:
+    # $ref and enum are defined separately, not in type
+    if "$ref" in keys:
         return "schemaReference", nullable
+    elif "enum" in keys:
+        return "enum", nullable
     # Handling of other types
     elif "type" in keys:
         # Check if elements nullable
