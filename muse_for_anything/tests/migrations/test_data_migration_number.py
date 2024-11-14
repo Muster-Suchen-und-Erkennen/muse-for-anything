@@ -254,28 +254,6 @@ class TestMigrationToNumber(unittest.TestCase):
         with self.assertRaises(ValueError):
             migrate_data(data, source_schema, self.target_schema)
 
-    def test_from_res_ref_to_number(self):
-        pass
-
-    def test_from_schema_ref_to_number(self):
-        pass
-
-    def test_to_number_error(self):
-        source_schema = {
-            "$ref": "#/definitions/root",
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "abstract": False,
-            "definitions": {
-                "root": {"$ref": "#/definitions/0"},
-                "0": {"type": ["integer"]},
-            },
-            "title": "Type",
-        }
-        self.assertEqual(
-            False,
-            match_schema(source_schema, self.target_schema),
-        )
-
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,10 +1,9 @@
 import numbers
 from typing import Optional
-from jsonschema import Draft7Validator
-from muse_for_anything.api.v1_api.ontology_object_validation import (
-    resolve_type_version_schema_url,
+from muse_for_anything.json_migrations.jsonschema_matcher import (
+    extract_type,
+    resolve_schema_reference,
 )
-from muse_for_anything.json_migrations.jsonschema_matcher import extract_type
 
 
 def migrate_data(
@@ -32,9 +31,6 @@ def migrate_data(
     Returns:
         Updated data, if update was successful
     """
-    # TODO Add check with validator whether object satisfies schema
-    # Maybe also outside of this method
-    # validator = Draft7Validator(target_schema)
     if depth > 100:
         raise ValueError("Data is too nested to migrate!")
     if source_root is None:
@@ -50,9 +46,13 @@ def migrate_data(
     source_type, source_nullable = extract_type(source_schema)
 
     if target_type == "schemaReference" or source_type == "schemaReference":
-        target_schema = resolve_schema_reference(target_schema)
-        source_schema = resolve_schema_reference(source_schema)
-        migrate_data(
+        target_schema = resolve_schema_reference(
+            schema=target_schema, root_schema=target_root
+        )
+        source_schema = resolve_schema_reference(
+            schema=source_schema, root_schema=source_root
+        )
+        return migrate_data(
             data=data,
             source_schema=source_schema,
             target_schema=target_schema,
@@ -111,34 +111,6 @@ def migrate_data(
         # TODO: Change to raise error further to indicate that update unsuccessful!
         raise ValueError
     return updated_data
-
-
-def resolve_schema_reference(schema: dict, root_schema: dict):
-    """Method that resolves a reference if one exists and returns the resolved schema.
-
-    Args:
-        schema (dict): A JSONSchema that potentially holds $ref
-        root_schema (dict): The root JSONSchema for local references
-
-    Returns:
-        dict: Resolved JSONSchema if there was a reference, else original schema
-    """
-    if "$ref" not in schema:
-        return schema
-    reference = schema["$ref"]
-    if reference.startswith("#/definitions"):
-        schema = root_schema["definitions"]
-        type = reference.split("/")[-1]
-        return schema[type]
-    else:
-        from muse_for_anything import create_app
-
-        app = create_app()
-        with app.app_context():
-            with app.test_request_context("http://localhost:5000/", method="GET"):
-                key = reference.split("#")[-1].split("/")[-1]
-                res_ref = resolve_type_version_schema_url(schema["$ref"])
-                return res_ref["definitions"][key]
 
 
 def migrate_to_number(data, source_type: str):

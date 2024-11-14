@@ -43,7 +43,7 @@ from muse_for_anything.api.v1_api.request_helpers import (
 from muse_for_anything.db.models.users import User
 from muse_for_anything.json_migrations.jsonschema_matcher import match_schema
 from muse_for_anything.oso_helpers import FLASK_OSO, OsoResource
-from muse_for_anything.tasks.migration import run_schema_match
+from muse_for_anything.tasks.migration import run_migration
 
 from .generators import type_version  # noqa
 from .models.ontology import ObjectTypePageParamsSchema, ObjectTypeSchema
@@ -405,7 +405,8 @@ class TypeView(MethodView):
 
         # Check if update is valid
         valid = match_schema(
-            source_schema=found_object_type.current_version.data, target_schema=data
+            source_schema=found_object_type.current_version.data,
+            target_schema=data,
         )
         if not valid:
             # TODO Handle error in UI
@@ -416,7 +417,6 @@ class TypeView(MethodView):
             version=found_object_type.version + 1,
             data=data,
         )
-
         # validate schema and references and extract references
         metadata = validate_object_type(object_type_version)
 
@@ -455,7 +455,7 @@ class TypeView(MethodView):
             .where(OntologyObject.object_type_id == found_object_type.id)
         )
         data_objects_ids = DB.session.execute(q).scalars().all()
-        run_schema_match.s(data_objects_ids=data_objects_ids).apply_async()
+        run_migration.s(data_objects_ids=data_objects_ids).apply_async()
 
         object_type_response = ApiResponseGenerator.get_api_response(
             found_object_type, link_to_relations=TYPE_EXTRA_LINK_RELATIONS

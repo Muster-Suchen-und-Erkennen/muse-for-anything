@@ -1,6 +1,12 @@
 import copy
 from typing import Optional
 
+from flask import Flask
+
+from muse_for_anything.api.v1_api.ontology_object_validation import (
+    resolve_type_version_schema_url,
+)
+
 
 def extract_type(schema: dict):
     """Extract the type of a given schema and indicates
@@ -63,6 +69,30 @@ def extract_type(schema: dict):
         raise ValueError("No type definition found!")
 
 
+def resolve_schema_reference(schema: dict, root_schema: dict):
+    """Method that resolves a reference if one exists and returns the resolved schema.
+
+    Args:
+        schema (dict): A JSONSchema that potentially holds $ref
+        root_schema (dict): The root JSONSchema for local references
+
+    Returns:
+        dict: Resolved JSONSchema if there was a reference, else original schema
+    """
+
+    if "$ref" not in schema:
+        return schema
+    reference = schema["$ref"]
+    if reference.startswith("#/definitions"):
+        schema = root_schema["definitions"]
+        type = reference.split("/")[-1]
+        return schema[type]
+    else:
+        key = reference.split("#")[-1].split("/")[-1]
+        res_ref = resolve_type_version_schema_url(schema["$ref"])
+        return res_ref["definitions"][key]
+
+
 def match_schema(
     source_schema: dict,
     target_schema: dict,
@@ -104,6 +134,22 @@ def match_schema(
     # Check if both schemas have valid types
     if source_type and target_type:
         # TODO: Implement "sanity checks" for updates on all types
+        if source_type == "schemaReference" or target_type == "schemaReference":
+            source_schema = resolve_schema_reference(
+                schema=source_schema,
+                root_schema=source_root,
+            )
+            target_schema = resolve_schema_reference(
+                schema=target_schema,
+                root_schema=target_root,
+            )
+            return match_schema(
+                source_schema=source_schema,
+                target_schema=target_schema,
+                source_root=source_root,
+                target_root=target_root,
+                depth=depth + 1,
+            )
         if target_type == "number":
             match source_type:
                 case "boolean" | "enum" | "integer" | "number" | "string":
@@ -159,8 +205,8 @@ def match_schema(
             match source_type:
                 case "boolean" | "integer" | "number" | "string":
                     return match_schema(
-                        source_schema,
-                        target_array_schema,
+                        source_schema=source_schema,
+                        target_schema=target_array_schema,
                         source_root=source_root,
                         target_root=target_root,
                         depth=depth + 1,
@@ -168,8 +214,8 @@ def match_schema(
                 case "array":
                     source_array_schema = source_schema["items"]
                     return match_schema(
-                        source_array_schema,
-                        target_array_schema,
+                        source_schema=source_array_schema,
+                        target_schema=target_array_schema,
                         source_root=source_root,
                         target_root=target_root,
                         depth=depth + 1,
@@ -178,8 +224,8 @@ def match_schema(
                     source_items_types = source_schema["items"]
                     for item_type in source_items_types:
                         valid = match_schema(
-                            item_type,
-                            target_array_schema,
+                            source_schema=item_type,
+                            target_schema=target_array_schema,
                             source_root=source_root,
                             target_root=target_root,
                             depth=depth + 1,
@@ -202,8 +248,8 @@ def match_schema(
                 case "boolean" | "integer" | "number" | "string":
                     if len(target_items_types) == 1:
                         return match_schema(
-                            source_schema,
-                            target_array_schema,
+                            source_schema=source_schema,
+                            target_schema=target_array_schema,
                             source_root=source_root,
                             target_root=target_root,
                             depth=depth + 1,
@@ -214,8 +260,8 @@ def match_schema(
                     source_array_schema = source_schema["items"]
                     for item_type in target_items_types:
                         valid = match_schema(
-                            source_array_schema,
-                            item_type,
+                            source_schema=source_array_schema,
+                            target_schema=item_type,
                             source_root=source_root,
                             target_root=target_root,
                             depth=depth + 1,
@@ -229,8 +275,8 @@ def match_schema(
                         source_items_types, target_items_types
                     ):
                         valid = match_schema(
-                            source_type,
-                            target_type,
+                            source_schema=source_type,
+                            target_schema=target_type,
                             source_root=source_root,
                             target_root=target_root,
                             depth=depth + 1,
@@ -256,8 +302,8 @@ def match_schema(
                     )
                     for prop in common_properties:
                         valid = match_schema(
-                            source_properties[prop],
-                            target_properties[prop],
+                            source_schema=source_properties[prop],
+                            target_schema=target_properties[prop],
                             source_root=source_root,
                             target_root=target_root,
                             depth=depth + 1,
@@ -268,8 +314,8 @@ def match_schema(
                         new_prop = next(iter(new_properties))
                         deleted_prop = next(iter(deleted_properties))
                         valid = match_schema(
-                            source_properties[deleted_prop],
-                            target_properties[new_prop],
+                            source_schema=source_properties[deleted_prop],
+                            target_schema=target_properties[new_prop],
                             source_root=source_root,
                             target_root=target_root,
                             depth=depth + 1,

@@ -309,8 +309,10 @@ class TestMigrationToTuple(unittest.TestCase):
             "$schema": "http://json-schema.org/draft-07/schema#",
             "abstract": False,
             "definitions": {
-                "root": {"$ref": "#/definitions/0"},
-                "0": {"type": ["integer"]},
+                "root": {
+                    "type": ["object"],
+                    "properties": {"one": {"type": ["integer"]}},
+                },
             },
             "title": "Type",
         }

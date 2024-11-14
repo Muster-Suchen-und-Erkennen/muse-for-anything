@@ -214,8 +214,10 @@ class TestMigrationToArray(unittest.TestCase):
             "$schema": "http://json-schema.org/draft-07/schema#",
             "abstract": False,
             "definitions": {
-                "root": {"$ref": "#/definitions/0"},
-                "0": {"type": ["integer"]},
+                "root": {
+                    "properties": {"stringprop": {"type": ["string"]}},
+                    "type": ["object"],
+                }
             },
             "title": "Type",
         }

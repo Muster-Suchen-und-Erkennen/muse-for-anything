@@ -1,4 +1,5 @@
 from celery.utils.log import get_task_logger
+from flask.globals import current_app
 from sqlalchemy.sql.expression import select
 
 from muse_for_anything.api.v1_api.constants import UPDATE
@@ -23,12 +24,15 @@ TASK_LOGGER = get_task_logger(_name)
 DEFAULT_BATCH_SIZE = 20
 
 
-@CELERY.task(name=f"{_name}.run_schema_match", bind=True, ignore_result=True)
-def run_schema_match(self: FlaskTask, data_objects_ids: list):
+@CELERY.task(name=f"{_name}.run_migration", bind=True, ignore_result=True)
+def run_migration(self: FlaskTask, data_objects_ids: list):
     # TODO: Run migration later button click
     for id in data_objects_ids:
         q = select(OntologyObject).where(OntologyObject.id == id)
         data_object = DB.session.execute(q).scalars().first()
+        if not data_object:
+            print(f"OntologyObject with ID {id} not found.")
+            continue
         data_object_version = data_object.current_version
         data_entry = data_object_version.data
         data_object_type_version = data_object_version.ontology_type_version
@@ -36,10 +40,15 @@ def run_schema_match(self: FlaskTask, data_objects_ids: list):
         data_object_type_current_version = data_object.ontology_type.current_version
         target_schema = data_object_type_current_version.data
         try:
-            updated_data = migrate_data(
-                data=data_entry, source_schema=source_schema, target_schema=target_schema
-            )
-
+            updated_data = None
+            with current_app.app_context():
+                with current_app.test_request_context("http://localhost:5000/", method="GET"):
+                    updated_data = migrate_data(
+                        data=data_entry,
+                        source_schema=source_schema,
+                        target_schema=target_schema,
+                    )
+            # TODO Check with draft7validator
             name = data_object.name
             description = data_object.description
 
@@ -82,5 +91,5 @@ def run_schema_match(self: FlaskTask, data_objects_ids: list):
             DB.session.commit()
         except ValueError:
             # TODO: Handle errors correctly
-            return f"Object with id {id} could not be migrated"
+            return f"OntologyObject with ID {id} could not be migrated."
     return "Task completed"

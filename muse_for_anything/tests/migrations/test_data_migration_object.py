@@ -257,8 +257,11 @@ class TestMigrationToObject(unittest.TestCase):
             "$schema": "http://json-schema.org/draft-07/schema#",
             "abstract": False,
             "definitions": {
-                "root": {"$ref": "#/definitions/0"},
-                "0": {"type": ["integer"]},
+                "root": {
+                    "arrayType": "tuple",
+                    "items": [{"type": ["number"]}],
+                    "type": ["array"],
+                }
             },
             "title": "Type",
         }
