@@ -41,54 +41,53 @@ def run_migration(self: FlaskTask, data_objects_ids: list):
         target_schema = data_object_type_current_version.data
         try:
             updated_data = None
-            with current_app.app_context():
-                with current_app.test_request_context("http://localhost:5000/", method="GET"):
-                    updated_data = migrate_data(
-                        data=data_entry,
-                        source_schema=source_schema,
-                        target_schema=target_schema,
+            with current_app.test_request_context("http://localhost:5000/", method="GET"):
+                updated_data = migrate_data(
+                    data=data_entry,
+                    source_schema=source_schema,
+                    target_schema=target_schema,
+                )
+                # TODO Check with draft7validator
+                name = data_object.name
+                description = data_object.description
+
+                object_version = OntologyObjectVersion(
+                    object=data_object,
+                    type_version=data_object_type_current_version,
+                    version=data_object.version + 1,
+                    name=name,
+                    description=description,
+                    data=updated_data,
+                )
+
+                # validate against object type and validate and extract resource references
+                metadata = validate_object(
+                    object_version=object_version,
+                    type_version=data_object_type_current_version,
+                )
+
+                # add references
+                for object_ref in metadata.referenced_objects:
+                    object_relation = OntologyObjectVersionToObject(
+                        object_version_source=object_version, object_target=object_ref
                     )
-            # TODO Check with draft7validator
-            name = data_object.name
-            description = data_object.description
+                    DB.session.add(object_relation)
+                for taxonomy_item in metadata.referenced_taxonomy_items:
+                    taxonomy_item_relation = OntologyObjectVersionToTaxonomyItem(
+                        object_version_source=object_version,
+                        taxonomy_item_target=taxonomy_item,
+                    )
+                    DB.session.add(taxonomy_item_relation)
 
-            object_version = OntologyObjectVersion(
-                object=data_object,
-                type_version=data_object_type_current_version,
-                version=data_object.version + 1,
-                name=name,
-                description=description,
-                data=updated_data,
-            )
-
-            # validate against object type and validate and extract resource references
-            metadata = validate_object(
-                object_version=object_version,
-                type_version=data_object_type_current_version,
-            )
-
-            # add references
-            for object_ref in metadata.referenced_objects:
-                object_relation = OntologyObjectVersionToObject(
-                    object_version_source=object_version, object_target=object_ref
+                # update existing object
+                data_object.update(
+                    name=name,
+                    description=description,
                 )
-                DB.session.add(object_relation)
-            for taxonomy_item in metadata.referenced_taxonomy_items:
-                taxonomy_item_relation = OntologyObjectVersionToTaxonomyItem(
-                    object_version_source=object_version,
-                    taxonomy_item_target=taxonomy_item,
-                )
-                DB.session.add(taxonomy_item_relation)
-
-            # update existing object
-            data_object.update(
-                name=name,
-                description=description,
-            )
-            data_object.current_version = object_version
-            DB.session.add(object_version)
-            DB.session.add(data_object)
-            DB.session.commit()
+                data_object.current_version = object_version
+                DB.session.add(object_version)
+                DB.session.add(data_object)
+                DB.session.commit()
         except ValueError:
             # TODO: Handle errors correctly
             return f"OntologyObject with ID {id} could not be migrated."
