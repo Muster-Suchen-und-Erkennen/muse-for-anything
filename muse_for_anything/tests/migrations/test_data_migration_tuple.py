@@ -1,8 +1,7 @@
-from muse_for_anything.json_migrations.data_migration import *
+from muse_for_anything.json_migrations.data_migration import migrate_data
+from muse_for_anything.json_migrations.jsonschema_matcher import match_schema
 
 import unittest
-
-from muse_for_anything.json_migrations.jsonschema_matcher import match_schema
 
 
 class TestMigrationToTuple(unittest.TestCase):

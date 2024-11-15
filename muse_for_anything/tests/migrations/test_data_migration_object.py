@@ -1,4 +1,4 @@
-from muse_for_anything.json_migrations.data_migration import *
+from muse_for_anything.json_migrations.data_migration import migrate_data
 
 import unittest
 

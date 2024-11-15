@@ -1,10 +1,10 @@
-from muse_for_anything.json_migrations.jsonschema_matcher import *
+from muse_for_anything.json_migrations.jsonschema_matcher import extract_type
 import unittest
 
 
 class TestTypeExtraction(unittest.TestCase):
 
-    def test_extract_string(self):
+    def test_extract_array(self):
         schema = {
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",

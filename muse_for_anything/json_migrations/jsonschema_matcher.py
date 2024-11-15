@@ -1,7 +1,28 @@
-import copy
-from typing import Optional
+# ==============================================================================
+# MIT License
+#
+# Copyright (c) 2024 Jan Weber
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# ==============================================================================
 
-from flask import Flask
+from typing import Optional
 
 from muse_for_anything.api.v1_api.ontology_object_validation import (
     resolve_type_version_schema_url,
@@ -70,7 +91,8 @@ def extract_type(schema: dict):
 
 
 def resolve_schema_reference(schema: dict, root_schema: dict):
-    """Method that resolves a reference if one exists and returns the resolved schema.
+    """Method that resolves a reference if one exists and returns
+    the resolved schema.
 
     Args:
         schema (dict): A JSONSchema that potentially holds $ref
@@ -101,19 +123,22 @@ def match_schema(
     target_root: Optional[dict] = None,
     depth: int = 0,
 ):
-    """Going from the source schema, it is checked whether a conversion to the target schema is possible.
-    Unsupported conversions are: \n
-    array to enum, array to object, enum to array, enum to object, enum to tuple,
-    object to array, object to enum, object to tuple, tuple to enum, and
-    tuple to object. These might need an intermediate conversion step, e. g.
-    via boolean, integer, number, or string.
+    """Going from the source schema, it is checked whether a conversion to
+    the target schema is possible. Unsupported conversions are: \n
+    array to enum, array to object, enum to array, enum to object, enum to
+    tuple, object to array, object to enum, object to tuple, tuple to enum,
+    and tuple to object. These might need an intermediate conversion step,
+    e. g. via boolean, integer, number, or string.
 
     Args:
         source_schema (dict): Source JSONSchema
         target_schema (dict): Target JSONSchema
-        source_root (Optional[dict], optional): Root source JSONSchema, used for reference resolving. Defaults to None.
-        target_root (Optional[dict], optional): Root target JSONSchema, used for reference resolving. Defaults to None.
-        depth (int, optional): Depth counter for recursion, stops at 100. Defaults to 0.
+        source_root (Optional[dict], optional): Root source JSONSchema,
+        used for reference resolving. Defaults to None.
+        target_root (Optional[dict], optional): Root target JSONSchema,
+        used for reference resolving. Defaults to None.
+        depth (int, optional): Depth counter for recursion, stops at 100.
+        Defaults to 0.
 
     Raises:
         ValueError: If a schema is nested too deep.
@@ -238,7 +263,15 @@ def match_schema(
                     return False
         elif target_type == "enum":
             match source_type:
-                case "array" | "boolean" | "integer" | "number" | "string" | "tuple":
+                case (
+                    "array"
+                    | "boolean"
+                    | "enum"
+                    | "integer"
+                    | "number"
+                    | "string"
+                    | "tuple"
+                ):
                     return True
                 case _:
                     return False

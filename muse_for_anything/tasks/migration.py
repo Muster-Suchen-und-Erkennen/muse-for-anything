@@ -1,8 +1,31 @@
+# ==============================================================================
+# MIT License
+#
+# Copyright (c) 2024 Jan Weber
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# ==============================================================================
+
 from celery.utils.log import get_task_logger
 from flask.globals import current_app
 from sqlalchemy.sql.expression import select
 
-from muse_for_anything.api.v1_api.constants import UPDATE
 from muse_for_anything.api.v1_api.ontology_object_validation import validate_object
 from muse_for_anything.db.db import DB
 from muse_for_anything.db.models.object_relation_tables import (
@@ -14,7 +37,6 @@ from muse_for_anything.db.models.ontology_objects import (
     OntologyObjectVersion,
 )
 from muse_for_anything.json_migrations.data_migration import migrate_data
-from muse_for_anything.oso_helpers import FLASK_OSO
 from ..celery import CELERY, FlaskTask
 
 _name = "muse_for_anything.tasks.migration"
@@ -27,11 +49,11 @@ DEFAULT_BATCH_SIZE = 20
 @CELERY.task(name=f"{_name}.run_migration", bind=True, ignore_result=True)
 def run_migration(self: FlaskTask, data_objects_ids: list):
     # TODO: Run migration later button click
-    for id in data_objects_ids:
-        q = select(OntologyObject).where(OntologyObject.id == id)
+    for _id in data_objects_ids:
+        q = select(OntologyObject).where(OntologyObject.id == _id)
         data_object = DB.session.execute(q).scalars().first()
         if not data_object:
-            print(f"OntologyObject with ID {id} not found.")
+            TASK_LOGGER.warning(f"OntologyObject with ID {_id} not found.")
             continue
         data_object_version = data_object.current_version
         data_entry = data_object_version.data
@@ -60,7 +82,8 @@ def run_migration(self: FlaskTask, data_objects_ids: list):
                     data=updated_data,
                 )
 
-                # validate against object type and validate and extract resource references
+                # validate against object type
+                # and validate and extract resource references
                 metadata = validate_object(
                     object_version=object_version,
                     type_version=data_object_type_current_version,
@@ -89,6 +112,5 @@ def run_migration(self: FlaskTask, data_objects_ids: list):
                 DB.session.add(data_object)
                 DB.session.commit()
         except ValueError:
-            # TODO: Handle errors correctly
-            return f"OntologyObject with ID {id} could not be migrated."
-    return "Task completed"
+            TASK_LOGGER.warning(f"OntologyObject with ID {_id} could not be migrated.")
+    return TASK_LOGGER.warning(f"OntologyObject with ID {_id} migrated successfully.")

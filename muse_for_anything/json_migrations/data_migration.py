@@ -1,3 +1,27 @@
+# ==============================================================================
+# MIT License
+#
+# Copyright (c) 2024 Jan Weber
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# ==============================================================================
+
 import numbers
 from typing import Optional
 from muse_for_anything.json_migrations.jsonschema_matcher import (
@@ -15,15 +39,19 @@ def migrate_data(
     target_root: Optional[dict] = None,
     depth: int = 0,
 ):
-    """Data conforming to the source schema is migrated to the target schema if possible.
+    """Data conforming to the source schema is migrated to the target schema if
+    possible.
 
     Args:
         data: Data stored in a MUSE4Anything object
         source_schema (dict): Source JSONSchema
         target_schema (dict): Target JSONSchema
-        source_root (Optional[dict], optional): Root source JSONSchema, used for reference resolving. Defaults to None.
-        target_root (Optional[dict], optional): Root target JSONSchema, used for reference resolving. Defaults to None.
-        depth (int, optional): Depth counter for recursion, stops at 100. Defaults to 0.
+        source_root (Optional[dict], optional): Root source JSONSchema,
+        used for reference resolving. Defaults to None.
+        target_root (Optional[dict], optional): Root target JSONSchema,
+        used for reference resolving. Defaults to None.
+        depth (int, optional): Depth counter for recursion, stops at 100.
+        Defaults to 0.
 
     Raises:
         ValueError: If transformation is not supported or possible to execute
@@ -41,14 +69,23 @@ def migrate_data(
         target_schema = target_schema["definitions"]["root"]
 
     target_type, target_nullable = extract_type(target_schema)
-    if data is None and target_nullable:
-        return None
-    source_type, source_nullable = extract_type(source_schema)
-
-    if target_type == "schemaReference" or source_type == "schemaReference":
+    if target_type == "schemaReference":
         target_schema = resolve_schema_reference(
             schema=target_schema, root_schema=target_root
         )
+        return migrate_data(
+            data=data,
+            source_schema=source_schema,
+            target_schema=target_schema,
+            source_root=source_root,
+            target_root=target_root,
+            depth=depth + 1,
+        )
+
+    if data is None and target_nullable:
+        return None
+    source_type, source_nullable = extract_type(source_schema)
+    if source_type == "schemaReference":
         source_schema = resolve_schema_reference(
             schema=source_schema, root_schema=source_root
         )
@@ -108,7 +145,7 @@ def migrate_data(
                 depth=depth + 1,
             )
     except ValueError:
-        # TODO: Change to raise error further to indicate that update unsuccessful!
+        # TODO: Change to raise error to indicate that update unsuccessful!
         raise ValueError
     return updated_data
 
@@ -191,7 +228,7 @@ def migrate_to_string(data, source_type: str, source_schema: dict):
     Args:
         data: Data potentially represented as a non-string
         source_type (str): Source type of data
-        source_schema (dict): Source JSONSchema to allow better conversion
+        source_schema (dict): Source JSONSchema for better conversion
 
     Raises:
         ValueError: If transformation to string was not possible
@@ -293,8 +330,8 @@ def migrate_to_array(
     Args:
         data: Data potentially represented as a non-array
         source_type (str): Source type of data
-        source_schema (dict): Source JSONSchema to allow better conversion
-        target_array_schema (dict): Indicates the data type of the elements of an array
+        source_schema (dict): Source JSONSchema for better conversion
+        target_array_schema (dict): Indicates data type of elements in an array
         source_root (dict): Root source JSONSchema, used for reference resolving
         target_root (dict): Root target JSONSchema, used for reference resolving
         depth (int): Depth counter for recursion, stops at 100
@@ -353,8 +390,8 @@ def migrate_to_object(
     Args:
         data: Data potentially represented as a non-object
         source_type (str): Source type of data
-        source_schema (dict): Source JSONSchema to allow better conversion
-        target_object_schema (dict): Target JSONSchema to allow better conversion
+        source_schema (dict): Source JSONSchema for better conversion
+        target_object_schema (dict): Target JSONSchema for better conversion
         source_root (dict): Root source JSONSchema, used for reference resolving
         target_root (dict): Root target JSONSchema, used for reference resolving
         depth (int): Depth counter for recursion, stops at 100
@@ -442,8 +479,8 @@ def migrate_to_tuple(
     Args:
         data: Data potentially represented as a non-tuple
         source_type (str): Source type of data
-        source_schema (dict): Source JSONSchema to allow better conversion
-        target_tuple_schema (list): Target JSONSchema to allow better conversion
+        source_schema (dict): Source JSONSchema for better conversion
+        target_tuple_schema (list): Target JSONSchema for better conversion
         source_root (dict): Root source JSONSchema, used for reference resolving
         target_root (dict): Root target JSONSchema, used for reference resolving
         depth (int): Depth counter for recursion, stops at 100
