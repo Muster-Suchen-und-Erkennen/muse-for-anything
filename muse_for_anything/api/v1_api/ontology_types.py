@@ -9,7 +9,6 @@ from flask.views import MethodView
 from flask_babel import gettext
 from flask_smorest import abort
 from marshmallow.utils import INCLUDE
-from sqlalchemy import text
 from sqlalchemy.sql.expression import or_, select
 
 from muse_for_anything.api.pagination_util import (
@@ -454,8 +453,10 @@ class TypeView(MethodView):
             .where(OntologyObject.namespace_id == namespace)
             .where(OntologyObject.object_type_id == found_object_type.id)
         )
+
         data_objects_ids = DB.session.execute(q).scalars().all()
-        run_migration.s(data_objects_ids=data_objects_ids).apply_async()
+        args_for_migration = [(data_object_id,) for data_object_id in data_objects_ids]
+        run_migration.starmap(args_for_migration).apply_async()
 
         object_type_response = ApiResponseGenerator.get_api_response(
             found_object_type, link_to_relations=TYPE_EXTRA_LINK_RELATIONS
