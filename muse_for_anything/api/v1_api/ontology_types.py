@@ -452,11 +452,12 @@ class TypeView(MethodView):
             select(OntologyObject.id)
             .where(OntologyObject.namespace_id == namespace)
             .where(OntologyObject.object_type_id == found_object_type.id)
+            .where(OntologyObject.deleted_on == None)
         )
 
         data_objects_ids = DB.session.execute(q).scalars().all()
-        args_for_migration = [(data_object_id,) for data_object_id in data_objects_ids]
-        run_migration.starmap(args_for_migration).apply_async()
+        list_for_migration = [(data_object_id,) for data_object_id in data_objects_ids]
+        run_migration.starmap(list_for_migration).apply_async()
 
         object_type_response = ApiResponseGenerator.get_api_response(
             found_object_type, link_to_relations=TYPE_EXTRA_LINK_RELATIONS
