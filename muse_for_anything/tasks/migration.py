@@ -47,13 +47,13 @@ DEFAULT_BATCH_SIZE = 20
 
 
 @CELERY.task(name=f"{_name}.run_migration", bind=True, ignore_result=True)
-def run_migration(self: FlaskTask, data_object_id: int):
+def run_migration(self: FlaskTask, data_object_id: int, host_url: str):
     """This Celery background tasks migrates data stored in an object to the
     current type version. It creates a new object version for each update
     until the current type version is reached.
 
     Args:
-        self (FlaskTask): 
+        self (FlaskTask):
         data_object_id (int): The id of the object to be migrated
     """
     # TODO: Update version by version
@@ -66,11 +66,11 @@ def run_migration(self: FlaskTask, data_object_id: int):
     data_entry = data_object_version.data
     data_object_type_version = data_object_version.ontology_type_version
     source_schema = data_object_type_version.data
-    data_object_type_target_version = data_object.ontology_type.current_version
-    target_schema = data_object_type_target_version.data
+    data_object_type_current_version = data_object.ontology_type.current_version
+    target_schema = data_object_type_current_version.data
     try:
         updated_data = None
-        with current_app.test_request_context("http://localhost:5000/", method="GET"):
+        with current_app.test_request_context(host_url, method="GET"):
             updated_data = migrate_data(
                 data=data_entry,
                 source_schema=source_schema,
