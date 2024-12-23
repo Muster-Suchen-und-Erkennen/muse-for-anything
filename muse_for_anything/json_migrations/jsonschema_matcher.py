@@ -177,11 +177,15 @@ def match_schema(
             )
         if target_type == "number":
             match source_type:
-                case "boolean" | "enum" | "integer" | "number" | "string":
+                case "integer" | "number":
+                    return check_numeric_attributes(
+                        source_schema=source_schema, target_schema=target_schema
+                    )
+                case "boolean" | "enum" | "string":
                     return True
-                case "array":
-                    return True
-                case "tuple":
+                case "array" | "tuple":
+                    if source_schema.get("minItems", 0) > 1:
+                        return False
                     return True
                 case "object":
                     return True
@@ -189,11 +193,15 @@ def match_schema(
                     return False
         elif target_type == "integer":
             match source_type:
-                case "boolean" | "enum" | "integer" | "number" | "string":
+                case "integer" | "number":
+                    return check_numeric_attributes(
+                        source_schema=source_schema, target_schema=target_schema
+                    )
+                case "boolean" | "enum" | "string":
                     return True
-                case "array":
-                    return True
-                case "tuple":
+                case "array" | "tuple":
+                    if source_schema.get("minItems", 0) > 1:
+                        return False
                     return True
                 case "object":
                     return True
@@ -204,6 +212,8 @@ def match_schema(
                 case "boolean" | "enum" | "integer" | "number" | "string":
                     return True
                 case "array" | "tuple":
+                    if source_schema.get("minItems", 0) > 1:
+                        return False
                     return True
                 case "object":
                     return True
@@ -211,16 +221,12 @@ def match_schema(
                     return False
         elif target_type == "string":
             match source_type:
-                case (
-                    "array"
-                    | "boolean"
-                    | "enum"
-                    | "integer"
-                    | "number"
-                    | "string"
-                    | "tuple"
-                ):
+                case "array" | "boolean" | "enum" | "integer" | "number" | "tuple":
                     return True
+                case "string":
+                    return check_string_attributes(
+                        source_schema=source_schema, target_schema=target_schema
+                    )
                 case "object":
                     return True
                 case _:
@@ -229,6 +235,8 @@ def match_schema(
             target_array_schema = target_schema["items"]
             match source_type:
                 case "boolean" | "integer" | "number" | "string":
+                    if target_schema.get("minItems", 0) > 1:
+                        return False
                     return match_schema(
                         source_schema=source_schema,
                         target_schema=target_array_schema,
@@ -237,28 +245,40 @@ def match_schema(
                         depth=depth + 1,
                     )
                 case "array":
-                    source_array_schema = source_schema["items"]
-                    return match_schema(
-                        source_schema=source_array_schema,
-                        target_schema=target_array_schema,
-                        source_root=source_root,
-                        target_root=target_root,
-                        depth=depth + 1,
+                    valid_limits = check_array_attributes(
+                        source_schema=source_schema, target_schema=target_schema
                     )
-                case "tuple":
-                    source_items_types = source_schema["items"]
-                    for item_type in source_items_types:
-                        valid = match_schema(
-                            source_schema=item_type,
+                    if valid_limits:
+                        source_array_schema = source_schema["items"]
+                        return match_schema(
+                            source_schema=source_array_schema,
                             target_schema=target_array_schema,
                             source_root=source_root,
                             target_root=target_root,
                             depth=depth + 1,
                         )
-                        if not valid:
-                            # One of the elements is not matchable
-                            return False
-                    return True
+                    else:
+                        return False
+                case "tuple":
+                    valid_limits = check_array_attributes(
+                        source_schema=source_schema, target_schema=target_schema
+                    )
+                    if valid_limits:
+                        source_items_types = source_schema["items"]
+                        for item_type in source_items_types:
+                            valid = match_schema(
+                                source_schema=item_type,
+                                target_schema=target_array_schema,
+                                source_root=source_root,
+                                target_root=target_root,
+                                depth=depth + 1,
+                            )
+                            if not valid:
+                                # One of the elements is not matchable
+                                return False
+                        return True
+                    else:
+                        return False
                 case _:
                     return False
         elif target_type == "enum":
@@ -279,6 +299,8 @@ def match_schema(
             target_items_types = target_schema["items"]
             match source_type:
                 case "boolean" | "integer" | "number" | "string":
+                    if target_schema.get("minItems", 0) > 1:
+                        return False
                     if len(target_items_types) == 1:
                         return match_schema(
                             source_schema=source_schema,
@@ -290,33 +312,45 @@ def match_schema(
                     else:
                         return False
                 case "array":
-                    source_array_schema = source_schema["items"]
-                    for item_type in target_items_types:
-                        valid = match_schema(
-                            source_schema=source_array_schema,
-                            target_schema=item_type,
-                            source_root=source_root,
-                            target_root=target_root,
-                            depth=depth + 1,
-                        )
-                        if not valid:
-                            return False
-                    return True
+                    valid_limits = check_array_attributes(
+                        source_schema=source_schema, target_schema=target_schema
+                    )
+                    if valid_limits:
+                        source_array_schema = source_schema["items"]
+                        for item_type in target_items_types:
+                            valid = match_schema(
+                                source_schema=source_array_schema,
+                                target_schema=item_type,
+                                source_root=source_root,
+                                target_root=target_root,
+                                depth=depth + 1,
+                            )
+                            if not valid:
+                                return False
+                        return True
+                    else:
+                        return False
                 case "tuple":
-                    source_items_types = source_schema["items"]
-                    for source_type, target_type in zip(
-                        source_items_types, target_items_types
-                    ):
-                        valid = match_schema(
-                            source_schema=source_type,
-                            target_schema=target_type,
-                            source_root=source_root,
-                            target_root=target_root,
-                            depth=depth + 1,
-                        )
-                        if not valid:
-                            return False
-                    return True
+                    valid_limits = check_array_attributes(
+                        source_schema=source_schema, target_schema=target_schema
+                    )
+                    if valid_limits:
+                        source_items_types = source_schema["items"]
+                        for source_type, target_type in zip(
+                            source_items_types, target_items_types
+                        ):
+                            valid = match_schema(
+                                source_schema=source_type,
+                                target_schema=target_type,
+                                source_root=source_root,
+                                target_root=target_root,
+                                depth=depth + 1,
+                            )
+                            if not valid:
+                                return False
+                        return True
+                    else:
+                        return False
                 case _:
                     return False
         elif target_type == "object":
@@ -361,3 +395,78 @@ def match_schema(
     else:
         return False
     return False
+
+
+def check_numeric_attributes(source_schema: dict, target_schema: dict):
+    min_source = source_schema.get("minimum", None)
+    min_target = target_schema.get("minimum", None)
+    max_source = source_schema.get("maximum", None)
+    max_target = target_schema.get("maximum", None)
+    excl_min_source = source_schema.get("exclusiveMinimum", None)
+    excl_min_target = target_schema.get("exclusiveMinimum", None)
+    excl_max_source = source_schema.get("exclusiveMaximum", None)
+    excl_max_target = target_schema.get("exclusiveMaximum", None)
+
+    if min_source is not None and max_target is not None:
+        if min_source > max_target:
+            return False
+
+    if min_source is not None and excl_max_target is not None:
+        if min_source >= excl_max_target:
+            return False
+
+    if max_source is not None and min_target is not None:
+        if max_source < min_target:
+            return False
+
+    if max_source is not None and excl_min_target is not None:
+        if max_source <= excl_min_target:
+            return False
+
+    if excl_min_source is not None and max_target is not None:
+        if excl_min_source >= max_target:
+            return False
+
+    if excl_min_source is not None and excl_max_target is not None:
+        if excl_min_source >= excl_max_target:
+            return False
+
+    if excl_max_source is not None and min_target is not None:
+        if excl_max_source <= min_target:
+            return False
+
+    if excl_max_source is not None and excl_min_target is not None:
+        if excl_max_source <= excl_min_target:
+            return False
+
+    return True
+
+
+def check_string_attributes(source_schema: dict, target_schema: dict):
+    min_length_source = source_schema.get("minLength", 0)
+    min_length_target = target_schema.get("minLength", 0)
+    max_length_source = source_schema.get("maxLength", None)
+    max_length_target = target_schema.get("maxLength", None)
+
+    if max_length_source is not None:
+        if max_length_source < min_length_target:
+            return False
+
+    if max_length_target is not None:
+        if min_length_source > max_length_target:
+            return False
+
+
+def check_array_attributes(source_schema: dict, target_schema: dict):
+    min_items_source = source_schema.get("minItems", 0)
+    min_items_target = target_schema.get("minItems", 0)
+    max_items_source = source_schema.get("maxItems", None)
+    max_items_target = target_schema.get("maxItems", None)
+
+    if max_items_source is not None:
+        if max_items_source < min_items_target:
+            return False
+
+    if max_items_target is not None:
+        if min_items_source > max_items_target:
+            return False
