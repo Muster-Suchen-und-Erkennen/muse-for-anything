@@ -1,6 +1,7 @@
 """Module containing the type API endpoints of the v1 API."""
 
 from datetime import datetime, timezone
+from celery import group
 from flask import request
 from http import HTTPStatus
 from typing import Any, List, Optional
@@ -458,10 +459,11 @@ class TypeView(MethodView):
 
         host_url = request.host_url
         data_objects_ids = DB.session.execute(q).scalars().all()
-        list_for_migration = [
-            (data_object_id, host_url) for data_object_id in data_objects_ids
-        ]
-        run_migration.starmap(list_for_migration).apply_async()
+        task_group = group(
+            run_migration.s(data_object_id, host_url)
+            for data_object_id in data_objects_ids
+        )
+        task_group.apply_async()
 
         object_type_response = ApiResponseGenerator.get_api_response(
             found_object_type, link_to_relations=TYPE_EXTRA_LINK_RELATIONS

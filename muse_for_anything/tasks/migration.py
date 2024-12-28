@@ -34,6 +34,8 @@ from muse_for_anything.db.models.object_relation_tables import (
 )
 from muse_for_anything.db.models.ontology_objects import (
     OntologyObject,
+    OntologyObjectType,
+    OntologyObjectTypeVersion,
     OntologyObjectVersion,
 )
 from muse_for_anything.json_migrations.data_migration import migrate_data
@@ -56,32 +58,48 @@ def run_migration(self: FlaskTask, data_object_id: int, host_url: str):
         self (FlaskTask):
         data_object_id (int): The id of the object to be migrated
     """
-    # TODO: Update version by version
     q = select(OntologyObject).where(OntologyObject.id == data_object_id)
     data_object = DB.session.execute(q).scalars().first()
     if not data_object:
         TASK_LOGGER.warning(f"OntologyObject with ID {data_object_id} not found.")
         return
+    # Data and type version from object
     data_object_version = data_object.current_version
     data_entry = data_object_version.data
-    data_object_type_version = data_object_version.ontology_type_version
-    source_schema = data_object_type_version.data
-    data_object_type_current_version = data_object.ontology_type.current_version
-    target_schema = data_object_type_current_version.data
+    current_version = data_object_version.ontology_type_version
+
+    # Latest type version
+    target_version = data_object.ontology_type.current_version
+
+    if target_version == current_version:
+        TASK_LOGGER.info(
+            f"OntologyObject with ID {data_object_id} is already up-to-date."
+        )
+        return
+
+    # Get next type version
+    next_q = (
+        select(OntologyObjectTypeVersion)
+        .where(OntologyObjectTypeVersion.object_type_id == data_object.object_type_id)
+        .where(OntologyObjectTypeVersion.version > current_version.version)
+        .where(OntologyObjectTypeVersion.deleted_on == None)
+        .order_by(OntologyObjectTypeVersion.version.asc())
+    )
+    next_version = DB.session.execute(next_q).scalars().first()
+
     try:
         updated_data = None
         with current_app.test_request_context(host_url, method="GET"):
             updated_data = migrate_data(
                 data=data_entry,
-                source_schema=source_schema,
-                target_schema=target_schema,
+                source_schema=current_version.data,
+                target_schema=next_version.data,
             )
             name = data_object.name
             description = data_object.description
-
             object_version = OntologyObjectVersion(
                 object=data_object,
-                type_version=data_object_type_current_version,
+                type_version=next_version,
                 version=data_object.version + 1,
                 name=name,
                 description=description,
@@ -92,7 +110,7 @@ def run_migration(self: FlaskTask, data_object_id: int, host_url: str):
             # and validate and extract resource references
             metadata = validate_object(
                 object_version=object_version,
-                type_version=data_object_type_current_version,
+                type_version=next_version,
             )
 
             # add references
@@ -113,13 +131,23 @@ def run_migration(self: FlaskTask, data_object_id: int, host_url: str):
                 name=name,
                 description=description,
             )
-            data_object.current_version = object_version
             DB.session.add(object_version)
+            data_object.current_version = object_version
             DB.session.add(data_object)
             DB.session.commit()
+        TASK_LOGGER.info(
+            f"OntologyObject with ID {data_object_id} migrated to version {next_version.version}."
+        )
+
+        if next_version != target_version:
+            run_migration.apply_async(args=[data_object_id, host_url])
     except ValueError:
         TASK_LOGGER.warning(
             f"OntologyObject with ID {data_object_id} could not be migrated."
         )
+        DB.session.rollback()
         return
-    TASK_LOGGER.info(f"OntologyObject with ID {data_object_id} migrated successfully.")
+    except Exception:
+        TASK_LOGGER.error(
+            f"Error during migration of OntologyObject {data_object_id}. Likely due to validation error."
+        )
