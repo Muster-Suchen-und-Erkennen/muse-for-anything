@@ -53,9 +53,6 @@ def migrate_data(
         depth (int, optional): Depth counter for recursion, stops at 100.
         Defaults to 0.
 
-    Raises:
-        ValueError: If transformation is not supported or possible to execute
-
     Returns:
         Updated data, if update was successful
     """
@@ -98,55 +95,53 @@ def migrate_data(
             depth=depth + 1,
         )
     updated_data = None
-    try:
-        # Call appropriate method depending on target schema main type
-        if target_type == "array":
-            # Array needs additional information on element type
-            target_array_schema = target_schema["items"]
-            updated_data = migrate_to_array(
-                data,
-                source_type,
-                source_schema,
-                target_array_schema,
-                source_root=source_root,
-                target_root=target_root,
-                depth=depth + 1,
-            )
-        elif target_type == "boolean":
-            updated_data = migrate_to_boolean(data, source_type)
-        elif target_type == "enum":
-            # Enum needs the allowed values
-            allowed_values = target_schema["enum"]
-            updated_data = migrate_to_enum(data, allowed_values)
-        elif target_type == "integer":
-            updated_data = migrate_to_integer(data, source_type)
-        elif target_type == "number":
-            updated_data = migrate_to_number(data, source_type)
-        elif target_type == "string":
-            updated_data = migrate_to_string(data, source_type, source_schema)
-        elif target_type == "tuple":
-            updated_data = migrate_to_tuple(
-                data,
-                source_type,
-                source_schema,
-                target_schema,
-                source_root=source_root,
-                target_root=target_root,
-                depth=depth + 1,
-            )
-        elif target_type == "object":
-            updated_data = migrate_to_object(
-                data,
-                source_type,
-                source_schema,
-                target_schema,
-                source_root=source_root,
-                target_root=target_root,
-                depth=depth + 1,
-            )
-    except ValueError:
-        # TODO: Change to raise error to indicate that update unsuccessful!
-        raise ValueError
+    # Call appropriate method depending on target schema main type
+    if target_type == "array":
+        # Array needs additional information on element type
+        target_array_schema = target_schema.get("items", [])
+        updated_data = migrate_to_array(
+            data=data,
+            source_type=source_type,
+            source_schema=source_schema,
+            target_array_schema=target_array_schema,
+            source_root=source_root,
+            target_root=target_root,
+            depth=depth,
+        )
+    elif target_type == "boolean":
+        updated_data = migrate_to_boolean(data=data, source_type=source_type)
+    elif target_type == "enum":
+        # Enum needs the allowed values
+        allowed_values = target_schema.get("enum", [])
+        updated_data = migrate_to_enum(data=data, allowed_values=allowed_values)
+    elif target_type == "integer":
+        updated_data = migrate_to_integer(data=data, source_type=source_type)
+    elif target_type == "number":
+        updated_data = migrate_to_number(data=data, source_type=source_type)
+    elif target_type == "string":
+        updated_data = migrate_to_string(
+            data=data, source_type=source_type, source_schema=source_schema
+        )
+    elif target_type == "tuple":
+        updated_data = migrate_to_tuple(
+            data=data,
+            source_type=source_type,
+            source_schema=source_schema,
+            target_tuple_schema=target_schema,
+            source_root=source_root,
+            target_root=target_root,
+            depth=depth + 1,
+        )
+    elif target_type == "object":
+        updated_data = migrate_to_object(
+            data=data,
+            source_type=source_type,
+            source_schema=source_schema,
+            target_object_schema=target_schema,
+            source_root=source_root,
+            target_root=target_root,
+            depth=depth + 1,
+        )
     return updated_data
 
 
@@ -244,7 +239,7 @@ def migrate_to_string(data, source_type: str, source_schema: dict):
                 raise ValueError("No transformation to string possible!")
         case "object":
             data_string = ""
-            properties = source_schema["properties"]
+            properties = source_schema.get("properties", {})
             for property in properties.keys():
                 data_string += property + ": " + str(data[property]) + ", "
             data = data_string[:-2]
@@ -343,21 +338,21 @@ def migrate_to_array(
         case "boolean" | "integer" | "number" | "string":
             data = [
                 migrate_data(
-                    data,
-                    source_schema,
-                    target_array_schema,
+                    data=data,
+                    source_schema=source_schema,
+                    target_schema=target_array_schema,
                     source_root=source_root,
                     target_root=target_root,
                     depth=depth + 1,
                 )
             ]
         case "array":
-            source_array_schema = source_schema["items"]
+            source_array_schema = source_schema.get("items", [])
             for i, element in enumerate(data):
                 data[i] = migrate_data(
-                    element,
-                    source_array_schema,
-                    target_array_schema,
+                    data=element,
+                    source_schema=source_array_schema,
+                    target_schema=target_array_schema,
                     source_root=source_root,
                     target_root=target_root,
                     depth=depth + 1,
@@ -368,18 +363,18 @@ def migrate_to_array(
             for i, element in enumerate(data):
                 if i < len(source_items_types):
                     data[i] = migrate_data(
-                        element,
-                        source_items_types[i],
-                        target_array_schema,
+                        data=element,
+                        source_schema=source_items_types[i],
+                        target_schema=target_array_schema,
                         source_root=source_root,
                         target_root=target_root,
                         depth=depth + 1,
                     )
                 elif additional_items_schema:
                     data[i] = migrate_data(
-                        element,
-                        additional_items_schema,
-                        target_array_schema,
+                        data=element,
+                        source_schema=additional_items_schema,
+                        target_schema=target_array_schema,
                         source_root=source_root,
                         target_root=target_root,
                         depth=depth + 1,
@@ -415,33 +410,33 @@ def migrate_to_object(
     Returns:
         dict: Data represented as an object
     """
-    target_properties = target_object_schema["properties"]
+    target_properties = target_object_schema.get("properties", {})
     match source_type:
         case "boolean" | "integer" | "number" | "string":
             if len(target_properties) != 1:
                 raise ValueError("No transformation to complex object possible!")
             prop_name = next(iter(target_properties))
-            prop_type = target_properties[prop_name]
+            prop_type = target_properties.get(prop_name, None)
             data = {
                 prop_name: migrate_data(
-                    data,
-                    source_schema,
-                    prop_type,
+                    data=data,
+                    source_schema=source_schema,
+                    target_schema=prop_type,
                     source_root=source_root,
                     target_root=target_root,
                     depth=depth + 1,
                 )
             }
         case "object":
-            source_properties = source_schema["properties"]
+            source_properties = source_schema.get("properties", {})
             common_properties = target_properties.keys() & source_properties.keys()
             new_properties = target_properties.keys() - source_properties.keys()
             deleted_properties = source_properties.keys() - target_properties.keys()
             for prop in common_properties:
                 data[prop] = migrate_data(
-                    data[prop],
-                    source_properties[prop],
-                    target_properties[prop],
+                    data=data.get(prop, None),
+                    source_schema=source_properties.get(prop, None),
+                    target_schema=target_properties.get(prop, None),
                     source_root=source_root,
                     target_root=target_root,
                     depth=depth + 1,
@@ -451,9 +446,9 @@ def migrate_to_object(
                 new_property = next(iter(new_properties))
                 deleted_property = next(iter(deleted_properties))
                 data[new_property] = migrate_data(
-                    data[deleted_property],
-                    source_properties[deleted_property],
-                    target_properties[new_property],
+                    data=data.get(deleted_property, None),
+                    source_schema=source_properties.get(deleted_property, None),
+                    target_schema=target_properties.get(new_property, None),
                     source_root=source_root,
                     target_root=target_root,
                     depth=depth + 1,
@@ -465,9 +460,9 @@ def migrate_to_object(
                 for prop in new_properties:
                     # TODO: default values?
                     data[prop] = migrate_data(
-                        None,
-                        None,
-                        target_properties[prop],
+                        data=None,
+                        source_schema=None,
+                        target_schema=target_properties.get(prop, None),
                         source_root=source_root,
                         target_root=target_root,
                         depth=depth + 1,
@@ -511,9 +506,9 @@ def migrate_to_tuple(
             if len(target_items) == 1:
                 data = [
                     migrate_data(
-                        data,
-                        source_schema,
-                        target_items[0],
+                        data=data,
+                        source_schema=source_schema,
+                        target_schema=target_items[0],
                         source_root=source_root,
                         target_root=target_root,
                         depth=depth + 1,
@@ -526,18 +521,18 @@ def migrate_to_tuple(
             for i, element in enumerate(data):
                 if i < len(target_items):
                     data[i] = migrate_data(
-                        element,
-                        source_array_schema,
-                        target_items[i],
+                        data=element,
+                        source_schema=source_array_schema,
+                        target_schema=target_items[i],
                         source_root=source_root,
                         target_root=target_root,
                         depth=depth + 1,
                     )
                 elif target_additional_items:
                     data[i] = migrate_data(
-                        element,
-                        source_array_schema,
-                        target_additional_items,
+                        data=element,
+                        source_schema=source_array_schema,
+                        target_schema=target_additional_items,
                         source_root=source_root,
                         target_root=target_root,
                         depth=depth + 1,
@@ -550,9 +545,9 @@ def migrate_to_tuple(
             for i, data_item in enumerate(data):
                 if i < len(source_items) and i < len(target_items):
                     data[i] = migrate_data(
-                        data_item,
-                        source_items[i],
-                        target_items[i],
+                        data=data_item,
+                        source_schema=source_items[i],
+                        target_schema=target_items[i],
                         source_root=source_root,
                         target_root=target_root,
                         depth=depth + 1,
@@ -560,9 +555,9 @@ def migrate_to_tuple(
                 elif i < len(source_items):
                     if target_additional_items:
                         data[i] = migrate_data(
-                            data_item,
-                            source_items[i],
-                            target_additional_items,
+                            data=data_item,
+                            source_schema=source_items[i],
+                            target_schema=target_additional_items,
                             source_root=source_root,
                             target_root=target_root,
                             depth=depth + 1,
@@ -572,9 +567,9 @@ def migrate_to_tuple(
                 elif i < len(target_items):
                     if source_additional_items:
                         data[i] = migrate_data(
-                            data_item,
-                            source_additional_items,
-                            target_items[i],
+                            data=data_item,
+                            source_schema=source_additional_items,
+                            target_schema=target_items[i],
                             source_root=source_root,
                             target_root=target_root,
                             depth=depth + 1,
@@ -584,9 +579,9 @@ def migrate_to_tuple(
                 else:
                     if source_additional_items and target_additional_items:
                         data[i] = migrate_data(
-                            data_item,
-                            source_additional_items,
-                            target_additional_items,
+                            data=data_item,
+                            source_schema=source_additional_items,
+                            target_schema=target_additional_items,
                             source_root=source_root,
                             target_root=target_root,
                             depth=depth + 1,
@@ -597,9 +592,9 @@ def migrate_to_tuple(
                 # TODO: default values?
                 data.append(
                     migrate_data(
-                        None,
-                        None,
-                        target_items[i],
+                        data=None,
+                        source_schema=None,
+                        target_schema=target_items[i],
                         source_root=source_root,
                         target_root=target_root,
                         depth=depth + 1,
