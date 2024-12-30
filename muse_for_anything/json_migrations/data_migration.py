@@ -522,12 +522,12 @@ def migrate_to_tuple(
                 )
         case "tuple":
             source_items = source_schema["items"]
-            for i, (source_item, target_item) in enumerate(
-                zip(source_items, target_items)
+            for i, (data_item, target_item) in enumerate(
+                zip(data, target_items)
             ):
                 data[i] = migrate_data(
-                    data[i],
-                    source_item,
+                    data_item,
+                    source_items[i],
                     target_item,
                     source_root=source_root,
                     target_root=target_root,
