@@ -456,13 +456,14 @@ def check_string_attributes(source_schema: dict, target_schema: dict):
         if min_length_source > max_length_target:
             return False
 
+    return True
+
 
 def check_array_attributes(source_schema: dict, target_schema: dict):
     min_items_source = source_schema.get("minItems", 0)
     min_items_target = target_schema.get("minItems", 0)
     max_items_source = source_schema.get("maxItems", None)
     max_items_target = target_schema.get("maxItems", None)
-
     if max_items_source is not None:
         if max_items_source < min_items_target:
             return False
@@ -470,3 +471,5 @@ def check_array_attributes(source_schema: dict, target_schema: dict):
     if max_items_target is not None:
         if min_items_source > max_items_target:
             return False
+
+    return True
