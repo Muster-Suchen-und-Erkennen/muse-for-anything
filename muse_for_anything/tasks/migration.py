@@ -34,7 +34,6 @@ from muse_for_anything.db.models.object_relation_tables import (
 )
 from muse_for_anything.db.models.ontology_objects import (
     OntologyObject,
-    OntologyObjectType,
     OntologyObjectTypeVersion,
     OntologyObjectVersion,
 )
