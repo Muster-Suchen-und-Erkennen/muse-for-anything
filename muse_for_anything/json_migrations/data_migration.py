@@ -363,16 +363,29 @@ def migrate_to_array(
                     depth=depth + 1,
                 )
         case "tuple":
-            source_items_types = source_schema["items"]
-            for i, element in enumerate(zip(data, source_items_types)):
-                data[i] = migrate_data(
-                    element[0],
-                    element[1],
-                    target_array_schema,
-                    source_root=source_root,
-                    target_root=target_root,
-                    depth=depth + 1,
-                )
+            source_items_types = source_schema.get("items", [])
+            additional_items_schema = source_schema.get("additionalItems", None)
+            for i, element in enumerate(data):
+                if i < len(source_items_types):
+                    data[i] = migrate_data(
+                        element,
+                        source_items_types[i],
+                        target_array_schema,
+                        source_root=source_root,
+                        target_root=target_root,
+                        depth=depth + 1,
+                    )
+                elif additional_items_schema:
+                    data[i] = migrate_data(
+                        element,
+                        additional_items_schema,
+                        target_array_schema,
+                        source_root=source_root,
+                        target_root=target_root,
+                        depth=depth + 1,
+                    )
+                else:
+                    raise ValueError(f"No schema definition for element at index {i}!")
     return data
 
 
@@ -469,7 +482,7 @@ def migrate_to_tuple(
     data,
     source_type: str,
     source_schema: dict,
-    target_tuple_schema: list,
+    target_tuple_schema: dict,
     source_root: dict,
     target_root: dict,
     depth: int,
@@ -491,7 +504,8 @@ def migrate_to_tuple(
     Returns:
         list: Data represented as a tuple
     """
-    target_items = target_tuple_schema["items"]
+    target_items = target_tuple_schema.get("items", [])
+    target_additional_items = target_tuple_schema.get("additionalItems", None)
     match source_type:
         case "boolean" | "integer" | "number" | "string":
             if len(target_items) == 1:
@@ -508,31 +522,80 @@ def migrate_to_tuple(
             else:
                 raise ValueError("No transformation to enum possible!")
         case "array":
-            source_array_schema = source_schema["items"]
-            if len(data) != len(target_items):
-                raise ValueError("No transformation from array to tuple possible!")
+            source_array_schema = source_schema.get("items", None)
+            additional_properties_schema = target_tuple_schema.get(
+                "additionalItems", None
+            )
             for i, element in enumerate(data):
-                data[i] = migrate_data(
-                    element,
-                    source_array_schema,
-                    target_items[i],
-                    source_root=source_root,
-                    target_root=target_root,
-                    depth=depth + 1,
-                )
+                if i < len(target_items):
+                    data[i] = migrate_data(
+                        element,
+                        source_array_schema,
+                        target_items[i],
+                        source_root=source_root,
+                        target_root=target_root,
+                        depth=depth + 1,
+                    )
+                elif additional_properties_schema:
+                    data[i] = migrate_data(
+                        element,
+                        source_array_schema,
+                        additional_properties_schema,
+                        source_root=source_root,
+                        target_root=target_root,
+                        depth=depth + 1,
+                    )
+                else:
+                    raise ValueError(f"No schema definition for element at index {i}!")
         case "tuple":
-            source_items = source_schema["items"]
-            for i, (data_item, target_item) in enumerate(zip(data, target_items)):
-                data[i] = migrate_data(
-                    data_item,
-                    source_items[i],
-                    target_item,
-                    source_root=source_root,
-                    target_root=target_root,
-                    depth=depth + 1,
-                )
-            for i in range(len(target_items), len(source_items)):
-                data.pop(i)
+            source_items = source_schema.get("items", [])
+            source_additional_items = source_schema.get("additionalItems", None)
+            for i, data_item in enumerate(data):
+                if i < len(source_items) and i < len(target_items):
+                    data[i] = migrate_data(
+                        data_item,
+                        source_items[i],
+                        target_items[i],
+                        source_root=source_root,
+                        target_root=target_root,
+                        depth=depth + 1,
+                    )
+                elif i < len(source_items):
+                    if target_additional_items:
+                        data[i] = migrate_data(
+                            data_item,
+                            source_items[i],
+                            target_additional_items,
+                            source_root=source_root,
+                            target_root=target_root,
+                            depth=depth + 1,
+                        )
+                    else:
+                        del data[i]
+                elif i < len(target_items):
+                    if source_additional_items:
+                        data[i] = migrate_data(
+                            data_item,
+                            source_additional_items,
+                            target_items[i],
+                            source_root=source_root,
+                            target_root=target_root,
+                            depth=depth + 1,
+                        )
+                    else:
+                        raise ValueError("Illegally defined tuple object!")
+                else:
+                    if source_additional_items and target_additional_items:
+                        data[i] = migrate_data(
+                            data_item,
+                            source_additional_items,
+                            target_additional_items,
+                            source_root=source_root,
+                            target_root=target_root,
+                            depth=depth + 1,
+                        )
+                    else:
+                        del data[i]
             for i in range(len(source_items), len(target_items)):
                 # TODO: default values?
                 data.append(
