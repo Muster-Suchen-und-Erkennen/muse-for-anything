@@ -523,9 +523,6 @@ def migrate_to_tuple(
                 raise ValueError("No transformation to enum possible!")
         case "array":
             source_array_schema = source_schema.get("items", None)
-            additional_properties_schema = target_tuple_schema.get(
-                "additionalItems", None
-            )
             for i, element in enumerate(data):
                 if i < len(target_items):
                     data[i] = migrate_data(
@@ -536,11 +533,11 @@ def migrate_to_tuple(
                         target_root=target_root,
                         depth=depth + 1,
                     )
-                elif additional_properties_schema:
+                elif target_additional_items:
                     data[i] = migrate_data(
                         element,
                         source_array_schema,
-                        additional_properties_schema,
+                        target_additional_items,
                         source_root=source_root,
                         target_root=target_root,
                         depth=depth + 1,

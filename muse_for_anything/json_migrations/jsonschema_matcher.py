@@ -111,7 +111,7 @@ def resolve_schema_reference(schema: dict, root_schema: dict):
         return schema[type]
     else:
         key = reference.split("#")[-1].split("/")[-1]
-        res_ref = resolve_type_version_schema_url(schema["$ref"])
+        res_ref = resolve_type_version_schema_url(url_string=schema["$ref"])
         return res_ref["definitions"][key]
 
 
@@ -154,11 +154,10 @@ def match_schema(
     if target_root is None:
         target_root = target_schema
         target_schema = target_schema["definitions"]["root"]
-    source_type, source_nullable = extract_type(source_schema)
-    target_type, target_nullable = extract_type(target_schema)
+    source_type, source_nullable = extract_type(schema=source_schema)
+    target_type, target_nullable = extract_type(schema=target_schema)
     # Check if both schemas have valid types
     if source_type and target_type:
-        # TODO: Implement "sanity checks" for updates on all types
         if source_type == "schemaReference" or target_type == "schemaReference":
             source_schema = resolve_schema_reference(
                 schema=source_schema,
@@ -232,7 +231,7 @@ def match_schema(
                 case _:
                     return False
         elif target_type == "array":
-            target_array_schema = target_schema["items"]
+            target_array_schema = target_schema.get("items", {})
             match source_type:
                 case "boolean" | "integer" | "number" | "string":
                     if target_schema.get("minItems", 0) > 1:
@@ -249,7 +248,7 @@ def match_schema(
                         source_schema=source_schema, target_schema=target_schema
                     )
                     if valid_limits:
-                        source_array_schema = source_schema["items"]
+                        source_array_schema = source_schema.get("items", {})
                         return match_schema(
                             source_schema=source_array_schema,
                             target_schema=target_array_schema,
@@ -264,7 +263,10 @@ def match_schema(
                         source_schema=source_schema, target_schema=target_schema
                     )
                     if valid_limits:
-                        source_items_types = source_schema["items"]
+                        source_items_types = source_schema.get("items", [])
+                        additional_items_schema = source_schema.get(
+                            "additionalItems", None
+                        )
                         for item_type in source_items_types:
                             valid = match_schema(
                                 source_schema=item_type,
@@ -275,6 +277,17 @@ def match_schema(
                             )
                             if not valid:
                                 # One of the elements is not matchable
+                                return False
+                        # Check if additionalItems match
+                        if additional_items_schema:
+                            valid = match_schema(
+                                source_schema=additional_items_schema,
+                                target_schema=target_array_schema,
+                                source_root=source_root,
+                                target_root=target_root,
+                                depth=depth + 1,
+                            )
+                            if not valid:
                                 return False
                         return True
                     else:
@@ -296,7 +309,8 @@ def match_schema(
                 case _:
                     return False
         elif target_type == "tuple":
-            target_items_types = target_schema["items"]
+            target_items_types = target_schema.get("items", [])
+            target_additional_items = target_schema.get("additionalItems", None)
             match source_type:
                 case "boolean" | "integer" | "number" | "string":
                     if target_schema.get("minItems", 0) > 1:
@@ -316,16 +330,29 @@ def match_schema(
                         source_schema=source_schema, target_schema=target_schema
                     )
                     if valid_limits:
-                        source_array_schema = source_schema["items"]
-                        for item_type in target_items_types:
-                            valid = match_schema(
-                                source_schema=source_array_schema,
-                                target_schema=item_type,
-                                source_root=source_root,
-                                target_root=target_root,
-                                depth=depth + 1,
-                            )
-                            if not valid:
+                        source_array_schema = source_schema.get("items", {})
+                        for i, item_type in enumerate(target_items_types):
+                            if i < len(target_items_types):
+                                valid = match_schema(
+                                    source_schema=source_array_schema,
+                                    target_schema=item_type,
+                                    source_root=source_root,
+                                    target_root=target_root,
+                                    depth=depth + 1,
+                                )
+                                if not valid:
+                                    return False
+                            elif target_additional_items:
+                                valid = match_schema(
+                                    source_schema=source_array_schema,
+                                    target_schema=target_additional_items,
+                                    source_root=source_root,
+                                    target_root=target_root,
+                                    depth=depth + 1,
+                                )
+                                if not valid:
+                                    return False
+                            else:
                                 return False
                         return True
                     else:
@@ -335,13 +362,48 @@ def match_schema(
                         source_schema=source_schema, target_schema=target_schema
                     )
                     if valid_limits:
-                        source_items_types = source_schema["items"]
-                        for source_type, target_type in zip(
-                            source_items_types, target_items_types
-                        ):
+                        source_items_types = source_schema.get("items", [])
+                        source_additional_items = source_schema.get(
+                            "additionalItems", None
+                        )
+                        max_length = max(len(source_items_types), len(target_items_types))
+                        for i in range(max_length):
+                            if i < len(source_items_types) and i < len(
+                                target_items_types
+                            ):
+                                valid = match_schema(
+                                    source_schema=source_items_types[i],
+                                    target_schema=target_items_types[i],
+                                    source_root=source_root,
+                                    target_root=target_root,
+                                    depth=depth + 1,
+                                )
+                                if not valid:
+                                    return False
+                            elif i < len(source_items_types) and target_additional_items:
+                                valid = match_schema(
+                                    source_schema=source_items_types[i],
+                                    target_schema=target_additional_items,
+                                    source_root=source_root,
+                                    target_root=target_root,
+                                    depth=depth + 1,
+                                )
+                                if not valid:
+                                    return False
+                            elif i < len(target_items_types) and source_additional_items:
+                                valid = match_schema(
+                                    source_schema=source_additional_items,
+                                    target_schema=target_items_types[i],
+                                    source_root=source_root,
+                                    target_root=target_root,
+                                    depth=depth + 1,
+                                )
+                                if not valid:
+                                    return False
+                        if source_additional_items and target_additional_items:
                             valid = match_schema(
-                                source_schema=source_type,
-                                target_schema=target_type,
+                                source_schema=source_additional_items,
+                                target_schema=target_additional_items,
                                 source_root=source_root,
                                 target_root=target_root,
                                 depth=depth + 1,
@@ -354,12 +416,12 @@ def match_schema(
                 case _:
                     return False
         elif target_type == "object":
-            target_properties = target_schema["properties"]
+            target_properties = target_schema.get("properties", {})
             match source_type:
                 case "boolean" | "integer" | "number" | "string":
                     return True
                 case "object":
-                    source_properties = source_schema["properties"]
+                    source_properties = source_schema.get("properties", {})
                     common_properties = (
                         target_properties.keys() & source_properties.keys()
                     )
@@ -392,6 +454,11 @@ def match_schema(
                     return True
                 case _:
                     return False
+        elif target_type == "resourceReference":
+            if source_type == "resourceReference":
+                return True
+            else:
+                return False
     else:
         return False
     return False
