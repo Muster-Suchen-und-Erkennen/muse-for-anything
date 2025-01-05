@@ -1,4 +1,4 @@
-from muse_for_anything.json_migrations.jsonschema_matcher import extract_type
+from muse_for_anything.json_migrations.jsonschema_matcher import _extract_type
 import unittest
 
 
@@ -18,7 +18,7 @@ class TestTypeExtraction(unittest.TestCase):
             },
             "title": "Type",
         }
-        self.assertEqual(("array", False), extract_type(schema["definitions"]["root"]))
+        self.assertEqual(("array", False), _extract_type(schema["definitions"]["root"]))
 
     def test_extract_boolean(self):
         schema = {
@@ -28,7 +28,7 @@ class TestTypeExtraction(unittest.TestCase):
             "definitions": {"root": {"type": ["boolean"]}},
             "title": "Type",
         }
-        self.assertEqual(("boolean", False), extract_type(schema["definitions"]["root"]))
+        self.assertEqual(("boolean", False), _extract_type(schema["definitions"]["root"]))
 
     def test_extract_enum(self):
         schema = {
@@ -38,7 +38,7 @@ class TestTypeExtraction(unittest.TestCase):
             "definitions": {"root": {"enum": ["all", True, 1234.56, None]}},
             "title": "Type",
         }
-        self.assertEqual(("enum", False), extract_type(schema["definitions"]["root"]))
+        self.assertEqual(("enum", False), _extract_type(schema["definitions"]["root"]))
 
     def test_extract_integer(self):
         schema = {
@@ -48,7 +48,7 @@ class TestTypeExtraction(unittest.TestCase):
             "definitions": {"root": {"type": ["integer"]}},
             "title": "Type",
         }
-        self.assertEqual(("integer", False), extract_type(schema["definitions"]["root"]))
+        self.assertEqual(("integer", False), _extract_type(schema["definitions"]["root"]))
 
     def test_extract_number(self):
         schema = {
@@ -58,7 +58,7 @@ class TestTypeExtraction(unittest.TestCase):
             "definitions": {"root": {"type": ["number"]}},
             "title": "Type",
         }
-        self.assertEqual(("number", False), extract_type(schema["definitions"]["root"]))
+        self.assertEqual(("number", False), _extract_type(schema["definitions"]["root"]))
 
     def test_extract_object(self):
         schema = {
@@ -77,7 +77,7 @@ class TestTypeExtraction(unittest.TestCase):
             },
             "title": "Type",
         }
-        self.assertEqual(("object", False), extract_type(schema["definitions"]["root"]))
+        self.assertEqual(("object", False), _extract_type(schema["definitions"]["root"]))
 
     def test_extract_resource_reference(self):
         schema = {
@@ -90,7 +90,7 @@ class TestTypeExtraction(unittest.TestCase):
             "title": "Type",
         }
         self.assertEqual(
-            ("resourceReference", False), extract_type(schema["definitions"]["root"])
+            ("resourceReference", False), _extract_type(schema["definitions"]["root"])
         )
 
     def test_extract_schema_ref(self):
@@ -106,7 +106,7 @@ class TestTypeExtraction(unittest.TestCase):
             "title": "Type",
         }
         self.assertEqual(
-            ("schemaReference", False), extract_type(schema["definitions"]["root"])
+            ("schemaReference", False), _extract_type(schema["definitions"]["root"])
         )
 
     def test_extract_string(self):
@@ -117,7 +117,7 @@ class TestTypeExtraction(unittest.TestCase):
             "definitions": {"root": {"type": ["string"]}},
             "title": "Type",
         }
-        self.assertEqual(("string", False), extract_type(schema["definitions"]["root"]))
+        self.assertEqual(("string", False), _extract_type(schema["definitions"]["root"]))
 
     def test_extract_tuple(self):
         schema = {
@@ -137,7 +137,7 @@ class TestTypeExtraction(unittest.TestCase):
             },
             "title": "Type",
         }
-        self.assertEqual(("tuple", False), extract_type(schema["definitions"]["root"]))
+        self.assertEqual(("tuple", False), _extract_type(schema["definitions"]["root"]))
 
     def test_extract_unknown_object_type(self):
         schema = {
@@ -148,7 +148,7 @@ class TestTypeExtraction(unittest.TestCase):
             "title": "Type",
         }
         with self.assertRaises(ValueError):
-            extract_type(schema["definitions"]["root"])
+            _extract_type(schema["definitions"]["root"])
 
     def test_extract_unknown_array_type(self):
         schema = {
@@ -159,7 +159,7 @@ class TestTypeExtraction(unittest.TestCase):
             "title": "Type",
         }
         with self.assertRaises(ValueError):
-            extract_type(schema["definitions"]["root"])
+            _extract_type(schema["definitions"]["root"])
 
     def test_extract_wrong_array_type(self):
         schema = {
@@ -170,7 +170,7 @@ class TestTypeExtraction(unittest.TestCase):
             "title": "Type",
         }
         with self.assertRaises(ValueError):
-            extract_type(schema["definitions"]["root"])
+            _extract_type(schema["definitions"]["root"])
 
     def test_extract_unknown_type(self):
         schema = {
@@ -181,7 +181,7 @@ class TestTypeExtraction(unittest.TestCase):
             "title": "Type",
         }
         with self.assertRaises(ValueError):
-            extract_type(schema["definitions"]["root"])
+            _extract_type(schema["definitions"]["root"])
 
     def test_extract_no_type(self):
         schema = {
@@ -192,7 +192,7 @@ class TestTypeExtraction(unittest.TestCase):
             "title": "Type",
         }
         with self.assertRaises(ValueError):
-            extract_type(schema["definitions"]["root"])
+            _extract_type(schema["definitions"]["root"])
 
     def test_extract_nullable_type(self):
         schema = {
@@ -202,7 +202,7 @@ class TestTypeExtraction(unittest.TestCase):
             "definitions": {"root": {"type": ["string", "null"]}},
             "title": "Type",
         }
-        self.assertEqual(("string", True), extract_type(schema["definitions"]["root"]))
+        self.assertEqual(("string", True), _extract_type(schema["definitions"]["root"]))
 
 
 if __name__ == "__main__":

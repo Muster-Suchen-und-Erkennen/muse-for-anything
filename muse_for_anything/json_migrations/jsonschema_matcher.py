@@ -29,7 +29,7 @@ from muse_for_anything.api.v1_api.ontology_object_validation import (
 )
 
 
-def extract_type(schema: dict):
+def _extract_type(schema: dict):
     """Extract the type of a given schema and indicates
     whether or not elements are nullable
 
@@ -154,8 +154,8 @@ def match_schema(
     if target_root is None:
         target_root = target_schema
         target_schema = target_schema["definitions"]["root"]
-    source_type, source_nullable = extract_type(schema=source_schema)
-    target_type, target_nullable = extract_type(schema=target_schema)
+    source_type, source_nullable = _extract_type(schema=source_schema)
+    target_type, target_nullable = _extract_type(schema=target_schema)
     # Check if both schemas have valid types
     if source_type and target_type:
         if source_type == "schemaReference" or target_type == "schemaReference":
@@ -177,7 +177,7 @@ def match_schema(
         if target_type == "number":
             match source_type:
                 case "integer" | "number":
-                    return check_numeric_attributes(
+                    return _check_numeric_attributes(
                         source_schema=source_schema, target_schema=target_schema
                     )
                 case "boolean" | "enum" | "string":
@@ -193,7 +193,7 @@ def match_schema(
         elif target_type == "integer":
             match source_type:
                 case "integer" | "number":
-                    return check_numeric_attributes(
+                    return _check_numeric_attributes(
                         source_schema=source_schema, target_schema=target_schema
                     )
                 case "boolean" | "enum" | "string":
@@ -223,7 +223,7 @@ def match_schema(
                 case "array" | "boolean" | "enum" | "integer" | "number" | "tuple":
                     return True
                 case "string":
-                    return check_string_attributes(
+                    return _check_string_attributes(
                         source_schema=source_schema, target_schema=target_schema
                     )
                 case "object":
@@ -244,7 +244,7 @@ def match_schema(
                         depth=depth + 1,
                     )
                 case "array":
-                    valid_limits = check_array_attributes(
+                    valid_limits = _check_array_attributes(
                         source_schema=source_schema, target_schema=target_schema
                     )
                     if valid_limits:
@@ -259,7 +259,7 @@ def match_schema(
                     else:
                         return False
                 case "tuple":
-                    valid_limits = check_array_attributes(
+                    valid_limits = _check_array_attributes(
                         source_schema=source_schema, target_schema=target_schema
                     )
                     if valid_limits:
@@ -326,7 +326,7 @@ def match_schema(
                     else:
                         return False
                 case "array":
-                    valid_limits = check_array_attributes(
+                    valid_limits = _check_array_attributes(
                         source_schema=source_schema, target_schema=target_schema
                     )
                     if valid_limits:
@@ -358,7 +358,7 @@ def match_schema(
                     else:
                         return False
                 case "tuple":
-                    valid_limits = check_array_attributes(
+                    valid_limits = _check_array_attributes(
                         source_schema=source_schema, target_schema=target_schema
                     )
                     if valid_limits:
@@ -464,7 +464,7 @@ def match_schema(
     return False
 
 
-def check_numeric_attributes(source_schema: dict, target_schema: dict):
+def _check_numeric_attributes(source_schema: dict, target_schema: dict):
     min_source = source_schema.get("minimum", None)
     min_target = target_schema.get("minimum", None)
     max_source = source_schema.get("maximum", None)
@@ -509,7 +509,7 @@ def check_numeric_attributes(source_schema: dict, target_schema: dict):
     return True
 
 
-def check_string_attributes(source_schema: dict, target_schema: dict):
+def _check_string_attributes(source_schema: dict, target_schema: dict):
     min_length_source = source_schema.get("minLength", 0)
     min_length_target = target_schema.get("minLength", 0)
     max_length_source = source_schema.get("maxLength", None)
@@ -526,7 +526,7 @@ def check_string_attributes(source_schema: dict, target_schema: dict):
     return True
 
 
-def check_array_attributes(source_schema: dict, target_schema: dict):
+def _check_array_attributes(source_schema: dict, target_schema: dict):
     min_items_source = source_schema.get("minItems", 0)
     min_items_target = target_schema.get("minItems", 0)
     max_items_source = source_schema.get("maxItems", None)

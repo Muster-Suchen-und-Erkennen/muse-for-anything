@@ -25,7 +25,7 @@
 import numbers
 from typing import Optional
 from muse_for_anything.json_migrations.jsonschema_matcher import (
-    extract_type,
+    _extract_type,
     resolve_schema_reference,
 )
 
@@ -65,7 +65,7 @@ def migrate_data(
         target_root = target_schema
         target_schema = target_schema["definitions"]["root"]
 
-    target_type, target_nullable = extract_type(target_schema)
+    target_type, target_nullable = _extract_type(target_schema)
     if target_type == "schemaReference":
         target_schema = resolve_schema_reference(
             schema=target_schema, root_schema=target_root
@@ -81,7 +81,7 @@ def migrate_data(
 
     if data is None and target_nullable:
         return None
-    source_type, source_nullable = extract_type(source_schema)
+    source_type, source_nullable = _extract_type(source_schema)
     if source_type == "schemaReference":
         source_schema = resolve_schema_reference(
             schema=source_schema, root_schema=source_root
@@ -99,7 +99,7 @@ def migrate_data(
     if target_type == "array":
         # Array needs additional information on element type
         target_array_schema = target_schema.get("items", [])
-        updated_data = migrate_to_array(
+        updated_data = _migrate_to_array(
             data=data,
             source_type=source_type,
             source_schema=source_schema,
@@ -109,21 +109,21 @@ def migrate_data(
             depth=depth,
         )
     elif target_type == "boolean":
-        updated_data = migrate_to_boolean(data=data, source_type=source_type)
+        updated_data = _migrate_to_boolean(data=data, source_type=source_type)
     elif target_type == "enum":
         # Enum needs the allowed values
         allowed_values = target_schema.get("enum", [])
-        updated_data = migrate_to_enum(data=data, allowed_values=allowed_values)
+        updated_data = _migrate_to_enum(data=data, allowed_values=allowed_values)
     elif target_type == "integer":
-        updated_data = migrate_to_integer(data=data, source_type=source_type)
+        updated_data = _migrate_to_integer(data=data, source_type=source_type)
     elif target_type == "number":
-        updated_data = migrate_to_number(data=data, source_type=source_type)
+        updated_data = _migrate_to_number(data=data, source_type=source_type)
     elif target_type == "string":
-        updated_data = migrate_to_string(
+        updated_data = _migrate_to_string(
             data=data, source_type=source_type, source_schema=source_schema
         )
     elif target_type == "tuple":
-        updated_data = migrate_to_tuple(
+        updated_data = _migrate_to_tuple(
             data=data,
             source_type=source_type,
             source_schema=source_schema,
@@ -133,7 +133,7 @@ def migrate_data(
             depth=depth + 1,
         )
     elif target_type == "object":
-        updated_data = migrate_to_object(
+        updated_data = _migrate_to_object(
             data=data,
             source_type=source_type,
             source_schema=source_schema,
@@ -145,7 +145,7 @@ def migrate_data(
     return updated_data
 
 
-def migrate_to_number(data, source_type: str):
+def _migrate_to_number(data, source_type: str):
     """Takes data and transforms it to a number/float instance.
 
     Args:
@@ -160,7 +160,6 @@ def migrate_to_number(data, source_type: str):
     """
     match source_type:
         case "boolean" | "enum" | "number" | "integer" | "string":
-            # TODO Implement potential cut off at limit
             data = float(data)
         case "array" | "tuple":
             if len(data) == 0:
@@ -180,7 +179,7 @@ def migrate_to_number(data, source_type: str):
     return data
 
 
-def migrate_to_integer(data, source_type: str):
+def _migrate_to_integer(data, source_type: str):
     """Takes data and transforms it to an integer instance.
 
     Args:
@@ -195,7 +194,6 @@ def migrate_to_integer(data, source_type: str):
     """
     match source_type:
         case "boolean" | "enum" | "number" | "integer" | "string":
-            # TODO Implement potential cut off at limit
             data = int(float(data))
         case "array" | "tuple":
             if len(data) == 0:
@@ -217,7 +215,7 @@ def migrate_to_integer(data, source_type: str):
     return data
 
 
-def migrate_to_string(data, source_type: str, source_schema: dict):
+def _migrate_to_string(data, source_type: str, source_schema: dict):
     """Takes data and transforms it to a string instance.
 
     Args:
@@ -246,7 +244,7 @@ def migrate_to_string(data, source_type: str, source_schema: dict):
     return data
 
 
-def migrate_to_boolean(data, source_type: str):
+def _migrate_to_boolean(data, source_type: str):
     """Takes data and transforms it to a boolean instance.
 
     Args:
@@ -283,7 +281,7 @@ def migrate_to_boolean(data, source_type: str):
     return data
 
 
-def migrate_to_enum(data, allowed_values: list):
+def _migrate_to_enum(data, allowed_values: list):
     """Takes data and ensures it conforms to the allowed values of the
     defined enum.
 
@@ -311,7 +309,7 @@ def migrate_to_enum(data, allowed_values: list):
         raise ValueError("No transformation to enum possible!")
 
 
-def migrate_to_array(
+def _migrate_to_array(
     data,
     source_type: str,
     source_schema: dict,
@@ -384,7 +382,7 @@ def migrate_to_array(
     return data
 
 
-def migrate_to_object(
+def _migrate_to_object(
     data,
     source_type: str,
     source_schema: dict,
@@ -458,7 +456,6 @@ def migrate_to_object(
             else:
                 # Add all new properties
                 for prop in new_properties:
-                    # TODO: default values?
                     data[prop] = migrate_data(
                         data=None,
                         source_schema=None,
@@ -473,7 +470,7 @@ def migrate_to_object(
     return data
 
 
-def migrate_to_tuple(
+def _migrate_to_tuple(
     data,
     source_type: str,
     source_schema: dict,
@@ -589,7 +586,6 @@ def migrate_to_tuple(
                     else:
                         del data[i]
             for i in range(len(source_items), len(target_items)):
-                # TODO: default values?
                 data.append(
                     migrate_data(
                         data=None,
