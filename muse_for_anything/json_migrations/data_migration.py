@@ -22,6 +22,7 @@
 # SOFTWARE.
 # ==============================================================================
 
+import json
 import numbers
 from typing import Optional
 from muse_for_anything.json_migrations.jsonschema_matcher import (
@@ -230,17 +231,13 @@ def _migrate_to_string(data, source_type: str, source_schema: dict):
         str: data represented as a string
     """
     match source_type:
-        case "array" | "boolean" | "enum" | "integer" | "number" | "string" | "tuple":
+        case "boolean" | "enum" | "integer" | "number" | "string":
             try:
                 data = str(data)
             except ValueError:
                 raise ValueError("No transformation to string possible!")
-        case "object":
-            data_string = ""
-            properties = source_schema.get("properties", {})
-            for property in properties.keys():
-                data_string += property + ": " + str(data[property]) + ", "
-            data = data_string[:-2]
+        case "array" | "object" | "tuple":
+            data = json.dumps(data)
     return data
 
 

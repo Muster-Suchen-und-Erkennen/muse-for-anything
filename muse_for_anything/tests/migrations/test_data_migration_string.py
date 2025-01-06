@@ -111,7 +111,7 @@ class TestMigrationToString(unittest.TestCase):
         data = {"one": 42, "three": True, "two": "Hello World!"}
         updated_data = migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(
-            "one: 42, three: True, two: Hello World!",
+            '{"one": 42, "three": true, "two": "Hello World!"}',
             updated_data,
         )
 
@@ -135,7 +135,7 @@ class TestMigrationToString(unittest.TestCase):
         }
         data = [True, 12, "Hello"]
         updated_data = migrate_data(data, source_schema, self.target_schema)
-        self.assertEqual("[True, 12, 'Hello']", updated_data)
+        self.assertEqual('[true, 12, "Hello"]', updated_data)
 
 
 if __name__ == "__main__":
