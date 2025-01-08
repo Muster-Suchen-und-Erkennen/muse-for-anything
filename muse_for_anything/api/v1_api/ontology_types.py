@@ -42,7 +42,7 @@ from muse_for_anything.api.v1_api.request_helpers import (
     PageResource,
 )
 from muse_for_anything.db.models.users import User
-from muse_for_anything.json_migrations.jsonschema_matcher import match_schema
+from muse_for_anything.json_migrations.jsonschema_validator import validate_schema
 from muse_for_anything.oso_helpers import FLASK_OSO, OsoResource
 from muse_for_anything.tasks.migration import run_migration
 
@@ -405,7 +405,7 @@ class TypeView(MethodView):
         FLASK_OSO.authorize_and_set_resource(found_object_type, action=UPDATE)
 
         # Check if update is valid
-        valid = match_schema(
+        valid = validate_schema(
             source_schema=found_object_type.current_version.data,
             target_schema=data,
         )

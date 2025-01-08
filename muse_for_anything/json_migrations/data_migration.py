@@ -25,7 +25,7 @@
 import json
 import numbers
 from typing import Optional
-from muse_for_anything.json_migrations.jsonschema_matcher import (
+from muse_for_anything.json_migrations.jsonschema_validator import (
     _extract_type,
     resolve_schema_reference,
 )

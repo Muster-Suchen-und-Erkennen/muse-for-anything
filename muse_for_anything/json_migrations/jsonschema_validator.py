@@ -115,7 +115,7 @@ def resolve_schema_reference(schema: dict, root_schema: dict):
         return res_ref["definitions"][key]
 
 
-def match_schema(
+def validate_schema(
     source_schema: dict,
     target_schema: dict,
     *,
@@ -167,7 +167,7 @@ def match_schema(
                 schema=target_schema,
                 root_schema=target_root,
             )
-            return match_schema(
+            return validate_schema(
                 source_schema=source_schema,
                 target_schema=target_schema,
                 source_root=source_root,
@@ -236,7 +236,7 @@ def match_schema(
                 case "boolean" | "integer" | "number" | "string":
                     if target_schema.get("minItems", 0) > 1:
                         return False
-                    return match_schema(
+                    return validate_schema(
                         source_schema=source_schema,
                         target_schema=target_array_schema,
                         source_root=source_root,
@@ -249,7 +249,7 @@ def match_schema(
                     )
                     if valid_limits:
                         source_array_schema = source_schema.get("items", {})
-                        return match_schema(
+                        return validate_schema(
                             source_schema=source_array_schema,
                             target_schema=target_array_schema,
                             source_root=source_root,
@@ -268,7 +268,7 @@ def match_schema(
                             "additionalItems", None
                         )
                         for item_type in source_items_types:
-                            valid = match_schema(
+                            valid = validate_schema(
                                 source_schema=item_type,
                                 target_schema=target_array_schema,
                                 source_root=source_root,
@@ -280,7 +280,7 @@ def match_schema(
                                 return False
                         # Check if additionalItems match
                         if additional_items_schema:
-                            valid = match_schema(
+                            valid = validate_schema(
                                 source_schema=additional_items_schema,
                                 target_schema=target_array_schema,
                                 source_root=source_root,
@@ -316,7 +316,7 @@ def match_schema(
                     if target_schema.get("minItems", 0) > 1:
                         return False
                     if len(target_items_types) == 1:
-                        return match_schema(
+                        return validate_schema(
                             source_schema=source_schema,
                             target_schema=target_array_schema,
                             source_root=source_root,
@@ -333,7 +333,7 @@ def match_schema(
                         source_array_schema = source_schema.get("items", {})
                         for i, item_type in enumerate(target_items_types):
                             if i < len(target_items_types):
-                                valid = match_schema(
+                                valid = validate_schema(
                                     source_schema=source_array_schema,
                                     target_schema=item_type,
                                     source_root=source_root,
@@ -343,7 +343,7 @@ def match_schema(
                                 if not valid:
                                     return False
                             elif target_additional_items:
-                                valid = match_schema(
+                                valid = validate_schema(
                                     source_schema=source_array_schema,
                                     target_schema=target_additional_items,
                                     source_root=source_root,
@@ -371,7 +371,7 @@ def match_schema(
                             if i < len(source_items_types) and i < len(
                                 target_items_types
                             ):
-                                valid = match_schema(
+                                valid = validate_schema(
                                     source_schema=source_items_types[i],
                                     target_schema=target_items_types[i],
                                     source_root=source_root,
@@ -381,7 +381,7 @@ def match_schema(
                                 if not valid:
                                     return False
                             elif i < len(source_items_types) and target_additional_items:
-                                valid = match_schema(
+                                valid = validate_schema(
                                     source_schema=source_items_types[i],
                                     target_schema=target_additional_items,
                                     source_root=source_root,
@@ -391,7 +391,7 @@ def match_schema(
                                 if not valid:
                                     return False
                             elif i < len(target_items_types) and source_additional_items:
-                                valid = match_schema(
+                                valid = validate_schema(
                                     source_schema=source_additional_items,
                                     target_schema=target_items_types[i],
                                     source_root=source_root,
@@ -401,7 +401,7 @@ def match_schema(
                                 if not valid:
                                     return False
                         if source_additional_items and target_additional_items:
-                            valid = match_schema(
+                            valid = validate_schema(
                                 source_schema=source_additional_items,
                                 target_schema=target_additional_items,
                                 source_root=source_root,
@@ -430,7 +430,7 @@ def match_schema(
                         source_properties.keys() - target_properties.keys()
                     )
                     for prop in common_properties:
-                        valid = match_schema(
+                        valid = validate_schema(
                             source_schema=source_properties[prop],
                             target_schema=target_properties[prop],
                             source_root=source_root,
@@ -442,7 +442,7 @@ def match_schema(
                     if len(new_properties) == 1 and len(deleted_properties) == 1:
                         new_prop = next(iter(new_properties))
                         deleted_prop = next(iter(deleted_properties))
-                        valid = match_schema(
+                        valid = validate_schema(
                             source_schema=source_properties[deleted_prop],
                             target_schema=target_properties[new_prop],
                             source_root=source_root,

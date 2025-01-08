@@ -1,5 +1,5 @@
 from muse_for_anything.json_migrations.data_migration import migrate_data
-from muse_for_anything.json_migrations.jsonschema_matcher import match_schema
+from muse_for_anything.json_migrations.jsonschema_validator import validate_schema
 
 import unittest
 
@@ -222,7 +222,7 @@ class TestMigrationToArray(unittest.TestCase):
         }
         self.assertEqual(
             False,
-            match_schema(
+            validate_schema(
                 source_schema,
                 self.target_schema_boolean,
             ),

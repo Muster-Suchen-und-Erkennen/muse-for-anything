@@ -1,4 +1,4 @@
-from muse_for_anything.json_migrations.jsonschema_matcher import _extract_type
+from muse_for_anything.json_migrations.jsonschema_validator import _extract_type
 import unittest
 
 
