@@ -108,11 +108,11 @@ def resolve_schema_reference(schema: dict, root_schema: dict):
     if reference.startswith("#/definitions"):
         schema = root_schema["definitions"]
         type = reference.split("/")[-1]
-        return schema[type]
+        return schema[type], root_schema
     else:
         key = reference.split("#")[-1].split("/")[-1]
         res_ref = resolve_type_version_schema_url(url_string=schema["$ref"])
-        return res_ref["definitions"][key]
+        return res_ref["definitions"][key], res_ref
 
 
 def validate_schema(
@@ -159,11 +159,11 @@ def validate_schema(
     # Check if both schemas have valid types
     if source_type and target_type:
         if source_type == "schemaReference" or target_type == "schemaReference":
-            source_schema = resolve_schema_reference(
+            source_schema, source_root = resolve_schema_reference(
                 schema=source_schema,
                 root_schema=source_root,
             )
-            target_schema = resolve_schema_reference(
+            target_schema, target_root = resolve_schema_reference(
                 schema=target_schema,
                 root_schema=target_root,
             )

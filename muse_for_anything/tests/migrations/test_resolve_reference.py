@@ -1,4 +1,6 @@
-from muse_for_anything.json_migrations.jsonschema_validator import resolve_schema_reference
+from muse_for_anything.json_migrations.jsonschema_validator import (
+    resolve_schema_reference,
+)
 from muse_for_anything.json_migrations.data_migration import migrate_data
 
 import unittest
@@ -62,14 +64,22 @@ class TestMigrationReference(unittest.TestCase):
     def test_resolve_ref(self):
         current_app = get_app()
         unresolved_reference = self.unresolved_schema["definitions"]["root"]
-        resolved_schema = {"minimum": 1, "type": ["integer", "null"]}
+        referenced_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {"root": {"minimum": 1, "type": ["integer", "null"]}},
+            "title": "IntegerType",
+        }
+        resolved_schema = referenced_schema["definitions"]["root"]
         resolved_reference = None
         with current_app.app_context():
             with current_app.test_request_context("http://localhost:5000/", method="GET"):
-                resolved_reference = resolve_schema_reference(
+                resolved_reference, root_schema = resolve_schema_reference(
                     unresolved_reference, self.unresolved_schema
                 )
         self.assertEqual(resolved_schema, resolved_reference)
+        self.assertEqual(referenced_schema, root_schema)
 
     def test_complex_to_ref_migration(self):
         source_schema = {
@@ -148,10 +158,11 @@ class TestMigrationReference(unittest.TestCase):
         resolved_reference = None
         with current_app.app_context():
             with current_app.test_request_context("http://localhost:5000/", method="GET"):
-                resolved_reference = resolve_schema_reference(
+                resolved_reference, root_schema = resolve_schema_reference(
                     unresolved_reference, self.unresolved_local_schema
                 )
         self.assertEqual(resolved_schema, resolved_reference)
+        self.assertEqual(self.unresolved_local_schema, root_schema)
 
 
 if __name__ == "__main__":

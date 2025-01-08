@@ -68,7 +68,7 @@ def migrate_data(
 
     target_type, target_nullable = _extract_type(target_schema)
     if target_type == "schemaReference":
-        target_schema = resolve_schema_reference(
+        target_schema, target_root = resolve_schema_reference(
             schema=target_schema, root_schema=target_root
         )
         return migrate_data(
@@ -84,7 +84,7 @@ def migrate_data(
         return None
     source_type, source_nullable = _extract_type(source_schema)
     if source_type == "schemaReference":
-        source_schema = resolve_schema_reference(
+        source_schema, source_root = resolve_schema_reference(
             schema=source_schema, root_schema=source_root
         )
         return migrate_data(
