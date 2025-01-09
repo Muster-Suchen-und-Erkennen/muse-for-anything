@@ -284,9 +284,6 @@ def _validate_types(
             source_type=source_type,
             source_schema=source_schema,
             target_schema=target_schema,
-            source_root=source_root,
-            target_root=target_root,
-            depth=depth,
         )
 
     return False
@@ -564,9 +561,6 @@ def _validate_to_resource_reference(
     source_type: str,
     source_schema: dict,
     target_schema: dict,
-    source_root: dict,
-    target_root: dict,
-    depth: int,
 ):
     """Validation logic when migrating to resource reference.
 
@@ -574,17 +568,28 @@ def _validate_to_resource_reference(
         source_type (str): Type of source schema
         source_scheam (dict): Source JSON Schema
         target_schema (dict): Target JSON Schema
-        source_root (dict): Root source JSON Schema
-        target_root (dict): Root target JSON Schema
-        depth (int): Depth counter
 
     Returns
         bool: Indicates whether change to object is valid
     """
-    if source_type == "resourceReference":
-        return True
-    else:
+    if source_type != "resourceReference":
         return False
+
+    source_ref_type = source_schema.get("referenceType", None)
+    target_ref_type = target_schema.get("referenceType", None)
+
+    if source_ref_type != target_ref_type:
+        return False
+
+    if source_ref_type == "ont-taxonomy":
+        source_namespace = source_schema.get("referenceKey")["namespaceId"]
+        target_namespace = target_schema.get("referenceKey")["namespaceId"]
+        source_taxonomy = source_schema.get("referenceKey")["taxonomyId"]
+        target_taxonomy = target_schema.get("referenceKey")["taxonomyId"]
+        return source_namespace == target_namespace and source_taxonomy == target_taxonomy
+
+    elif source_ref_type == "ont-type":
+        pass
 
 
 def _validate_array_to_array(

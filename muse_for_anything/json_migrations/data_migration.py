@@ -283,7 +283,7 @@ def _migrate_to_string(data, source_type: str, source_schema: dict):
     Args:
         data: Data potentially represented as a non-string
         source_type (str): Source type of data
-        source_schema (dict): Source JSON Schema for better conversion
+        source_schema (dict): Source JSON Schema
 
     Raises:
         ValueError: If transformation to string was not possible
@@ -349,7 +349,7 @@ def _migrate_to_array(
     Args:
         data: Data potentially represented as a non-array
         source_type (str): Source type of data
-        source_schema (dict): Source JSON Schema for better conversion
+        source_schema (dict): Source JSON Schema
         target_schema (dict): Target JSON Schema
         source_root (dict): Root source JSON Schema
         target_root (dict): Root target JSON Schema
@@ -374,7 +374,7 @@ def _migrate_to_array(
             ]
 
         case "array":
-            data = _migrate_array_to_array(
+            return _migrate_array_to_array(
                 data,
                 source_schema=source_schema,
                 target_array_schema=target_array_schema,
@@ -384,7 +384,7 @@ def _migrate_to_array(
             )
 
         case "tuple":
-            data = _migrate_tuple_to_array(
+            return _migrate_tuple_to_array(
                 data,
                 source_schema=source_schema,
                 target_array_schema=target_array_schema,
@@ -392,7 +392,121 @@ def _migrate_to_array(
                 target_root=target_root,
                 depth=depth,
             )
-    return data
+
+
+def _migrate_to_tuple(
+    data,
+    source_type: str,
+    source_schema: dict,
+    target_tuple_schema: dict,
+    source_root: dict,
+    target_root: dict,
+    depth: int,
+):
+    """Takes data and transforms it to a tuple instance.
+
+    Args:
+        data: Data potentially represented as a non-tuple
+        source_type (str): Source type of data
+        source_schema (dict): Source JSON Schema
+        target_tuple_schema (list): Target JSON Schema
+        source_root (dict): Root source JSON Schema
+        target_root (dict): Root target JSON Schema
+        depth (int): Depth counter for recursion, stops at 100
+
+    Raises:
+        ValueError: If transformation to tuple was not possible
+
+    Returns:
+        list: Data represented as a tuple
+    """
+    target_items = target_tuple_schema.get("items", [])
+    target_additional_items = target_tuple_schema.get("additionalItems", None)
+    match source_type:
+        case "boolean" | "integer" | "number" | "string":
+            if len(target_items) == 1:
+                return [
+                    migrate_data(
+                        data=data,
+                        source_schema=source_schema,
+                        target_schema=target_items[0],
+                        source_root=source_root,
+                        target_root=target_root,
+                        depth=depth + 1,
+                    )
+                ]
+            else:
+                raise ValueError("No transformation to enum possible!")
+        case "array":
+            return _migrate_array_to_tuple(
+                data,
+                source_schema=source_schema,
+                target_items=target_items,
+                target_additional_items=target_additional_items,
+                source_root=source_root,
+                target_root=target_root,
+                depth=depth,
+            )
+        case "tuple":
+            return _migrate_tuple_to_tuple(
+                data,
+                source_schema=source_schema,
+                target_items=target_items,
+                target_additional_items=target_additional_items,
+                source_root=source_root,
+                target_root=target_root,
+                depth=depth,
+            )
+
+
+def _migrate_to_object(
+    data,
+    source_type: str,
+    source_schema: dict,
+    target_object_schema: dict,
+    source_root: dict,
+    target_root: dict,
+    depth: int,
+):
+    """Takes data and transforms it to an object instance.
+
+    Args:
+        data: Data potentially represented as a non-object
+        source_type (str): Source type of data
+        source_schema (dict): Source JSON Schema
+        target_object_schema (dict): Target JSON Schema
+        source_root (dict): Root source JSON Schema
+        target_root (dict): Root target JSON Schema
+        depth (int): Depth counter for recursion
+
+    Raises:
+        ValueError: If transformation to object was not possible
+
+    Returns:
+        dict: Data represented as an object
+    """
+    target_properties = target_object_schema.get("properties", {})
+    match source_type:
+        case "boolean" | "integer" | "number" | "string":
+            return _migrate_primitive_to_object(
+                data=data,
+                source_schema=source_schema,
+                target_properties=target_properties,
+                source_root=source_root,
+                target_root=target_root,
+                depth=depth,
+            )
+        case "object":
+            return _migrate_object_to_object(
+                data=data,
+                source_schema=source_schema,
+                target_properties=target_properties,
+                source_root=source_root,
+                target_root=target_root,
+                depth=depth,
+            )
+        case _:
+            raise ValueError("No transformation to object possible!")
 
 
 def _migrate_array_to_array(
@@ -407,7 +521,7 @@ def _migrate_array_to_array(
 
     Args:
         data (list): Array data
-        source_schema (dict): Source JSON Schema for better conversion
+        source_schema (dict): Source JSON Schema
         target_array_schema (dict): Target Array JSON Schema
         source_root (dict): Root source JSON Schema
         target_root (dict): Root target JSON Schema
@@ -442,7 +556,7 @@ def _migrate_tuple_to_array(
 
     Args:
         data (list): Tuple data
-        source_schema (dict): Source JSON Schema for better conversion
+        source_schema (dict): Source JSON Schema
         target_array_schema (dict): Target Array JSON Schema
         source_root (dict): Root source JSON Schema
         target_root (dict): Root target JSON Schema
@@ -481,123 +595,6 @@ def _migrate_tuple_to_array(
     return data
 
 
-def _migrate_to_tuple(
-    data,
-    source_type: str,
-    source_schema: dict,
-    target_tuple_schema: dict,
-    source_root: dict,
-    target_root: dict,
-    depth: int,
-):
-    """Takes data and transforms it to a tuple instance.
-
-    Args:
-        data: Data potentially represented as a non-tuple
-        source_type (str): Source type of data
-        source_schema (dict): Source JSON Schema for better conversion
-        target_tuple_schema (list): Target JSON Schema for better conversion
-        source_root (dict): Root source JSON Schema
-        target_root (dict): Root target JSON Schema
-        depth (int): Depth counter for recursion, stops at 100
-
-    Raises:
-        ValueError: If transformation to tuple was not possible
-
-    Returns:
-        list: Data represented as a tuple
-    """
-    target_items = target_tuple_schema.get("items", [])
-    target_additional_items = target_tuple_schema.get("additionalItems", None)
-    match source_type:
-        case "boolean" | "integer" | "number" | "string":
-            if len(target_items) == 1:
-                data = [
-                    migrate_data(
-                        data=data,
-                        source_schema=source_schema,
-                        target_schema=target_items[0],
-                        source_root=source_root,
-                        target_root=target_root,
-                        depth=depth + 1,
-                    )
-                ]
-            else:
-                raise ValueError("No transformation to enum possible!")
-        case "array":
-            data = _migrate_array_to_tuple(
-                data,
-                source_schema=source_schema,
-                target_items=target_items,
-                target_additional_items=target_additional_items,
-                source_root=source_root,
-                target_root=target_root,
-                depth=depth,
-            )
-        case "tuple":
-            source_items = source_schema.get("items", [])
-            source_additional_items = source_schema.get("additionalItems", None)
-            for i, data_item in enumerate(data):
-                if i < len(source_items) and i < len(target_items):
-                    data[i] = migrate_data(
-                        data=data_item,
-                        source_schema=source_items[i],
-                        target_schema=target_items[i],
-                        source_root=source_root,
-                        target_root=target_root,
-                        depth=depth + 1,
-                    )
-                elif i < len(source_items):
-                    if target_additional_items:
-                        data[i] = migrate_data(
-                            data=data_item,
-                            source_schema=source_items[i],
-                            target_schema=target_additional_items,
-                            source_root=source_root,
-                            target_root=target_root,
-                            depth=depth + 1,
-                        )
-                    else:
-                        del data[i]
-                elif i < len(target_items):
-                    if source_additional_items:
-                        data[i] = migrate_data(
-                            data=data_item,
-                            source_schema=source_additional_items,
-                            target_schema=target_items[i],
-                            source_root=source_root,
-                            target_root=target_root,
-                            depth=depth + 1,
-                        )
-                    else:
-                        raise ValueError("Illegally defined tuple object!")
-                else:
-                    if source_additional_items and target_additional_items:
-                        data[i] = migrate_data(
-                            data=data_item,
-                            source_schema=source_additional_items,
-                            target_schema=target_additional_items,
-                            source_root=source_root,
-                            target_root=target_root,
-                            depth=depth + 1,
-                        )
-                    else:
-                        del data[i]
-            for i in range(len(source_items), len(target_items)):
-                data.append(
-                    migrate_data(
-                        data=None,
-                        source_schema=None,
-                        target_schema=target_items[i],
-                        source_root=source_root,
-                        target_root=target_root,
-                        depth=depth + 1,
-                    )
-                )
-
-    return data
-
-
 def _migrate_array_to_tuple(
     data: list,
     source_schema: dict,
@@ -611,7 +608,7 @@ def _migrate_array_to_tuple(
 
     Args:
         data (list): Tuple data
-        source_schema (dict): Source JSON Schema for better conversion
+        source_schema (dict): Source JSON Schema
         target_items (dict): Target Tuple JSON Schema
         target_additional_items (dict): dict
         source_root (dict): Root source JSON Schema
@@ -624,7 +621,6 @@ def _migrate_array_to_tuple(
     Returns:
         Data updated to tuple structure
     """
-
     source_array_schema = source_schema.get("items", None)
 
     for i, element in enumerate(data):
@@ -656,54 +652,93 @@ def _migrate_array_to_tuple(
     return data
 
 
-def _migrate_to_object(
-    data,
-    source_type: str,
+def _migrate_tuple_to_tuple(
+    data: list,
     source_schema: dict,
-    target_object_schema: dict,
+    target_items: list,
+    target_additional_items: dict,
     source_root: dict,
     target_root: dict,
     depth: int,
 ):
-    """Takes data and transforms it to an object instance.
+    """Migration logic from tuple to tuple.
 
     Args:
-        data: Data potentially represented as a non-object
-        source_type (str): Source type of data
-        source_schema (dict): Source JSON Schema for better conversion
-        target_object_schema (dict): Target JSON Schema for better conversion
+        data (list): Tuple data
+        source_schema (dict): Source JSON Schema
+        target_items (dict): Target Tuple JSON Schema
+        target_additional_items (dict): dict
         source_root (dict): Root source JSON Schema
         target_root (dict): Root target JSON Schema
         depth (int): Depth counter for recursion
 
     Raises:
-        ValueError: If transformation to object was not possible
+        ValueError: If transformation to tuple not possible!
 
     Returns:
-        dict: Data represented as an object
+        Data updated to new tuple structure
     """
-    target_properties = target_object_schema.get("properties", {})
-    match source_type:
-        case "boolean" | "integer" | "number" | "string":
-            return _migrate_primitive_to_object(
-                data=data,
-                source_schema=source_schema,
-                target_properties=target_properties,
+    source_items = source_schema.get("items", [])
+    source_additional_items = source_schema.get("additionalItems", None)
+    for i, data_item in enumerate(data):
+        if i < len(source_items) and i < len(target_items):
+            data[i] = migrate_data(
+                data=data_item,
+                source_schema=source_items[i],
+                target_schema=target_items[i],
                 source_root=source_root,
                 target_root=target_root,
-                depth=depth,
+                depth=depth + 1,
             )
-        case "object":
-            return _migrate_object_to_object(
-                data=data,
-                source_schema=source_schema,
-                target_properties=target_properties,
+        elif i < len(source_items):
+            if target_additional_items:
+                data[i] = migrate_data(
+                    data=data_item,
+                    source_schema=source_items[i],
+                    target_schema=target_additional_items,
+                    source_root=source_root,
+                    target_root=target_root,
+                    depth=depth + 1,
+                )
+            else:
+                del data[i]
+        elif i < len(target_items):
+            if source_additional_items:
+                data[i] = migrate_data(
+                    data=data_item,
+                    source_schema=source_additional_items,
+                    target_schema=target_items[i],
+                    source_root=source_root,
+                    target_root=target_root,
+                    depth=depth + 1,
+                )
+            else:
+                raise ValueError("Illegally defined tuple object!")
+        else:
+            if source_additional_items and target_additional_items:
+                data[i] = migrate_data(
+                    data=data_item,
+                    source_schema=source_additional_items,
+                    target_schema=target_additional_items,
+                    source_root=source_root,
+                    target_root=target_root,
+                    depth=depth + 1,
+                )
+            else:
+                del data[i]
+    for i in range(len(source_items), len(target_items)):
+        data.append(
+            migrate_data(
+                data=None,
+                source_schema=None,
+                target_schema=target_items[i],
                 source_root=source_root,
                 target_root=target_root,
-                depth=depth,
+                depth=depth + 1,
             )
-        case _:
-            raise ValueError("No transformation to object possible!")
+        )
+
+    return data
 
 
 def _migrate_primitive_to_object(
@@ -718,7 +753,7 @@ def _migrate_primitive_to_object(
 
     Args:
         data: Data represented as a non-object
-        source_schema (dict): Source JSON Schema for better conversion
+        source_schema (dict): Source JSON Schema
         target_properties (dict): Target Object properties schema
         source_root (dict): Root source JSON Schema
         target_root (dict): Root target JSON Schema
@@ -757,7 +792,7 @@ def _migrate_object_to_object(
 
     Args:
         data: Data represented as a non-object
-        source_schema (dict): Source JSON Schema for better conversion
+        source_schema (dict): Source JSON Schema
         target_properties (dict): Target Object properties schema
         source_root (dict): Root source JSON Schema
         target_root (dict): Root target JSON Schema
