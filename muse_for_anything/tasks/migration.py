@@ -56,18 +56,15 @@ def run_migration(self: FlaskTask, data_object_id: int, host_url: str):
     Args:
         self (FlaskTask):
         data_object_id (int): The id of the object to be migrated
+        host_url (str): URL where migration was initiated
     """
-    q = select(OntologyObject).where(OntologyObject.id == data_object_id)
-    data_object = DB.session.execute(q).scalars().first()
+    data_object = _fetch_data_object(data_object_id)
     if not data_object:
         TASK_LOGGER.warning(f"OntologyObject with ID {data_object_id} not found.")
         return
-    # Data and type version from object
-    data_object_version = data_object.current_version
-    data_entry = data_object_version.data
-    current_version = data_object_version.ontology_type_version
 
-    # Latest type version
+    # Type versions
+    current_version = data_object.current_version.ontology_type_version
     target_version = data_object.ontology_type.current_version
 
     if target_version == current_version:
@@ -76,7 +73,89 @@ def run_migration(self: FlaskTask, data_object_id: int, host_url: str):
         )
         return
 
-    # Get next type version
+    try:
+        _migrate_object(
+            data_object=data_object,
+            current_version=current_version,
+            target_version=target_version,
+            host_url=host_url,
+        )
+    except ValueError as error:
+        TASK_LOGGER.error(
+            f"""
+            OntologyObject {data_object.name} ({data_object_id}) could not be migrated.
+            {str(error)}
+            """
+        )
+        DB.session.rollback()
+
+    except Exception as error:
+        TASK_LOGGER.error(
+            f"""
+            Error during migration of OntologyObject {data_object.name} ({data_object_id}).
+            {str(error)}
+        """
+        )
+        DB.session.rollback()
+
+
+def _fetch_data_object(data_object_id: int):
+    """Retrieves data object from database by id.
+
+    Args:
+        data_object_id (int): Object id
+
+    Returns:
+        Database object with given id
+    """
+    q = select(OntologyObject).where(OntologyObject.id == data_object_id)
+    return DB.session.execute(q).scalars().first()
+
+
+def _migrate_object(
+    data_object: OntologyObject,
+    current_version: OntologyObjectTypeVersion,
+    target_version: OntologyObjectTypeVersion,
+    host_url: str,
+):
+    """Migrates an OntologyObject to the newest type version.
+
+    Args:
+        data_object (OntologyObject): A data object from the repository
+        current_version (OntologyObjectTypeVersion): Current type version
+        target_version (OntologyObjectTypeVersion): Latest type version
+        host_url (str): URL where migration was initiated
+    """
+    while current_version != target_version:
+        next_version = _get_next_version(
+            data_object=data_object, current_version=current_version
+        )
+
+        updated_data = _migrate_data_step(
+            data_object=data_object,
+            current_version=current_version,
+            next_version=next_version,
+            host_url=host_url,
+        )
+        _save_new_version(
+            data_object=data_object, next_version=next_version, updated_data=updated_data
+        )
+
+        current_version = next_version
+
+
+def _get_next_version(
+    data_object: OntologyObject, current_version: OntologyObjectTypeVersion
+):
+    """Retrieve the next type version of an object.
+
+    Args:
+        data_object (OntologyObject): Object of the repository
+        current_version (OntologyObjectTypeVersion): Current type version
+
+    Returns:
+        OntologyObjectTypeVersion: Next type version of the data object
+    """
     next_q = (
         select(OntologyObjectTypeVersion)
         .where(OntologyObjectTypeVersion.object_type_id == data_object.object_type_id)
@@ -84,74 +163,76 @@ def run_migration(self: FlaskTask, data_object_id: int, host_url: str):
         .where(OntologyObjectTypeVersion.deleted_on == None)
         .order_by(OntologyObjectTypeVersion.version.asc())
     )
-    next_version = DB.session.execute(next_q).scalars().first()
+    return DB.session.execute(next_q).scalars().first()
 
-    try:
-        updated_data = None
-        with current_app.test_request_context(host_url, method="GET"):
-            updated_data = migrate_data(
-                data=data_entry,
-                source_schema=current_version.data,
-                target_schema=next_version.data,
-            )
-            name = data_object.name
-            description = data_object.description
-            object_version = OntologyObjectVersion(
-                object=data_object,
-                type_version=next_version,
-                version=data_object.version + 1,
-                name=name,
-                description=description,
-                data=updated_data,
-            )
 
-            # validate against object type
-            # and validate and extract resource references
-            metadata = validate_object(
-                object_version=object_version,
-                type_version=next_version,
-            )
+def _migrate_data_step(
+    data_object: OntologyObject,
+    current_version: OntologyObjectTypeVersion,
+    next_version: OntologyObjectTypeVersion,
+    host_url: str,
+):
+    """Performs a migration step by one version number for an object
 
-            # add references
-            for object_ref in metadata.referenced_objects:
-                object_relation = OntologyObjectVersionToObject(
-                    object_version_source=object_version, object_target=object_ref
-                )
-                DB.session.add(object_relation)
-            for taxonomy_item in metadata.referenced_taxonomy_items:
-                taxonomy_item_relation = OntologyObjectVersionToTaxonomyItem(
-                    object_version_source=object_version,
-                    taxonomy_item_target=taxonomy_item,
-                )
-                DB.session.add(taxonomy_item_relation)
+    Args:
+        data_object (OntologyObject): Object to be migrated
+        current_version (OntologyObjectTypeVersion): Current type version
+        next_version (OntologyObjectTypeVersion): Next type version
+        host_url (str): URL where migration was initiated
 
-            # update existing object
-            data_object.update(
-                name=name,
-                description=description,
-            )
-            DB.session.add(object_version)
-            data_object.current_version = object_version
-            DB.session.add(data_object)
-            DB.session.commit()
-        message = f"""
-            OntologyObject {data_object.name} migrated to version {next_version.version}.
-            """
-        TASK_LOGGER.info(message)
+    Returns:
+        Updated data of the data object
+    """
+    with current_app.test_request_context(host_url, method="GET"):
+        return migrate_data(
+            data=data_object.current_version.data,
+            source_schema=current_version.data,
+            target_schema=next_version.data,
+        )
 
-        if next_version != target_version:
-            run_migration.apply_async(args=[data_object_id, host_url])
-    except ValueError as error:
-        message = f"""
-            OntologyObject {data_object.name} ({data_object_id}) could not be migrated.
-            {str(error)}
-            """
-        TASK_LOGGER.error(message)
-        DB.session.rollback()
-        return
-    except Exception as error:
-        message = f"""
-            Error during migration of OntologyObject {data_object.name} ({data_object_id}).
-            {str(error)}
-        """
-        TASK_LOGGER.error(message)
+
+def _save_new_version(
+    data_object: OntologyObject, next_version: OntologyObjectTypeVersion, updated_data
+):
+    name = data_object.name
+    description = data_object.description
+    object_version = OntologyObjectVersion(
+        object=data_object,
+        type_version=next_version,
+        version=data_object.version + 1,
+        name=name,
+        description=description,
+        data=updated_data,
+    )
+
+    # validate against object type
+    # and validate and extract resource references
+    metadata = validate_object(
+        object_version=object_version,
+        type_version=next_version,
+    )
+    # add references
+    for object_ref in metadata.referenced_objects:
+        object_relation = OntologyObjectVersionToObject(
+            object_version_source=object_version, object_target=object_ref
+        )
+        DB.session.add(object_relation)
+    for taxonomy_item in metadata.referenced_taxonomy_items:
+        taxonomy_item_relation = OntologyObjectVersionToTaxonomyItem(
+            object_version_source=object_version,
+            taxonomy_item_target=taxonomy_item,
+        )
+        DB.session.add(taxonomy_item_relation)
+
+    data_object.update(
+        name=name,
+        description=description,
+    )
+    DB.session.add(object_version)
+    data_object.current_version = object_version
+    DB.session.add(data_object)
+    DB.session.commit()
+
+    TASK_LOGGER.info(
+        f"OntologyObject {data_object.name} migrated to version {next_version.version}."
+    )
