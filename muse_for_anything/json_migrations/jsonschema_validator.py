@@ -34,7 +34,7 @@ def extract_type(schema: dict):
     whether or not elements are nullable
 
     Args:
-        schema (dict): A JSONSchema saved as python dict
+        schema (dict): A JSON Schema saved as python dict
 
     Raises:
         ValueError: When schema does not include a known type definition
@@ -115,11 +115,11 @@ def resolve_schema_reference(schema: dict, root_schema: dict):
     the resolved schema.
 
     Args:
-        schema (dict): A JSONSchema that potentially holds $ref
-        root_schema (dict): The root JSONSchema for local references
+        schema (dict): A JSON Schema that potentially holds $ref
+        root_schema (dict): The root JSON Schema for local references
 
     Returns:
-        dict: Resolved JSONSchema if there was a reference, else original schema
+        dict: Resolved JSON Schema if there was a reference, else original schema
     """
 
     if "$ref" not in schema:
@@ -151,11 +151,11 @@ def validate_schema(
     e. g. via boolean, integer, number, or string.
 
     Args:
-        source_schema (dict): Source JSONSchema
-        target_schema (dict): Target JSONSchema
-        source_root (Optional[dict], optional): Root source JSONSchema,
+        source_schema (dict): Source JSON Schema
+        target_schema (dict): Target JSON Schema
+        source_root (Optional[dict], optional): Root source JSON Schema,
         used for reference resolving. Defaults to None.
-        target_root (Optional[dict], optional): Root target JSONSchema,
+        target_root (Optional[dict], optional): Root target JSON Schema,
         used for reference resolving. Defaults to None.
         depth (int, optional): Depth counter for recursion, stops at 100.
         Defaults to 0.
@@ -210,8 +210,8 @@ def _validate_types(
         target_type (str): Type of target schema
         source_scheam (dict): Source JSON Schema
         target_schema (dict): Target JSON Schema
-        source_root (dict): Root source JSONSchema
-        target_root (dict): Root target JSONSchema
+        source_root (dict): Root source JSON Schema
+        target_root (dict): Root target JSON Schema
         depth (int): Depth counter
     """
     if source_type == "schemaReference" or target_type == "schemaReference":
@@ -305,8 +305,8 @@ def _validate_schema_reference(
     Args:
         source_schema (dict): Source JSON Schema
         target_schema (dict): Target JSON Schema
-        source_root (dict): Root source JSONSchema
-        target_root (dict): Root target JSONSchema
+        source_root (dict): Root source JSON Schema
+        target_root (dict): Root target JSON Schema
         depth (int): Depth counter
 
     Returns:
@@ -433,8 +433,8 @@ def _validate_to_array(
         source_type (str): Type of source schema
         source_scheam (dict): Source JSON Schema
         target_schema (dict): Target JSON Schema
-        source_root (dict): Root source JSONSchema
-        target_root (dict): Root target JSONSchema
+        source_root (dict): Root source JSON Schema
+        target_root (dict): Root target JSON Schema
         depth (int): Depth counter
 
     Returns
@@ -484,8 +484,8 @@ def _validate_to_tuple(
         source_type (str): Type of source schema
         source_scheam (dict): Source JSON Schema
         target_schema (dict): Target JSON Schema
-        source_root (dict): Root source JSONSchema
-        target_root (dict): Root target JSONSchema
+        source_root (dict): Root source JSON Schema
+        target_root (dict): Root target JSON Schema
         depth (int): Depth counter
 
     Returns
@@ -538,8 +538,8 @@ def _validate_to_object(
         source_type (str): Type of source schema
         source_scheam (dict): Source JSON Schema
         target_schema (dict): Target JSON Schema
-        source_root (dict): Root source JSONSchema
-        target_root (dict): Root target JSONSchema
+        source_root (dict): Root source JSON Schema
+        target_root (dict): Root target JSON Schema
         depth (int): Depth counter
 
     Returns
@@ -574,8 +574,8 @@ def _validate_to_resource_reference(
         source_type (str): Type of source schema
         source_scheam (dict): Source JSON Schema
         target_schema (dict): Target JSON Schema
-        source_root (dict): Root source JSONSchema
-        target_root (dict): Root target JSONSchema
+        source_root (dict): Root source JSON Schema
+        target_root (dict): Root target JSON Schema
         depth (int): Depth counter
 
     Returns
@@ -599,8 +599,8 @@ def _validate_array_to_array(
     Args:
         source_scheam (dict): Source JSON Schema
         target_schema (dict): Target JSON Schema
-        source_root (dict): Root source JSONSchema
-        target_root (dict): Root target JSONSchema
+        source_root (dict): Root source JSON Schema
+        target_root (dict): Root target JSON Schema
         depth (int): Depth counter
 
     Return:
@@ -635,8 +635,8 @@ def _validate_tuple_to_array(
     Args:
         source_scheam (dict): Source JSON Schema
         target_schema (dict): Target JSON Schema
-        source_root (dict): Root source JSONSchema
-        target_root (dict): Root target JSONSchema
+        source_root (dict): Root source JSON Schema
+        target_root (dict): Root target JSON Schema
         depth (int): Depth counter
 
     Return:
@@ -855,8 +855,8 @@ def _check_numeric_attributes(source_schema: dict, target_schema: dict):
     e. g., min and max, of source and target schema.
 
     Args:
-        source_schema (dict): Source JSONSchema
-        target_schema (dict): Target JSONSchema
+        source_schema (dict): Source JSON Schema
+        target_schema (dict): Target JSON Schema
 
     Returns:
         boolean: True, if update valid, else false
@@ -910,8 +910,8 @@ def _check_string_attributes(source_schema: dict, target_schema: dict):
     min and max length of source and target schema.
 
     Args:
-        source_schema (dict): Source JSONSchema
-        target_schema (dict): Target JSONSchema
+        source_schema (dict): Source JSON Schema
+        target_schema (dict): Target JSON Schema
 
     Returns:
         boolean: True, if update valid, else false
@@ -937,8 +937,8 @@ def _check_array_attributes(source_schema: dict, target_schema: dict):
     min and max items of source and target schema.
 
     Args:
-        source_schema (dict): Source JSONSchema
-        target_schema (dict): Target JSONSchema
+        source_schema (dict): Source JSON Schema
+        target_schema (dict): Target JSON Schema
 
     Returns:
         boolean: True, if update valid, else false
