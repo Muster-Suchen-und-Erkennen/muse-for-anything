@@ -26,7 +26,7 @@ import json
 import numbers
 from typing import Optional
 from muse_for_anything.json_migrations.jsonschema_validator import (
-    _extract_type,
+    extract_type,
     resolve_schema_reference,
 )
 
@@ -66,7 +66,7 @@ def migrate_data(
         target_root = target_schema
         target_schema = target_schema["definitions"]["root"]
 
-    target_type, target_nullable = _extract_type(target_schema)
+    target_type, target_nullable = extract_type(target_schema)
     if target_type == "schemaReference":
         target_schema, target_root = resolve_schema_reference(
             schema=target_schema, root_schema=target_root
@@ -82,7 +82,7 @@ def migrate_data(
 
     if data is None and target_nullable:
         return None
-    source_type, source_nullable = _extract_type(source_schema)
+    source_type, source_nullable = extract_type(source_schema)
     if source_type == "schemaReference":
         source_schema, source_root = resolve_schema_reference(
             schema=source_schema, root_schema=source_root
