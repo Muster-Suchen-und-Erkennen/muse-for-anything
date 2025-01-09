@@ -40,25 +40,25 @@ def migrate_data(
     target_root: Optional[dict] = None,
     depth: int = 0,
 ):
-    """Data conforming to the source schema is migrated to the target schema if
-    possible.
+    """Migrate data from source schema to the target schema if possible.
 
     Args:
         data: Data stored in a MUSE4Anything object
         source_schema (dict): Source JSON Schema
         target_schema (dict): Target JSON Schema
-        source_root (Optional[dict], optional): Root source JSON Schema,
-        used for reference resolving. Defaults to None.
-        target_root (Optional[dict], optional): Root target JSON Schema,
-        used for reference resolving. Defaults to None.
-        depth (int, optional): Depth counter for recursion, stops at 100.
+        source_root (Optional[dict], optional): Root source JSON Schema
+        target_root (Optional[dict], optional): Root target JSON Schema
+        depth (int, optional): Depth counter for recursion
         Defaults to 0.
 
+    Raises:
+        Exception: When data is nested too deeply.
+
     Returns:
-        Updated data, if update was successful
+        Migrated data conforming to the target schema, if possible
     """
     if depth > 100:
-        raise ValueError("Data is too nested to migrate!")
+        raise Exception("Data is too nested to migrate!")
 
     # Initialize root schemas
     if source_root is None:

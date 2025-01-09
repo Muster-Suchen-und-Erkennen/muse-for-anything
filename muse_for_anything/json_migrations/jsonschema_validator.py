@@ -119,7 +119,7 @@ def resolve_schema_reference(schema: dict, root_schema: dict):
         root_schema (dict): The root JSON Schema for local references
 
     Returns:
-        dict: Resolved JSON Schema if there was a reference, else original schema
+        dict: Resolved schema if there was a reference, else original schema
     """
 
     if "$ref" not in schema:
@@ -161,13 +161,13 @@ def validate_schema(
         Defaults to 0.
 
     Raises:
-        ValueError: If a schema is nested too deep.
+        Exception: If a schema is nested too deep.
 
     Returns:
         bool: Returns True if schemas could be matched, else False
     """
     if depth > 100:
-        raise ValueError("Schema nested too deep")
+        raise Exception("Schema nested too deep")
 
     if source_root is None:
         source_root = source_schema
