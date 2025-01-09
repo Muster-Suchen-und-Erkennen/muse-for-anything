@@ -134,19 +134,24 @@ def run_migration(self: FlaskTask, data_object_id: int, host_url: str):
             data_object.current_version = object_version
             DB.session.add(data_object)
             DB.session.commit()
-        TASK_LOGGER.info(
-            f"OntologyObject with ID {data_object_id} migrated to version {next_version.version}."
-        )
+        message = f"""
+            OntologyObject {data_object.name} migrated to version {next_version.version}.
+            """
+        TASK_LOGGER.info(message)
 
         if next_version != target_version:
             run_migration.apply_async(args=[data_object_id, host_url])
-    except ValueError:
-        TASK_LOGGER.warning(
-            f"OntologyObject with ID {data_object_id} could not be migrated."
-        )
+    except ValueError as error:
+        message = f"""
+            OntologyObject {data_object.name} ({data_object_id}) could not be migrated.
+            {str(error)}
+            """
+        TASK_LOGGER.error(message)
         DB.session.rollback()
         return
-    except Exception:
-        TASK_LOGGER.error(
-            f"Error during migration of OntologyObject {data_object_id}. Likely due to validation error."
-        )
+    except Exception as error:
+        message = f"""
+            Error during migration of OntologyObject {data_object.name} ({data_object_id}).
+            {str(error)}
+        """
+        TASK_LOGGER.error(message)

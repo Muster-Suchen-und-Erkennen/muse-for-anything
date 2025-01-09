@@ -232,10 +232,7 @@ def _migrate_to_string(data, source_type: str, source_schema: dict):
     """
     match source_type:
         case "boolean" | "enum" | "integer" | "number" | "string":
-            try:
-                data = str(data)
-            except ValueError:
-                raise ValueError("No transformation to string possible!")
+            data = str(data)
         case "array" | "object" | "tuple":
             data = json.dumps(data)
     return data
@@ -256,10 +253,7 @@ def _migrate_to_boolean(data, source_type: str):
     """
     match source_type:
         case "boolean" | "enum" | "integer" | "number" | "string":
-            try:
-                data = bool(data)
-            except ValueError:
-                raise ValueError("No transformation to boolean possible!")
+            data = bool(data)
         case "object":
             if len(data) == 0:
                 data = False
