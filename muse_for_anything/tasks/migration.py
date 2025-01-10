@@ -58,7 +58,8 @@ def run_migration(self: FlaskTask, data_object_id: int, host_url: str):
         data_object_id (int): The id of the object to be migrated
         host_url (str): URL where migration was initiated
     """
-    data_object = _fetch_data_object(data_object_id)
+    q = select(OntologyObject).where(OntologyObject.id == data_object_id)
+    data_object = DB.session.execute(q).scalars().first()
     if not data_object:
         TASK_LOGGER.warning(f"OntologyObject with ID {data_object_id} not found.")
         return
@@ -97,19 +98,6 @@ def run_migration(self: FlaskTask, data_object_id: int, host_url: str):
         """
         )
         DB.session.rollback()
-
-
-def _fetch_data_object(data_object_id: int):
-    """Retrieves data object from database by id.
-
-    Args:
-        data_object_id (int): Object id
-
-    Returns:
-        Database object with given id
-    """
-    q = select(OntologyObject).where(OntologyObject.id == data_object_id)
-    return DB.session.execute(q).scalars().first()
 
 
 def _migrate_object(
@@ -204,6 +192,7 @@ def _save_new_version(
         description=description,
         data=updated_data,
     )
+    DB.session.add(object_version)
 
     # validate against object type
     # and validate and extract resource references
@@ -228,7 +217,6 @@ def _save_new_version(
         name=name,
         description=description,
     )
-    DB.session.add(object_version)
     data_object.current_version = object_version
     DB.session.add(data_object)
     DB.session.commit()

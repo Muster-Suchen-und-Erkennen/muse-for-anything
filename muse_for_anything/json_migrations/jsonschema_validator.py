@@ -582,14 +582,15 @@ def _validate_to_resource_reference(
         return False
 
     if source_ref_type == "ont-taxonomy":
-        source_namespace = source_schema.get("referenceKey")["namespaceId"]
-        target_namespace = target_schema.get("referenceKey")["namespaceId"]
-        source_taxonomy = source_schema.get("referenceKey")["taxonomyId"]
-        target_taxonomy = target_schema.get("referenceKey")["taxonomyId"]
-        return source_namespace == target_namespace and source_taxonomy == target_taxonomy
+        return _validate_taxonomy_reference(
+            source_schema=source_schema,
+            target_schema=target_schema,
+        )
 
     elif source_ref_type == "ont-type":
-        pass
+        return _validate_type_reference(
+            source_schema=source_schema, target_schema=target_schema
+        )
 
 
 def _validate_array_to_array(
@@ -852,6 +853,50 @@ def _validate_object_to_object(
         )
         if not valid:
             return False
+    return True
+
+
+def _validate_taxonomy_reference(source_schema: dict, target_schema: dict):
+    """Validation logic for taxonomy references.
+
+    Args:
+        source_schema (dict): Source JSON Schema
+        target_schema (dict): Target JSON Schema
+
+    Returns:
+        bool: Inidicates if taxonomy ref update is valid
+    """
+    source_namespace = source_schema.get("referenceKey")["namespaceId"]
+    target_namespace = target_schema.get("referenceKey")["namespaceId"]
+    source_taxonomy = source_schema.get("referenceKey")["taxonomyId"]
+    target_taxonomy = target_schema.get("referenceKey")["taxonomyId"]
+    namespace_equal = source_namespace == target_namespace
+    taxonomy_equal = source_taxonomy == target_taxonomy
+    return namespace_equal and taxonomy_equal
+
+
+def _validate_type_reference(source_schema: dict, target_schema: dict):
+    """Validation logic for type references.
+
+    Args:
+        source_schema (dict): Source JSON Schema
+        target_schema (dict): Target JSON Schema
+
+    Returns:
+        bool: Indicates if type ref update is valid
+    """
+    source_ref_key = source_schema.get("referenceKey", None)
+    target_ref_key = target_schema.get("referenceKey", None)
+
+    if source_ref_key and target_ref_key:
+        source_namespace = source_schema["referenceKey"]["namespaceId"]
+        target_namespace = target_schema["referenceKey"]["namespaceId"]
+        source_type = source_schema["referenceKey"]["typeId"]
+        target_type = target_schema["referenceKey"]["typeId"]
+        namespace_equal = source_namespace == target_namespace
+        type_equal = source_type == target_type
+        return namespace_equal and type_equal
+
     return True
 
 

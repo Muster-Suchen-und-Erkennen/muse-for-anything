@@ -24,7 +24,10 @@
 
 import json
 import numbers
+import select
 from typing import Optional
+from muse_for_anything.db.db import DB
+from muse_for_anything.db.models.ontology_objects import OntologyObject
 from muse_for_anything.json_migrations.jsonschema_validator import (
     extract_type,
     resolve_schema_reference,
@@ -190,6 +193,14 @@ def _execute_migration_function(
             source_root=source_root,
             target_root=target_root,
             depth=depth,
+        )
+
+    elif target_type == "resourceReference":
+        updated_data = _migrate_to_resource_reference(
+            data=data,
+            source_type=source_type,
+            source_schema=source_schema,
+            target_schema=target_schema,
         )
 
     return updated_data
@@ -358,11 +369,11 @@ def _migrate_to_array(
     Returns:
         list: data represented as an array
     """
-    target_array_schema = target_schema.get("items", [])
+    target_array_schema = target_schema.get("items", {})
 
     match source_type:
         case "boolean" | "integer" | "number" | "string":
-            data = [
+            return [
                 migrate_data(
                     data=data,
                     source_schema=source_schema,
@@ -507,6 +518,55 @@ def _migrate_to_object(
             )
         case _:
             raise ValueError("No transformation to object possible!")
+
+
+def _migrate_to_resource_reference(
+    data,
+    source_type: str,
+    source_schema: dict,
+    target_schema: dict,
+):
+    """Migration logic for resource references. They can only be migrated from
+    resource reference to resource reference. Also, their type of resource is
+    fixed, i. e., taxonomy reference cannot be changed to object reference and
+    vice versa.
+
+    Args:
+        data: Data stored in OntologyObject
+        source_type (str): Source type of data
+        source_schema (dict): Source JSON Schema
+        target_schema (dict): Target JSON Schema
+
+    Raises:
+        ValueError: If the schema change was invalid (not )
+
+    Returns:
+        _type_: _description_
+    """
+    if source_type != "resourceReference":
+        raise ValueError(
+            f"No conversion from {source_type} to resource reference supported"
+        )
+
+    source_ref_type = source_schema.get("referenceType", None)
+    target_ref_type = target_schema.get("referenceType", None)
+
+    if source_ref_type != target_ref_type:
+        raise ValueError(
+            f"Conversion {source_ref_type} to {target_ref_type} not supported"
+        )
+
+    if source_ref_type == "ont-taxonomy":
+        return _migrate_taxonomy_resource_reference(
+            data=data,
+            source_schema=source_schema,
+            target_schema=target_schema,
+        )
+
+    if source_ref_type == "ont-type":
+        return _migrate_type_resource_reference(
+            data=data, source_schema=source_schema, target_schema=target_schema
+        )
 
 
 def _migrate_array_to_array(
@@ -848,3 +908,111 @@ def _migrate_object_to_object(
             del data[prop]
 
     return data
+
+
+def _migrate_taxonomy_resource_reference(
+    data,
+    source_schema: dict,
+    target_schema: dict,
+):
+    """Migration logic from taxonomy resource reference to taxonomy resource
+    reference.
+
+    Args:
+        data: Data Object
+        source_schema (dict): Source JSON Schema
+        target_schema (dict): Target JSON Schema
+
+    Returns:
+        Data if schema change valid
+    """
+    source_namespace = source_schema.get("referenceKey")["namespaceId"]
+    target_namespace = target_schema.get("referenceKey")["namespaceId"]
+    source_taxonomy = source_schema.get("referenceKey")["taxonomyId"]
+    target_taxonomy = target_schema.get("referenceKey")["taxonomyId"]
+    namespace_equal = source_namespace == target_namespace
+    taxonomy_equal = source_taxonomy == target_taxonomy
+    if namespace_equal and taxonomy_equal:
+        return data
+
+
+def _migrate_type_resource_reference(
+    data,
+    source_schema: dict,
+    target_schema: dict,
+):
+    """Migration logic from type resource reference to type resource reference.
+
+    Args:
+        data: Data stored in OntologyObject
+        source_schema (dict): Source JSON Schema
+        target_schema (dict): Target JSON Schema
+
+    Returns:
+        Data if schema change valid
+    """
+    source_ref_key = source_schema.get("referenceKey", None)
+    target_ref_key = target_schema.get("referenceKey", None)
+
+    if source_ref_key and target_ref_key:
+        return _check_types_equal(
+            data=data, source_schema=source_schema, target_schema=target_schema
+        )
+
+    elif target_ref_key:
+        return _check_type_compatible(data=data, target_schema=target_schema)
+
+    else:
+        return data
+
+
+def _check_types_equal(data, source_schema: dict, target_schema: dict):
+    """Check whether referenced types are equal
+
+    Args:
+        data: Data stored in resource reference
+        source_schema (dict): Source JSON Schema
+        target_schema (dict): Target JSON Schema
+
+    Returns:
+        bool: Indicates whether referenced types are equal
+    """
+    source_namespace = source_schema["referenceKey"]["namespaceId"]
+    target_namespace = target_schema["referenceKey"]["namespaceId"]
+    source_type = source_schema["referenceKey"]["typeId"]
+    target_type = target_schema["referenceKey"]["typeId"]
+
+    namespace_equal = source_namespace == target_namespace
+    type_equal = source_type == target_type
+
+    if namespace_equal and type_equal:
+        return data
+
+    else:
+        raise ValueError(
+            f"Source type {source_type} not equal target type {target_type}!"
+        )
+
+
+def _check_type_compatible(data, target_schema: dict):
+    """Check whether data is compatible to new resource reference.
+
+    Args:
+        data: Data stored in resource reference
+        target_schema (dict): Target JSON Schema
+
+    Returns:
+        bool: Indicates if resource references are compatible
+    """
+    target_type = target_schema["referenceKey"]["typeId"]
+    data_object = data["referenceKey"]["objectId"]
+
+    q = select(OntologyObject).where(OntologyObject.id == data_object)
+    ontology_object = DB.session.execute(q).scalars().first()
+    object_type = ontology_object.object_type_id
+
+    if target_type == object_type:
+        return data
+
+    else:
+        raise ValueError(f"ObjectType {object_type} is not equal RefType {target_type}!")
