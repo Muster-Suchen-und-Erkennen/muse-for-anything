@@ -410,8 +410,7 @@ class TypeView(MethodView):
             target_schema=data,
         )
         if not valid:
-            # TODO Handle error in UI
-            raise ValueError("Type conversion is not supported!")
+            abort(HTTPStatus.BAD_REQUEST, message=gettext("Schema change is not valid"))
 
         object_type_version = OntologyObjectTypeVersion(
             ontology_type=found_object_type,

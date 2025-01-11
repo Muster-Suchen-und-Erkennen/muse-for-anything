@@ -22,6 +22,7 @@ export class ApiSchemaForm {
     @bindable({ defaultBindingMode: bindingMode.fromView }) abortSignal: AbortSignal;
     @bindable({ defaultBindingMode: bindingMode.fromView }) submitSuccess: boolean = false;
     @bindable({ defaultBindingMode: bindingMode.fromView }) submitError: boolean = false;
+    @bindable({ defaultBindingMode: bindingMode.fromView }) errorMessage: string = "";
 
     @observable schema: NormalizedApiSchema;
     resourceTypeTranslationKey: string;
@@ -97,6 +98,8 @@ export class ApiSchemaForm {
             .catch(() => {
                 this.submitError = true;
                 this.submitSuccess = false;
+                this.errorMessage = "Schema change is invalid.";
+                setTimeout(() => this.errorMessage = "", 3000);
             })
             .finally(() => {
                 this.abortSignal = null;
