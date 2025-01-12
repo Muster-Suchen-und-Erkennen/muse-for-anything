@@ -303,7 +303,12 @@ def _migrate_to_string(data, source_type: str, source_schema: dict):
         str: data represented as a string
     """
     match source_type:
-        case "boolean" | "enum" | "integer" | "number" | "string":
+        case "boolean":
+            if not data:
+                return ""
+            else:
+                return str(data)
+        case "enum" | "integer" | "number" | "string":
             data = str(data)
 
         case "array" | "object" | "tuple":
@@ -332,12 +337,11 @@ def _migrate_to_enum(data, target_schema: dict):
         temp_data = data
 
         for value in allowed_values:
+            if value == data:
+                return value
             if isinstance(value, numbers.Number) and round(value) == round(temp_data):
                 temp_data = value
         data = temp_data
-
-    elif isinstance(data, list) and len(data) == 1:
-        data = data[0]
 
     if data in allowed_values:
         return data

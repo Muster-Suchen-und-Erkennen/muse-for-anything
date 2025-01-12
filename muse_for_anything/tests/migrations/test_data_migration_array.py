@@ -120,7 +120,7 @@ class TestMigrationToArray(unittest.TestCase):
         }
         data = False
         updated_data = migrate_data(data, source_schema, self.target_schema_string)
-        self.assertEqual(["False"], updated_data)
+        self.assertEqual([""], updated_data)
 
     def test_from_int_to_array_number(self):
         source_schema = {
