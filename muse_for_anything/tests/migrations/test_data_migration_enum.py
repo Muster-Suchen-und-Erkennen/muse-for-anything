@@ -9,7 +9,7 @@ class TestMigrationToInteger(unittest.TestCase):
         "$ref": "#/definitions/root",
         "$schema": "http://json-schema.org/draft-07/schema#",
         "abstract": False,
-        "definitions": {"root": {"enum": [False, None, 1944, 1944.123, "hello world"]}},
+        "definitions": {"root": {"enum": [False, None, 1944.123, "hello world"]}},
         "title": "Type",
     }
 
@@ -97,7 +97,7 @@ class TestMigrationToInteger(unittest.TestCase):
         with self.assertRaises(ValueError):
             migrate_data(data, source_schema, self.target_schema)
 
-    def test_from_integer_to_enum_valid(self):
+    def test_from_integer_to_enum_invalid(self):
         source_schema = {
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -106,10 +106,10 @@ class TestMigrationToInteger(unittest.TestCase):
             "title": "Type",
         }
         data = 1944
-        updated_data = migrate_data(data, source_schema, self.target_schema)
-        self.assertEqual(1944, updated_data)
+        with self.assertRaises(ValueError):
+            migrate_data(data, source_schema, self.target_schema)
 
-    def test_from_integer_to_enum_invalid(self):
+    def test_from_integer_to_enum_invalid_two(self):
         source_schema = {
             "$ref": "#/definitions/root",
             "$schema": "http://json-schema.org/draft-07/schema#",

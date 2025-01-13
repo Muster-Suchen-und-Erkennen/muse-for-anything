@@ -333,16 +333,6 @@ def _migrate_to_enum(data, target_schema: dict):
     """
     allowed_values = target_schema.get("enum", [])
 
-    if isinstance(data, numbers.Number):
-        temp_data = data
-
-        for value in allowed_values:
-            if value == data:
-                return value
-            if isinstance(value, numbers.Number) and round(value) == round(temp_data):
-                temp_data = value
-        data = temp_data
-
     if data in allowed_values:
         return data
 
