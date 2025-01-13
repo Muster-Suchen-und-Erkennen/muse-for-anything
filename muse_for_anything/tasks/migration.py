@@ -75,12 +75,12 @@ def run_migration(self: FlaskTask, data_object_id: int, host_url: str):
         return
 
     try:
-        _migrate_object(
-            data_object=data_object,
-            current_version=current_version,
-            target_version=target_version,
-            host_url=host_url,
-        )
+        with current_app.test_request_context(host_url, method="GET"):
+            _migrate_object(
+                data_object=data_object,
+                current_version=current_version,
+                target_version=target_version,
+            )
     except ValueError as error:
         TASK_LOGGER.error(
             f"""
@@ -104,7 +104,6 @@ def _migrate_object(
     data_object: OntologyObject,
     current_version: OntologyObjectTypeVersion,
     target_version: OntologyObjectTypeVersion,
-    host_url: str,
 ):
     """Migrates an OntologyObject to the newest type version.
 
@@ -119,11 +118,10 @@ def _migrate_object(
             data_object=data_object, current_version=current_version
         )
 
-        updated_data = _migrate_data_step(
-            data_object=data_object,
-            current_version=current_version,
-            next_version=next_version,
-            host_url=host_url,
+        updated_data = migrate_data(
+            data=data_object.current_version.data,
+            source_schema=current_version.data,
+            target_schema=next_version.data,
         )
         _save_new_version(
             data_object=data_object, next_version=next_version, updated_data=updated_data
@@ -152,31 +150,6 @@ def _get_next_version(
         .order_by(OntologyObjectTypeVersion.version.asc())
     )
     return DB.session.execute(next_q).scalars().first()
-
-
-def _migrate_data_step(
-    data_object: OntologyObject,
-    current_version: OntologyObjectTypeVersion,
-    next_version: OntologyObjectTypeVersion,
-    host_url: str,
-):
-    """Performs a migration step by one version number for an object
-
-    Args:
-        data_object (OntologyObject): Object to be migrated
-        current_version (OntologyObjectTypeVersion): Current type version
-        next_version (OntologyObjectTypeVersion): Next type version
-        host_url (str): URL where migration was initiated
-
-    Returns:
-        Updated data of the data object
-    """
-    with current_app.test_request_context(host_url, method="GET"):
-        return migrate_data(
-            data=data_object.current_version.data,
-            source_schema=current_version.data,
-            target_schema=next_version.data,
-        )
 
 
 def _save_new_version(
