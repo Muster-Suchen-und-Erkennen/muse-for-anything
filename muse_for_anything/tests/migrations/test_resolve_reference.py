@@ -5,19 +5,10 @@ from muse_for_anything.json_migrations.data_migration import migrate_data
 
 import unittest
 
-app = None
-
-
-def get_app():
-    from muse_for_anything import create_app
-
-    global app
-    if app is None:
-        app = create_app()
-    return app
-
 
 class TestMigrationReference(unittest.TestCase):
+
+    app = None
 
     unresolved_schema = {
         "$ref": "#/definitions/root",
@@ -61,8 +52,15 @@ class TestMigrationReference(unittest.TestCase):
         "title": "Type",
     }
 
+    @classmethod
+    def setUpClass(cls):
+        from muse_for_anything import create_app
+
+        if cls.app is None:
+            cls.app = create_app()
+
     def test_resolve_ref(self):
-        current_app = get_app()
+        current_app = self.app
         unresolved_reference = self.unresolved_schema["definitions"]["root"]
         referenced_schema = {
             "$ref": "#/definitions/root",
@@ -104,7 +102,7 @@ class TestMigrationReference(unittest.TestCase):
             },
             "title": "Type",
         }
-        current_app = get_app()
+        current_app = self.app
         data = {"one": {"one": "42", "two": 555}, "two": 42, "three": 53.23}
         updated_data = None
         with current_app.app_context():
@@ -139,7 +137,7 @@ class TestMigrationReference(unittest.TestCase):
             },
             "title": "Type",
         }
-        current_app = get_app()
+        current_app = self.app
         data = {"one": {"one": 42, "two": 555}, "two": "42", "three": 53.23}
         updated_data = None
         with current_app.app_context():
@@ -152,7 +150,7 @@ class TestMigrationReference(unittest.TestCase):
         )
 
     def test_resolve_local_ref(self):
-        current_app = get_app()
+        current_app = self.app
         unresolved_reference = self.unresolved_local_schema["definitions"]["root"]
         resolved_schema = {"type": ["integer"]}
         resolved_reference = None
