@@ -109,7 +109,7 @@ def get_page_info(
     if cursor is not None:
         # always include cursor row
         query_filter = or_(cursor_column == cursor, and_(*filter_criteria))
-        item_query = model.query.filter(query_filter).order_by(order_by)
+        item_query = model.query.filter(query_filter).order_by(*order_by)
         cursor_row_subq = (
             DB.session.query(
                 row_numbers.label("row"),
