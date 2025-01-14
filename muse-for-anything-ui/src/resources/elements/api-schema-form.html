@@ -9,7 +9,7 @@
             <schema-form initial-data.bind="initialData" schema.bind="schema" debug.bind="debug" context.bind="context"
                 label.bind="resourceTypeTranslationKey | t" value.two-way="data" valid.from-view="valid"></schema-form>
         </form>
-        <div if.bind="errorMessage" style="color: red; margin-top: 1rem; text-align: right;">
+        <div if.bind="errorMessage" style="color: red; margin-top: 1rem; font-size: 20px; text-align: right;">
             ${errorMessage}
         </div>
         <div class="mt-2 px-1 flex flex-wrap gap-1">

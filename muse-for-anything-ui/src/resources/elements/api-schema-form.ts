@@ -82,6 +82,7 @@ export class ApiSchemaForm {
             return;
         }
         console.log(JSON.stringify(this.data))
+        this.errorMessage = "";
         this.submitting = true;
         this.api.submitByApiLink(this.apiLink, this.data, this.abortSignal)
             .then((response) => {
@@ -95,11 +96,12 @@ export class ApiSchemaForm {
                     this.events.publish(API_RESOURCE_CHANGES_CHANNEL, response.data.changed.resourceKey);
                 }
             })
-            .catch(() => {
+            .catch((error) => {
                 this.submitError = true;
                 this.submitSuccess = false;
-                this.errorMessage = "Schema change is invalid.";
-                setTimeout(() => this.errorMessage = "", 3000);
+                if (error.response && error.response.status === 400) {
+                    this.errorMessage = "Schema change is invalid";
+                }
             })
             .finally(() => {
                 this.abortSignal = null;

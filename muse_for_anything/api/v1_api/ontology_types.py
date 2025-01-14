@@ -2,7 +2,7 @@
 
 from datetime import datetime, timezone
 from celery import group
-from flask import request
+from flask import jsonify, request
 from http import HTTPStatus
 from typing import Any, List, Optional
 
@@ -410,7 +410,14 @@ class TypeView(MethodView):
             target_schema=data,
         )
         if not valid:
-            abort(HTTPStatus.BAD_REQUEST, message=gettext("Schema change is not valid"))
+            response = jsonify(
+                {
+                    "message": gettext("Schema change is not valid"),
+                    "code": "INVALID_SCHEMA_CHANGE",
+                }
+            )
+            response.status_code = HTTPStatus.BAD_REQUEST
+            return response
 
         object_type_version = OntologyObjectTypeVersion(
             ontology_type=found_object_type,
