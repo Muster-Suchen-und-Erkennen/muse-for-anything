@@ -155,6 +155,13 @@ def _get_next_version(
 def _save_new_version(
     data_object: OntologyObject, next_version: OntologyObjectTypeVersion, updated_data
 ):
+    """Saves a new ObjectVersion to the database with the migrated data
+
+    Args:
+        data_object (OntologyObject): Object to be updated
+        next_version (OntologyObjectTypeVersion): New version of the object
+        updated_data: New data value to be saved to database
+    """
     name = data_object.name
     description = data_object.description
     object_version = OntologyObjectVersion(
