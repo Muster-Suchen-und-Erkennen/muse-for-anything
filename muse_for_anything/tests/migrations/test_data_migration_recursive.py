@@ -1,6 +1,8 @@
 from muse_for_anything.json_migrations.data_migration import migrate_data
 import unittest
 
+from muse_for_anything.json_migrations.jsonschema_validator import validate_schema
+
 
 class TestRecursiveMigration(unittest.TestCase):
 
@@ -299,6 +301,20 @@ class TestRecursiveMigration(unittest.TestCase):
             [[[0, False, "hi"], [1, True, "bye"], [0, True, "sun"]], "42"],
             updated_data,
         )
+
+    def test_self_recursive_schema(self):
+        unresolved_local_schema = {
+            "$ref": "#/definitions/root",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "abstract": False,
+            "definitions": {
+                "root": {"$ref": "#/definitions/1"},
+                "1": {"$ref": "#/definitions/1"},
+            },
+            "title": "Type",
+        }
+        valid = validate_schema(unresolved_local_schema, unresolved_local_schema)
+        self.assertEqual(True, valid)
 
 
 if __name__ == "__main__":

@@ -22,6 +22,7 @@
 # SOFTWARE.
 # ==============================================================================
 
+import json
 from typing import Optional
 
 from muse_for_anything.api.v1_api.ontology_object_validation import (
@@ -141,6 +142,8 @@ def validate_schema(
     *,
     source_root: Optional[dict] = None,
     target_root: Optional[dict] = None,
+    source_visited_set: Optional[set] = None,
+    target_visited_set: Optional[set] = None,
     depth: int = 0,
 ):
     """Going from the source schema, it is checked whether a conversion to
@@ -153,10 +156,12 @@ def validate_schema(
     Args:
         source_schema (dict): Source JSON Schema
         target_schema (dict): Target JSON Schema
-        source_root (Optional[dict], optional): Root source JSON Schema,
+        source_root (Optional[dict]): Root source JSON Schema,
         used for reference resolving. Defaults to None.
-        target_root (Optional[dict], optional): Root target JSON Schema,
+        target_root (Optional[dict]): Root target JSON Schema,
         used for reference resolving. Defaults to None.
+        source_visited_set (Optional[set]): Stores visited schemas for source
+        target_visited_set (Optional[set]): Stores visited schemas for target
         depth (int, optional): Depth counter for recursion, stops at 100.
         Defaults to 0.
 
@@ -170,12 +175,16 @@ def validate_schema(
         raise Exception("Schema nested too deep")
 
     if source_root is None:
+        source_visited_set = set()
         source_root = source_schema
         source_schema = source_schema["definitions"]["root"]
+        update_visited_set(visited_set=source_visited_set, schema=source_root)
 
     if target_root is None:
+        target_visited_set = set()
         target_root = target_schema
         target_schema = target_schema["definitions"]["root"]
+        update_visited_set(visited_set=target_visited_set, schema=target_root)
 
     source_type = extract_type(schema=source_schema)[0]
     target_type = extract_type(schema=target_schema)[0]
@@ -189,9 +198,29 @@ def validate_schema(
             target_schema=target_schema,
             source_root=source_root,
             target_root=target_root,
+            source_visited_set=source_visited_set,
+            target_visited_set=target_visited_set,
             depth=depth,
         )
     return False
+
+
+def update_visited_set(visited_set: set, schema: dict):
+    """Helper function that updates the visited set to recognize recursion
+
+    Args:
+        visited_set (set): The schemas that were visited before
+        schema (dict): Newly visited schema
+
+    Returns:
+        Updated visited set
+    """
+    schema_string = json.dumps(schema, sort_keys=True)
+    recursive = False
+    if schema_string in visited_set:
+        recursive = True
+    visited_set.add(schema_string)
+    return recursive
 
 
 def _validate_types(
@@ -201,6 +230,8 @@ def _validate_types(
     target_schema: dict,
     source_root: dict,
     target_root: dict,
+    source_visited_set: set,
+    target_visited_set: set,
     depth: int,
 ):
     """Validate schema based on source and target type.
@@ -212,6 +243,8 @@ def _validate_types(
         target_schema (dict): Target JSON Schema
         source_root (dict): Root source JSON Schema
         target_root (dict): Root target JSON Schema
+        source_visited_set (Optional[set]): Stores visited schemas for source
+        target_visited_set (Optional[set]): Stores visited schemas for target
         depth (int): Depth counter
     """
     if source_type == "schemaReference" or target_type == "schemaReference":
@@ -220,6 +253,8 @@ def _validate_types(
             target_schema=target_schema,
             source_root=source_root,
             target_root=target_root,
+            source_visited_set=source_visited_set,
+            target_visited_set=target_visited_set,
             depth=depth,
         )
 
@@ -256,6 +291,8 @@ def _validate_types(
             target_schema=target_schema,
             source_root=source_root,
             target_root=target_root,
+            source_visited_set=source_visited_set,
+            target_visited_set=target_visited_set,
             depth=depth,
         )
 
@@ -266,6 +303,8 @@ def _validate_types(
             target_schema=target_schema,
             source_root=source_root,
             target_root=target_root,
+            source_visited_set=source_visited_set,
+            target_visited_set=target_visited_set,
             depth=depth,
         )
 
@@ -276,6 +315,8 @@ def _validate_types(
             target_schema=target_schema,
             source_root=source_root,
             target_root=target_root,
+            source_visited_set=source_visited_set,
+            target_visited_set=target_visited_set,
             depth=depth,
         )
 
@@ -294,6 +335,8 @@ def _validate_schema_reference(
     target_schema: dict,
     source_root: dict,
     target_root: dict,
+    source_visited_set: set,
+    target_visited_set: set,
     depth: int,
 ):
     """Resolve schema references that are either in the source or target schema,
@@ -304,6 +347,8 @@ def _validate_schema_reference(
         target_schema (dict): Target JSON Schema
         source_root (dict): Root source JSON Schema
         target_root (dict): Root target JSON Schema
+        source_visited_set (Optional[set]): Stores visited schemas for source
+        target_visited_set (Optional[set]): Stores visited schemas for target
         depth (int): Depth counter
 
     Returns:
@@ -313,15 +358,29 @@ def _validate_schema_reference(
         schema=source_schema,
         root_schema=source_root,
     )
+    source_recursive = update_visited_set(
+        visited_set=source_visited_set, schema=source_root
+    )
+    if source_recursive:
+        return True
+
     target_schema, target_root = resolve_schema_reference(
         schema=target_schema,
         root_schema=target_root,
     )
+    target_recursive = update_visited_set(
+        visited_set=target_visited_set, schema=target_root
+    )
+    if target_recursive:
+        return True
+
     return validate_schema(
         source_schema=source_schema,
         target_schema=target_schema,
         source_root=source_root,
         target_root=target_root,
+        source_visited_set=source_visited_set,
+        target_visited_set=target_visited_set,
         depth=depth + 1,
     )
 
@@ -422,6 +481,8 @@ def _validate_to_array(
     target_schema: dict,
     source_root: dict,
     target_root: dict,
+    source_visited_set: set,
+    target_visited_set: set,
     depth: int,
 ):
     """Validation logic when migrating to array.
@@ -432,6 +493,8 @@ def _validate_to_array(
         target_schema (dict): Target JSON Schema
         source_root (dict): Root source JSON Schema
         target_root (dict): Root target JSON Schema
+        source_visited_set (Optional[set]): Stores visited schemas for source
+        target_visited_set (Optional[set]): Stores visited schemas for target
         depth (int): Depth counter
 
     Returns
@@ -445,6 +508,8 @@ def _validate_to_array(
                 target_schema=target_array_schema,
                 source_root=source_root,
                 target_root=target_root,
+                source_visited_set=source_visited_set,
+                target_visited_set=target_visited_set,
                 depth=depth + 1,
             )
         case "array":
@@ -453,6 +518,8 @@ def _validate_to_array(
                 target_schema=target_schema,
                 source_root=source_root,
                 target_root=target_root,
+                source_visited_set=source_visited_set,
+                target_visited_set=target_visited_set,
                 depth=depth,
             )
         case "tuple":
@@ -461,6 +528,8 @@ def _validate_to_array(
                 target_schema=target_schema,
                 source_root=source_root,
                 target_root=target_root,
+                source_visited_set=source_visited_set,
+                target_visited_set=target_visited_set,
                 depth=depth,
             )
         case _:
@@ -473,6 +542,8 @@ def _validate_to_tuple(
     target_schema: dict,
     source_root: dict,
     target_root: dict,
+    source_visited_set: set,
+    target_visited_set: set,
     depth: int,
 ):
     """Validation logic when migrating to tuple.
@@ -483,6 +554,8 @@ def _validate_to_tuple(
         target_schema (dict): Target JSON Schema
         source_root (dict): Root source JSON Schema
         target_root (dict): Root target JSON Schema
+        source_visited_set (Optional[set]): Stores visited schemas for source
+        target_visited_set (Optional[set]): Stores visited schemas for target
         depth (int): Depth counter
 
     Returns
@@ -497,6 +570,8 @@ def _validate_to_tuple(
                     target_schema=target_items_types[0],
                     source_root=source_root,
                     target_root=target_root,
+                    source_visited_set=source_visited_set,
+                    target_visited_set=target_visited_set,
                     depth=depth + 1,
                 )
             else:
@@ -507,6 +582,8 @@ def _validate_to_tuple(
                 target_schema=target_schema,
                 source_root=source_root,
                 target_root=target_root,
+                source_visited_set=source_visited_set,
+                target_visited_set=target_visited_set,
                 depth=depth,
             )
         case "tuple":
@@ -515,6 +592,8 @@ def _validate_to_tuple(
                 target_schema=target_schema,
                 source_root=source_root,
                 target_root=target_root,
+                source_visited_set=source_visited_set,
+                target_visited_set=target_visited_set,
                 depth=depth,
             )
         case _:
@@ -527,6 +606,8 @@ def _validate_to_object(
     target_schema: dict,
     source_root: dict,
     target_root: dict,
+    source_visited_set: set,
+    target_visited_set: set,
     depth: int,
 ):
     """Validation logic when migrating to object.
@@ -537,6 +618,8 @@ def _validate_to_object(
         target_schema (dict): Target JSON Schema
         source_root (dict): Root source JSON Schema
         target_root (dict): Root target JSON Schema
+        source_visited_set (Optional[set]): Stores visited schemas for source
+        target_visited_set (Optional[set]): Stores visited schemas for target
         depth (int): Depth counter
 
     Returns
@@ -551,6 +634,8 @@ def _validate_to_object(
                 target_schema=target_schema,
                 source_root=source_root,
                 target_root=target_root,
+                source_visited_set=source_visited_set,
+                target_visited_set=target_visited_set,
                 depth=depth,
             )
         case _:
@@ -598,6 +683,8 @@ def _validate_array_to_array(
     target_schema: dict,
     source_root: dict,
     target_root: dict,
+    source_visited_set: set,
+    target_visited_set: set,
     depth: int,
 ):
     """Validation logic when migrating from array to array.
@@ -607,6 +694,8 @@ def _validate_array_to_array(
         target_schema (dict): Target JSON Schema
         source_root (dict): Root source JSON Schema
         target_root (dict): Root target JSON Schema
+        source_visited_set (Optional[set]): Stores visited schemas for source
+        target_visited_set (Optional[set]): Stores visited schemas for target
         depth (int): Depth counter
 
     Return:
@@ -623,6 +712,8 @@ def _validate_array_to_array(
             target_schema=target_array_schema,
             source_root=source_root,
             target_root=target_root,
+            source_visited_set=source_visited_set,
+            target_visited_set=target_visited_set,
             depth=depth + 1,
         )
     else:
@@ -634,6 +725,8 @@ def _validate_tuple_to_array(
     target_schema: dict,
     source_root: dict,
     target_root: dict,
+    source_visited_set: set,
+    target_visited_set: set,
     depth: int,
 ):
     """Validation logic when migrating from tuple to array.
@@ -643,6 +736,8 @@ def _validate_tuple_to_array(
         target_schema (dict): Target JSON Schema
         source_root (dict): Root source JSON Schema
         target_root (dict): Root target JSON Schema
+        source_visited_set (Optional[set]): Stores visited schemas for source
+        target_visited_set (Optional[set]): Stores visited schemas for target
         depth (int): Depth counter
 
     Return:
@@ -661,6 +756,8 @@ def _validate_tuple_to_array(
                 target_schema=target_array_schema,
                 source_root=source_root,
                 target_root=target_root,
+                source_visited_set=source_visited_set,
+                target_visited_set=target_visited_set,
                 depth=depth + 1,
             )
             if not valid:
@@ -673,6 +770,8 @@ def _validate_tuple_to_array(
                 target_schema=target_array_schema,
                 source_root=source_root,
                 target_root=target_root,
+                source_visited_set=source_visited_set,
+                target_visited_set=target_visited_set,
                 depth=depth + 1,
             )
             if not valid:
@@ -687,6 +786,8 @@ def _validate_array_to_tuple(
     target_schema: dict,
     source_root: dict,
     target_root: dict,
+    source_visited_set: set,
+    target_visited_set: set,
     depth: int,
 ):
     """Validation logic when migrating from array to tuple
@@ -696,6 +797,8 @@ def _validate_array_to_tuple(
         target_schema (dict): Target JSON Schema
         source_root (dict): Root source JSON Schema
         target_root (dict): Root target JSON Schema
+        source_visited_set (Optional[set]): Stores visited schemas for source
+        target_visited_set (Optional[set]): Stores visited schemas for target
         depth (int): Depth counter
 
     Returns:
@@ -718,6 +821,8 @@ def _validate_array_to_tuple(
                 target_schema=item_type,
                 source_root=source_root,
                 target_root=target_root,
+                source_visited_set=source_visited_set,
+                target_visited_set=target_visited_set,
                 depth=depth + 1,
             )
             if not valid:
@@ -728,6 +833,8 @@ def _validate_array_to_tuple(
                 target_schema=target_additional_items,
                 source_root=source_root,
                 target_root=target_root,
+                source_visited_set=source_visited_set,
+                target_visited_set=target_visited_set,
                 depth=depth + 1,
             )
             if not valid:
@@ -742,6 +849,8 @@ def _validate_tuple_to_tuple(
     target_schema: dict,
     source_root: dict,
     target_root: dict,
+    source_visited_set: set,
+    target_visited_set: set,
     depth: int,
 ):
     """Validation logic when migrating from tuple to tuple
@@ -751,6 +860,8 @@ def _validate_tuple_to_tuple(
         target_schema (dict): Target JSON Schema
         source_root (dict): Root source JSON Schema
         target_root (dict): Root target JSON Schema
+        source_visited_set (Optional[set]): Stores visited schemas for source
+        target_visited_set (Optional[set]): Stores visited schemas for target
         depth (int): Depth counter
 
     Returns:
@@ -775,6 +886,8 @@ def _validate_tuple_to_tuple(
                 target_schema=target_items_types[i],
                 source_root=source_root,
                 target_root=target_root,
+                source_visited_set=source_visited_set,
+                target_visited_set=target_visited_set,
                 depth=depth + 1,
             )
             if not valid:
@@ -785,6 +898,8 @@ def _validate_tuple_to_tuple(
                 target_schema=target_additional_items,
                 source_root=source_root,
                 target_root=target_root,
+                source_visited_set=source_visited_set,
+                target_visited_set=target_visited_set,
                 depth=depth + 1,
             )
             if not valid:
@@ -795,6 +910,8 @@ def _validate_tuple_to_tuple(
                 target_schema=target_items_types[i],
                 source_root=source_root,
                 target_root=target_root,
+                source_visited_set=source_visited_set,
+                target_visited_set=target_visited_set,
                 depth=depth + 1,
             )
             if not valid:
@@ -809,6 +926,8 @@ def _validate_object_to_object(
     target_schema: dict,
     source_root: dict,
     target_root: dict,
+    source_visited_set: set,
+    target_visited_set: set,
     depth: int,
 ):
     """Validation logic when migrating from object to object
@@ -818,6 +937,8 @@ def _validate_object_to_object(
         target_schema (dict): Target JSON Schema
         source_root (dict): Root source JSON Schema
         target_root (dict): Root target JSON Schema
+        source_visited_set (Optional[set]): Stores visited schemas for source
+        target_visited_set (Optional[set]): Stores visited schemas for target
         depth (int): Depth counter
 
     Returns:
@@ -836,6 +957,8 @@ def _validate_object_to_object(
             target_schema=target_properties[prop],
             source_root=source_root,
             target_root=target_root,
+            source_visited_set=source_visited_set,
+            target_visited_set=target_visited_set,
             depth=depth + 1,
         )
         if not valid:
@@ -849,6 +972,8 @@ def _validate_object_to_object(
             target_schema=target_properties[new_prop],
             source_root=source_root,
             target_root=target_root,
+            source_visited_set=source_visited_set,
+            target_visited_set=target_visited_set,
             depth=depth + 1,
         )
         if not valid:
