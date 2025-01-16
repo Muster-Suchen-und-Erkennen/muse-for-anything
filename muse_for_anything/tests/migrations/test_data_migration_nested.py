@@ -4,7 +4,7 @@ import unittest
 from muse_for_anything.json_migrations.jsonschema_validator import validate_schema
 
 
-class TestRecursiveMigration(unittest.TestCase):
+class TestNestedMigration(unittest.TestCase):
 
     def test_object_to_object(self):
         source_schema = {
