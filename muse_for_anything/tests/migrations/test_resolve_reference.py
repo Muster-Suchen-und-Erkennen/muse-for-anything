@@ -1,28 +1,38 @@
+from flask import Flask
+from flask.testing import FlaskClient
+from muse_for_anything.json_migrations.data_migration import migrate_data
 from muse_for_anything.json_migrations.jsonschema_validator import (
     resolve_schema_reference,
 )
-from muse_for_anything.json_migrations.data_migration import migrate_data
+from muse_for_anything.tests.migrations.schemas_for_db_test import (
+    UNRESOLVED_COMPLEX_SCHEMA,
+    UNRESOLVED_LOCAL_SCHEMA,
+    UNRESOLVED_SCHEMA,
+)
 
-import unittest
 
-
-class TestMigrationReference(unittest.TestCase):
-
-    app = None
-
-    unresolved_schema = {
+def test_resolve_ref(client: FlaskClient, app: Flask):
+    unresolved_reference = UNRESOLVED_SCHEMA["definitions"]["root"]
+    referenced_schema = {
         "$ref": "#/definitions/root",
         "$schema": "http://json-schema.org/draft-07/schema#",
         "abstract": False,
-        "definitions": {
-            "root": {
-                "$ref": "http://localhost:5000/api/v1/namespaces/3/types/3/versions/2/#/definitions/root"
-            }
-        },
-        "title": "Type",
+        "definitions": {"root": {"minimum": 1, "type": ["integer", "null"]}},
+        "title": "IntegerType",
     }
+    resolved_schema = referenced_schema["definitions"]["root"]
+    resolved_reference = None
+    with app.app_context():
+        with app.test_request_context("http://localhost:5000/", method="GET"):
+            resolved_reference, root_schema = resolve_schema_reference(
+                unresolved_reference, UNRESOLVED_SCHEMA
+            )
+    assert resolved_schema == resolved_reference
+    assert referenced_schema == root_schema
 
-    unresolved_complex_schema = {
+
+def test_complex_to_ref_migration(client: FlaskClient, app: Flask):
+    source_schema = {
         "$ref": "#/definitions/root",
         "$schema": "http://json-schema.org/draft-07/schema#",
         "abstract": False,
@@ -30,138 +40,67 @@ class TestMigrationReference(unittest.TestCase):
             "root": {
                 "properties": {
                     "one": {
-                        "$ref": "http://localhost:5000/api/v1/namespaces/3/types/36/versions/1/#/definitions/root"
+                        "properties": {
+                            "one": {"type": ["string"]},
+                            "two": {"type": ["integer"]},
+                        },
+                        "type": ["object"],
                     },
                     "three": {"type": ["number"]},
-                    "two": {"type": ["string"]},
+                    "two": {"type": ["integer"]},
                 },
                 "type": ["object"],
             }
         },
         "title": "Type",
     }
+    data = {"one": {"one": "42", "two": 555}, "two": 42, "three": 53.23}
+    updated_data = None
+    with app.app_context():
+        with app.test_request_context("http://localhost:5000/", method="GET"):
+            updated_data = migrate_data(data, source_schema, UNRESOLVED_COMPLEX_SCHEMA)
+    assert {"one": {"one": 42, "two": 555}, "two": "42", "three": 53.23} == updated_data
 
-    unresolved_local_schema = {
+
+def test_complex_from_ref_migration_(client: FlaskClient, app: Flask):
+    target_schema = {
         "$ref": "#/definitions/root",
         "$schema": "http://json-schema.org/draft-07/schema#",
         "abstract": False,
         "definitions": {
-            "root": {"$ref": "#/definitions/1"},
-            "1": {"type": ["integer"]},
+            "root": {
+                "properties": {
+                    "one": {
+                        "properties": {
+                            "one": {"type": ["string"]},
+                            "two": {"type": ["integer"]},
+                        },
+                        "type": ["object"],
+                    },
+                    "three": {"type": ["number"]},
+                    "two": {"type": ["integer"]},
+                },
+                "type": ["object"],
+            }
         },
         "title": "Type",
     }
-
-    @classmethod
-    def setUpClass(cls):
-        from muse_for_anything import create_app
-
-        if cls.app is None:
-            cls.app = create_app()
-
-    def test_resolve_ref(self):
-        current_app = self.app
-        unresolved_reference = self.unresolved_schema["definitions"]["root"]
-        referenced_schema = {
-            "$ref": "#/definitions/root",
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "abstract": False,
-            "definitions": {"root": {"minimum": 1, "type": ["integer", "null"]}},
-            "title": "IntegerType",
-        }
-        resolved_schema = referenced_schema["definitions"]["root"]
-        resolved_reference = None
-        with current_app.app_context():
-            with current_app.test_request_context("http://localhost:5000/", method="GET"):
-                resolved_reference, root_schema = resolve_schema_reference(
-                    unresolved_reference, self.unresolved_schema
-                )
-        self.assertEqual(resolved_schema, resolved_reference)
-        self.assertEqual(referenced_schema, root_schema)
-
-    def test_complex_to_ref_migration(self):
-        source_schema = {
-            "$ref": "#/definitions/root",
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "abstract": False,
-            "definitions": {
-                "root": {
-                    "properties": {
-                        "one": {
-                            "properties": {
-                                "one": {"type": ["string"]},
-                                "two": {"type": ["integer"]},
-                            },
-                            "type": ["object"],
-                        },
-                        "three": {"type": ["number"]},
-                        "two": {"type": ["integer"]},
-                    },
-                    "type": ["object"],
-                }
-            },
-            "title": "Type",
-        }
-        current_app = self.app
-        data = {"one": {"one": "42", "two": 555}, "two": 42, "three": 53.23}
-        updated_data = None
-        with current_app.app_context():
-            with current_app.test_request_context("http://localhost:5000/", method="GET"):
-                updated_data = migrate_data(
-                    data, source_schema, self.unresolved_complex_schema
-                )
-        self.assertEqual(
-            {"one": {"one": 42, "two": 555}, "two": "42", "three": 53.23}, updated_data
-        )
-
-    def test_complex_from_ref_migration_(self):
-        target_schema = {
-            "$ref": "#/definitions/root",
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "abstract": False,
-            "definitions": {
-                "root": {
-                    "properties": {
-                        "one": {
-                            "properties": {
-                                "one": {"type": ["string"]},
-                                "two": {"type": ["integer"]},
-                            },
-                            "type": ["object"],
-                        },
-                        "three": {"type": ["number"]},
-                        "two": {"type": ["integer"]},
-                    },
-                    "type": ["object"],
-                }
-            },
-            "title": "Type",
-        }
-        current_app = self.app
-        data = {"one": {"one": 42, "two": 555}, "two": "42", "three": 53.23}
-        updated_data = None
-        with current_app.app_context():
-            with current_app.test_request_context("http://localhost:5000/", method="GET"):
-                updated_data = migrate_data(
-                    data, self.unresolved_complex_schema, target_schema
-                )
-        self.assertEqual(
-            {"one": {"one": "42", "two": 555}, "two": 42, "three": 53.23}, updated_data
-        )
-
-    def test_resolve_local_ref(self):
-        current_app = self.app
-        unresolved_reference = self.unresolved_local_schema["definitions"]["root"]
-        resolved_schema = {"type": ["integer"]}
-        resolved_reference = None
-        with current_app.app_context():
-            with current_app.test_request_context("http://localhost:5000/", method="GET"):
-                resolved_reference, root_schema = resolve_schema_reference(
-                    unresolved_reference, self.unresolved_local_schema
-                )
-        self.assertEqual(resolved_schema, resolved_reference)
-        self.assertEqual(self.unresolved_local_schema, root_schema)
+    data = {"one": {"one": 42, "two": 555}, "two": "42", "three": 53.23}
+    updated_data = None
+    with app.app_context():
+        with app.test_request_context("http://localhost:5000/", method="GET"):
+            updated_data = migrate_data(data, UNRESOLVED_COMPLEX_SCHEMA, target_schema)
+    assert {"one": {"one": "42", "two": 555}, "two": 42, "three": 53.23} == updated_data
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_resolve_local_ref(client: FlaskClient, app: Flask):
+    unresolved_reference = UNRESOLVED_LOCAL_SCHEMA["definitions"]["root"]
+    resolved_schema = {"type": ["integer"]}
+    resolved_reference = None
+    with app.app_context():
+        with app.test_request_context("http://localhost:5000/", method="GET"):
+            resolved_reference, root_schema = resolve_schema_reference(
+                unresolved_reference, UNRESOLVED_LOCAL_SCHEMA
+            )
+    assert resolved_schema == resolved_reference
+    assert UNRESOLVED_LOCAL_SCHEMA == root_schema
