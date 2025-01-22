@@ -255,3 +255,8 @@ The following command executes all test cases in the stated folder:
 ```
 python -m unittest discover ./muse-for-anything/tests/migrations/
 ```
+
+Tests for reference resolving need to be executed separately with the following command:
+```
+python -m pytest ./muse_for_anything/tests/migrations/test_resolve_reference.py
+```
