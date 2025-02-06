@@ -18,7 +18,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y gcc python-dev-is
 
 #RUN python -m pip install --upgrade pip
 
-RUN python -m pip install gunicorn poetry
+RUN python -m pip install gunicorn poetry poetry-plugin-export
 
 ENV POETRY_VIRTUALENVS_CREATE=false
 
