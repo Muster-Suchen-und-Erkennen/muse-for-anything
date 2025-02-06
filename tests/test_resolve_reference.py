@@ -4,7 +4,8 @@ from muse_for_anything.json_migrations.data_migration import migrate_data
 from muse_for_anything.json_migrations.jsonschema_validator import (
     resolve_schema_reference,
 )
-from muse_for_anything.tests.migrations.schemas_for_db_test import (
+
+from schemas_for_db_test import (
     UNRESOLVED_COMPLEX_SCHEMA,
     UNRESOLVED_LOCAL_SCHEMA,
     UNRESOLVED_SCHEMA,

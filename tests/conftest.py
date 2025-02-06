@@ -14,7 +14,7 @@ from muse_for_anything.db.models.ontology_objects import (
     OntologyObjectType,
     OntologyObjectTypeVersion,
 )
-from muse_for_anything.tests.migrations.schemas_for_db_test import (
+from schemas_for_db_test import (
     INTEGER_SCHEMA,
     OBJECT_SCHEMA,
     UNRESOLVED_COMPLEX_SCHEMA,

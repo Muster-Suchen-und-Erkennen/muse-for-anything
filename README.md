@@ -248,15 +248,11 @@ poetry run invoke worker --beat --watch
 poetry run invoke stop-broker
 ```
 
-The expected behavior of data migration is specified by the test cases in `muse-for-anything/tests/migrations/`\.
-By adding new test cases, or changing old ones, new desired behavior can be defined.
-Also, changes of the implementation should be validated by executing all test cases.
-The following command executes all test cases in the stated folder:
-```
-python -m unittest discover ./muse-for-anything/tests/migrations/
-```
+The TDD (Test Driven Development) test cases for the data migration functions can be found in the `/tests/` directory.
+Before changing any functionality in the tested functions, first create new failing tests (or change existing tests) for the desired functionality.
+Only then should the data migration code be changed until it satisfies the all failing tests.
 
-Tests for reference resolving need to be executed separately with the following command:
+The following command executes all existing test cases:
 ```
-python -m pytest ./muse_for_anything/tests/migrations/test_resolve_reference.py
+poetry run pytest tests
 ```
