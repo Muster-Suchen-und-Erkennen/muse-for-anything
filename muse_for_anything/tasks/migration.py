@@ -148,6 +148,7 @@ def _get_next_version(
         .where(OntologyObjectTypeVersion.version > current_version.version)
         .where(OntologyObjectTypeVersion.deleted_on == None)
         .order_by(OntologyObjectTypeVersion.version.asc())
+        .limit(1)
     )
     return DB.session.execute(next_q).scalars().first()
 

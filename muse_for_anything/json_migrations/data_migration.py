@@ -23,8 +23,10 @@
 # ==============================================================================
 
 import json
-import select
 from typing import Optional
+
+from sqlalchemy.sql import select
+
 from muse_for_anything.db.db import DB
 from muse_for_anything.db.models.ontology_objects import OntologyObject
 from muse_for_anything.json_migrations.jsonschema_validator import (
@@ -1000,9 +1002,8 @@ def _check_type_compatible(data, target_schema: dict):
     target_type = target_schema["referenceKey"]["typeId"]
     data_object = data["referenceKey"]["objectId"]
 
-    q = select(OntologyObject).where(OntologyObject.id == data_object)
-    ontology_object = DB.session.execute(q).scalars().first()
-    object_type = ontology_object.object_type_id
+    q = select(OntologyObject.object_type_id).where(OntologyObject.id == data_object).limit(1)
+    object_type = DB.session.execute(q).scalars().first()
 
     if target_type == object_type:
         return data

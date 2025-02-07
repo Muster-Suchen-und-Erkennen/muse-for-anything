@@ -12,7 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from celery import Celery
-from flask import Flask
 
-from .migration import run_migration
+from . import migration  # noqa
