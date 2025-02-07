@@ -198,9 +198,6 @@ class ObjectsView(MethodView):
         if deleted and not is_admin:
             deleted = False
 
-        if outdated and not is_admin:
-            outdated = False
-
         ontology_object_filter = (
             (
                 OntologyObject.deleted_on == None
