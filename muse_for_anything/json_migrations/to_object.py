@@ -4,7 +4,7 @@ from json import JSONDecodeError, loads
 from typing import Optional
 
 from .data_migration import DataMigrator, JsonSchema
-from .jsonschema_validator import extract_type
+from .util import extract_type
 
 
 def _get_prop_schema(property: str, schema: dict, base: JsonSchema) -> JsonSchema:

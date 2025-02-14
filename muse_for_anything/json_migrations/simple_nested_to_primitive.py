@@ -3,7 +3,7 @@ from copy import deepcopy
 from typing import Optional, Union
 
 from .data_migration import DataMigrator, JsonSchema
-from .jsonschema_validator import extract_type
+from .util import extract_type
 
 
 class SimpleNestedToPrimitive(DataMigrator):

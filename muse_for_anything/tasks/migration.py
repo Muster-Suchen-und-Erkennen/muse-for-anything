@@ -23,9 +23,11 @@
 # ==============================================================================
 
 from celery.utils.log import get_task_logger
+from flask import url_for
 from flask.globals import current_app
 from sqlalchemy.sql.expression import select
 
+from muse_for_anything.api.v1_api.constants import TYPE_VERSION_RESOURCE
 from muse_for_anything.api.v1_api.ontology_object_validation import validate_object
 from muse_for_anything.db.db import DB
 from muse_for_anything.db.models.object_relation_tables import (
@@ -37,7 +39,8 @@ from muse_for_anything.db.models.ontology_objects import (
     OntologyObjectTypeVersion,
     OntologyObjectVersion,
 )
-from muse_for_anything.json_migrations.data_migration import migrate_data
+from muse_for_anything.json_migrations.data_migration import DataMigrator, JsonSchema
+
 from ..celery import CELERY, FlaskTask
 
 _name = "muse_for_anything.tasks.migration"
@@ -118,10 +121,31 @@ def _migrate_object(
             data_object=data_object, current_version=current_version
         )
 
-        updated_data = migrate_data(
+        if next_version is None:
+            break
+
+        updated_data = DataMigrator.migrate_data(
             data=data_object.current_version.data,
-            source_schema=current_version.data,
-            target_schema=next_version.data,
+            source_schema=JsonSchema(
+                schema_url=url_for(
+                    TYPE_VERSION_RESOURCE,
+                    namespace=str(current_version.ontology_type.namespace_id),
+                    object_type=str(current_version.object_type_id),
+                    version=str(current_version.version),
+                    _external=True,
+                ),
+                schema=current_version.data,
+            ),
+            target_schema=JsonSchema(
+                schema_url=url_for(
+                    TYPE_VERSION_RESOURCE,
+                    namespace=str(next_version.ontology_type.namespace_id),
+                    object_type=str(next_version.object_type_id),
+                    version=str(next_version.version),
+                    _external=True,
+                ),
+                schema=current_version.data,
+            ),
         )
         _save_new_version(
             data_object=data_object, next_version=next_version, updated_data=updated_data

@@ -1,6 +1,6 @@
 import unittest
 
-from muse_for_anything.json_migrations.jsonschema_validator import extract_type
+from muse_for_anything.json_migrations.util import extract_type
 
 
 class TestTypeExtraction(unittest.TestCase):

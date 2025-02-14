@@ -3,7 +3,7 @@ from json import JSONDecodeError, loads
 from typing import Optional, Union
 
 from .data_migration import DataMigrator, JsonSchema
-from .jsonschema_validator import extract_type
+from .util import extract_type
 
 
 class JsonToSequence(DataMigrator):
