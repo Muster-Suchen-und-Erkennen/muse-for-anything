@@ -24,6 +24,7 @@
 
 import json
 from typing import Optional
+from warnings import warn
 
 from muse_for_anything.api.v1_api.ontology_object_validation import (
     resolve_type_version_schema_url,
@@ -171,6 +172,8 @@ def validate_schema(
     Returns:
         bool: Returns True if schemas could be matched, else False
     """
+    if depth == 0:
+        warn("This method is going to be removed. Use the methods of the DataMigrator class instead!", category=DeprecationWarning, stacklevel=2)
     if depth > 100:
         raise Exception("Schema nested too deep")
 

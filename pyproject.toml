@@ -52,7 +52,7 @@ PyMySQL = ["PyMySQL"]
 #flask = 'flask.cli:main'
 
 [tool.black]
-target-version = ["py37"]
+target-version = ["py310"]
 line-length = 90
 include = '\.pyi?$'
 
