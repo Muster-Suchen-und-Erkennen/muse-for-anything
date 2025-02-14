@@ -25,6 +25,7 @@
 
 from .data_migration import JsonSchema, DataMigrator  # noqa
 
+from . import to_resource_ref  # noqa
 from . import simple_nested_to_primitive  # noqa
 from . import primitive_to_sequence  # noqa
 from . import to_boolean  # noqa
