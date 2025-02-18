@@ -1,6 +1,6 @@
-import { bindable, observable, bindingMode, child, TaskQueue, autoinject } from "aurelia-framework";
-import { NormalizedApiSchema } from "rest/schema-objects";
+import { autoinject, bindable, bindingMode, child, observable, TaskQueue } from "aurelia-framework";
 import { nanoid } from "nanoid";
+import { NormalizedApiSchema } from "rest/schema-objects";
 
 
 @autoinject()
@@ -43,7 +43,9 @@ export class BooleanForm {
 
     initialDataChanged(newValue, oldValue) {
         if (newValue !== undefined) {
-            this.value = newValue;
+            this.queue.queueMicroTask(() => {
+                this.value = newValue;
+            });
         }
     }
 
@@ -53,9 +55,14 @@ export class BooleanForm {
         this.description = normalized.description ?? "";
         this.isNullable = normalized.type.has(null);
         if (!this.isNullable && this.value == null) {
-            this.value = false;
+            this.queue.queueMicroTask(() => {
+                this.value = false;
+            });
+        } else {
+            this.queue.queueMicroTask(() => {
+                this.updateValid();
+            });
         }
-        this.updateValid();
     }
 
     cycle(event?: Event) {
@@ -77,8 +84,13 @@ export class BooleanForm {
         }
     }
 
-    valueInChanged(newValue) {
-        this.value = newValue;
+    valueInChanged(newValue, oldValue) {
+        if (newValue == null && oldValue == null) {
+            return;  // ignore updates from null to undefined and reverse
+        }
+        this.queue.queueMicroTask(() => {
+            this.value = newValue;
+        });
     }
 
     valueChanged(newValue, oldValue) {
@@ -102,11 +114,13 @@ export class BooleanForm {
 
     updateValid() {
         if (this.schema == null) {
-            this.valid = false;
+            this.queue.queueMicroTask(() => { // this prevents updates getting lost
+                this.valid = false;
+            });
             return;
         }
         this.queue.queueMicroTask(() => { // this prevents updates getting lost
-            this.valid = this.isNullable || this.value != null;
+            this.valid = this.isNullable || this.valueOut != null;
         });
     }
 
