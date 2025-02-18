@@ -64,6 +64,7 @@ TYPE_VERSION_REL_TYPE = "ont-type-version"
 
 OBJECT_REL_TYPE = "ont-object"
 OBJECT_VERSION_REL_TYPE = "ont-object-version"
+OUTDATED_REL = "outdated"
 
 TAXONOMY_REL_TYPE = "ont-taxonomy"
 
@@ -94,6 +95,7 @@ TYPE_EXTRA_LINK_RELATIONS = (
     TYPE_VERSION_REL_TYPE,
     LATEST_REL,
     OBJECT_REL_TYPE,
+    OUTDATED_REL,
     f"{CREATE_REL}_{OBJECT_REL_TYPE}",
 )
 
@@ -184,6 +186,8 @@ TAXONOMY_ITEM_RELATION_ID_KEY = "relationId"
 
 # query keys
 ITEM_COUNT_QUERY_KEY = "item-count"
+
+OUTDATED_QUERY_KEY = "outdated"
 
 TYPE_ID_QUERY_KEY = "type-id"
 TYPE_EXTRA_ARG = "type"

@@ -25,6 +25,9 @@
             "ont-object": "Edit Object",
             "ont-taxonomy": "Edit Taxonomy",
             "ont-taxonomy-item": "Edit Item"
+        },
+        "outdated": {
+            "ont-object": "Outdated Objects"
         }
     },
     "themes": {
@@ -143,6 +146,9 @@
         "export": {
             "ont-namespace": "Export Namespace"
         },
+        "outdated": {
+            "ont-object": "Outdated Objects"
+        },
         "user": "User",
         "user-role": "User-Role",
         "user-grant": "User-Grant",
@@ -175,6 +181,7 @@
         },
         "keys": {
             "?deleted": "Show deleted",
+            "?outdated": "Show only outdated",
             "?type-id": "Filter by object type"
         }
     },

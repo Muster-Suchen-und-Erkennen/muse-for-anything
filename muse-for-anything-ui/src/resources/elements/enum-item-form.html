@@ -15,15 +15,18 @@
             </div>
         </div>
 
-        <select class="bg-gray-100 border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1 dark:bg-gray-700 dark:border-gray-200"
-            value.bind="selectedChoice">
-            <option model.bind="null">Choose...</option>
-            <option repeat.for="choice of choices" model.bind="choice">
-                ${choice.title}
-            </option>
-        </select>
+        <label>
+            <span class="font-semibold form-title">Enum item type</span>
+            <select class="bg-gray-100 border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1 dark:bg-gray-700 dark:border-gray-200"
+                value.bind="selectedChoice" aria-label="enum item type">
+                <option model.bind="null">Choose...</option>
+                <option repeat.for="choice of choices" model.bind="choice">
+                    ${choice.title}
+                </option>
+            </select>
+        </label>
         <div if.bind="activeSchema != null">
-            <schema-form class="w-full" key.bind="activeSchema.title" label.bind="activeSchema.title"
+            <schema-form class="w-full" key.bind="activeSchema.title" label.bind="'enum item value'"
                 initial-data.bind="initialData" value.bind="value" schema.bind="activeSchema.schema"
                 valid.from-view="childValid" required.bind="true" debug.bind="debug">
             </schema-form>

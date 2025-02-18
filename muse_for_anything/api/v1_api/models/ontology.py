@@ -41,11 +41,15 @@ class ChangesSchemaMixin(CreateSchemaMixin, UpdateSchemaMixin, DeleteSchemaMixin
 
 
 class SearchPageSchemaMixin:
-    search = ma.fields.String(required=False, allow_none=True, missing=None)
+    search = ma.fields.String(required=False, allow_none=True, load_default=None)
 
 
 class DeletedPageSchemaMixin:
-    deleted = ma.fields.Boolean(required=False, allow_none=True, missing=False)
+    deleted = ma.fields.Boolean(required=False, allow_none=True, load_default=False)
+
+
+class OutdatedPageSchemaMixing:
+    outdated = ma.fields.Boolean(required=False, allow_none=True, load_default=False)
 
 
 class NamespacePageParamsSchema(
@@ -178,7 +182,10 @@ class ObjectData(BaseApiObject, ChangesDataMixin, NameDescriptionMixin):
 
 
 class ObjectsCursorPageArgumentsSchema(
-    CursorPageArgumentsSchema, DeletedPageSchemaMixin, SearchPageSchemaMixin
+    CursorPageArgumentsSchema,
+    DeletedPageSchemaMixin,
+    OutdatedPageSchemaMixing,
+    SearchPageSchemaMixin,
 ):
     type_id = ma.fields.String(data_key="type-id", allow_none=True, load_only=True)
 

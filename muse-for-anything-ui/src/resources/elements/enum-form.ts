@@ -20,7 +20,11 @@ export class EnumForm {
 
     @observable() value: string | number | boolean | null;
 
+    showInfo: boolean = false;
+
     slug = nanoid(8);
+
+    description: string = "";
 
     isNullable: boolean = true;
 
@@ -30,6 +34,11 @@ export class EnumForm {
 
     constructor(queue: TaskQueue) {
         this.queue = queue;
+    }
+
+    toggleInfo() {
+        this.showInfo = !this.showInfo;
+        return false;
     }
 
     initialDataChanged(newValue, oldValue) {
@@ -44,6 +53,7 @@ export class EnumForm {
     // eslint-disable-next-line complexity
     schemaChanged(newValue: NormalizedApiSchema, oldValue) {
         const normalized = newValue.normalized;
+        this.description = normalized.description ?? "";
         this.isNullable = normalized.enum.some(item => item === null) || normalized.type?.has("null");
         const enumChoices = new Set(normalized.enum);
         if (this.isNullable) {

@@ -1,12 +1,12 @@
-import { bindable, autoinject, observable, bindingMode } from "aurelia-framework";
 import { EventAggregator } from "aurelia-event-aggregator";
+import { autoinject, bindable, bindingMode, observable } from "aurelia-framework";
 import { Router } from "aurelia-router";
 import { BindingSignaler } from "aurelia-templating-resources";
-import { ApiLink, isApiObject, isChangedApiObject, isNewApiObject } from "rest/api-objects";
+import { API_RESOURCE_CHANGES_CHANNEL } from "resources/events";
+import { ApiLink, isChangedApiObject, isNewApiObject } from "rest/api-objects";
 import { BaseApiService } from "rest/base-api";
 import { NormalizedApiSchema } from "rest/schema-objects";
 import { SchemaService } from "rest/schema-service";
-import { API_RESOURCE_CHANGES_CHANNEL } from "resources/events";
 
 @autoinject
 export class ApiSchemaForm {
@@ -22,6 +22,7 @@ export class ApiSchemaForm {
     @bindable({ defaultBindingMode: bindingMode.fromView }) abortSignal: AbortSignal;
     @bindable({ defaultBindingMode: bindingMode.fromView }) submitSuccess: boolean = false;
     @bindable({ defaultBindingMode: bindingMode.fromView }) submitError: boolean = false;
+    @bindable({ defaultBindingMode: bindingMode.fromView }) errorMessage: string = "";
 
     @observable schema: NormalizedApiSchema;
     resourceTypeTranslationKey: string;
@@ -81,6 +82,7 @@ export class ApiSchemaForm {
             return;
         }
         console.log(JSON.stringify(this.data))
+        this.errorMessage = "";
         this.submitting = true;
         this.api.submitByApiLink(this.apiLink, this.data, this.abortSignal)
             .then((response) => {
@@ -94,9 +96,13 @@ export class ApiSchemaForm {
                     this.events.publish(API_RESOURCE_CHANGES_CHANNEL, response.data.changed.resourceKey);
                 }
             })
-            .catch(() => {
+            .catch((error) => {
                 this.submitError = true;
                 this.submitSuccess = false;
+                error.response.json().then(
+                    (apiError) => this.errorMessage = apiError.message,
+                    () => this.errorMessage = "Something went wrong, check form for errors and try again.",
+                );
             })
             .finally(() => {
                 this.abortSignal = null;

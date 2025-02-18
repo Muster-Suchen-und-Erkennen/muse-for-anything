@@ -49,6 +49,7 @@ interface ArrayBaseJsonSchema extends JsonSchema {
     minItems?: number;
     maxItems?: number;
     uniqueItems?: boolean;
+    unorderedItems?: boolean;
 }
 
 interface ArrayJsonSchema extends ArrayBaseJsonSchema {
@@ -395,6 +396,7 @@ export interface NormalizedJsonSchema {
     minItems?: number;
     maxItems?: number;
     uniqueItems?: boolean;
+    unorderedItems?: boolean;
     items?: NormalizedApiSchema;
     tupleItems?: NormalizedApiSchema[];
     contains?: NormalizedApiSchema;
@@ -566,6 +568,9 @@ function mergeArrayProperties(key, normalized: NormalizedJsonSchema, toNormalize
     if (key === "uniqueItems") {
         normalized.uniqueItems = toNormalize.uniqueItems || Boolean(normalized.uniqueItems);
         return true;
+    }
+    if (key === "unorderedItems") {
+        normalized.unorderedItems = toNormalize.unorderedItems || Boolean(normalized.unorderedItems);
     }
     return false;
 }

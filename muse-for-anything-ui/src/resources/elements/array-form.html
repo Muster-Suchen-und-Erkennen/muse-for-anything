@@ -2,17 +2,48 @@
     <require from="./schema-form"></require>
     <require from="./validity-indicator"></require>
     <require from="./schema-form-actions"></require>
+    <require from="./svg-icon.html"></require>
     <!-- TODO translations -->
 
     <div class="form-container">
         <div class="mb-2 flex items-center form-container-title">
             <p class="font-semibold text-lg">${label}</p>
             <validity-indicator class="ml-2" valid.bind="valid"></validity-indicator>
+            <button class="button-flat-toggle" type="button" aria-label="Show additional form field information."
+                aria-expanded.bind="showInfo ? 'true' : 'false'" aria-controls="info-${slug}" click.delegate="toggleInfo()">
+                <svg-icon icon.bind="'info'"></svg-icon>
+            </button>
             <div class="flex-grow"></div>
             <div class="justify-items-end flex items-center" if.bind="actions != null">
                 <schema-form-actions actions.bind="actions" key.bind="key" action-signal.call="actionSignal($event)">
                 </schema-form-actions>
             </div>
+        </div>
+        <div id="info-${slug}" class="mb-2" show.bind="showInfo">
+            <p class="mb-2" if.bind="description">${description}</p>
+            <p>Additional Constraints:</p>
+            <dl class="constraints-list">
+                <dt>Required:</dt>
+                <dd>${required ? 'yes' : 'no'}</dd>
+                <dt>Type:</dt>
+                <dd>${isTuple ? 'tuple' : 'array'}</dd>
+                <template if.bind="!isTuple">
+                    <dt>Properties:</dt>
+                    <dd>
+                        <span if.bind="uniqueItems">unique</span>
+                        <span if.bind="!uniqueItems">non-unique</span>,
+                        <span if.bind="orderedItems">ordered</span>
+                        <span if.bind="!orderedItems">unordered</span>
+                    </dd>
+                </template>
+                <template if.bind="minItems != null || maxItems != null">
+                    <dt>Length:</dt>
+                    <dd>
+                        ${minItems != null ? minItems : 0} - ${maxItems != null ? maxItems : '∞'}
+                        <span if.bind="minItems || maxItems">(${value.length})</span>
+                    </dd>
+                </template>
+            </dl>
         </div>
         <div class="flex flex-wrap card px-2 py-2" repeat.for="i of itemSchemas.length">
             <schema-form class="w-full" key.bind="$parent.itemSchemas[i].itemIndex"

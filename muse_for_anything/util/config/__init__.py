@@ -3,6 +3,7 @@
 from logging import INFO, WARNING
 from os import urandom
 
+from .celery_config import CELERY_DEBUG_CONFIG, CELERY_PRODUCTION_CONFIG
 from .oso_config import OsoDebugConfig, OsoProductionConfig
 from .passwords_config import PasswordsDebugConfig, PasswordsProductionConfig
 from .smorest_config import SmorestDebugConfig, SmorestProductionConfig
@@ -35,6 +36,8 @@ class ProductionConfig(
     DEFAULT_LOG_FORMAT = "{asctime} [{levelname:^7}] [{module:<30}] {message}    <{funcName}, {lineno}; {pathname}>"
     DEFAULT_LOG_DATE_FORMAT = None
 
+    CELERY = CELERY_PRODUCTION_CONFIG
+
 
 class DebugConfig(
     ProductionConfig,
@@ -48,3 +51,5 @@ class DebugConfig(
     SECRET_KEY = "debug_secret"  # FIXME make sure this NEVER! gets used in production!!!
 
     DEFAULT_LOG_SEVERITY = INFO
+
+    CELERY = CELERY_DEBUG_CONFIG

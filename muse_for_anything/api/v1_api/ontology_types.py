@@ -4,12 +4,14 @@ from datetime import datetime, timezone
 from http import HTTPStatus
 from typing import Any, List, Optional
 
+from celery import group
+from flask import request, url_for
 from flask.globals import g
 from flask.views import MethodView
 from flask_babel import gettext
 from flask_smorest import abort
 from marshmallow.utils import INCLUDE
-from sqlalchemy.sql.expression import or_
+from sqlalchemy.sql.expression import or_, select
 
 from muse_for_anything.api.pagination_util import (
     PaginationOptions,
@@ -29,6 +31,7 @@ from muse_for_anything.api.v1_api.constants import (
     TYPE_EXTRA_LINK_RELATIONS,
     TYPE_PAGE_EXTRA_LINK_RELATIONS,
     TYPE_REL_TYPE,
+    TYPE_VERSION_RESOURCE,
     UPDATE,
     UPDATE_REL,
 )
@@ -40,9 +43,10 @@ from muse_for_anything.api.v1_api.request_helpers import (
     PageResource,
 )
 from muse_for_anything.db.models.users import User
+from muse_for_anything.json_migrations.data_migration import DataMigrator, JsonSchema
 from muse_for_anything.oso_helpers import FLASK_OSO, OsoResource
+from muse_for_anything.tasks.migration import run_migration
 
-from .generators import type_version  # noqa
 from .models.ontology import ObjectTypePageParamsSchema, ObjectTypeSchema
 from .root import API_V1
 from ..base_models import (
@@ -63,10 +67,15 @@ from ...db.models.object_relation_tables import (
     OntologyTypeVersionToType,
     OntologyTypeVersionToTypeVersion,
 )
-from ...db.models.ontology_objects import OntologyObjectType, OntologyObjectTypeVersion
+from ...db.models.ontology_objects import (
+    OntologyObject,
+    OntologyObjectType,
+    OntologyObjectTypeVersion,
+)
 
 # import type specific generators to load them
 from .generators import type as type_  # noqa
+from .generators import type_version  # noqa
 
 
 @API_V1.route("/namespaces/<string:namespace>/types/")
@@ -396,12 +405,50 @@ class TypeView(MethodView):
 
         FLASK_OSO.authorize_and_set_resource(found_object_type, action=UPDATE)
 
+        target_version = (
+            1
+            if not found_object_type
+            else (found_object_type.current_version.version + 1)
+        )
+        # Check if schema changes are valid
+        target_schema = JsonSchema(
+            schema_url=url_for(
+                TYPE_VERSION_RESOURCE,
+                namespace=namespace,
+                object_type=object_type,
+                version=str(target_version),
+                _external=True,
+            ),
+            schema=data,
+        )
+
+        if found_object_type:
+            source_schema = JsonSchema(
+                schema_url=url_for(
+                    TYPE_VERSION_RESOURCE,
+                    namespace=namespace,
+                    object_type=object_type,
+                    version=str(found_object_type.current_version.version),
+                    _external=True,
+                ),
+                schema=found_object_type.current_version.data,
+            )
+        else:
+            # if this is the first schema, check schema with itself:
+            source_schema = target_schema
+
+        valid = DataMigrator.check_schema_changes(
+            source_schema=source_schema,
+            target_schema=target_schema,
+        )
+        if not valid:
+            abort(HTTPStatus.BAD_REQUEST, message=gettext("Schema change is not valid"))
+
         object_type_version = OntologyObjectTypeVersion(
             ontology_type=found_object_type,
             version=found_object_type.version + 1,
             data=data,
         )
-
         # validate schema and references and extract references
         metadata = validate_object_type(object_type_version)
 
@@ -432,6 +479,22 @@ class TypeView(MethodView):
         DB.session.add(object_type_version)
         DB.session.add(found_object_type)
         DB.session.commit()
+
+        # Start migration on all objects of updated type
+        q = (
+            select(OntologyObject.id)
+            .where(OntologyObject.namespace_id == namespace)
+            .where(OntologyObject.object_type_id == found_object_type.id)
+            .where(OntologyObject.deleted_on == None)
+        )
+
+        host_url = request.host_url
+        data_objects_ids = DB.session.execute(q).scalars().all()
+        task_group = group(
+            run_migration.s(data_object_id, host_url)
+            for data_object_id in data_objects_ids
+        )
+        task_group.apply_async()
 
         object_type_response = ApiResponseGenerator.get_api_response(
             found_object_type, link_to_relations=TYPE_EXTRA_LINK_RELATIONS

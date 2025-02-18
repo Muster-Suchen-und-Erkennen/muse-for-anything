@@ -1,18 +1,28 @@
 <template>
     <require from="./validity-indicator"></require>
+    <require from="./new-property-info"></require>
     <require from="./schema-form"></require>
     <require from="./schema-form-actions"></require>
     <require from="./api-resource"></require>
+    <require from="./svg-icon.html"></require>
 
     <div class="flex flex-col form-container">
         <div class="w-full mb-2 flex items-center form-container-title">
             <p class="font-semibold" for="">${label}</p>
             <validity-indicator class="ml-1" valid.bind="valid"></validity-indicator>
+            <button class="button-flat-toggle" type="button" aria-label="Show additional form field information."
+                aria-expanded.bind="showInfo ? 'true' : 'false'" aria-controls="info-${slug}" click.delegate="toggleInfo()"
+                if.bind="description">
+                <svg-icon icon.bind="'info'"></svg-icon>
+            </button>
             <div class="flex-grow"></div>
             <div class="justify-items-end flex items-center" if.bind="actions != null">
                 <schema-form-actions actions.bind="actions" key.bind="key" action-signal.call="actionSignal($event)">
                 </schema-form-actions>
             </div>
+        </div>
+        <div id="info-${slug}" class="mb-2" show.bind="showInfo">
+            <p class="mb-2" if.bind="description">${description}</p>
         </div>
         <!-- FIXME add translations -->
         <div class="flex flex-wrap" repeat.for="prop of extraProperties">
@@ -22,6 +32,7 @@
                 <button class="button-flat" click.delegate="addGhostProperty(prop.propertyName)">
                     Add Property
                 </button>
+                <new-property-info schema.bind="prop.propertySchema"></new-property-info>
             </div>
             <p if.bind="propertyState[prop.propertyName] === 'readonly'">${initialData[prop.propertyName]}</p>
             <schema-form if.bind="propertyState[prop.propertyName] === 'editable'" class="w-full properties"
@@ -47,8 +58,8 @@
             <api-resource api-link.bind="currentResourceLink" is-root.one-time="false">
             </api-resource>
         </div>
-        <button class="button-outline" click.delegate="openResourceChooser()">
-            Choose
+        <button class="button-outline" type="button" click.delegate="openResourceChooser()">
+            Choose Resource
         </button>
     </div>
 </template>
