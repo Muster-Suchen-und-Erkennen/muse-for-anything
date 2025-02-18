@@ -1,5 +1,5 @@
-import { bindable, observable, bindingMode, autoinject, TaskQueue } from "aurelia-framework";
-import { NormalizedApiSchema, NormalizedJsonSchema } from "rest/schema-objects";
+import { autoinject, bindable, bindingMode, observable, TaskQueue } from "aurelia-framework";
+import { NormalizedApiSchema } from "rest/schema-objects";
 
 export type UpdateSignal = (type?: "value" | "valid" | "dirty") => void;
 
@@ -32,6 +32,7 @@ export class SchemaForm {
         this.queue = queue;
     }
 
+    default: any;
     initialDataFix: any;
 
     activeSchema: NormalizedApiSchema;
@@ -44,6 +45,7 @@ export class SchemaForm {
     schemaChanged(newValue: NormalizedApiSchema, oldValue) {
         this.constValue = undefined;
         this.activeSchema = null;
+        this.default = undefined;
         const normalized = newValue.normalized;
         if (normalized.enum != null) {
             this.schemaType = "enum";
@@ -80,6 +82,12 @@ export class SchemaForm {
             this.schemaType = "unknown";
         }
         this.activeSchema = newValue;
+        if (normalized.default != null) {
+            // assign a copy of the default value
+            this.default = JSON.parse(JSON.stringify(normalized.default));
+        } else {
+            this.default = normalized.default;
+        }
     }
 
     initialDataChanged(newValue, oldValue) {
@@ -103,6 +111,9 @@ export class SchemaForm {
             this.value = this.constValue;
         }
         // propagate value change to child form
+        if (newValue == null && oldValue == null) {
+            return; // but ignore changes from null to undefined
+        }
         this.valueIn = newValue;
     }
 

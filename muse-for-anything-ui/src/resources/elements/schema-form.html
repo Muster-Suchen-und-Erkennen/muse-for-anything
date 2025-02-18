@@ -18,7 +18,7 @@
 
     <template if.bind="schemaType === 'custom'">
         <div class="${noCard ? '' : 'card px-2 py-2 mt-4'}" if.bind="extraType === 'typeRoot'">
-            <type-root-form key.bind="key" label.bind="label" initial-data.bind="initialDataFix"
+            <type-root-form key.bind="key" label.bind="label" initial-data.bind="initialDataFix != null ? initialDataFix : default"
                 schema.bind="activeSchema" required.bind="required" debug.bind="debug" context.bind="context"
                 value-in.bind="valueIn" value-out.from-view="valueOut & throttle" valid.from-view="valid"
                 dirty.from-view="dirty" actions.bind="actions" action-signal.call="actionSignal($event)">
@@ -26,40 +26,40 @@
         </div>
         <div class="${noCard ? '' : 'card px-2 py-2 mt-4 focus-within:border focus-within:border-primary'}"
             if.bind="extraType === 'typeDefinition'">
-            <type-definition-form key.bind="key" label.bind="label" initial-data.bind="initialDataFix"
+            <type-definition-form key.bind="key" label.bind="label" initial-data.bind="initialDataFix != null ? initialDataFix : default"
                 schema.bind="activeSchema" required.bind="required" debug.bind="debug" context.bind="context"
                 value-in.bind="valueIn" value-out.from-view="valueOut & throttle" valid.from-view="valid"
                 dirty.from-view="dirty" actions.bind="actions" action-signal.call="actionSignal($event)">
             </type-definition-form>
         </div>
         <div class="${noCard ? '' : 'card px-2 py-2 mt-4'}" if.bind="extraType === 'resourceReferenceDefinition'">
-            <resource-reference-definition-form key.bind="key" label.bind="label" initial-data.bind="initialDataFix"
+            <resource-reference-definition-form key.bind="key" label.bind="label" initial-data.bind="initialDataFix != null ? initialDataFix : default"
                 schema.bind="activeSchema" required.bind="required" debug.bind="debug" context.bind="context"
                 value-in.bind="valueIn" value-out.from-view="valueOut & throttle" valid.from-view="valid"
                 dirty.from-view="dirty" actions.bind="actions" action-signal.call="actionSignal($event)">
             </resource-reference-definition-form>
         </div>
         <div if.bind="extraType === 'resourceReference'">
-            <resource-reference-form key.bind="key" label.bind="label" initial-data.bind="initialDataFix"
+            <resource-reference-form key.bind="key" label.bind="label" initial-data.bind="initialDataFix != null ? initialDataFix : default"
                 schema.bind="activeSchema" required.bind="required" debug.bind="debug" context.bind="context"
                 value-in.bind="valueIn" value-out.from-view="valueOut & throttle" valid.from-view="valid"
                 dirty.from-view="dirty" actions.bind="actions" action-signal.call="actionSignal($event)">
             </resource-reference-form>
         </div>
         <enum-item-form if.bind="extraType === 'enumItem'" key.bind="key" label.bind="label"
-            initial-data.bind="initialDataFix" schema.bind="activeSchema" required.bind="required" debug.bind="debug"
+            initial-data.bind="initialDataFix != null ? initialDataFix : default" schema.bind="activeSchema" required.bind="required" debug.bind="debug"
             context.bind="context" value-in.bind="valueIn" value-out.from-view="valueOut & throttle"
             valid.from-view="valid" dirty.from-view="dirty" actions.bind="actions"
             action-signal.call="actionSignal($event)">
         </enum-item-form>
         <json-type-form if.bind="extraType === 'jsonType'" key.bind="key" label.bind="label"
-            initial-data.bind="initialDataFix" schema.bind="activeSchema" required.bind="required" debug.bind="debug"
+            initial-data.bind="initialDataFix != null ? initialDataFix : default" schema.bind="activeSchema" required.bind="required" debug.bind="debug"
             context.bind="context" value-in.bind="valueIn" value-out.from-view="valueOut & throttle"
             valid.from-view="valid" dirty.from-view="dirty" actions.bind="actions"
             action-signal.call="actionSignal($event)">
         </json-type-form>
         <json-ref-form if.bind="extraType === 'jsonRef'" key.bind="key" label.bind="label"
-            initial-data.bind="initialDataFix" schema.bind="activeSchema" required.bind="required" debug.bind="debug"
+            initial-data.bind="initialDataFix != null ? initialDataFix : default" schema.bind="activeSchema" required.bind="required" debug.bind="debug"
             context.bind="context" value-in.bind="valueIn" value-out.from-view="valueOut & throttle"
             valid.from-view="valid" dirty.from-view="dirty" actions.bind="actions"
             action-signal.call="actionSignal($event)">
@@ -67,7 +67,7 @@
     </template>
     <template if.bind="schemaType === 'object'">
         <div class="${noCard ? '' : 'card px-2 py-2 mt-4'}">
-            <object-form key.bind="key" label.bind="label" initial-data.bind="initialDataFix" schema.bind="activeSchema"
+            <object-form key.bind="key" label.bind="label" initial-data.bind="initialDataFix != null ? initialDataFix : default" schema.bind="activeSchema"
                 required.bind="required" debug.bind="debug" context.bind="context" value-in.bind="valueIn"
                 value-out.from-view="valueOut & throttle" valid.from-view="valid" dirty.from-view="dirty"
                 actions.bind="actions" action-signal.call="actionSignal($event)">
@@ -75,35 +75,35 @@
         </div>
     </template>
     <template if.bind="schemaType === 'array'">
-        <array-form class="mt-4 block" key.bind="key" label.bind="label" initial-data.bind="initialDataFix"
+        <array-form class="mt-4 block" key.bind="key" label.bind="label" initial-data.bind="initialDataFix != null ? initialDataFix : default"
             schema.bind="activeSchema" required.bind="required" debug.bind="debug" context.bind="context"
             value-in.bind="valueIn" value-out.from-view="valueOut & throttle" valid.from-view="valid"
             dirty.from-view="dirty" actions.bind="actions" action-signal.call="actionSignal($event)">
         </array-form>
     </template>
     <template if.bind="schemaType === 'string'">
-        <text-form class="block mt-1" key.bind="key" label.bind="label" initial-data.bind="initialDataFix"
+        <text-form class="block mt-1" key.bind="key" label.bind="label" initial-data.bind="initialDataFix != null ? initialDataFix : default"
             schema.bind="activeSchema" required.bind="required" debug.bind="debug" value-in.bind="valueIn"
             value-out.from-view="valueOut & throttle" valid.from-view="valid" key.bind="key" actions.bind="actions"
             action-signal.call="actionSignal($event)" dirty.from-view="dirty">
         </text-form>
     </template>
     <template if.bind="schemaType === 'number'">
-        <number-form class="block mt-1" key.bind="key" label.bind="label" initial-data.bind="initialDataFix"
+        <number-form class="block mt-1" key.bind="key" label.bind="label" initial-data.bind="initialDataFix != null ? initialDataFix : default"
             schema.bind="activeSchema" required.bind="required" debug.bind="debug" value-in.bind="valueIn"
             value-out.from-view="valueOut & throttle" valid.from-view="valid" dirty.from-view="dirty"
             actions.bind="actions" action-signal.call="actionSignal($event)">
         </number-form>
     </template>
     <template if.bind="schemaType === 'boolean'">
-        <boolean-form class="block mt-2 mb-2" key.bind="key" label.bind="label" initial-data.bind="initialDataFix"
+        <boolean-form class="block mt-2 mb-2" key.bind="key" label.bind="label" initial-data.bind="initialDataFix != null ? initialDataFix : default"
             schema.bind="activeSchema" required.bind="required" debug.bind="debug" value-in.bind="valueIn"
             value-out.from-view="valueOut & throttle" valid.from-view="valid" dirty.from-view="dirty"
             actions.bind="actions" action-signal.call="actionSignal($event)">
         </boolean-form>
     </template>
     <template if.bind="schemaType === 'enum'">
-        <enum-form class="block mt-1" key.bind="key" label.bind="label" initial-data.bind="initialDataFix"
+        <enum-form class="block mt-1" key.bind="key" label.bind="label" initial-data.bind="initialDataFix != null ? initialDataFix : default"
             schema.bind="activeSchema" required.bind="required" debug.bind="debug" value-in.bind="valueIn"
             value-out.from-view="valueOut & throttle" valid.from-view="valid" dirty.from-view="dirty"
             actions.bind="actions" action-signal.call="actionSignal($event)">
@@ -139,6 +139,12 @@
                 Initial:
                 <code>
                     ${initialData | json}
+                </code>
+            </div>
+            <div>
+                Default:
+                <code>
+                    ${default | json}
                 </code>
             </div>
             <div>
