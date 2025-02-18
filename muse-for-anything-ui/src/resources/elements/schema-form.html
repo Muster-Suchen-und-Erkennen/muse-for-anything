@@ -1,5 +1,6 @@
 <template>
     <require from="./validity-indicator"></require>
+    <require from="./new-property-info"></require>
     <require from="./schema-form-actions"></require>
     <require from="./type-root-form"></require>
     <require from="./type-definition-form"></require>
@@ -112,6 +113,7 @@
         <div class="mt-1 w-full flex items-center">
             <p class="font-semibold" for="">${label}</p>
             <validity-indicator class="ml-1" valid.bind="valid"></validity-indicator>
+            <new-property-info schema.bind="activeSchema"></new-property-info>
             <div class="flex-grow"></div>
             <div class="justify-items-end flex items-center" if.bind="actions != null">
                 <schema-form-actions actions.bind="actions" key.bind="key" action-signal.call="actionSignal($event)">

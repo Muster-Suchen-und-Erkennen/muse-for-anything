@@ -20,7 +20,11 @@ export class BooleanForm {
 
     @observable() value: boolean | null;
 
+    showInfo: boolean = false;
+
     slug = nanoid(8);
+
+    description: string = "";
 
     isNullable: boolean = true;
 
@@ -32,6 +36,11 @@ export class BooleanForm {
         this.queue = queue;
     }
 
+    toggleInfo() {
+        this.showInfo = !this.showInfo;
+        return false;
+    }
+
     initialDataChanged(newValue, oldValue) {
         if (newValue !== undefined) {
             this.value = newValue;
@@ -41,6 +50,7 @@ export class BooleanForm {
     // eslint-disable-next-line complexity
     schemaChanged(newValue: NormalizedApiSchema, oldValue) {
         const normalized = newValue.normalized;
+        this.description = normalized.description ?? "";
         this.isNullable = normalized.type.has(null);
         if (!this.isNullable && this.value == null) {
             this.value = false;

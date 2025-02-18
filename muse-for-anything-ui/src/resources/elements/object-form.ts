@@ -21,12 +21,20 @@ export class ObjectForm {
 
     @observable() value: any = {};
 
+    showMain: boolean = true;
+    showInfo: boolean = false;
+
     isNullable: boolean = false;
+
+    description: string = "";
 
     properties: PropertyDescription[] = [];
     propertiesByKey: Map<string, PropertyDescription> = new Map();
     propertyState: { [prop: string]: "readonly" | "editable" | "missing" } = {};
     requiredProperties: Set<string> = new Set();
+
+    minProperties: number | null = null;
+    maxProperties: number | null = null;
 
     updateCount = 100;
 
@@ -50,6 +58,15 @@ export class ObjectForm {
         this.queue = queue;
     }
 
+    toggleMain() {
+        this.showMain = !this.showMain;
+        return false;
+    }
+
+    toggleInfo() {
+        this.showInfo = !this.showInfo;
+        return false;
+    }
 
     initialDataChanged(newValue, oldValue) {
         if (newValue != null && !this.value) {
@@ -70,16 +87,23 @@ export class ObjectForm {
     // eslint-disable-next-line complexity
     reloadProperties() {
         if (this.schema == null) {
+            this.description = "";
             this.properties = [];
+            this.minProperties = null;
+            this.maxProperties = null;
             this.requiredProperties = new Set();
             return;
         }
         if (this.schema.normalized.type == null || !this.schema.normalized.type.has("object")) {
             console.error("Not an object!"); // FIXME better error!
+            this.description = "";
             this.properties = [];
+            this.minProperties = null;
+            this.maxProperties = null;
             this.requiredProperties = new Set();
             return;
         }
+        this.description = this.schema.normalized.description ?? "";
 
         // check if nullable
         this.isNullable = this.schema.normalized.type.has("null");
@@ -126,6 +150,8 @@ export class ObjectForm {
         this.properties = properties;
         this.propertiesByKey = propertiesByKey;
         this.requiredProperties = requiredProperties;
+        this.minProperties = this.schema.normalized.minProperties ?? null;
+        this.maxProperties = this.schema.normalized.maxProperties ?? null;
 
         if (this.hasExtraProperties) { // recheck valid status
             this.extraPropertyNameChanged(this.extraPropertyName);

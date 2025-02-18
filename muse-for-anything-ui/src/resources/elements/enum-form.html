@@ -1,16 +1,29 @@
 <template>
     <require from="./validity-indicator"></require>
     <require from="./schema-form-actions"></require>
+    <require from="./svg-icon.html"></require>
 
     <div class="flex flex-col form-field">
         <div class="w-full flex items-center">
             <label class="font-semibold form-title" for.bind="key+slug">${label}</label>
             <validity-indicator class="ml-1" valid.bind="valid"></validity-indicator>
+            <button class="button-flat-toggle" type="button" aria-label="Show additional form field information."
+                aria-expanded.bind="showInfo ? 'true' : 'false'" aria-controls="info-${slug}" click.delegate="toggleInfo()">
+                <svg-icon icon.bind="'info'"></svg-icon>
+            </button>
             <div class="flex-grow"></div>
             <div class="justify-items-end flex items-center" if.bind="actions != null">
                 <schema-form-actions actions.bind="actions" key.bind="key" action-signal.call="actionSignal($event)">
                 </schema-form-actions>
             </div>
+        </div>
+        <div id="info-${slug}" class="mb-2" show.bind="showInfo">
+            <p class="mb-2" if.bind="description">${description}</p>
+            <p>Additional Constraints:</p>
+            <dl class="constraints-list">
+                <dt>Required:</dt>
+                <dd>${required ? 'yes' : 'no'}</dd>
+            </dl>
         </div>
         <select class="bg-gray-100 border rounded-sm border-gray-800 focus:ring-4 w-full px-2 py-1 dark:bg-gray-700 dark:border-gray-200" id.bind="key+slug"
             name.bind="key+slug" required.bind="required && !isNullable && minLength != null & empty"

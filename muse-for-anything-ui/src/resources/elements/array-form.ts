@@ -19,15 +19,27 @@ export class ArrayForm {
 
     @observable() value: any[] = [];
 
+    showInfo: boolean = false;
+
+    description: string = "";
+
     isNullable: boolean = false;
 
     itemSchemas: ItemDescription[] = [];
 
     minItems: number;
     maxItems: number;
+    isTuple: boolean = false;
+    uniqueItems: boolean = false;
+    orderedItems: boolean = true;
 
     @observable() itemsValid: boolean[] = [];
     @observable() itemsDirty: boolean[] = [];
+
+    toggleInfo() {
+        this.showInfo = !this.showInfo;
+        return false;
+    }
 
     initialDataChanged(newValue, oldValue) {
         this.reloadItems();
@@ -73,28 +85,40 @@ export class ArrayForm {
         this.reloadItems();
     }
 
+    // eslint-disable-next-line complexity
     reloadItems() {
         if (this.schema == null) {
+            this.description = "";
             this.itemSchemas = [];
             this.minItems = null;
             this.maxItems = 0;
+            this.isTuple = false;
+            this.uniqueItems = false;
+            this.orderedItems = true;
             this.itemsValid = [];
             this.itemsDirty = [];
             this.valid = false;
             return;
         }
         const normalized = this.schema.normalized;
+        this.description = normalized.description ?? "";
         if (normalized.type == null || !normalized.type.has("array")) {
             //console.error("Not an array!", this.schema); // FIXME better error!
             // can happen when switching type schema...
             this.itemSchemas = [];
             this.minItems = null;
             this.maxItems = 0;
+            this.isTuple = false;
+            this.uniqueItems = false;
+            this.orderedItems = true;
             return;
         }
         this.isNullable = normalized.type.has("null");
         this.minItems = normalized.minItems;
         this.maxItems = normalized.maxItems;
+        this.isTuple = Boolean(normalized.tupleItems);
+        this.uniqueItems = normalized.uniqueItems;
+        this.orderedItems = !normalized.unorderedItems;
         const currentValueLength = this.value?.length ?? 0;
         const initialDataLength = this.initialData?.length ?? 0;
         const currentLength = (currentValueLength > initialDataLength) ? currentValueLength : initialDataLength;
