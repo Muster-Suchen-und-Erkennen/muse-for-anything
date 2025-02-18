@@ -248,6 +248,10 @@ button:disabled {
     text-decoration: none;
 }
 
+input {
+    accent-color: var(--primary-color);
+}
+
 /* Taxonomy Graph styles */
 
 taxonomy-graph {
