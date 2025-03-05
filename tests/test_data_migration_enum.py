@@ -100,7 +100,7 @@ class TestMigrationToEnum(unittest.TestCase):
             DataMigrator.check_schema_changes(source_schema, self.target_schema)
         )
         updated_data = DataMigrator.migrate_data(data, source_schema, self.target_schema)
-        self.assertEquals(1944.123, updated_data)
+        self.assertEqual(1944.123, updated_data)
 
     def test_from_enum_to_enum_valid(self):
         source_schema = JsonSchema(
