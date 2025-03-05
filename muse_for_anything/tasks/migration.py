@@ -144,7 +144,7 @@ def _migrate_object(
                     version=str(next_version.version),
                     _external=True,
                 ),
-                schema=current_version.data,
+                schema=next_version.data,
             ),
         )
         _save_new_version(
