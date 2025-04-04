@@ -1,5 +1,6 @@
 import { bindable, bindingMode, observable } from "aurelia-framework";
 import { ItemDescription, NormalizedApiSchema } from "rest/schema-objects";
+import { deepEqual } from "util/comparisons";
 
 export class ArrayForm {
     @bindable key: string;
@@ -61,7 +62,7 @@ export class ArrayForm {
     valueChanged(newValue, oldValue) {
         const newOutValue: any[] = [...(newValue ?? [])];
         const newValueIsDifferent = newOutValue.some((item, index) => {
-            if (this.valueOut?.[index] !== item) {
+            if (deepEqual(this.valueOut?.[index], item)) {
                 return true;
             }
             return false;

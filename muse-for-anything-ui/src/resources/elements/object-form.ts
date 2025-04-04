@@ -1,6 +1,7 @@
 import { autoinject, bindable, bindingMode, observable, TaskQueue } from "aurelia-framework";
 import { nanoid } from "nanoid";
 import { NormalizedApiSchema, PropertyDescription } from "rest/schema-objects";
+import { deepEqual } from "util/comparisons";
 
 @autoinject
 export class ObjectForm {
@@ -193,7 +194,7 @@ export class ObjectForm {
     }
 
     onPropertyValueUpdate = (value, binding) => {
-        this.queue.queueMicroTask(() => this.valueChanged(this.value));
+        this.valueChanged(this.value);
     };
 
     valueChanged(newValue) {
@@ -210,7 +211,7 @@ export class ObjectForm {
                     // const values always win
                     newOutValue[key] = prop.propertySchema.normalized.const;
                 }
-                if (this.valueOut?.[key] !== newOutValue[key]) {
+                if (!deepEqual(this.valueOut?.[key], newOutValue[key])) {
                     newValueIsDifferent = true;
                 }
             }
@@ -322,7 +323,7 @@ export class ObjectForm {
     }
 
     onPropertyValidUpdate = (value, binding) => {
-        this.queue.queueMicroTask(() => this.propertiesValidChanged(this.propertiesValid));
+        this.propertiesValidChanged(this.propertiesValid);
     };
 
     // eslint-disable-next-line complexity
@@ -364,7 +365,7 @@ export class ObjectForm {
     }
 
     onPropertyDirtyUpdate = (value, binding) => {
-        this.queue.queueMicroTask(() => this.propertiesDirtyChanged(this.propertiesDirty));
+        this.propertiesDirtyChanged(this.propertiesDirty);
     };
 
     propertiesDirtyChanged(newValue: { [prop: string]: boolean }) {
