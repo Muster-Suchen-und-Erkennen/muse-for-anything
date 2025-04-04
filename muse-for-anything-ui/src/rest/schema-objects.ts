@@ -299,13 +299,13 @@ export class ApiSchema {
         return definedTypes;
     }
 
+    // eslint-disable-next-line complexity
     public async resolveSchema(ref?: string, depth: number = 0): Promise<JsonSchema> {
         if (ref === "#") {
             ref = null;
         }
-        if (this.hitCount > 100) { // FIXME remove emergency recursion stop later if possible
-            console.trace(ref);
-            throw Error("Too many schemas requested!");
+        if (this.hitCount === 10000) { // FIXME remove emergency warning later if possible
+            console.trace("Too many schemas requested!", ref);
         }
         this.hitCount++;
         if (depth > 100) { // FIXME remove emergency recursion stop later if possible
@@ -752,7 +752,6 @@ function consolidateExtraProperties(rootSchema: JsonSchema, normalized: Normaliz
                 ],
             };
             if (schema.customType != null) {
-                console.log(schema.customType); // TODO test workaround
                 combined.customType = schema.customType;
             }
             oneOf.push(new NormalizedApiSchema(combined, ["oneOf", "customType"])); // FIXME do not ignore custom type of schema, only ignore root schema…
