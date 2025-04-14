@@ -107,6 +107,11 @@ class TestMigrationToInteger(unittest.TestCase):
         )
         updated_data = DataMigrator.migrate_data(data, source_schema, self.target_schema)
         self.assertEqual(0, updated_data)
+        self.assertNotIsInstance(
+            updated_data,
+            bool,
+            "Updated value must not be a boolean type, as booleans will have different serialization!",
+        )
 
     def test_from_number_to_int(self):
         source_schema = JsonSchema(
