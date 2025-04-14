@@ -305,7 +305,41 @@ class TestMigrationToObject(unittest.TestCase):
         updated_data = DataMigrator.migrate_data(
             data, source_schema, self.target_schema_complex
         )
-        self.assertEqual({"one": None, "two": "hello world", "three": True}, updated_data)
+        self.assertDictEqual(
+            {"one": None, "two": "hello world", "three": True}, updated_data
+        )
+
+    def test_from_object_to_object_change_prop_simple(self):
+        source_schema = JsonSchema(
+            _ROOT_URL,
+            {
+                "$ref": "#/definitions/root",
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "abstract": False,
+                "definitions": {
+                    "root": {
+                        "properties": {
+                            "one": {"type": ["string"]},
+                            "three": {"type": ["boolean"]},
+                            "two": {"type": ["string"]},
+                        },
+                        "type": ["object"],
+                    }
+                },
+                "title": "Type",
+            },
+        )
+        data = {"one": "42", "two": "hello world", "three": True}
+        self.assertTrue(
+            DataMigrator.check_schema_changes(source_schema, self.target_schema_complex)
+        )
+        updated_data = DataMigrator.migrate_data(
+            data, source_schema, self.target_schema_complex
+        )
+        self.assertEqual(int, type(updated_data["one"]))
+        self.assertDictEqual(
+            {"one": 42, "two": "hello world", "three": True}, updated_data
+        )
 
     def test_from_object_to_object_change_prop(self):
         source_schema = JsonSchema(
@@ -334,7 +368,9 @@ class TestMigrationToObject(unittest.TestCase):
         updated_data = DataMigrator.migrate_data(
             data, source_schema, self.target_schema_complex
         )
-        self.assertEqual({"one": 42, "two": "hello world", "three": True}, updated_data)
+        self.assertDictEqual(
+            {"one": 42, "two": "hello world", "three": True}, updated_data
+        )
 
     def test_from_object_to_object_combination(self):
         source_schema = JsonSchema(
