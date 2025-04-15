@@ -61,9 +61,11 @@ def _check_numeric_attributes(source_schema: dict, target_schema: dict):  # noqa
 def _convert_to_number(
     data: Union[bool, int, float, str], target_type: Union[Type[int], Type[float]]
 ) -> Union[int, float]:
+    if isinstance(data, bool):
+        return int(data)
     if isinstance(data, target_type):
         return data  # don't convert
-    if isinstance(data, (bool, int, float)):
+    if isinstance(data, (int, float)):
         return target_type(data)  # numbers and boolean are safe for direct conversion
 
     # handle strings
