@@ -123,14 +123,22 @@ export class ObjectForm {
 
         // setup properties
         const setProperties = new Set<string>();
-        Object.keys(this.initialData ?? {}).forEach(key => {
-            if (!this.deletedProperties.has(key)) {
+        const currentInitialData = this.initialData ?? {};
+        Object.keys(currentInitialData).forEach(key => {
+            if (!this.deletedProperties.has(key) && currentInitialData[key] !== undefined) {
                 setProperties.add(key);
             }
         });
-        if (this.value != null) {
-            Object.keys(this.value).forEach(key => setProperties.add(key));
+        const currentValue = this.value;
+        if (currentValue != null) {
+            Object.keys(currentValue).forEach(key => {
+                if (currentValue[key] !== undefined) {
+                    // only use keys with actual values
+                    setProperties.add(key);
+                }
+            });
         }
+
         const properties = this.schema.getPropertyList(Array.from(setProperties.keys()));
         const propertiesByKey = new Map<string, PropertyDescription>();
         const propertyState: { [prop: string]: "readonly" | "editable" | "missing" } = {};
@@ -146,17 +154,30 @@ export class ObjectForm {
             }
         });
 
-
+        // always update property state
         this.propertyState = propertyState;
-        this.properties = properties;
-        this.propertiesByKey = propertiesByKey;
         this.requiredProperties = requiredProperties;
         this.minProperties = this.schema.normalized.minProperties ?? null;
         this.maxProperties = this.schema.normalized.maxProperties ?? null;
-
         if (this.hasExtraProperties) { // recheck valid status
             this.extraPropertyNameChanged(this.extraPropertyName);
         }
+
+        const currentProperties = this.properties;
+        if (currentProperties != null && currentProperties.length === properties.length) {
+            const noPropHasChangedSchema = properties.every((prop, i) => {
+                return prop.propertySchema.normalized.$id === currentProperties[i].propertySchema.normalized.$id;
+            });
+
+            if (noPropHasChangedSchema) {
+                return;  // properties did not change, no need for any updates
+            }
+        }
+
+        // only updated if a property schema has changed
+        this.properties = properties;
+        this.propertiesByKey = propertiesByKey;
+
         this.valueChanged(this.value);
     }
 
@@ -184,13 +205,17 @@ export class ObjectForm {
         }
     }
 
-    valueInChanged(newValue) {
+    valueInChanged(newValue, oldValue) {
+        const isChangeFromOutside = !deepEqual(newValue, this.valueOut);
         if (newValue == null) {
             this.value = null;
         } else {
             this.value = { ...newValue };
         }
-        this.reloadProperties();
+        if (isChangeFromOutside) {
+            // only reload for changes coming from outside
+            this.reloadProperties();
+        }
     }
 
     onPropertyValueUpdate = (value, binding) => {
@@ -217,12 +242,12 @@ export class ObjectForm {
             }
         });
         const hasLessKeys = Object.keys(newOutValue).length < Object.keys(this.valueOut ?? {}).length;
-        // FIXME console.log(newOutValue, newValueIsDifferent, hasLessKeys)
+
         if (newValueIsDifferent || hasLessKeys) {
             if (newValue == null && this.isNullable) {
                 this.valueOut = null;
             } else {
-                this.valueOut = newOutValue;
+                this.valueOut = { ...newOutValue };
             }
         }
     }

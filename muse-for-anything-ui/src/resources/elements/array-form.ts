@@ -47,12 +47,16 @@ export class ArrayForm {
     }
 
     valueInChanged(newValue) {
+        const isChangeFromOutside = !deepEqual(newValue, this.valueOut);
         if (newValue == null) {
             this.value = null;
         } else {
             this.value = [...newValue];
         }
-        this.reloadItems();
+        if (isChangeFromOutside) {
+            // only reload for changes coming from outside
+            this.reloadItems();
+        }
     }
 
     onItemValueUpdate = (value, binding) => {
@@ -62,8 +66,11 @@ export class ArrayForm {
     valueChanged(newValue, oldValue) {
         const newOutValue: any[] = [...(newValue ?? [])];
         const newValueIsDifferent = newOutValue.some((item, index) => {
-            if (deepEqual(this.valueOut?.[index], item)) {
-                return true;
+            if (!Array.isArray(this.valueOut)) {
+                return true;  // current value out has no items!
+            }
+            if (!deepEqual(this.valueOut?.[index], item)) {
+                return true;  // item in place "index" is different
             }
             return false;
         });
@@ -136,6 +143,17 @@ export class ArrayForm {
         }
         if (currentLength < this.itemsDirty.length) {
             this.itemsDirty = this.itemsDirty.slice(0, currentLength);
+        }
+
+        const newItemSchemas = this.schema.getItemList(currentLength);
+        if (this.itemSchemas != null && this.itemSchemas.length === newItemSchemas.length) {
+            const noItemHasChangedSchema = newItemSchemas.every((prop, i) => {
+                return prop.itemSchema.normalized.$id === this.itemSchemas[i].itemSchema.normalized.$id;
+            });
+
+            if (noItemHasChangedSchema) {
+                return;  // items did not change, no need for any updates
+            }
         }
 
         this.itemSchemas = this.schema.getItemList(currentLength);
