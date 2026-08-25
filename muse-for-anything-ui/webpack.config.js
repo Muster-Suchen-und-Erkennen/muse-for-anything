@@ -50,7 +50,9 @@ const cssRules = (production) => [
 
 module.exports = ({ production, extractCss, analyze, tests, hmr, port, host } = {}) => ({
     resolve: {
-        extensions: ['.ts', '.js'],
+        // .json is a webpack default that gets lost by overriding extensions;
+        // emojilib (via @milkdown/plugin-emoji) requires its data as './emojis'
+        extensions: ['.ts', '.js', '.json'],
         modules: [srcDir, 'node_modules'],
 
         alias: {

@@ -5,6 +5,7 @@
 @import url("/node_modules/prosemirror-view/style/prosemirror.css");
 @import url("/node_modules/prosemirror-gapcursor/style/gapcursor.css");
 @import url("/node_modules/katex/dist/katex.min.css");
+@import url("/node_modules/@milkdown-lab/plugin-menu/style.css");
 
 
 @layer utilities {
@@ -354,6 +355,11 @@ p:where(.block-max-3l:not(.overflow-y-hidden),.block-max-5l:not(.overflow-y-hidd
 }
 
 /* Milkdown Styles */
+
+/* Milkdown 7 is headless and ships no styles of its own, so everything the
+   editor renders is styled here. Colors come from the app wide custom
+   properties so the editor follows the light/dark theme switch. */
+
 .milkdown .hide {
     display: none;
 }
@@ -362,58 +368,18 @@ p:where(.block-max-3l:not(.overflow-y-hidden),.block-max-5l:not(.overflow-y-hidd
     margin-inline: 0px;
 }
 
-.milkdown-menu-wrapper {
-    @apply flex flex-col relative w-full;
-}
-
-.milkdown-menu-wrapper > .milkdown {
+.milkdown .ProseMirror {
+    outline: none;
     @apply p-2;
 }
 
-.milkdown-menu-wrapper > .milkdown-menu {
-    border: none;
-    overflow-x: auto;
-    @apply w-full px-2;
-}
-
-.milkdown-menu .menu-selector-wrapper {
-    border: none;
-}
-.milkdown-menu .menu-selector-wrapper .menu-selector {
-    @apply m-0 dark:text-white;
-}
-.milkdown-menu .button{
-    @apply m-0 dark:text-white;
-}
-.milkdown-menu .divider{
-    @apply my-1 mx-2 dark:text-white;
-}
-
-.milkdown-menu .menu-selector-list {
-    left: unset !important;
-}
-
-.milkdown-cell-point > * {
-    padding: 0px;
-    transform: translate(-2px, -2px);
-}
-
-.milkdown .tooltip > * {
-    min-width: 2rem;
-    min-height: 2rem;
-    @apply flex items-center justify-center
-}
-
-.milkdown .tooltip > *:hover {
-    background-color: var(--background-color);
-}
-
-.milkdown .tooltip > *.active {
-    background-color: var(--primary-extra-light-color);
+.milkdown .ProseMirror p {
+    @apply my-2;
 }
 
 .milkdown hr {
     @apply my-2;
+    border-color: var(--border-color);
 }
 
 .milkdown h1 {
@@ -440,9 +406,63 @@ p:where(.block-max-3l:not(.overflow-y-hidden),.block-max-5l:not(.overflow-y-hidd
     @apply font-extralight mt-2 mb-2;
 }
 
-.milkdown .code-inline {
+.milkdown :not(pre) > code {
     background-color: var(--background-alt-color);
     @apply p-1 rounded-md;
+}
+
+.milkdown pre {
+    background-color: var(--background-alt-color);
+    @apply my-2 p-2 border rounded-md overflow-x-auto;
+    border-color: var(--border-color);
+}
+
+.milkdown pre:focus-within {
+    border-color: var(--primary-color);
+}
+
+.milkdown blockquote {
+    @apply ml-7 my-2 pl-2 border-l-4 border-primary;
+}
+
+.milkdown ul {
+    list-style-type: disc;
+    @apply my-2 pl-8;
+}
+
+.milkdown ol {
+    list-style-type: decimal;
+    @apply my-2 pl-8;
+}
+
+.milkdown li > p {
+    @apply my-0;
+}
+
+/* gfm task list items carry their own checkbox, so they lose the list marker */
+.milkdown li[data-item-type="task"] {
+    list-style-type: none;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+.milkdown table {
+    @apply my-2 w-full;
+    border-collapse: collapse;
+}
+
+.milkdown :is(th, td) {
+    @apply px-2 py-1 border;
+    border-color: var(--border-color);
+}
+
+.milkdown th {
+    background-color: var(--background-alt-color);
+}
+
+.milkdown .ProseMirror-selectednode {
+    outline: none;
 }
 
 .milkdown .katex::before, .milkdown .katex::after {
@@ -456,101 +476,33 @@ p:where(.block-max-3l:not(.overflow-y-hidden),.block-max-5l:not(.overflow-y-hidd
     content: "";
 }
 
-.milkdown .code-fence {
-    @apply border rounded-md;
+/* menu plugin: its stylesheet hard codes a dark palette, so rebind the
+   variables it exposes and the two colors it sets directly */
+.milkdown-menu {
+    --menu-bg: var(--background-color);
+    --menu-border: var(--border-color);
+    --menu-bg-hover: var(--background-alt-color);
+    --menu-text-hover: var(--primary-color);
+    overflow-x: auto;
 }
 
-.milkdown .code-fence:focus-within, .milkdown .code-fence:focus {
-    border-color: var(--primary-color);
-    background-color: var(--background-alt-color);
+.milkdown-menu :is(button, li[role="menuitem"]) {
+    color: var(--text-color);
 }
 
-.milkdown .code-fence pre {
-    @apply ml-6;
-}
-
-.milkdown .code-fence_selector-list {
-    @apply border border-gray-700 rounded-b-md;
-}
-
-.milkdown .ProseMirror-selectednode {
-    outline: none;
-}
-
-.milkdown .math-block.ProseMirror-selectednode > :first-child {
-    @apply mt-2 border rounded-md;
-    border-color: var(--primary-color);
-}
-
-.milkdown .blockquote {
-    @apply ml-7 my-2 pl-2 border-l-4 border-primary;
-}
-
-.milkdown .bullet-list {
-    list-style-type: none;
-}
-
-.milkdown .bullet-list .list-item {
-    display: flex;
-}
-
-.milkdown .bullet-list .list-item_label {
+.milkdown-menu .markdown-menu-icon {
     display: inline-flex;
-    justify-content: end;
-    @apply w-8 mr-2;
 }
 
-.milkdown .ordered-list {
-    list-style-type: none;
+/* the select buttons carry a hard coded material icons chevron; the app does
+   not load that font, so hide the ligature text and draw a caret instead */
+.milkdown-menu .material-icons {
+    font-size: 0;
 }
 
-.milkdown .ordered-list .list-item {
-    display: flex;
-}
-
-.milkdown .ordered-list .list-item_label {
-    display: inline-flex;
-    justify-content: end;
-    @apply w-8 mr-2;
-}
-
-.milkdown .bullet-list .task-list-item {
-    display: flex;
-    position: revert;
-}
-
-.milkdown .bullet-list .task-list-item label {
-    display: inline-flex;
-    justify-content: end;
-    align-items: center;
-    @apply w-8 mr-2;
-}
-
-.milkdown .bullet-list .task-list-item label > div {
-    padding: 0px;
-}
-
-.milkdown .bullet-list .task-list-item label > input {
-    width: 0px;
-}
-
-.milkdown .bullet-list .task-list-item > div > .paragraph {
-    margin: 0px;
-}
-
-.milkdown .footnote-definition {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.milkdown .footnote-definition_content {
-    flex-grow: 1;
-    display: flex;
-    gap: 0.5rem;
-}
-
-.milkdown .footnote-definition dt {
-    @apply w-8;
+.milkdown-menu .material-icons::after {
+    content: "▾";
+    font-size: 1rem;
 }
 
 /* end milkdown styles */
