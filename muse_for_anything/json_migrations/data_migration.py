@@ -25,7 +25,7 @@
 from typing import ClassVar, Literal, Optional, Sequence, Union
 
 from muse_for_anything.api.v1_api.ontology_object_validation import (
-    resolve_type_version_schema_url,
+    retrieve_schema_resource,
 )
 from muse_for_anything.json_migrations.util import extract_type
 
@@ -199,9 +199,11 @@ class DataMigrator:
             else:
                 root_url, fragment = reference.split("#", maxsplit=1)
                 assert fragment.startswith("/definitions")
-                resolved_ref = resolve_type_version_schema_url(url_string=reference)
+                resolved_ref = retrieve_schema_resource(url_string=reference)
                 assert resolved_ref is not None
-                schema = JsonSchema(root_url, resolved_ref).resolve_local(fragment)
+                schema = JsonSchema(root_url, resolved_ref.contents).resolve_local(
+                    fragment
+                )
 
             if schema.schema_url in seen:
                 raise RecursionError(

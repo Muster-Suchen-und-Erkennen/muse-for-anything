@@ -1,28 +1,29 @@
 """Module containing validation functions for objects."""
 
 from dataclasses import dataclass
-
+from http import HTTPStatus
+from typing import Any, Dict, Optional, Set
 from urllib.parse import urlparse
 
-from muse_for_anything.db.models.taxonomies import TaxonomyItem
 from flask.globals import request_ctx
+from flask_babel import gettext
+from flask_smorest import abort
+from jsonschema import Draft7Validator
+from jsonschema.exceptions import ValidationError
+from referencing import Registry, Resource
+from referencing.exceptions import NoSuchResource
+from referencing.jsonschema import DRAFT7
 from werkzeug.routing import MapAdapter
 
-from http import HTTPStatus
-
 from muse_for_anything.api.json_schema.schema_tools import SchemaWalker
-from typing import Any, Dict, Optional, Set
-from flask_babel import gettext
-from jsonschema import Draft7Validator
-
-from flask_smorest import abort
-
 from muse_for_anything.db.models.ontology_objects import (
     OntologyObject,
     OntologyObjectTypeVersion,
     OntologyObjectVersion,
 )
-from ..json_schema import DataWalker, DataWalkerVisitor, DataVisitorException
+from muse_for_anything.db.models.taxonomies import TaxonomyItem
+
+from ..json_schema import DataVisitorException, DataWalker, DataWalkerVisitor
 
 
 @dataclass
@@ -34,10 +35,10 @@ class ObjectMetadata:
 ALLOWED_SCHEMA_ENDPOINTS = set(["api-v1.TypeVersionView"])
 
 
-def resolve_type_version_schema_url(url_string: str):
+def retrieve_schema_resource(ref: str) -> Resource:
     """Resolver url references without creating any http request by directly querying the database."""
     # TODO use url cache
-    url = urlparse(url_string)
+    url = urlparse(ref)
     # url should already be from a validated type!
     try:
         ctx = request_ctx._get_current_object()
@@ -77,30 +78,35 @@ def resolve_type_version_schema_url(url_string: str):
         )
 
         if found_type_version is None:
-            raise DataVisitorException(f"Invalid schema ref! Schema '{url}' not found!")
+            raise NoSuchResource(ref)
 
-        return found_type_version.data
+        return Resource(found_type_version.data, specification=DRAFT7)
 
 
 def validate_object_against_schema(
     object_data: Any, type_version: OntologyObjectTypeVersion
 ):
-    validator = Draft7Validator(type_version.data)
+    registry = Registry(retrieve=retrieve_schema_resource)
+    validator = Draft7Validator(type_version.data, registry=registry)
 
-    # add internal resolver function
-    validator.resolver.handlers["http"] = resolve_type_version_schema_url
-    validator.resolver.handlers["https"] = resolve_type_version_schema_url
-
-    # FIXME add proper error reporting for api client
-    validation_errors = []
+    validation_errors: list[ValidationError] = []
     for error in sorted(validator.iter_errors(object_data), key=str):
-        print("VALIDATION ERROR", error.message)
         validation_errors.append(error)
+
+    errors = {
+        "jsonschema": [
+            {"path": ("data", *e.absolute_path), "message": e.message}
+            for e in validation_errors
+        ]
+    }
+
+    print("\n\n", errors, "\n\n")
+
     if validation_errors:
         abort(
             HTTPStatus.BAD_REQUEST,
             message=gettext("The object does not conform to the type json schema!"),
-            # errors=validation_errors,
+            errors=errors,
         )
 
 
@@ -124,7 +130,7 @@ class ResourceReferenceVisitor(DataWalkerVisitor):
                 )
             if not data.get("referenceKey"):
                 raise DataVisitorException(
-                    f"Malformed taxonomy item reference! Reference must contain a resource key of a taxonomy item."
+                    "Malformed taxonomy item reference! Reference must contain a resource key of a taxonomy item."
                 )
             taxonomy_key = walker.get_resolved_attribute("referenceKey")[-1]
             self.check_taxonomy_item_key(data["referenceKey"], taxonomy_key=taxonomy_key)
@@ -135,7 +141,7 @@ class ResourceReferenceVisitor(DataWalkerVisitor):
                 )
             if not data.get("referenceKey"):
                 raise DataVisitorException(
-                    f"Malformed object reference! Reference must contain a resource key of an object."
+                    "Malformed object reference! Reference must contain a resource key of an object."
                 )
             type_keys = walker.get_resolved_attribute("referenceKey")
             type_key = type_keys[-1] if type_keys else None
@@ -221,7 +227,7 @@ def validate_object(
     )
     walker = DataWalker(
         object_version.data,
-        SchemaWalker(type_version.data, resolve_type_version_schema_url),
+        SchemaWalker(type_version.data, retrieve_schema_resource),
         visitors=[resource_reference_visitor],
     )
 
