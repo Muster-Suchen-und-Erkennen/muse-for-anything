@@ -169,6 +169,9 @@ export class NavigationLinksService {
     }
 
     private getTranslationKeyForLink(link: ApiLink): string {
+        if (link.rel.some(rel => rel === "outdated")) {
+            return `outdated.${link.resourceType}`;
+        }
         if (link.rel.some(rel => rel === "page" || rel === "collection")) {
             return `collection.${link.resourceType}`;
         }

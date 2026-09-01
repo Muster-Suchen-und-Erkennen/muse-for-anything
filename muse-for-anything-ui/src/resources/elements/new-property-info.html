@@ -1,0 +1,13 @@
+<template>
+    <require from="./svg-icon.html"></require>
+
+    <div class="text-popup-container" if.bind="schema && schema.normalized.description">
+        <button class="button-flat-toggle text-popup-anchor" type="button" aria-label="Show additional property information."
+            popovertarget.bind="'popup-' + slug & attr" popovertargetaction="toggle">
+            <svg-icon icon.bind="'info'"></svg-icon>
+        </button>
+        <div class="text-popup" id="popup-${slug}" popover>
+            <p>${schema.normalized.description}</p>
+        </div>
+    </div>
+</template>

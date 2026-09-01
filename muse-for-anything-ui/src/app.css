@@ -248,6 +248,10 @@ button:disabled {
     text-decoration: none;
 }
 
+input {
+    accent-color: var(--primary-color);
+}
+
 /* Taxonomy Graph styles */
 
 taxonomy-graph {
@@ -633,7 +637,49 @@ p:where(.block-max-3l:not(.overflow-y-hidden),.block-max-5l:not(.overflow-y-hidd
     @apply mb-2 rounded-md shadow-card dark:shadow-none dark:border dark:border-default;
 }
 
+.constraints-list {
+    @apply grid gap-x-2 ml-2;
+    grid-template-columns: auto 1fr;
+}
+
+/* popover styles for toggletips */
+
+.text-popup-container {
+    anchor-scope: --text-popup-anchor;
+}
+
+.text-popup-anchor {
+    anchor-name: --text-popup-anchor;
+}
+
+.text-popup {
+    @apply text-default bg-default border-default border;
+    max-width: 25em;
+}
+
+@supports not (position-area: right) {
+    .text-popup[popover]::backdrop {
+        background-color: #00000044;
+    }
+}
+
+@supports (position-area: right) {
+    .text-popup {
+        @apply m-0 text-default bg-default border-default border;
+        max-width: 25em;
+        position-anchor: --text-popup-anchor;
+        position-visibility: anchors-visible;
+        position-area: right;
+        position-try-order: most-block-size;
+        position-try-fallbacks: right, top, bottom, left;
+    }
+}
+
 /* button styles */
+
+.button-details-toggle {
+    @apply p-1 m-1 rounded-sm hover:bg-gray-100 hover:shadow-sm hover:text-primary dark:hover:bg-gray-700;
+}
 
 .button-flat-toggle {
     @apply p-1 m-1 rounded-sm hover:bg-gray-100 hover:shadow-sm hover:text-primary dark:hover:bg-gray-700;
@@ -889,12 +935,12 @@ ontology-graph[data-maximized] {
     width: 100%;
 }
 
-ul{
+tree-node ul {
     list-style-type:none;
     margin:0;
 }
 
-tree-node  ul:first-child{
+tree-node  ul:first-child {
     padding-left:0;
 }
 

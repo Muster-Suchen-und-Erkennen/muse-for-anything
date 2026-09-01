@@ -8,9 +8,11 @@
                 <span class="font-semibold form-title">${label}</span>
                 <span>${mainType}, </span>
                 <label class="" for.bind="key+slug">${'schemaViews.nullable' | t}</label>
-                <input class="rounded-sm focus:ring-4 m-1.5 px-2 py-1 dark:bg-gray-700 dark:border-gray-200"
-                    id.bind="key+slug" name.bind="key+slug" type="checkbox" change.delegate="toggleNullable($event)"
-                    checked.to-view="typeContainsNull">
+                <div class="inline-grid h-5 w-5 ml-4 mr-3">
+                    <input class="rounded-sm focus:ring-4 px-2 py-1 dark:bg-gray-700 dark:border-gray-200"
+                        id.bind="key+slug" name.bind="key+slug" type="checkbox" change.delegate="toggleNullable($event)"
+                        checked.to-view="typeContainsNull">
+                </div>
             </p>
             <validity-indicator class="ml-1" valid.bind="valid"></validity-indicator>
             <button class="button-outline" click.delegate="resetMainType()" if.bind="expectedMainType != null && expectedMainType !== mainType">

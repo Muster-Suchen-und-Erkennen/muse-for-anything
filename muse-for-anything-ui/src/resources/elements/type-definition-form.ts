@@ -1,6 +1,7 @@
 import { autoinject, bindable, bindingMode, observable, TaskQueue } from "aurelia-framework";
 import { nanoid } from "nanoid";
 import { NormalizedApiSchema } from "rest/schema-objects";
+import { deepEqual } from "util/comparisons";
 
 interface SchemaDescription {
     title: string;
@@ -31,6 +32,7 @@ export class TypeDefinitionForm {
 
     choices: SchemaDescription[] = [];
     @observable() chosenSchema: SchemaDescription;
+    initialDataChoice: SchemaDescription | null = null;
 
     @observable() nextActiveSchema: SchemaDescription;
     nextActiveValue: any;
@@ -47,19 +49,25 @@ export class TypeDefinitionForm {
     }
 
     initialDataChanged(newValue, oldValue) {
-        this.updateChoiceFromObjectData(newValue, true);
+        if (newValue) {
+            const choice = this.getChoiceFromObjectData(newValue);
+            this.initialDataChoice = choice;
+            if (choice != null) {
+                this.activeSchema = choice;
+                this.chosenSchema = choice;
+            }
+        } else {
+            this.initialDataChoice = null;
+        }
     }
 
     // eslint-disable-next-line complexity
-    updateChoiceFromObjectData(data: any, forceUpdate: boolean = false) {
+    getChoiceFromObjectData(data: any): SchemaDescription | null {
         if (!(this.choices?.length > 0)) {
-            return; // no choices to choose from
+            return null; // no choices to choose from
         }
         if (data == null) {
-            return; // no data to update from
-        }
-        if (this.chosenSchema != null && !forceUpdate) {
-            return; // some schema already chosen
+            return null; // no data to update from
         }
         let schemaId: string;
         const initialType = data.type ?? [];
@@ -95,12 +103,7 @@ export class TypeDefinitionForm {
             return choice.schema.normalized.$id.endsWith(schemaId);
         });
 
-        if (choice != null) {
-            this.activeSchema = null;
-            this.chosenSchema = choice;
-            this.nextActiveValue = { ...(this.value ?? {}) };
-            this.nextActiveSchema = choice;
-        }
+        return choice;
     }
 
     schemaChanged(newValue: NormalizedApiSchema, oldValue) {
@@ -132,7 +135,17 @@ export class TypeDefinitionForm {
             return 0;
         });
         this.choices = choices;
-        this.updateChoiceFromObjectData(this.initialData);
+
+        let choice;
+        if (this.valueIn) {
+            choice = this.getChoiceFromObjectData(this.valueIn);
+        } else if (this.initialData) {
+            choice = this.getChoiceFromObjectData(this.initialData);
+        }
+        if (choice != null && this.chosenSchema == null) {
+            this.activeSchema = choice;
+            this.chosenSchema = choice;
+        }
 
         this.updateValid();
     }
@@ -142,7 +155,14 @@ export class TypeDefinitionForm {
             console.error("Wrong input value!", newValue)
             return;
         }
-        this.updateChoiceFromObjectData(newValue);
+        if (deepEqual(newValue, this.valueOut)) {
+            return; // nothing has changed
+        }
+        const choice = this.getChoiceFromObjectData(newValue);
+        if (choice != null && this.chosenSchema == null) {
+            this.activeSchema = choice;
+            this.chosenSchema = choice;
+        }
         this.value = { ...newValue };
     }
 
@@ -151,9 +171,8 @@ export class TypeDefinitionForm {
             return; // cannot be null
         }
         const newValueOut = { ...newValue };
-        const containsChanges = Object.keys(newValueOut).some(key => newValueOut[key] !== this.valueOut?.[key]);
-        const hasLessKeys = Object.keys(newValueOut).length < Object.keys(this.valueOut ?? {}).length;
-        if (containsChanges || hasLessKeys) {
+        const containsChanges = !deepEqual(this.valueOut, newValue);
+        if (containsChanges) {
             this.queue.queueMicroTask(() => this.valueOut = newValueOut);
         }
     }
@@ -186,7 +205,7 @@ export class TypeDefinitionForm {
         }
         this.activeSchema = null; // always set active schema to null first to reset child form
         if (newSchemaValue == null) {
-            this.nextActiveValue = null;
+            this.nextActiveValue = undefined;
             this.nextActiveSchema = null;
             this.value = null;
             return;
@@ -198,7 +217,6 @@ export class TypeDefinitionForm {
         }
         if (this.valueCache.has(newSchemaValue.title)) {
             const cachedValue = this.valueCache.get(newSchemaValue.title);
-            console.log(JSON.stringify(newValue), cachedValue, Object.keys(cachedValue))
             Object.keys(cachedValue).forEach(key => {
                 if (cachedValue[key] != null) {
                     newValue[key] = cachedValue[key];
@@ -211,14 +229,21 @@ export class TypeDefinitionForm {
             }
         });
 
+        // set next active schema to user choice
         this.nextActiveValue = newValue;
         this.nextActiveSchema = newSchemaValue;
     }
 
     nextActiveSchemaChanged(newSchema) {
-        if (this.nextActiveValue !== undefined) {
-            this.value = this.nextActiveValue;
-        }
-        this.activeSchema = newSchema;
+        this.queue.queueMicroTask(() => {
+            if (this.nextActiveValue !== undefined) {
+                const containsChanges = !deepEqual(this.valueOut, this.nextActiveValue);
+                if (containsChanges && this.nextActiveValue != null) {
+                    this.valueOut = { ...this.nextActiveValue };
+                }
+                this.value = this.nextActiveValue;
+            }
+            this.activeSchema = newSchema;
+        });
     }
 }

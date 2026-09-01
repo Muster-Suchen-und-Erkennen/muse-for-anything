@@ -28,15 +28,15 @@ class MaBaseSchema(ma.Schema):
 class ApiLinkBaseSchema(MaBaseSchema):
     """Schema for (non templated) api links."""
 
-    href = ma.fields.Url(reqired=True, allow_none=False, dump_only=True)
+    href = ma.fields.Url(required=True, allow_none=False, dump_only=True)
     rel = ma.fields.List(
         ma.fields.String(allow_none=False, dump_only=True),
         validate=Length(min=1, error="At least one ref must be provided!"),
-        reqired=True,
+        required=True,
         allow_none=False,
         dump_only=True,
     )
-    resource_type = ma.fields.String(reqired=True, allow_none=False, dump_only=True)
+    resource_type = ma.fields.String(required=True, allow_none=False, dump_only=True)
     doc = ma.fields.Url(allow_none=True, dump_only=True)
     schema = ma.fields.Url(allow_none=True, dump_only=True)
     name = ma.fields.String(allow_none=True, dump_only=True)
@@ -59,7 +59,7 @@ class ApiLinkSchema(ApiLinkBaseSchema):
     resource_key = ma.fields.Mapping(
         ma.fields.String,
         ma.fields.String,
-        reqired=False,
+        required=False,
         allow_none=True,
         dump_only=True,
         metadata={
@@ -81,14 +81,14 @@ class KeyedApiLinkSchema(ApiLinkSchema):
     key = ma.fields.List(
         ma.fields.String(allow_none=False, dump_only=True),
         validate=Length(min=1, error="At least one ref must be provided!"),
-        reqired=True,
+        required=True,
         allow_none=False,
         dump_only=True,
     )
     query_key = ma.fields.List(
         ma.fields.String(allow_none=False, dump_only=True),
         validate=Length(min=1, error="At least one ref must be provided!"),
-        reqired=True,
+        required=True,
         allow_none=False,
         dump_only=True,
     )
@@ -113,18 +113,18 @@ class DeletedApiObjectSchema(ApiObjectSchema):
 
 class ApiResponseSchema(MaBaseSchema):
     links = ma.fields.Nested(
-        ApiLinkSchema, many=True, reqired=True, allow_none=False, dump_only=True
+        ApiLinkSchema, many=True, required=True, allow_none=False, dump_only=True
     )
     keyed_links = ma.fields.Nested(
-        KeyedApiLinkSchema, many=True, reqired=False, allow_none=True, dump_only=True
+        KeyedApiLinkSchema, many=True, required=False, allow_none=True, dump_only=True
     )
     embedded = ma.fields.List(
         ma.fields.Nested(lambda: RawApiResponseSchema(exclude=("embedded",))),
-        reqired=False,
+        required=False,
         allow_none=True,
         dump_only=True,
     )
-    data = ma.fields.Nested(lambda: ApiObjectSchema(), reqired=True, allow_none=False)
+    data = ma.fields.Nested(lambda: ApiObjectSchema(), required=True, allow_none=False)
 
     @ma.post_dump()
     def remove_empty_attributes(
@@ -140,11 +140,11 @@ class ApiResponseSchema(MaBaseSchema):
 class RawApiResponseSchema(ApiResponseSchema):
     """API Response Schema to be used if data is already marshalled."""
 
-    data = ma.fields.Raw(reqired=True, allow_none=False)
+    data = ma.fields.Raw(required=True, allow_none=False)
 
 
 class DynamicApiResponseSchema(ApiResponseSchema):
-    data = ma.fields.Method("dump_data", "load_data", reqired=True, allow_none=False)
+    data = ma.fields.Method("dump_data", "load_data", required=True, allow_none=False)
 
     def __init__(
         self, data_schema: SchemaABC = ApiObjectSchema(), *args, **kwargs

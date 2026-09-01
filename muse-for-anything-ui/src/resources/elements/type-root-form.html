@@ -1,5 +1,6 @@
 <template>
     <require from="./validity-indicator"></require>
+    <require from="./new-property-info"></require>
     <require from="./schema-form"></require>
     <require from="./schema-form-actions"></require>
 
@@ -21,6 +22,7 @@
                 <button class="button-flat" click.delegate="addGhostProperty(prop.propertyName)">
                     Add Property
                 </button>
+                <new-property-info schema.bind="prop.propertySchema"></new-property-info>
             </div>
             <!-- TODO do show readonly properties -->
             <p if.bind="propertyState[prop.propertyName] === 'readonly'">${initialData[prop.propertyName]}</p>

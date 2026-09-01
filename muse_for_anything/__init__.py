@@ -15,7 +15,7 @@ from flask_cors import CORS
 from flask_static_digest import FlaskStaticDigest
 from tomli import load as load_toml
 
-from . import api, babel, db, licenses, oso_helpers, password_helpers
+from . import api, babel, celery, db, licenses, oso_helpers, password_helpers
 from .api import jwt
 from .root_routes import register_root_routes
 from .util.config import DebugConfig, ProductionConfig
@@ -163,6 +163,8 @@ def create_app(test_config: Optional[Dict[str, Any]] = None):
     oso_helpers.register_oso(app)
 
     babel.register_babel(app)
+
+    celery.register_celery(app)
 
     licenses.register_licenses(app)
 

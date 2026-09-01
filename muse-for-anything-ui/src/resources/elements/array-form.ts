@@ -1,5 +1,6 @@
 import { bindable, bindingMode, observable } from "aurelia-framework";
 import { ItemDescription, NormalizedApiSchema } from "rest/schema-objects";
+import { deepEqual } from "util/comparisons";
 
 export class ArrayForm {
     @bindable key: string;
@@ -19,27 +20,43 @@ export class ArrayForm {
 
     @observable() value: any[] = [];
 
+    showInfo: boolean = false;
+
+    description: string = "";
+
     isNullable: boolean = false;
 
     itemSchemas: ItemDescription[] = [];
 
     minItems: number;
     maxItems: number;
+    isTuple: boolean = false;
+    uniqueItems: boolean = false;
+    orderedItems: boolean = true;
 
     @observable() itemsValid: boolean[] = [];
     @observable() itemsDirty: boolean[] = [];
+
+    toggleInfo() {
+        this.showInfo = !this.showInfo;
+        return false;
+    }
 
     initialDataChanged(newValue, oldValue) {
         this.reloadItems();
     }
 
     valueInChanged(newValue) {
+        const isChangeFromOutside = !deepEqual(newValue, this.valueOut);
         if (newValue == null) {
             this.value = null;
         } else {
             this.value = [...newValue];
         }
-        this.reloadItems();
+        if (isChangeFromOutside) {
+            // only reload for changes coming from outside
+            this.reloadItems();
+        }
     }
 
     onItemValueUpdate = (value, binding) => {
@@ -49,8 +66,11 @@ export class ArrayForm {
     valueChanged(newValue, oldValue) {
         const newOutValue: any[] = [...(newValue ?? [])];
         const newValueIsDifferent = newOutValue.some((item, index) => {
-            if (this.valueOut?.[index] !== item) {
-                return true;
+            if (!Array.isArray(this.valueOut)) {
+                return true;  // current value out has no items!
+            }
+            if (!deepEqual(this.valueOut?.[index], item)) {
+                return true;  // item in place "index" is different
             }
             return false;
         });
@@ -73,28 +93,40 @@ export class ArrayForm {
         this.reloadItems();
     }
 
+    // eslint-disable-next-line complexity
     reloadItems() {
         if (this.schema == null) {
+            this.description = "";
             this.itemSchemas = [];
             this.minItems = null;
             this.maxItems = 0;
+            this.isTuple = false;
+            this.uniqueItems = false;
+            this.orderedItems = true;
             this.itemsValid = [];
             this.itemsDirty = [];
             this.valid = false;
             return;
         }
         const normalized = this.schema.normalized;
+        this.description = normalized.description ?? "";
         if (normalized.type == null || !normalized.type.has("array")) {
             //console.error("Not an array!", this.schema); // FIXME better error!
             // can happen when switching type schema...
             this.itemSchemas = [];
             this.minItems = null;
             this.maxItems = 0;
+            this.isTuple = false;
+            this.uniqueItems = false;
+            this.orderedItems = true;
             return;
         }
         this.isNullable = normalized.type.has("null");
         this.minItems = normalized.minItems;
         this.maxItems = normalized.maxItems;
+        this.isTuple = Boolean(normalized.tupleItems);
+        this.uniqueItems = normalized.uniqueItems;
+        this.orderedItems = !normalized.unorderedItems;
         const currentValueLength = this.value?.length ?? 0;
         const initialDataLength = this.initialData?.length ?? 0;
         const currentLength = (currentValueLength > initialDataLength) ? currentValueLength : initialDataLength;
@@ -111,6 +143,17 @@ export class ArrayForm {
         }
         if (currentLength < this.itemsDirty.length) {
             this.itemsDirty = this.itemsDirty.slice(0, currentLength);
+        }
+
+        const newItemSchemas = this.schema.getItemList(currentLength);
+        if (this.itemSchemas != null && this.itemSchemas.length === newItemSchemas.length) {
+            const noItemHasChangedSchema = newItemSchemas.every((prop, i) => {
+                return prop.itemSchema.normalized.$id === this.itemSchemas[i].itemSchema.normalized.$id;
+            });
+
+            if (noItemHasChangedSchema) {
+                return;  // items did not change, no need for any updates
+            }
         }
 
         this.itemSchemas = this.schema.getItemList(currentLength);

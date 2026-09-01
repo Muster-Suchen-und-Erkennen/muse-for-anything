@@ -18,6 +18,9 @@ from typing import (
 from re import search
 from functools import reduce
 
+from referencing import Resource
+from referencing.exceptions import NoSuchResource
+
 __all__ = [
     "SchemaWalker",
     "DataWalker",
@@ -40,7 +43,7 @@ class SchemaWalker:
     def __init__(
         self,
         schema: Union[Dict[str, Any], Sequence[Tuple[str, Dict[str, Any]]]],
-        url_resolver: Callable[[str], Optional[Dict[str, Any]]],
+        url_resolver: Callable[[str], Optional[Resource]],
         cache: Optional[Dict[str, Dict[str, Any]]] = None,
         path: Optional[Tuple[Union[str, int], ...]] = None,
     ) -> None:
@@ -251,10 +254,11 @@ class SchemaWalker:
         try:
             return self.cache[anchor]
         except KeyError:
-            schema = self.url_resolver(anchor)
-            if schema is None:
+            try:
+                schema = self.url_resolver(anchor)
+            except NoSuchResource:
                 raise KeyError(f"No schema found under URL '{anchor}'")
-            self.cache[anchor] = schema
+            self.cache[anchor] = schema.contents
             return schema
 
     def _resolve_single_ref(self, anchor, schema) -> Tuple[str, Dict[str, Any]]:

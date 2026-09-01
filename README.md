@@ -227,3 +227,32 @@ poetry run invoke doc-index --filter=searchtext
 # export/update requirements.txt from poetry dependencies (for readthedocs build)
 poetry run invoke update-dependencies
 ```
+
+## Assisted Data Migration
+
+The migration package is found in `muse-for-anything/json_migrations/`.\
+It consists of two files, one for the schema validation (includes some helper functions) and one for the data migration functionalities.
+The validation and migration functions are called in the Ontology Types API when editing a type schema and called as celery background tasks.
+The task is defined in `muse-for-anything/tasks/migration.py`, and incrementally updates an object version by version.
+
+To execute background tasks correctly, a redis instance and a worker process is required:
+
+```bash
+# Start redis instance in docker container (if not started already)
+poetry run invoke start-broker
+
+# Start worker process to execute background task
+poetry run invoke worker --beat --watch
+
+# Stop redis instance (automatic data migration will not be executed)
+poetry run invoke stop-broker
+```
+
+The TDD (Test Driven Development) test cases for the data migration functions can be found in the `/tests/` directory.
+Before changing any functionality in the tested functions, first create new failing tests (or change existing tests) for the desired functionality.
+Only then should the data migration code be changed until it satisfies the all failing tests.
+
+The following command executes all existing test cases:
+```
+poetry run pytest tests
+```

@@ -25,6 +25,10 @@ export class ResourceReferenceDefinitionForm {
 
     @observable() value: any = {};
 
+    showInfo: boolean = false;
+
+    description: string = "";
+
     extraProperties: PropertyDescription[] = [];
     propertyState: { [prop: string]: "readonly" | "editable" | "missing" } = {};
     requiredProperties: Set<string> = new Set();
@@ -52,6 +56,11 @@ export class ResourceReferenceDefinitionForm {
         this.dialogService = dialogService;
         this.apiService = apiService;
         this.queue = queue;
+    }
+
+    toggleInfo() {
+        this.showInfo = !this.showInfo;
+        return false;
     }
 
     initialDataChanged(newValue, oldValue) {
@@ -106,12 +115,14 @@ export class ResourceReferenceDefinitionForm {
     // eslint-disable-next-line complexity
     reloadProperties() {
         if (this.schema == null) {
+            this.description = "";
             this.extraProperties = [];
             this.requiredProperties = new Set();
             return;
         }
         if (!this.schema.normalized.type?.has("object")) {
             console.error("Not an object!"); // FIXME better error!
+            this.description = "";
             this.extraProperties = [];
             this.requiredProperties = new Set();
             return;
@@ -130,6 +141,7 @@ export class ResourceReferenceDefinitionForm {
         this.propertyState = propertyState;
         propertyBlockList.forEach(propKey => requiredProperties.delete(propKey));
         this.requiredProperties = requiredProperties;
+        this.description = normalized.description ?? "";
 
         this.valueChanged(this.value, null);
     }

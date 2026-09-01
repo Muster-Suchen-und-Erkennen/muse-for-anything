@@ -51,7 +51,11 @@ class JSONSchemaSchema(MaBaseSchema):
     definitions = ma.fields.Mapping(
         ma.fields.String(), SchemaField(allow_none=False), required=True, allow_none=False
     )
-    abstract = ma.fields.Boolean(required=False, load_default=False)
+    abstract = ma.fields.Boolean(
+        required=False,
+        load_default=False,
+        description="Controls whether objects can be created for this type. If checked, no objects can be created for this type.",
+    )
 
 
 JSON_SCHEMA_ROOT_SCHEMA_REF = {"$ref": "#/definitions/root"}
@@ -104,10 +108,18 @@ JSON_MINIMAL_META_PROPERTIES_SCHEMA = {
     "type": ["object"],
     "properties": {
         "$id": {"type": "string", "format": "uri-reference"},
-        "title": {"type": "string", "maxLength": 300},
-        "description": {"type": "string", "format": "markdown"},
+        "title": {"type": "string", "maxLength": 300, "description": "Displayed title."},
+        "description": {
+            "type": "string",
+            "format": "markdown",
+            "description": "Additional description.",
+        },
         "$comment": {"title": "comment", "type": "string"},
-        "deprecated": {"type": "boolean", "default": False},
+        "deprecated": {
+            "type": "boolean",
+            "default": False,
+            "description": "Mark this as soon to be removed.",
+        },
         "readOnly": {"type": "boolean", "default": False},
         "writeOnly": {"type": "boolean", "default": False},
     },
@@ -133,11 +145,19 @@ JSON_META_PROPERTIES_SCHEMA = {
     "type": ["object"],
     "properties": {
         "$id": {"type": "string", "format": "uri-reference"},
-        "title": {"type": "string", "maxLength": 300},
-        "description": {"type": "string", "format": "markdown"},
+        "title": {"type": "string", "maxLength": 300, "description": "Displayed title."},
+        "description": {
+            "type": "string",
+            "format": "markdown",
+            "description": "Additional description.",
+        },
         "$comment": {"title": "comment", "type": "string"},
         "default": NESTED_JSON_SCHEMA_REF,
-        "deprecated": {"type": "boolean", "default": False},
+        "deprecated": {
+            "type": "boolean",
+            "default": False,
+            "description": "Mark this as soon to be removed.",
+        },
         "readOnly": {"type": "boolean", "default": False},
         "writeOnly": {"type": "boolean", "default": False},
         "allOf": {
@@ -168,6 +188,7 @@ JSON_META_PROPERTIES_SCHEMA = {
 JSON_OBJECT_PROPERTIES_SCHEMA = {
     "$id": JSON_OBJECT_PROPERTIES_SCHEMA_REF["$ref"],
     "title": "Object",
+    "description": "Defines a collection of properties.",
     "type": ["object"],
     "default": {"type": ["object"]},
     "required": ["type"],
@@ -195,37 +216,65 @@ JSON_OBJECT_PROPERTIES_SCHEMA = {
                 "enumItem",
             ],
         },
-        "maxProperties": {"type": "integer", "minimum": 0},
-        "minProperties": {"type": "integer", "minimum": 0, "default": 0},
+        "maxProperties": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The maximum allowed nr of properties.",
+        },
+        "minProperties": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0,
+            "description": "The minimum required number of properties.",
+        },
         "required": {
             "type": "array",
             "items": {"type": "string", "singleLine": True},
             "uniqueItems": True,
             "default": [],
+            "description": "A list of required properties.\n\nAll entries must be properties from the `properties` map.\nDo not use the propertys' `title` value in this list.",
         },
         "properties": {
             "type": "object",
             "additionalProperties": NESTED_JSON_SCHEMA_REF,
             "default": {},
+            "description": "A map of property names to property definitions.",
         },
         "patternProperties": {
             "type": "object",
             "additionalProperties": NESTED_JSON_SCHEMA_REF,
             "propertyNames": {"type": "string", "format": "regex", "singleLine": True},
             "default": {},
+            "description": "A map of property name patterns to property definitions.",
         },
-        "propertyNames": JSON_SCHEMA_REF,  # TODO
-        "additionalProperties": NESTED_JSON_SCHEMA_REF,
+        "propertyNames": {  # TODO
+            "allOf": [
+                NESTED_JSON_SCHEMA_REF,
+                {
+                    "description": "A property definition applying to the names of any additional properties."
+                },
+            ]
+        },
+        "additionalProperties": {
+            "allOf": [
+                NESTED_JSON_SCHEMA_REF,
+                {
+                    "description": "Property definition for any additional properties. If no property definition is given, then additional properties cannot be created."
+                },
+            ]
+        },
         # custom properties
         "hiddenProperties": {
             "type": "array",
             "items": {"type": "string", "singleLine": True},
             "uniqueItems": True,
             "default": [],
+            "description": "A list of properties that are hidden.",
         },
         "propertyOrder": {
             "type": "object",
             "additionalProperties": {"type": "number"},
+            "description": "Defines the order properties will be displayed in. The properties will be sorted according to their associated numbers.",
         },
     },
     "propertyOrder": {
@@ -273,9 +322,22 @@ JSON_ARRAY_PROPERTIES_BASE_SCHEMA = {
             "uniqueItems": True,
             "customType": "jsonType",
         },
-        "maxItems": {"type": "integer", "minimum": 0},
-        "minItems": {"type": "integer", "minimum": 0, "default": 0},
-        "uniqueItems": {"type": "boolean", "default": False},
+        "maxItems": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The maximum allowed number of items.",
+        },
+        "minItems": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0,
+            "description": "The minimum required number of items.",
+        },
+        "uniqueItems": {
+            "type": "boolean",
+            "default": False,
+            "description": "If checked, unique items must only appear once.",
+        },
         "items": {
             "anyOf": [
                 NESTED_JSON_SCHEMA_REF,
@@ -286,8 +348,18 @@ JSON_ARRAY_PROPERTIES_BASE_SCHEMA = {
                 },
             ]
         },
-        "contains": NESTED_JSON_SCHEMA_REF,
-        "additionalItems": NESTED_JSON_SCHEMA_REF,
+        "contains": {
+            "allOf": [
+                NESTED_JSON_SCHEMA_REF,
+                "One of the items must match this property definition.",
+            ]
+        },
+        "additionalItems": {
+            "allOf": [
+                NESTED_JSON_SCHEMA_REF,
+                {"description": "Additional items allowed after the fixed items list."},
+            ]
+        },
     },
     "hiddenProperties": ["contains", "abstract"],
 }
@@ -295,14 +367,29 @@ JSON_ARRAY_PROPERTIES_BASE_SCHEMA = {
 JSON_ARRAY_PROPERTIES_SCHEMA = {
     "$id": JSON_ARRAY_PROPERTIES_SCHEMA_REF["$ref"],
     "title": "Array",
+    "description": "Defines a list of similar items.",
     "type": ["object"],
     "default": {"type": ["array"]},
     "required": ["type", "arrayType"],
     "allOf": [JSON_ARRAY_PROPERTIES_BASE_SCHEMA_REF],
     "properties": {
-        "items": NESTED_JSON_SCHEMA_REF,
-        "arrayType": {"const": "array"},
-        "unorderedItems": {"type": "boolean", "default": False},
+        "items": {
+            "allOf": [
+                NESTED_JSON_SCHEMA_REF,
+                {
+                    "description": "The definition of the array items. Every item must match this definition."
+                },
+            ]
+        },
+        "arrayType": {
+            "const": "array",
+            "description": "A constant to reliably distinguish arrays from tuples.",
+        },
+        "unorderedItems": {
+            "type": "boolean",
+            "default": False,
+            "description": "If true, items should be considered to not be in any particular order.",
+        },
     },
     "hiddenProperties": [
         "contains",
@@ -321,6 +408,7 @@ JSON_ARRAY_PROPERTIES_SCHEMA = {
 JSON_TUPLE_PROPERTIES_SCHEMA = {
     "$id": JSON_TUPLE_PROPERTIES_SCHEMA_REF["$ref"],
     "title": "Tuple",
+    "description": "Defines a tuple of (different) items with a strict order.",
     "type": ["object"],
     "default": {"type": ["array"]},
     "required": ["type", "arrayType"],
@@ -330,8 +418,16 @@ JSON_TUPLE_PROPERTIES_SCHEMA = {
             "type": "array",
             "minItems": 1,
             "items": NESTED_JSON_SCHEMA_REF,
+            "description": (
+                "Definitions for the individual tuple items.\n"
+                "Every item specification in this list matches exactly one item in the tuple at the given position.\n"
+                "Additional items can be allowed by specifying additionalItems."
+            ),
         },
-        "arrayType": {"const": "tuple"},
+        "arrayType": {
+            "const": "tuple",
+            "description": "A constant to reliably distinguish tuples from arrays.",
+        },
     },
     "hiddenProperties": [
         "contains",
@@ -349,6 +445,7 @@ JSON_TUPLE_PROPERTIES_SCHEMA = {
 JSON_STRING_PROPERTIES_SCHEMA = {
     "$id": JSON_STRING_PROPERTIES_SCHEMA_REF["$ref"],
     "title": "String",
+    "description": "Defines a single or multiline text field.",
     "type": ["object"],
     "default": {"type": ["string"]},
     "required": ["type"],
@@ -369,16 +466,34 @@ JSON_STRING_PROPERTIES_SCHEMA = {
             "uniqueItems": True,
             "customType": "jsonType",
         },
-        "maxLength": {"type": "integer", "minimum": 0},
-        "minLength": {"type": "integer", "minimum": 0, "default": 0},
+        "maxLength": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The maximum length of the string.",
+        },
+        "minLength": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0,
+            "description": "The minimal required length of the string.",
+        },
         "singleLine": {
             "title": "Single-Line",
             "description": "Display a single line input instead of a text field.",
             "type": "boolean",
             "default": False,
         },
-        "pattern": {"type": "string", "format": "regex", "singleLine": True},
-        "format": {"type": "string", "singleLine": True},
+        "pattern": {
+            "type": "string",
+            "format": "regex",
+            "singleLine": True,
+            "description": "Strings must match this regex pattern.",
+        },
+        "format": {
+            "type": "string",
+            "singleLine": True,
+            "description": "The string content is in the given format (e.g., 'markdown').",
+        },
         "contentMediaType": {"type": "string", "singleLine": True},
         "contentEncoding": {"type": "string", "singleLine": True},
         "contentSchema": NESTED_JSON_SCHEMA_REF,
@@ -406,17 +521,34 @@ JSON_NUMBER_PROPERTIES_BASE_SCHEMA = {
     "type": ["object"],
     "allOf": [JSON_META_PROPERTIES_SCHEMA_REF],
     "properties": {
-        "multipleOf": {"type": "number", "exclusiveMinimum": 0},
-        "maximum": {"type": "number"},
-        "exclusiveMaximum": {"type": "number"},
-        "minimum": {"type": "number"},
-        "exclusiveMinimum": {"type": "number"},
+        "multipleOf": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "The value must be a multiple of this number.",
+        },
+        "maximum": {
+            "type": "number",
+            "description": "The value must be smaller than or equal to this number.",
+        },
+        "exclusiveMaximum": {
+            "type": "number",
+            "description": "The value must be smaller than this number.",
+        },
+        "minimum": {
+            "type": "number",
+            "description": "The value must be larger than or equal to this number.",
+        },
+        "exclusiveMinimum": {
+            "type": "number",
+            "description": "The value must be larger than this number.",
+        },
     },
 }
 
 JSON_NUMBER_PROPERTIES_SCHEMA = {
     "$id": JSON_NUMBER_PROPERTIES_SCHEMA_REF["$ref"],
     "title": "Number",
+    "description": "Defines a number field.",
     "type": ["object"],
     "default": {"type": ["number"]},
     "required": ["type"],
@@ -451,6 +583,7 @@ JSON_NUMBER_PROPERTIES_SCHEMA = {
 JSON_INTEGER_PROPERTIES_SCHEMA = {
     "$id": JSON_INTEGER_PROPERTIES_SCHEMA_REF["$ref"],
     "title": "Integer",
+    "description": "Defines a number field with only integer values.",
     "type": ["object"],
     "default": {"type": ["integer"]},
     "required": ["type"],
@@ -484,6 +617,7 @@ JSON_INTEGER_PROPERTIES_SCHEMA = {
 JSON_BOOLEAN_PROPERTIES_SCHEMA = {
     "$id": JSON_BOOLEAN_PROPERTIES_SCHEMA_REF["$ref"],
     "title": "Boolean",
+    "description": "Defines a binary true/false, checked/unchecked field.",
     "type": ["object"],
     "default": {"type": ["boolean"]},
     "required": ["type"],
@@ -530,6 +664,7 @@ JSON_BASE_TYPE_STRING = {
 JSON_ENUM_PROPERTIES_SCHEMA = {
     "$id": JSON_ENUM_PROPERTIES_SCHEMA_REF["$ref"],
     "title": "Enumeration",
+    "description": "Defines predefined list of constants to choose from.",
     "type": ["object"],
     "default": {"enum": []},
     "required": ["enum"],
@@ -539,11 +674,37 @@ JSON_ENUM_PROPERTIES_SCHEMA = {
             "type": "array",
             "items": {
                 "oneOf": [
-                    JSON_BASE_TYPE_NULL_REF,
-                    JSON_BASE_TYPE_BOOLEAN_REF,
+                    {
+                        "allOf": [
+                            JSON_BASE_TYPE_NULL_REF,
+                            {
+                                "title": "null",
+                                "description": "Constant for the empty object.",
+                            },
+                        ]
+                    },
+                    {
+                        "allOf": [
+                            JSON_BASE_TYPE_BOOLEAN_REF,
+                            {
+                                "title": "boolean",
+                                "description": "A boolean constant (true/false).",
+                            },
+                        ]
+                    },
                     # This cannot be part of oneOf, as it overlaps with number! JSON_BASE_TYPE_INTEGER_REF,
-                    JSON_BASE_TYPE_NUMBER_REF,
-                    JSON_BASE_TYPE_STRING_REF,
+                    {
+                        "allOf": [
+                            JSON_BASE_TYPE_NUMBER_REF,
+                            {"title": "number", "description": "A number constant."},
+                        ]
+                    },
+                    {
+                        "allOf": [
+                            JSON_BASE_TYPE_STRING_REF,
+                            {"title": "string", "description": "A string constant."},
+                        ]
+                    },
                 ],
                 "customType": "enumItem",
             },
@@ -560,6 +721,7 @@ JSON_ENUM_PROPERTIES_SCHEMA = {
 JSON_REF_PROPERTIES_SCHEMA = {
     "$id": JSON_REF_PROPERTIES_SCHEMA_REF["$ref"],
     "title": "Schema Reference",
+    "description": "References an existing schema in the same type or another type in the same namespace.",
     "type": ["object"],
     "customType": "jsonRef",
     "default": {"$ref": None},
@@ -577,6 +739,7 @@ JSON_REF_PROPERTIES_SCHEMA = {
 JSON_RESOURCE_REFERENCE_SCHEMA = {
     "$id": JSON_RESOURCE_REFERENCE_SCHEMA_REF["$ref"],
     "title": "Resource Reference",
+    "description": "Defines a reference to an object or a taxonomy item.",
     "type": "object",
     "default": {"type": ["object"], "required": ["referenceKey", "referenceType"]},
     "required": ["type", "customType", "referenceType", "required", "properties"],
@@ -602,6 +765,7 @@ JSON_RESOURCE_REFERENCE_SCHEMA = {
         "referenceType": {
             "title": "Reference Type",
             "enum": ["ont-taxonomy", "ont-type"],  # update to include more...
+            "description": "Decides which type this reference definition is.",
         },
         "referenceKey": {
             "type": "object",
@@ -667,14 +831,25 @@ JSON_SCHEMA_ROOT_SCHEMA = {
             "additionalProperties": JSON_SCHEMA_REF,
             "default": {},
         },
-        "abstract": {"title": "Is Abstract", "type": "boolean", "default": False},
+        "abstract": {
+            "title": "Is Abstract",
+            "description": "Controls whether objects can be created for this type. If checked, no objects can be created for this type.",
+            "type": "boolean",
+            "default": False,
+        },
         "title": {
             "title": "Title",
+            "description": "The displayed name of the type.",
             "type": "string",
             "singleLine": True,
             "maxLength": 150,
         },
-        "description": {"title": "Description", "type": "string"},
+        "description": {
+            "title": "Description",
+            "description": "The displayed description of the type.",
+            "type": "string",
+            "format": "markdown",
+        },
     },
     "propertyOrder": {
         "title": 10,

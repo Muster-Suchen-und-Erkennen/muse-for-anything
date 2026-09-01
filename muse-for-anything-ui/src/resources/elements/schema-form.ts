@@ -1,5 +1,6 @@
-import { bindable, observable, bindingMode, autoinject, TaskQueue } from "aurelia-framework";
-import { NormalizedApiSchema, NormalizedJsonSchema } from "rest/schema-objects";
+import { autoinject, bindable, bindingMode, observable, TaskQueue } from "aurelia-framework";
+import { NormalizedApiSchema } from "rest/schema-objects";
+import { deepEqual } from "util/comparisons";
 
 export type UpdateSignal = (type?: "value" | "valid" | "dirty") => void;
 
@@ -32,6 +33,7 @@ export class SchemaForm {
         this.queue = queue;
     }
 
+    default: any;
     initialDataFix: any;
 
     activeSchema: NormalizedApiSchema;
@@ -42,8 +44,12 @@ export class SchemaForm {
 
     // eslint-disable-next-line complexity
     schemaChanged(newValue: NormalizedApiSchema, oldValue) {
+        if (newValue != null && oldValue != null && newValue?.normalized?.$id === oldValue?.normalized?.$id) {
+            return;  // schema did not change
+        }
         this.constValue = undefined;
         this.activeSchema = null;
+        this.default = undefined;
         const normalized = newValue.normalized;
         if (normalized.enum != null) {
             this.schemaType = "enum";
@@ -80,6 +86,12 @@ export class SchemaForm {
             this.schemaType = "unknown";
         }
         this.activeSchema = newValue;
+        if (normalized.default != null) {
+            // assign a copy of the default value
+            this.default = JSON.parse(JSON.stringify(normalized.default));
+        } else {
+            this.default = normalized.default;
+        }
     }
 
     initialDataChanged(newValue, oldValue) {
@@ -90,7 +102,7 @@ export class SchemaForm {
     }
 
     valueChanged(newValue, oldValue) {
-        if (this.valueOut === newValue) {
+        if (this.valueOut === newValue || deepEqual(this.valueOut, newValue)) {
             return; // value change came from child form
         }
         if (this.constValue !== undefined && newValue !== this.constValue) {
@@ -98,12 +110,19 @@ export class SchemaForm {
                 console.error("Const update loop detected.", this.key, this.label, this.schema);
                 return;
             }
-            this.maxConstUpdateTries--;
-            this.valid = true;
-            this.value = this.constValue;
+            this.queue.queueMicroTask(() => {
+                this.maxConstUpdateTries--;
+                this.valid = true;
+                this.value = this.constValue;
+            });
         }
         // propagate value change to child form
-        this.valueIn = newValue;
+        if (newValue == null && oldValue == null) {
+            return; // but ignore changes from null to undefined
+        }
+        this.queue.queueMicroTask(() => {
+            this.valueIn = newValue;
+        });
     }
 
     valueOutChanged(newValue, oldValue) {

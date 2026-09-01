@@ -23,6 +23,10 @@ export class ResourceReferenceForm {
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
 
+    showInfo: boolean = false;
+
+    description: string = "";
+
     referenceRootType: string;
     referenceRootKey: ApiLinkKey;
 
@@ -46,6 +50,11 @@ export class ResourceReferenceForm {
         this.apiService = apiService;
     }
 
+    toggleInfo() {
+        this.showInfo = !this.showInfo;
+        return false;
+    }
+
     initialDataChanged(newValue, oldValue) {
         if (newValue != null) {
             this.currentReferenceType = newValue.referenceType;
@@ -60,6 +69,7 @@ export class ResourceReferenceForm {
         this.valid = null;
         this.referenceRootType = null;
         this.referenceRootKey = null;
+        this.description = "";
 
         if (newValue != null) {
             const schema = newValue.normalized;
@@ -80,6 +90,7 @@ export class ResourceReferenceForm {
             this.referenceRootType = schema.referenceType;
             this.referenceRootKey = schema.referenceKey;
             this.currentReferenceType = refType;
+            this.description = schema.description ?? "";
             this.updateValueOut();
         }
         this.reloadReferenceRoot();

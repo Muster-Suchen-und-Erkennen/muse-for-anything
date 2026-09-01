@@ -23,13 +23,11 @@
                 ${choice.title}
             </option>
         </select>
-        <div if.bind="activeSchema != null">
-            <schema-form class="w-full properties" key.bind="activeSchema.title" label.bind="'Type Schema'"
-                initial-data.bind="initialData" value.bind="value" context.bind="context"
-                schema.bind="activeSchema.schema" required.bind="true" valid.from-view="childValid"
-                dirty.from-view="dirty" debug.bind="debug">
-            </schema-form>
-        </div>
+        <schema-form class="w-full properties" key.bind="activeSchema.title" label.bind="'Type Schema'"
+            initial-data.bind="chosenSchema === initialDataChoice ? initialData : undefined" value.bind="value" context.bind="context"
+            schema.bind="activeSchema.schema" required.bind="true" valid.from-view="childValid"
+            dirty.from-view="dirty" debug.bind="debug" if="condition.bind: activeSchema != null; cache: false">
+        </schema-form>
     </div>
 
 </template>

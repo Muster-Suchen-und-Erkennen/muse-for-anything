@@ -20,7 +20,11 @@ export class NumberForm {
 
     @observable() value: string;
 
+    showInfo: boolean = false;
+
     slug = nanoid(8);
+
+    description: string = "";
 
     isNullable: boolean = true;
 
@@ -44,6 +48,11 @@ export class NumberForm {
         this.queue = queue;
     }
 
+    toggleInfo() {
+        this.showInfo = !this.showInfo;
+        return false;
+    }
+
     initialDataChanged(newValue, oldValue) {
         if (newValue !== undefined) {
             if (this.isNullable) {
@@ -59,6 +68,7 @@ export class NumberForm {
     // eslint-disable-next-line complexity
     schemaChanged(newValue: NormalizedApiSchema, oldValue) {
         const normalized = newValue.normalized;
+        this.description = normalized.description ?? "";
         this.isNullable = normalized.type.has(null);
         if (!this.isNullable && this.value == null) {
             this.queue.queueMicroTask(() => this.value = "0");

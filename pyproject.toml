@@ -21,6 +21,8 @@ flask-smorest = "^0.44.0"
 Flask-Static-Digest = "^0.4.1"
 oso = "^0.27.3"
 tomli = "^2.0.0"
+celery = "^5.4.0"
+redis = "^5.0.8"
 marshmallow-jsonschema = "^0.13.0"
 jsonschema = "4.23.0"
 bcrypt = "^4.0.0"
@@ -40,6 +42,7 @@ sphinx-click = "^6.0.0"
 myst-parser = "^3.0.1"
 sphinx-rtd-theme = "^2.0.0"
 pip-licenses = "^4.5.1"
+watchdog = "^4.0.1"
 
 [tool.poetry.extras]
 psycopg2 = ["psycopg2"]
@@ -49,7 +52,7 @@ PyMySQL = ["PyMySQL"]
 #flask = 'flask.cli:main'
 
 [tool.black]
-target-version = ["py37"]
+target-version = ["py310"]
 line-length = 90
 include = '\.pyi?$'
 

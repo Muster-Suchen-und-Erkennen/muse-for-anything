@@ -49,6 +49,7 @@ interface ArrayBaseJsonSchema extends JsonSchema {
     minItems?: number;
     maxItems?: number;
     uniqueItems?: boolean;
+    unorderedItems?: boolean;
 }
 
 interface ArrayJsonSchema extends ArrayBaseJsonSchema {
@@ -298,13 +299,13 @@ export class ApiSchema {
         return definedTypes;
     }
 
+    // eslint-disable-next-line complexity
     public async resolveSchema(ref?: string, depth: number = 0): Promise<JsonSchema> {
         if (ref === "#") {
             ref = null;
         }
-        if (this.hitCount > 100) { // FIXME remove emergency recursion stop later if possible
-            console.trace(ref);
-            throw Error("Too many schemas requested!");
+        if (this.hitCount === 10000) { // FIXME remove emergency warning later if possible
+            console.trace("Too many schemas requested!", ref);
         }
         this.hitCount++;
         if (depth > 100) { // FIXME remove emergency recursion stop later if possible
@@ -395,6 +396,7 @@ export interface NormalizedJsonSchema {
     minItems?: number;
     maxItems?: number;
     uniqueItems?: boolean;
+    unorderedItems?: boolean;
     items?: NormalizedApiSchema;
     tupleItems?: NormalizedApiSchema[];
     contains?: NormalizedApiSchema;
@@ -566,6 +568,9 @@ function mergeArrayProperties(key, normalized: NormalizedJsonSchema, toNormalize
     if (key === "uniqueItems") {
         normalized.uniqueItems = toNormalize.uniqueItems || Boolean(normalized.uniqueItems);
         return true;
+    }
+    if (key === "unorderedItems") {
+        normalized.unorderedItems = toNormalize.unorderedItems || Boolean(normalized.unorderedItems);
     }
     return false;
 }
@@ -747,7 +752,6 @@ function consolidateExtraProperties(rootSchema: JsonSchema, normalized: Normaliz
                 ],
             };
             if (schema.customType != null) {
-                console.log(schema.customType); // TODO test workaround
                 combined.customType = schema.customType;
             }
             oneOf.push(new NormalizedApiSchema(combined, ["oneOf", "customType"])); // FIXME do not ignore custom type of schema, only ignore root schema…

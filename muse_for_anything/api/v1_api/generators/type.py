@@ -18,6 +18,8 @@ from muse_for_anything.api.v1_api.constants import (
     NAMESPACE_REL_TYPE,
     NAV_REL,
     OBJECT_REL_TYPE,
+    OUTDATED_REL,
+    OUTDATED_QUERY_KEY,
     PAGE_REL,
     POST_REL,
     PUT_REL,
@@ -427,6 +429,28 @@ class ObjectTypeObjectsNavLinkGenerator(
                 TYPE_ID_QUERY_KEY: str(resource.id),
             },
             extra_relations=(NAV_REL,),
+        )
+        
+
+class ObjectTypeOutdatedObjectsNavLinkGenerator(
+    LinkGenerator, resource_type=OntologyObjectType, relation=OUTDATED_REL
+):
+    def generate_link(
+        self,
+        resource: OntologyObjectType,
+        *,
+        query_params: Optional[Dict[str, str]] = None,
+        ignore_deleted: bool = False,
+    ) -> Optional[ApiLink]:
+        assert isinstance(resource, OntologyObjectType)
+        return LinkGenerator.get_link_of(
+            PageResource(OntologyObject, resource=resource.namespace, page_number=1),
+            query_params={
+                ITEM_COUNT_QUERY_KEY: ITEM_COUNT_DEFAULT,
+                OUTDATED_QUERY_KEY: True,
+                TYPE_ID_QUERY_KEY: str(resource.id),
+            },
+            extra_relations=(NAV_REL, OUTDATED_REL),
         )
 
 

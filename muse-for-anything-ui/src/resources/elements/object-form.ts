@@ -1,6 +1,7 @@
 import { autoinject, bindable, bindingMode, observable, TaskQueue } from "aurelia-framework";
 import { nanoid } from "nanoid";
 import { NormalizedApiSchema, PropertyDescription } from "rest/schema-objects";
+import { deepEqual } from "util/comparisons";
 
 @autoinject
 export class ObjectForm {
@@ -21,12 +22,20 @@ export class ObjectForm {
 
     @observable() value: any = {};
 
+    showMain: boolean = true;
+    showInfo: boolean = false;
+
     isNullable: boolean = false;
+
+    description: string = "";
 
     properties: PropertyDescription[] = [];
     propertiesByKey: Map<string, PropertyDescription> = new Map();
     propertyState: { [prop: string]: "readonly" | "editable" | "missing" } = {};
     requiredProperties: Set<string> = new Set();
+
+    minProperties: number | null = null;
+    maxProperties: number | null = null;
 
     updateCount = 100;
 
@@ -50,6 +59,15 @@ export class ObjectForm {
         this.queue = queue;
     }
 
+    toggleMain() {
+        this.showMain = !this.showMain;
+        return false;
+    }
+
+    toggleInfo() {
+        this.showInfo = !this.showInfo;
+        return false;
+    }
 
     initialDataChanged(newValue, oldValue) {
         if (newValue != null && !this.value) {
@@ -70,16 +88,23 @@ export class ObjectForm {
     // eslint-disable-next-line complexity
     reloadProperties() {
         if (this.schema == null) {
+            this.description = "";
             this.properties = [];
+            this.minProperties = null;
+            this.maxProperties = null;
             this.requiredProperties = new Set();
             return;
         }
         if (this.schema.normalized.type == null || !this.schema.normalized.type.has("object")) {
             console.error("Not an object!"); // FIXME better error!
+            this.description = "";
             this.properties = [];
+            this.minProperties = null;
+            this.maxProperties = null;
             this.requiredProperties = new Set();
             return;
         }
+        this.description = this.schema.normalized.description ?? "";
 
         // check if nullable
         this.isNullable = this.schema.normalized.type.has("null");
@@ -98,14 +123,22 @@ export class ObjectForm {
 
         // setup properties
         const setProperties = new Set<string>();
-        Object.keys(this.initialData ?? {}).forEach(key => {
-            if (!this.deletedProperties.has(key)) {
+        const currentInitialData = this.initialData ?? {};
+        Object.keys(currentInitialData).forEach(key => {
+            if (!this.deletedProperties.has(key) && currentInitialData[key] !== undefined) {
                 setProperties.add(key);
             }
         });
-        if (this.value != null) {
-            Object.keys(this.value).forEach(key => setProperties.add(key));
+        const currentValue = this.value;
+        if (currentValue != null) {
+            Object.keys(currentValue).forEach(key => {
+                if (currentValue[key] !== undefined) {
+                    // only use keys with actual values
+                    setProperties.add(key);
+                }
+            });
         }
+
         const properties = this.schema.getPropertyList(Array.from(setProperties.keys()));
         const propertiesByKey = new Map<string, PropertyDescription>();
         const propertyState: { [prop: string]: "readonly" | "editable" | "missing" } = {};
@@ -121,15 +154,30 @@ export class ObjectForm {
             }
         });
 
-
+        // always update property state
         this.propertyState = propertyState;
-        this.properties = properties;
-        this.propertiesByKey = propertiesByKey;
         this.requiredProperties = requiredProperties;
-
+        this.minProperties = this.schema.normalized.minProperties ?? null;
+        this.maxProperties = this.schema.normalized.maxProperties ?? null;
         if (this.hasExtraProperties) { // recheck valid status
             this.extraPropertyNameChanged(this.extraPropertyName);
         }
+
+        const currentProperties = this.properties;
+        if (currentProperties != null && currentProperties.length === properties.length) {
+            const noPropHasChangedSchema = properties.every((prop, i) => {
+                return prop.propertySchema.normalized.$id === currentProperties[i].propertySchema.normalized.$id;
+            });
+
+            if (noPropHasChangedSchema) {
+                return;  // properties did not change, no need for any updates
+            }
+        }
+
+        // only updated if a property schema has changed
+        this.properties = properties;
+        this.propertiesByKey = propertiesByKey;
+
         this.valueChanged(this.value);
     }
 
@@ -157,17 +205,21 @@ export class ObjectForm {
         }
     }
 
-    valueInChanged(newValue) {
+    valueInChanged(newValue, oldValue) {
+        const isChangeFromOutside = !deepEqual(newValue, this.valueOut);
         if (newValue == null) {
             this.value = null;
         } else {
             this.value = { ...newValue };
         }
-        this.reloadProperties();
+        if (isChangeFromOutside) {
+            // only reload for changes coming from outside
+            this.reloadProperties();
+        }
     }
 
     onPropertyValueUpdate = (value, binding) => {
-        this.queue.queueMicroTask(() => this.valueChanged(this.value));
+        this.valueChanged(this.value);
     };
 
     valueChanged(newValue) {
@@ -184,18 +236,18 @@ export class ObjectForm {
                     // const values always win
                     newOutValue[key] = prop.propertySchema.normalized.const;
                 }
-                if (this.valueOut?.[key] !== newOutValue[key]) {
+                if (!deepEqual(this.valueOut?.[key], newOutValue[key])) {
                     newValueIsDifferent = true;
                 }
             }
         });
         const hasLessKeys = Object.keys(newOutValue).length < Object.keys(this.valueOut ?? {}).length;
-        // FIXME console.log(newOutValue, newValueIsDifferent, hasLessKeys)
+
         if (newValueIsDifferent || hasLessKeys) {
             if (newValue == null && this.isNullable) {
                 this.valueOut = null;
             } else {
-                this.valueOut = newOutValue;
+                this.valueOut = { ...newOutValue };
             }
         }
     }
@@ -296,7 +348,7 @@ export class ObjectForm {
     }
 
     onPropertyValidUpdate = (value, binding) => {
-        this.queue.queueMicroTask(() => this.propertiesValidChanged(this.propertiesValid));
+        this.propertiesValidChanged(this.propertiesValid);
     };
 
     // eslint-disable-next-line complexity
@@ -338,7 +390,7 @@ export class ObjectForm {
     }
 
     onPropertyDirtyUpdate = (value, binding) => {
-        this.queue.queueMicroTask(() => this.propertiesDirtyChanged(this.propertiesDirty));
+        this.propertiesDirtyChanged(this.propertiesDirty);
     };
 
     propertiesDirtyChanged(newValue: { [prop: string]: boolean }) {

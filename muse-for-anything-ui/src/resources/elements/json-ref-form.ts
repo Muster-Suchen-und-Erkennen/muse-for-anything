@@ -34,7 +34,11 @@ export class JsonRefForm {
     @bindable({ defaultBindingMode: bindingMode.fromView }) dirty: boolean;
     @bindable({ defaultBindingMode: bindingMode.fromView }) valid: boolean;
 
+    showInfo: boolean = false;
+
     slug = nanoid(8);
+
+    description: string = "";
 
     isNullable: boolean = true;
 
@@ -58,6 +62,11 @@ export class JsonRefForm {
         this.apiService = rest;
         this.schemas = schemas;
         this.dialogService = dialogservice;
+    }
+
+    toggleInfo() {
+        this.showInfo = !this.showInfo;
+        return false;
     }
 
     private splitUrl(value: string | null) {
@@ -101,6 +110,7 @@ export class JsonRefForm {
 
     schemaChanged(newValue: NormalizedApiSchema, oldValue) {
         const normalized = newValue.normalized;
+        this.description = normalized.description ?? "";
         this.isNullable = normalized.type.has(null);
         this.updateValid();
     }

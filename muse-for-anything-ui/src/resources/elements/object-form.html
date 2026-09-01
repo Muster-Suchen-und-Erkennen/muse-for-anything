@@ -1,20 +1,53 @@
 <template>
     <require from="./schema-form"></require>
     <require from="./validity-indicator"></require>
+    <require from="./new-property-info"></require>
     <require from="./schema-form-actions"></require>
+    <require from="./svg-icon.html"></require>
 
     <!-- TODO translations -->
 
-    <details class="form-container" open>
-        <summary class="mb-2 flex items-center form-container-title">
-            <p class="font-semibold text-lg">${label}</p>
-            <validity-indicator class="ml-2" valid.bind="valid"></validity-indicator>
-            <div class="flex-grow"></div>
-            <div class="justify-items-end flex items-center" if.bind="actions != null">
-                <schema-form-actions actions.bind="actions" key.bind="key" action-signal.call="actionSignal($event)">
-                </schema-form-actions>
-            </div>
-        </summary>
+    <div class="mb-2 flex items-center form-container-title">
+        <button class="button-details-toggle inline-flex items-center font-semibold text-lg" type="button"
+            aria-expanded.bind="showMain ? 'true' : 'false'" aria-controls="main-${slug}" click.delegate="toggleMain()">
+            <svg-icon icon.bind="showMain ? 'chevron-down' : 'chevron-right'"></svg-icon>
+            ${label}
+        </button>
+        <validity-indicator class="ml-2" valid.bind="valid"></validity-indicator>
+        <button class="button-flat-toggle" type="button" aria-label="Show additional form field information."
+            aria-expanded.bind="showInfo ? 'true' : 'false'" aria-controls="info-${slug}" click.delegate="toggleInfo()">
+            <svg-icon icon.bind="'info'"></svg-icon>
+        </button>
+        <div class="flex-grow"></div>
+        <div class="justify-items-end flex items-center" if.bind="actions != null">
+            <schema-form-actions actions.bind="actions" key.bind="key" action-signal.call="actionSignal($event)">
+            </schema-form-actions>
+        </div>
+    </div>
+    <div id="info-${slug}" class="mb-2" show.bind="showInfo">
+        <p class="mb-2" if.bind="description">${description}</p>
+        <p>Additional Constraints:</p>
+        <dl class="constraints-list">
+            <dt>Required:</dt>
+            <dd>${required ? 'yes' : 'no'}</dd>
+            <template if.bind="minProperties != null || maxProperties != null">
+                <dt>Length:</dt>
+                <dd>
+                    ${minProperties != null ? minProperties : 0} - ${maxProperties != null ? maxProperties : '∞'}
+                    <!--span if.bind="minProperties || maxProperties">()</span-->
+                </dd>
+            </template>
+            <template if.bind="requiredProperties.size > 0">
+                <dt>Required properties:</dt>
+                <dd>
+                    <ul class="list-disc list-inside">
+                        <li repeat.for="prop of requiredProperties">${prop}</li>
+                    </ul>
+                </dd>
+            </template>
+        </dl>
+    </div>
+    <div class="form-container" id="main-${slug}" class="mb-2" show.bind="showMain">
         <div if.bind="debug && invalidProps">
             Invalid: ${invalidProps|json}
         </div>
@@ -28,6 +61,7 @@
                 <button class="button-flat" click.delegate="addGhostProperty(prop.propertyName)">
                     Add Property
                 </button>
+                <new-property-info schema.bind="prop.propertySchema"></new-property-info>
             </div>
             <!-- TODO do show readonly properties -->
             <p if.bind="propertyState[prop.propertyName] === 'readonly'">
@@ -58,5 +92,5 @@
                 Add Property
             </button>
         </div>
-    </details>
+    </div>
 </template>

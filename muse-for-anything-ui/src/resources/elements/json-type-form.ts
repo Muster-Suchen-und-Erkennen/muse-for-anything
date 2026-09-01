@@ -40,6 +40,9 @@ export class JsonTypeForm {
 
     initialDataChanged(newValue, oldValue) {
         if (newValue !== undefined) {
+            if (this.valueIn != null && Array.isArray(this.valueIn)) {
+                return;  // value in overrides initial data
+            }
             if (newValue == null || (Array.isArray(newValue) && newValue.every(v => VALID_JSON_TYPES.has(v)))) {
                 // only assign valid type arrays (or null)
                 this.value = newValue;
