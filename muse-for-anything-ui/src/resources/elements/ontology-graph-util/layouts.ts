@@ -1,6 +1,6 @@
-import { Edge, edgeId } from "@ustutt/grapheditor-webcomponent/lib/edge";
-import GraphEditor from "@ustutt/grapheditor-webcomponent/lib/grapheditor";
-import { Node } from "@ustutt/grapheditor-webcomponent/lib/node";
+import { Edge, edgeId } from "grapheditor-webcomponent/lib/edge";
+import GraphEditor from "grapheditor-webcomponent/lib/grapheditor";
+import { Node } from "grapheditor-webcomponent/lib/node";
 import { forceCenter, forceCollide, forceLink, forceManyBody, forceSimulation, forceX, forceY } from "d3-force";
 import createLayout from "ngraph.forcelayout";
 import createGraph from "ngraph.graph";

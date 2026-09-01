@@ -1,9 +1,9 @@
 
-import { Point } from "@ustutt/grapheditor-webcomponent/lib/edge";
-import GraphEditor from "@ustutt/grapheditor-webcomponent/lib/grapheditor";
-import { GroupBehaviour } from "@ustutt/grapheditor-webcomponent/lib/grouping";
-import { Node } from "@ustutt/grapheditor-webcomponent/lib/node";
-import { calculateBoundingRect, Rect } from "@ustutt/grapheditor-webcomponent/lib/util";
+import { Point } from "grapheditor-webcomponent/lib/edge";
+import GraphEditor from "grapheditor-webcomponent/lib/grapheditor";
+import { GroupBehaviour } from "grapheditor-webcomponent/lib/grouping";
+import { Node } from "grapheditor-webcomponent/lib/node";
+import { calculateBoundingRect, Rect } from "grapheditor-webcomponent/lib/util";
 import { BOUNDING_BOX_PADDING } from "./node-templates";
 
 
@@ -178,7 +178,14 @@ export class TypeGroupBehaviour implements GroupBehaviour {
             });
         });
 
-        const minBox = calculateBoundingRect(...boxes);
+        // grapheditor 1.0 requires at least one rectangle, a group without
+        // children has no bounding box to fit the group node to
+        const [firstBox, ...remainingBoxes] = boxes;
+        if (firstBox == null) {
+            return;
+        }
+
+        const minBox = calculateBoundingRect(firstBox, ...remainingBoxes);
 
         groupNode.width = minBox.width;
         groupNode.height = minBox.height + 10 + BOUNDING_BOX_PADDING; // + 10 for title text

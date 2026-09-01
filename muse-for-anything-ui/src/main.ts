@@ -7,7 +7,7 @@ import Backend from "i18next-xhr-backend";
 import * as environment from "../config/environment.json";
 
 // import grapheditor library to enable webcomponent
-import "@ustutt/grapheditor-webcomponent";
+import "grapheditor-webcomponent";
 
 export function configure(aurelia: Aurelia): void {
     aurelia.use

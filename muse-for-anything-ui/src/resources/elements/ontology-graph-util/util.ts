@@ -1,5 +1,5 @@
-import GraphEditor from "@ustutt/grapheditor-webcomponent/lib/grapheditor";
-import { Node } from "@ustutt/grapheditor-webcomponent/lib/node";
+import GraphEditor from "grapheditor-webcomponent/lib/grapheditor";
+import { Node } from "grapheditor-webcomponent/lib/node";
 import { observable } from "aurelia-framework";
 import { ApiLink, ApiObject, ApiResponse, PageApiObject } from "rest/api-objects";
 import { BaseApiService } from "rest/base-api";

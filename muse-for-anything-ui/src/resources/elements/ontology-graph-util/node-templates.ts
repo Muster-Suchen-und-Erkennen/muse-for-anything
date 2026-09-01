@@ -1,7 +1,7 @@
-import { DynamicNodeTemplate, DynamicTemplateContext } from "@ustutt/grapheditor-webcomponent/lib/dynamic-templates/dynamic-template";
-import GraphEditor from "@ustutt/grapheditor-webcomponent/lib/grapheditor";
-import { LinkHandle } from "@ustutt/grapheditor-webcomponent/lib/link-handle";
-import { Node } from "@ustutt/grapheditor-webcomponent/lib/node";
+import { DynamicNodeTemplate, DynamicTemplateContext } from "grapheditor-webcomponent/lib/dynamic-templates/dynamic-template";
+import GraphEditor from "grapheditor-webcomponent/lib/grapheditor";
+import { LinkHandle } from "grapheditor-webcomponent/lib/link-handle";
+import { Node } from "grapheditor-webcomponent/lib/node";
 
 export const BOUNDING_BOX_PADDING: number = 10;
 

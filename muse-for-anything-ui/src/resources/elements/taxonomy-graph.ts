@@ -4,9 +4,9 @@ import { BaseApiService } from "rest/base-api";
 import { ApiLink, ApiLinkKey, ApiObject, ApiResponse, ChangedApiObject, isChangedApiObject, isNewApiObject, NewApiObject } from "rest/api-objects";
 import { NavigationLinksService } from "services/navigation-links";
 import { API_RESOURCE_CHANGES_CHANNEL } from "resources/events";
-import GraphEditor from "@ustutt/grapheditor-webcomponent/lib/grapheditor";
-import { Node } from "@ustutt/grapheditor-webcomponent/lib/node";
-import { DraggedEdge, Edge, edgeId } from "@ustutt/grapheditor-webcomponent/lib/edge";
+import GraphEditor from "grapheditor-webcomponent/lib/grapheditor";
+import { Node } from "grapheditor-webcomponent/lib/node";
+import { DraggedEdge, Edge, edgeId } from "grapheditor-webcomponent/lib/edge";
 import { PropertyDescription } from "rest/schema-objects";
 import { SchemaService } from "rest/schema-service";
 

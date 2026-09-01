@@ -1,8 +1,8 @@
-import { SmoothedEdgePathGenerator } from "@ustutt/grapheditor-webcomponent/lib/dynamic-templates/edge-path-generators";
-import { edgeId } from "@ustutt/grapheditor-webcomponent/lib/edge";
-import GraphEditor from "@ustutt/grapheditor-webcomponent/lib/grapheditor";
-import { Node } from "@ustutt/grapheditor-webcomponent/lib/node";
-import { Rect } from "@ustutt/grapheditor-webcomponent/lib/util";
+import { SmoothedEdgePathGenerator } from "grapheditor-webcomponent/lib/dynamic-templates/edge-path-generators";
+import { edgeId } from "grapheditor-webcomponent/lib/edge";
+import GraphEditor from "grapheditor-webcomponent/lib/grapheditor";
+import { Node } from "grapheditor-webcomponent/lib/node";
+import { Rect } from "grapheditor-webcomponent/lib/util";
 import { EventAggregator, Subscription } from "aurelia-event-aggregator";
 import { autoinject, bindable, child, observable, TaskQueue } from "aurelia-framework";
 import { curveLinear } from "d3-shape";
